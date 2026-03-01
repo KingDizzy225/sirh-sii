@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse } from 'lucide-react';
+import { Home, Users, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { RequirePermission } from '../auth/ProtectedRoute';
 
@@ -24,6 +24,9 @@ const navItems = [
     { name: 'Support Social', path: '/social-support', icon: Heart, permission: 'support:view' },
     { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: Shield, permission: 'support_tickets:manage' },
     { name: 'Santé & Sécurité', path: '/hse', icon: Shield, permission: 'employees:edit' },
+    { name: 'Matériel & Flotte', path: '/assets', icon: Laptop, permission: 'employees:edit' },
+    { name: 'Rapports & Coûts', path: '/analytics', icon: BarChart, permission: 'dashboard:view' },
+    { name: 'Rémunération', path: '/compensation', icon: PiggyBank, permission: 'payroll:view' },
     { name: 'Paramètres', path: '/settings', icon: Settings, permission: 'settings:view' },
 ];
 

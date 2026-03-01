@@ -25,6 +25,9 @@ import { Timesheet } from './pages/Timesheet';
 import { Expenses } from './pages/Expenses';
 import { Engagement } from './pages/Engagement';
 import { HSE } from './pages/HSE';
+import { Assets } from './pages/Assets';
+import { Analytics } from './pages/Analytics';
+import { Compensation } from './pages/Compensation';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -141,6 +144,24 @@ export default function App() {
                 <Route path="/hse" element={
                   <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Social Worker']}>
                     <HSE />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/assets" element={
+                  <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                    <Assets />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/analytics" element={
+                  <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                    <Analytics />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/compensation" element={
+                  <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                    <Compensation />
                   </ProtectedRoute>
                 } />
 
