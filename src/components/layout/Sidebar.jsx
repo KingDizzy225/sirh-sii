@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 import { Home, Users, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { RequirePermission } from '../auth/ProtectedRoute';

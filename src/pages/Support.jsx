@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Lock, Key, CheckCircle2, AlertTriangle, MessageSquare, PlusCircle, ArrowLeft } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@/lib/utils';
 
 export function Support() {
     // Local state for the tickets stored in the browser

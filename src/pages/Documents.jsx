@@ -11,7 +11,7 @@ import {
     FileText, UploadCloud, Download, Trash2, Shield,
     Folder, FolderOpen, File, CheckCircle2, Lock, Search
 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@/lib/utils';
 
 // Mock Data
 const MOCK_COMPANY_DOCUMENTS = [
