@@ -1,0 +1,3413 @@
+{
+  "employees": [
+    {
+      "id": "23d6f198-a499-428e-ae5c-3e4bd1d87adf",
+      "first_name": "Stephanie",
+      "last_name": "Crist",
+      "email": "amina.osinski49@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-it",
+      "department": "Engineering",
+      "status": "ACTIVE",
+      "hire_date": "2025-05-14T04:45:35.686Z",
+      "position_title": "Regional Optimization Engineer",
+      "created_at": "2026-03-01T00:04:19.557Z"
+    },
+    {
+      "id": "b0be5bc9-cb9f-43d6-8f53-13c97891d6ca",
+      "first_name": "Mandy",
+      "last_name": "Buckridge",
+      "email": "elsie_hane86@company.com",
+      "role": "Manager",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2025-04-08T00:06:59.779Z",
+      "position_title": "Central Mobility Assistant",
+      "created_at": "2026-03-01T00:04:19.565Z"
+    },
+    {
+      "id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "first_name": "Leticia",
+      "last_name": "Witting",
+      "email": "ariel.tremblay91@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "ACTIVE",
+      "hire_date": "2021-07-13T08:35:36.458Z",
+      "position_title": "Central Creative Developer",
+      "created_at": "2026-03-01T00:04:19.565Z"
+    },
+    {
+      "id": "cd660c01-04f4-4c2c-b2e9-ccef170c2182",
+      "first_name": "Hattie",
+      "last_name": "Harber",
+      "email": "kitty_kessler21@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "TERMINATED",
+      "hire_date": "2021-05-13T09:51:04.157Z",
+      "position_title": "Customer Assurance Strategist",
+      "created_at": "2026-03-01T00:04:19.566Z"
+    },
+    {
+      "id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "first_name": "Lyda",
+      "last_name": "Rice",
+      "email": "allene_lubowitz83@company.com",
+      "role": "HR",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "ACTIVE",
+      "hire_date": "2025-03-16T11:06:53.853Z",
+      "position_title": "Chief Paradigm Coordinator",
+      "created_at": "2026-03-01T00:04:19.566Z"
+    },
+    {
+      "id": "c63303ea-41df-4574-b9e4-cf0c3097f425",
+      "first_name": "Marcus",
+      "last_name": "Schneider",
+      "email": "vicki69@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "ACTIVE",
+      "hire_date": "2023-08-24T01:27:26.113Z",
+      "position_title": "Principal Directives Supervisor",
+      "created_at": "2026-03-01T00:04:19.566Z"
+    },
+    {
+      "id": "23129d9a-9627-42b3-ada7-8228a9257a8b",
+      "first_name": "Israel",
+      "last_name": "Casper",
+      "email": "preston_kirlin19@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2025-09-10T15:31:53.531Z",
+      "position_title": "Human Data Assistant",
+      "created_at": "2026-03-01T00:04:19.566Z"
+    },
+    {
+      "id": "60b67d93-5490-4d14-84b4-0e74f796c3e6",
+      "first_name": "Lorraine",
+      "last_name": "Ratke",
+      "email": "manuel_von11@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2022-06-12T21:30:25.592Z",
+      "position_title": "Product Data Associate",
+      "created_at": "2026-03-01T00:04:19.566Z"
+    },
+    {
+      "id": "b9eb5b2d-63be-4f4f-8ed7-cb79f615ab81",
+      "first_name": "Lilian",
+      "last_name": "Kulas",
+      "email": "green_brown23@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "TERMINATED",
+      "hire_date": "2023-10-02T17:30:19.183Z",
+      "position_title": "Senior Data Director",
+      "created_at": "2026-03-01T00:04:19.567Z"
+    },
+    {
+      "id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "first_name": "Rafael",
+      "last_name": "Strosin",
+      "email": "dora90@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "TERMINATED",
+      "hire_date": "2023-07-11T06:17:35.207Z",
+      "position_title": "Investor Functionality Facilitator",
+      "created_at": "2026-03-01T00:04:19.567Z"
+    },
+    {
+      "id": "4e92fd14-70c5-491a-9ddb-e9fe1bc92027",
+      "first_name": "Laurence",
+      "last_name": "Murray",
+      "email": "krystal_gusikowski@company.com",
+      "role": "Manager",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2023-05-08T08:24:11.900Z",
+      "position_title": "District Metrics Consultant",
+      "created_at": "2026-03-01T00:04:19.567Z"
+    },
+    {
+      "id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "first_name": "Anne",
+      "last_name": "Dibbert",
+      "email": "annetta.berge@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-it",
+      "department": "Engineering",
+      "status": "ACTIVE",
+      "hire_date": "2022-10-27T10:40:41.645Z",
+      "position_title": "Central Optimization Coordinator",
+      "created_at": "2026-03-01T00:04:19.567Z"
+    },
+    {
+      "id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "first_name": "Lisa",
+      "last_name": "Corkery",
+      "email": "willie26@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2024-07-22T00:23:03.626Z",
+      "position_title": "Internal Configuration Specialist",
+      "created_at": "2026-03-01T00:04:19.567Z"
+    },
+    {
+      "id": "b2d22e97-950d-4973-95c4-a59d3a41762c",
+      "first_name": "Darrel",
+      "last_name": "Effertz-Medhurst",
+      "email": "khalil32@company.com",
+      "role": "Manager",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ON_LEAVE",
+      "hire_date": "2024-10-02T18:42:38.474Z",
+      "position_title": "International Quality Facilitator",
+      "created_at": "2026-03-01T00:04:19.567Z"
+    },
+    {
+      "id": "2543efde-dbb5-4c06-9e98-40ca32fe524d",
+      "first_name": "Estelle",
+      "last_name": "Cassin",
+      "email": "allison.lindgren@company.com",
+      "role": "HR",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2021-06-06T01:30:11.693Z",
+      "position_title": "Central Program Designer",
+      "created_at": "2026-03-01T00:04:19.567Z"
+    },
+    {
+      "id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "first_name": "Edwin",
+      "last_name": "Mayer",
+      "email": "erika.cummings75@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "TERMINATED",
+      "hire_date": "2022-09-08T23:55:50.866Z",
+      "position_title": "Product Operations Administrator",
+      "created_at": "2026-03-01T00:04:19.568Z"
+    },
+    {
+      "id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "first_name": "Louise",
+      "last_name": "Lang",
+      "email": "lyric_treutel-will@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2024-01-13T18:58:02.163Z",
+      "position_title": "Future Assurance Producer",
+      "created_at": "2026-03-01T00:04:19.568Z"
+    },
+    {
+      "id": "61bd0e50-a56f-4849-b25f-511ac60352a9",
+      "first_name": "Rico",
+      "last_name": "Brown",
+      "email": "jim.hahn39@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2022-11-22T14:21:35.886Z",
+      "position_title": "Principal Accounts Engineer",
+      "created_at": "2026-03-01T00:04:19.568Z"
+    },
+    {
+      "id": "a4a6a9c4-a7e1-482b-b006-9c0982fd6fb0",
+      "first_name": "Dane",
+      "last_name": "Schmitt",
+      "email": "cleveland41@company.com",
+      "role": "HR",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2023-10-22T15:45:06.199Z",
+      "position_title": "Principal Markets Coordinator",
+      "created_at": "2026-03-01T00:04:19.568Z"
+    },
+    {
+      "id": "f2560243-bb49-4d9c-aa66-a173c725746c",
+      "first_name": "Harvey",
+      "last_name": "Marks-Wuckert",
+      "email": "matt77@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2023-06-04T10:54:25.527Z",
+      "position_title": "Lead Applications Associate",
+      "created_at": "2026-03-01T00:04:19.568Z"
+    },
+    {
+      "id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "first_name": "Sonny",
+      "last_name": "Larkin",
+      "email": "rosalie.reichel78@company.com",
+      "role": "Manager",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "TERMINATED",
+      "hire_date": "2022-02-08T13:54:06.517Z",
+      "position_title": "Future Accountability Assistant",
+      "created_at": "2026-03-01T00:04:19.568Z"
+    },
+    {
+      "id": "bd5ac45d-d53f-467a-a212-8f578ab25b00",
+      "first_name": "Taylor",
+      "last_name": "Schultz",
+      "email": "lilyan.hackett@company.com",
+      "role": "Social Worker",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "TERMINATED",
+      "hire_date": "2024-11-18T10:03:24.726Z",
+      "position_title": "Central Metrics Supervisor",
+      "created_at": "2026-03-01T00:04:19.568Z"
+    },
+    {
+      "id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "first_name": "Mitchell",
+      "last_name": "Herman",
+      "email": "hubert81@company.com",
+      "role": "Social Worker",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "TERMINATED",
+      "hire_date": "2021-08-27T22:09:56.851Z",
+      "position_title": "Product Optimization Orchestrator",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "first_name": "Alek",
+      "last_name": "Daniel",
+      "email": "dawson_lind@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2025-08-10T14:22:16.913Z",
+      "position_title": "International Research Orchestrator",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "e3265bcf-8f3b-4d9b-b009-1f2afa2f9c14",
+      "first_name": "Dedric",
+      "last_name": "Lockman",
+      "email": "sammy.bartell69@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-it",
+      "department": "Engineering",
+      "status": "ON_LEAVE",
+      "hire_date": "2024-03-30T09:35:16.254Z",
+      "position_title": "National Interactions Agent",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "49eb586f-7839-491f-99ef-9ebb8199376e",
+      "first_name": "Domenico",
+      "last_name": "Harvey",
+      "email": "elbert86@company.com",
+      "role": "Administrator",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2024-11-02T18:02:24.417Z",
+      "position_title": "Forward Identity Analyst",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "fe6fe81f-619e-44f5-9f86-c5a16734e618",
+      "first_name": "Amy",
+      "last_name": "Beahan",
+      "email": "edmund.schaefer@company.com",
+      "role": "HR",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "ACTIVE",
+      "hire_date": "2021-10-15T22:50:54.737Z",
+      "position_title": "Internal Paradigm Supervisor",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "ac3ae417-baf0-413d-9031-228e011fd623",
+      "first_name": "Maud",
+      "last_name": "Bins-Purdy",
+      "email": "ron.donnelly@company.com",
+      "role": "HR",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "ACTIVE",
+      "hire_date": "2021-11-24T21:21:05.738Z",
+      "position_title": "Product Marketing Director",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "aab347ac-4f74-40f7-8cd6-8d6daae14277",
+      "first_name": "Tyrone",
+      "last_name": "Roob",
+      "email": "krista_terry@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ON_LEAVE",
+      "hire_date": "2024-01-01T18:57:47.026Z",
+      "position_title": "National Program Developer",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "ebac7c9c-6aa3-4bd7-b0ce-b6d8f43c721d",
+      "first_name": "Jessie",
+      "last_name": "Ondricka",
+      "email": "manuel.gleichner75@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "TERMINATED",
+      "hire_date": "2022-11-06T09:48:20.105Z",
+      "position_title": "Product Applications Representative",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "7241ee23-91db-4db9-a5f3-0a3cbc63a141",
+      "first_name": "Bessie",
+      "last_name": "Rippin",
+      "email": "octavia0@company.com",
+      "role": "Social Worker",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "ACTIVE",
+      "hire_date": "2021-09-03T16:46:48.210Z",
+      "position_title": "Internal Marketing Assistant",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "first_name": "Bob",
+      "last_name": "Morar",
+      "email": "herman.runte99@company.com",
+      "role": "HR",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "TERMINATED",
+      "hire_date": "2023-07-01T06:38:29.013Z",
+      "position_title": "Corporate Intranet Producer",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "28920d36-6462-4b56-bdc9-2d0d27226bdf",
+      "first_name": "Woodrow",
+      "last_name": "Jacobson",
+      "email": "beulah7@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ON_LEAVE",
+      "hire_date": "2023-11-30T02:01:41.995Z",
+      "position_title": "Dynamic Data Planner",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "first_name": "Kari",
+      "last_name": "Roob",
+      "email": "rollin43@company.com",
+      "role": "Manager",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "TERMINATED",
+      "hire_date": "2021-12-14T09:25:48.626Z",
+      "position_title": "District Assurance Producer",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "first_name": "Alexandra",
+      "last_name": "Jaskolski",
+      "email": "josephine_emmerich@company.com",
+      "role": "Social Worker",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2024-08-24T23:54:56.369Z",
+      "position_title": "Customer Program Designer",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "6728a76e-ed64-4673-b3d5-5fccf88bbfda",
+      "first_name": "Patricia",
+      "last_name": "Christiansen",
+      "email": "rey_schmeler93@company.com",
+      "role": "Manager",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2023-11-13T05:54:45.311Z",
+      "position_title": "District Interactions Consultant",
+      "created_at": "2026-03-01T00:04:19.569Z"
+    },
+    {
+      "id": "02e1a483-31f6-4b9a-833c-798bbf7e0fc0",
+      "first_name": "Ova",
+      "last_name": "Bode",
+      "email": "bobby55@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-it",
+      "department": "Engineering",
+      "status": "ACTIVE",
+      "hire_date": "2022-06-24T02:53:08.971Z",
+      "position_title": "Legacy Optimization Consultant",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "27bd466d-fb86-4312-baa9-e1245bb2580f",
+      "first_name": "Arlene",
+      "last_name": "Borer",
+      "email": "ayana_mante12@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2022-02-19T10:17:38.940Z",
+      "position_title": "Principal Creative Manager",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "1059fcbb-4ecd-4ecf-9aa9-9f3a1d31e0d5",
+      "first_name": "Ben",
+      "last_name": "Mohr",
+      "email": "denis_schiller@company.com",
+      "role": "Social Worker",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2026-01-30T17:58:29.800Z",
+      "position_title": "Product Brand Analyst",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "aac99c8c-9234-44b2-8d8e-89e4fb006a10",
+      "first_name": "Teresa",
+      "last_name": "Nikolaus-Hartmann",
+      "email": "jaycee_schultz@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2025-01-13T15:28:18.188Z",
+      "position_title": "Customer Creative Officer",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "46341bf1-0321-46fe-bddc-d13dd431a5fa",
+      "first_name": "Cynthia",
+      "last_name": "Langworth",
+      "email": "erin6@company.com",
+      "role": "Social Worker",
+      "department_id": "uuid-dept-it",
+      "department": "Engineering",
+      "status": "ACTIVE",
+      "hire_date": "2021-04-01T16:10:35.445Z",
+      "position_title": "Dynamic Usability Consultant",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "b902e441-949f-4a6d-a9a1-dbf408ba9bc1",
+      "first_name": "Philip",
+      "last_name": "Schimmel",
+      "email": "ted.oreilly@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "ON_LEAVE",
+      "hire_date": "2024-01-16T12:57:32.476Z",
+      "position_title": "Investor Accountability Orchestrator",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "9475f842-c8a3-4259-b547-70492b8c64c9",
+      "first_name": "Essie",
+      "last_name": "Schmidt",
+      "email": "jammie.kshlerin@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-it",
+      "department": "Engineering",
+      "status": "ACTIVE",
+      "hire_date": "2024-05-31T13:29:44.234Z",
+      "position_title": "Internal Web Assistant",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "first_name": "Will",
+      "last_name": "Emard",
+      "email": "chelsea_medhurst@company.com",
+      "role": "Social Worker",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2021-10-24T11:52:18.099Z",
+      "position_title": "Customer Optimization Administrator",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "first_name": "Jonathan",
+      "last_name": "Lemke",
+      "email": "ole_oconnell@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "ACTIVE",
+      "hire_date": "2024-10-29T17:17:47.439Z",
+      "position_title": "Product Usability Analyst",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "first_name": "Dominique",
+      "last_name": "Deckow",
+      "email": "yazmin84@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "ACTIVE",
+      "hire_date": "2023-04-02T20:45:50.295Z",
+      "position_title": "Direct Division Architect",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "244a1cae-7c7c-430e-81d1-15914b251015",
+      "first_name": "Scott",
+      "last_name": "Kuphal-Kihn",
+      "email": "levi.terry@company.com",
+      "role": "Social Worker",
+      "department_id": "uuid-dept-sales",
+      "department": "Sales",
+      "status": "ACTIVE",
+      "hire_date": "2025-06-01T23:26:16.653Z",
+      "position_title": "Central Division Technician",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "first_name": "Madeline",
+      "last_name": "Swaniawski",
+      "email": "mamie_pfeffer@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-hr",
+      "department": "Human Resources",
+      "status": "TERMINATED",
+      "hire_date": "2022-07-19T23:55:46.837Z",
+      "position_title": "Internal Research Developer",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "8c222fc7-1e3f-41dd-b12d-3a755ddde63a",
+      "first_name": "Noah",
+      "last_name": "O'Reilly",
+      "email": "cornelius.emmerich33@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-it",
+      "department": "Engineering",
+      "status": "ON_LEAVE",
+      "hire_date": "2023-07-17T20:57:58.058Z",
+      "position_title": "Global Accounts Orchestrator",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    },
+    {
+      "id": "e686370e-ffd6-4965-950c-794e1aa7b9ab",
+      "first_name": "Ronald",
+      "last_name": "Olson",
+      "email": "cristina.christiansen65@company.com",
+      "role": "Employee",
+      "department_id": "uuid-dept-finance",
+      "department": "Finance",
+      "status": "TERMINATED",
+      "hire_date": "2025-05-08T21:04:47.981Z",
+      "position_title": "Dynamic Group Developer",
+      "created_at": "2026-03-01T00:04:19.570Z"
+    }
+  ],
+  "payroll_records": [
+    {
+      "id": "bb9a0f41-e233-452e-a972-94284c520676",
+      "employee_id": "23d6f198-a499-428e-ae5c-3e4bd1d87adf",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 59983,
+      "bonus": 0,
+      "deductions": 251,
+      "status": "Paid"
+    },
+    {
+      "id": "5d740600-e24e-47a4-a38e-9ba48dcaa8d7",
+      "employee_id": "b0be5bc9-cb9f-43d6-8f53-13c97891d6ca",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 52520,
+      "bonus": 1235,
+      "deductions": 747,
+      "status": "Paid"
+    },
+    {
+      "id": "2e77baf8-ba79-4a8f-b227-7312a565ed15",
+      "employee_id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 76536,
+      "bonus": 4307,
+      "deductions": 737,
+      "status": "Paid"
+    },
+    {
+      "id": "be3d13f8-445a-46de-a8b4-c6607311f212",
+      "employee_id": "cd660c01-04f4-4c2c-b2e9-ccef170c2182",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 76746,
+      "bonus": 4952,
+      "deductions": 527,
+      "status": "Paid"
+    },
+    {
+      "id": "bdb92be9-06b0-442f-b2af-2ad4b9956c06",
+      "employee_id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 56997,
+      "bonus": 0,
+      "deductions": 526,
+      "status": "Paid"
+    },
+    {
+      "id": "6e6356fe-d309-4212-a2c1-42026f76705c",
+      "employee_id": "c63303ea-41df-4574-b9e4-cf0c3097f425",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 111517,
+      "bonus": 3495,
+      "deductions": 130,
+      "status": "Paid"
+    },
+    {
+      "id": "393d205c-6b1e-41ac-a346-9c2ceffbde42",
+      "employee_id": "23129d9a-9627-42b3-ada7-8228a9257a8b",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 35911,
+      "bonus": 1923,
+      "deductions": 238,
+      "status": "Paid"
+    },
+    {
+      "id": "c8af4380-bbb3-41df-9b77-b8c92cb711ca",
+      "employee_id": "60b67d93-5490-4d14-84b4-0e74f796c3e6",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 102895,
+      "bonus": 3017,
+      "deductions": 592,
+      "status": "Paid"
+    },
+    {
+      "id": "82a576e7-b049-4924-a302-25cac64cd09e",
+      "employee_id": "b9eb5b2d-63be-4f4f-8ed7-cb79f615ab81",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 60207,
+      "bonus": 0,
+      "deductions": 188,
+      "status": "Paid"
+    },
+    {
+      "id": "021607b3-dbf1-461f-ba93-b57b17b2b948",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 48232,
+      "bonus": 3664,
+      "deductions": 203,
+      "status": "Paid"
+    },
+    {
+      "id": "3f774b9e-08dd-49f4-a1f4-defd668ae2ab",
+      "employee_id": "4e92fd14-70c5-491a-9ddb-e9fe1bc92027",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 112171,
+      "bonus": 0,
+      "deductions": 364,
+      "status": "Paid"
+    },
+    {
+      "id": "6ef9b4e0-7708-43cc-8d3f-05423814d0cb",
+      "employee_id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 109508,
+      "bonus": 0,
+      "deductions": 246,
+      "status": "Paid"
+    },
+    {
+      "id": "8bf136d1-72eb-49eb-a2be-e5c241bdc0d7",
+      "employee_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 94080,
+      "bonus": 0,
+      "deductions": 685,
+      "status": "Paid"
+    },
+    {
+      "id": "583aba3c-3624-4672-b4e6-e293eda82467",
+      "employee_id": "b2d22e97-950d-4973-95c4-a59d3a41762c",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 58876,
+      "bonus": 0,
+      "deductions": 580,
+      "status": "Paid"
+    },
+    {
+      "id": "59779333-9a5c-492a-8dbb-70e39ae2e708",
+      "employee_id": "2543efde-dbb5-4c06-9e98-40ca32fe524d",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 92836,
+      "bonus": 1650,
+      "deductions": 495,
+      "status": "Paid"
+    },
+    {
+      "id": "65145baa-b7c6-4ba8-91fb-88c9f7a2a171",
+      "employee_id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 106476,
+      "bonus": 4461,
+      "deductions": 683,
+      "status": "Paid"
+    },
+    {
+      "id": "5122ae48-a920-4b20-b938-a5e30ff5c291",
+      "employee_id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 68797,
+      "bonus": 0,
+      "deductions": 626,
+      "status": "Paid"
+    },
+    {
+      "id": "3812948c-e140-468a-b1cb-055bee93305b",
+      "employee_id": "61bd0e50-a56f-4849-b25f-511ac60352a9",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 113499,
+      "bonus": 0,
+      "deductions": 152,
+      "status": "Paid"
+    },
+    {
+      "id": "0a692043-3563-4db5-8897-ba9de848960a",
+      "employee_id": "a4a6a9c4-a7e1-482b-b006-9c0982fd6fb0",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 77291,
+      "bonus": 2692,
+      "deductions": 676,
+      "status": "Paid"
+    },
+    {
+      "id": "7a55b7de-8130-4ec1-b98c-ed0981088dde",
+      "employee_id": "f2560243-bb49-4d9c-aa66-a173c725746c",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 95166,
+      "bonus": 0,
+      "deductions": 240,
+      "status": "Paid"
+    },
+    {
+      "id": "d648b679-8571-474a-b6c7-f1dd1f713d27",
+      "employee_id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 74385,
+      "bonus": 0,
+      "deductions": 100,
+      "status": "Paid"
+    },
+    {
+      "id": "4b653108-b13f-48c7-8ecf-7e957a7344c5",
+      "employee_id": "bd5ac45d-d53f-467a-a212-8f578ab25b00",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 75954,
+      "bonus": 2333,
+      "deductions": 401,
+      "status": "Paid"
+    },
+    {
+      "id": "9607c95a-a47c-45be-aaa4-d979350a7e16",
+      "employee_id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 75480,
+      "bonus": 0,
+      "deductions": 380,
+      "status": "Paid"
+    },
+    {
+      "id": "734d695f-5716-471e-9772-433c86fcaf7f",
+      "employee_id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 74857,
+      "bonus": 0,
+      "deductions": 285,
+      "status": "Paid"
+    },
+    {
+      "id": "e89f0635-2e99-4f32-8a89-55d4c3bcb5d0",
+      "employee_id": "e3265bcf-8f3b-4d9b-b009-1f2afa2f9c14",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 108410,
+      "bonus": 4453,
+      "deductions": 391,
+      "status": "Paid"
+    },
+    {
+      "id": "b507103d-abc2-419e-98c2-5213b0e61b51",
+      "employee_id": "49eb586f-7839-491f-99ef-9ebb8199376e",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 86049,
+      "bonus": 0,
+      "deductions": 600,
+      "status": "Paid"
+    },
+    {
+      "id": "563645e4-bc76-4d9c-91e9-77d11e4e9bd3",
+      "employee_id": "fe6fe81f-619e-44f5-9f86-c5a16734e618",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 114917,
+      "bonus": 1192,
+      "deductions": 621,
+      "status": "Paid"
+    },
+    {
+      "id": "b0c4ce72-39c0-4434-910a-bb8074c1f871",
+      "employee_id": "ac3ae417-baf0-413d-9031-228e011fd623",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 69179,
+      "bonus": 0,
+      "deductions": 358,
+      "status": "Paid"
+    },
+    {
+      "id": "e5a0c86a-8ae2-4aa1-a938-b7b825edc3d6",
+      "employee_id": "aab347ac-4f74-40f7-8cd6-8d6daae14277",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 52266,
+      "bonus": 0,
+      "deductions": 303,
+      "status": "Paid"
+    },
+    {
+      "id": "380c8a9d-e2bf-4f8f-a205-7f1cf58ce607",
+      "employee_id": "ebac7c9c-6aa3-4bd7-b0ce-b6d8f43c721d",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 114959,
+      "bonus": 0,
+      "deductions": 386,
+      "status": "Paid"
+    },
+    {
+      "id": "019f6576-fcc0-441c-bfac-877e457dc3b1",
+      "employee_id": "7241ee23-91db-4db9-a5f3-0a3cbc63a141",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 52875,
+      "bonus": 0,
+      "deductions": 418,
+      "status": "Paid"
+    },
+    {
+      "id": "9fe3adc4-9cd6-4444-aae8-c106ca43ede0",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 49042,
+      "bonus": 0,
+      "deductions": 284,
+      "status": "Paid"
+    },
+    {
+      "id": "f07915f6-8ec2-44c0-8072-cb81f52536b6",
+      "employee_id": "28920d36-6462-4b56-bdc9-2d0d27226bdf",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 41420,
+      "bonus": 3499,
+      "deductions": 627,
+      "status": "Paid"
+    },
+    {
+      "id": "2b347cd1-d71b-430b-98e4-732ed737905a",
+      "employee_id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 71813,
+      "bonus": 0,
+      "deductions": 456,
+      "status": "Paid"
+    },
+    {
+      "id": "2793d4b0-bdf3-4272-88f4-b73f381bcf65",
+      "employee_id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 113477,
+      "bonus": 0,
+      "deductions": 381,
+      "status": "Paid"
+    },
+    {
+      "id": "a3f872ef-4f75-4b45-84b6-23fae3946c95",
+      "employee_id": "6728a76e-ed64-4673-b3d5-5fccf88bbfda",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 89226,
+      "bonus": 0,
+      "deductions": 173,
+      "status": "Paid"
+    },
+    {
+      "id": "20e17001-7de4-4472-8826-d55226040854",
+      "employee_id": "02e1a483-31f6-4b9a-833c-798bbf7e0fc0",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 39751,
+      "bonus": 3082,
+      "deductions": 531,
+      "status": "Paid"
+    },
+    {
+      "id": "0440e1cd-ab62-46e2-a3b6-b2760f6d16d1",
+      "employee_id": "27bd466d-fb86-4312-baa9-e1245bb2580f",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 65312,
+      "bonus": 0,
+      "deductions": 322,
+      "status": "Paid"
+    },
+    {
+      "id": "769e56cf-6bb2-484a-b2df-f0df543891cf",
+      "employee_id": "1059fcbb-4ecd-4ecf-9aa9-9f3a1d31e0d5",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 83057,
+      "bonus": 0,
+      "deductions": 689,
+      "status": "Paid"
+    },
+    {
+      "id": "b881951e-0470-48eb-ae02-ca3b7821a3ef",
+      "employee_id": "aac99c8c-9234-44b2-8d8e-89e4fb006a10",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 56201,
+      "bonus": 0,
+      "deductions": 194,
+      "status": "Paid"
+    },
+    {
+      "id": "c46bf19b-3cf6-4526-91f3-b247dc3101d6",
+      "employee_id": "46341bf1-0321-46fe-bddc-d13dd431a5fa",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 53881,
+      "bonus": 0,
+      "deductions": 642,
+      "status": "Paid"
+    },
+    {
+      "id": "ce12742d-fd96-404b-975d-f444491048b3",
+      "employee_id": "b902e441-949f-4a6d-a9a1-dbf408ba9bc1",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 81576,
+      "bonus": 0,
+      "deductions": 563,
+      "status": "Paid"
+    },
+    {
+      "id": "9d7d35fd-9299-4b7d-8ffc-0dae7501ad31",
+      "employee_id": "9475f842-c8a3-4259-b547-70492b8c64c9",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 57536,
+      "bonus": 0,
+      "deductions": 402,
+      "status": "Paid"
+    },
+    {
+      "id": "9c4417c3-8fa7-4f0f-a738-ca55b3e9ac84",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 75423,
+      "bonus": 0,
+      "deductions": 242,
+      "status": "Paid"
+    },
+    {
+      "id": "3aa7a75e-81b6-40e1-838f-15723af1103b",
+      "employee_id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 76712,
+      "bonus": 3314,
+      "deductions": 531,
+      "status": "Paid"
+    },
+    {
+      "id": "85528472-b246-4411-9453-8ebfca7fb157",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 70107,
+      "bonus": 4549,
+      "deductions": 629,
+      "status": "Paid"
+    },
+    {
+      "id": "2986db14-af9f-4943-8910-2607c9019180",
+      "employee_id": "244a1cae-7c7c-430e-81d1-15914b251015",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 51313,
+      "bonus": 4200,
+      "deductions": 526,
+      "status": "Paid"
+    },
+    {
+      "id": "1400122c-a19a-40d3-be6c-046d0defca21",
+      "employee_id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 56341,
+      "bonus": 1827,
+      "deductions": 232,
+      "status": "Paid"
+    },
+    {
+      "id": "1b1a4e28-db59-4e2f-b56c-a4b5fce22a0e",
+      "employee_id": "8c222fc7-1e3f-41dd-b12d-3a755ddde63a",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 113767,
+      "bonus": 0,
+      "deductions": 554,
+      "status": "Paid"
+    },
+    {
+      "id": "7d10b8e1-d163-4c52-9a0b-09a767a28c53",
+      "employee_id": "e686370e-ffd6-4965-950c-794e1aa7b9ab",
+      "period": "2026-02-01T00:00:00.000Z",
+      "base_salary": 98790,
+      "bonus": 0,
+      "deductions": 428,
+      "status": "Paid"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "28d2d7bb-59e0-4423-b74a-86f3c462c225",
+      "employee_id": "23d6f198-a499-428e-ae5c-3e4bd1d87adf",
+      "type": "Sick",
+      "start_date": "2026-06-04T17:44:44.787Z",
+      "end_date": "2026-06-13T12:16:42.658Z",
+      "status": "Pending",
+      "duration_days": 7
+    },
+    {
+      "id": "3d6ca87d-8b3f-42a5-9711-96fc84226fbd",
+      "employee_id": "b0be5bc9-cb9f-43d6-8f53-13c97891d6ca",
+      "type": "Annual",
+      "start_date": "2026-01-09T17:09:55.065Z",
+      "end_date": "2026-01-09T22:17:11.279Z",
+      "status": "Approved",
+      "duration_days": 8
+    },
+    {
+      "id": "116cfaf6-7951-44ee-8cb8-cdf721762ab5",
+      "employee_id": "b0be5bc9-cb9f-43d6-8f53-13c97891d6ca",
+      "type": "Maternity",
+      "start_date": "2026-11-18T20:02:14.111Z",
+      "end_date": "2026-11-26T00:49:43.117Z",
+      "status": "Pending",
+      "duration_days": 2
+    },
+    {
+      "id": "d045d11f-3519-4b85-9e1f-9b6ac25eb6af",
+      "employee_id": "b0be5bc9-cb9f-43d6-8f53-13c97891d6ca",
+      "type": "Sick",
+      "start_date": "2026-01-09T08:29:43.605Z",
+      "end_date": "2026-01-16T14:17:21.367Z",
+      "status": "Approved",
+      "duration_days": 4
+    },
+    {
+      "id": "807ac1de-88f1-4443-a495-beee629e13bb",
+      "employee_id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "type": "Sick",
+      "start_date": "2026-11-25T09:48:43.486Z",
+      "end_date": "2026-11-28T03:14:08.128Z",
+      "status": "Pending",
+      "duration_days": 4
+    },
+    {
+      "id": "f91524d4-ee12-4c9a-8f5a-4c04027ad21a",
+      "employee_id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "type": "Maternity",
+      "start_date": "2024-06-07T19:10:46.872Z",
+      "end_date": "2024-06-16T10:26:11.499Z",
+      "status": "Pending",
+      "duration_days": 10
+    },
+    {
+      "id": "f80258e2-f03c-4de7-857d-b8a11900bd08",
+      "employee_id": "cd660c01-04f4-4c2c-b2e9-ccef170c2182",
+      "type": "Annual",
+      "start_date": "2026-01-31T23:21:44.945Z",
+      "end_date": "2026-02-07T13:41:17.846Z",
+      "status": "Approved",
+      "duration_days": 9
+    },
+    {
+      "id": "5b9814b7-08ea-40d7-94fd-fd6bf05a8e21",
+      "employee_id": "cd660c01-04f4-4c2c-b2e9-ccef170c2182",
+      "type": "Sick",
+      "start_date": "2026-07-10T21:08:23.325Z",
+      "end_date": "2026-07-17T20:15:47.521Z",
+      "status": "Pending",
+      "duration_days": 1
+    },
+    {
+      "id": "c876db82-c691-4629-bfb7-978aada356f6",
+      "employee_id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "type": "Maternity",
+      "start_date": "2025-05-04T02:20:37.765Z",
+      "end_date": "2025-05-09T12:17:01.314Z",
+      "status": "Rejected",
+      "duration_days": 9
+    },
+    {
+      "id": "bc7fa2e6-65e5-46ef-b8f5-44ab5698a545",
+      "employee_id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "type": "Maternity",
+      "start_date": "2026-03-01T23:51:55.315Z",
+      "end_date": "2026-03-02T12:55:10.787Z",
+      "status": "Approved",
+      "duration_days": 1
+    },
+    {
+      "id": "9b0f7eaf-d1c2-428d-b55c-ff7ad7808511",
+      "employee_id": "c63303ea-41df-4574-b9e4-cf0c3097f425",
+      "type": "Sick",
+      "start_date": "2025-11-23T19:14:51.706Z",
+      "end_date": "2025-11-27T17:22:25.919Z",
+      "status": "Approved",
+      "duration_days": 10
+    },
+    {
+      "id": "2ae3f510-dbce-4586-9e47-d793752bea88",
+      "employee_id": "23129d9a-9627-42b3-ada7-8228a9257a8b",
+      "type": "Maternity",
+      "start_date": "2025-11-17T20:21:20.775Z",
+      "end_date": "2025-11-25T15:07:18.727Z",
+      "status": "Approved",
+      "duration_days": 5
+    },
+    {
+      "id": "33c17e19-46d2-429f-97ab-4fabf78defc8",
+      "employee_id": "60b67d93-5490-4d14-84b4-0e74f796c3e6",
+      "type": "Annual",
+      "start_date": "2026-04-29T06:39:20.509Z",
+      "end_date": "2026-05-04T05:39:48.316Z",
+      "status": "Pending",
+      "duration_days": 3
+    },
+    {
+      "id": "7ad8876f-a21c-482e-accc-fd81ac09c16a",
+      "employee_id": "b9eb5b2d-63be-4f4f-8ed7-cb79f615ab81",
+      "type": "Annual",
+      "start_date": "2024-01-02T12:48:53.826Z",
+      "end_date": "2024-01-07T19:55:34.285Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "b57b098e-3508-4383-a8f1-fa4340a15372",
+      "employee_id": "b9eb5b2d-63be-4f4f-8ed7-cb79f615ab81",
+      "type": "Unpaid",
+      "start_date": "2026-04-24T09:07:42.439Z",
+      "end_date": "2026-05-04T00:20:14.556Z",
+      "status": "Approved",
+      "duration_days": 5
+    },
+    {
+      "id": "a0e35615-61c0-4441-8f2c-514337746d56",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "type": "Sick",
+      "start_date": "2026-05-17T09:10:17.415Z",
+      "end_date": "2026-05-23T16:17:40.439Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "7c896b61-42d8-48a9-9525-d8b4d6b553b6",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "type": "Maternity",
+      "start_date": "2025-01-12T10:21:02.158Z",
+      "end_date": "2025-01-18T19:15:38.509Z",
+      "status": "Pending",
+      "duration_days": 3
+    },
+    {
+      "id": "b17b92ba-fbd7-4a4b-b3e7-6ec3c4548bc6",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "type": "Annual",
+      "start_date": "2026-10-29T03:13:16.522Z",
+      "end_date": "2026-11-04T11:22:16.276Z",
+      "status": "Approved",
+      "duration_days": 9
+    },
+    {
+      "id": "558c1c4d-d421-4bda-aea4-0cd6ccce4362",
+      "employee_id": "4e92fd14-70c5-491a-9ddb-e9fe1bc92027",
+      "type": "Unpaid",
+      "start_date": "2024-05-18T05:14:36.278Z",
+      "end_date": "2024-05-27T08:01:53.128Z",
+      "status": "Rejected",
+      "duration_days": 7
+    },
+    {
+      "id": "5f2f30c1-74ec-4e49-86f2-c8d6a4123a10",
+      "employee_id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "type": "Annual",
+      "start_date": "2026-01-21T14:55:03.209Z",
+      "end_date": "2026-01-24T02:41:24.149Z",
+      "status": "Rejected",
+      "duration_days": 7
+    },
+    {
+      "id": "9c827bb7-a8ea-4675-b954-26d80a69206d",
+      "employee_id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "type": "Unpaid",
+      "start_date": "2026-11-19T10:10:46.259Z",
+      "end_date": "2026-11-26T15:53:03.822Z",
+      "status": "Approved",
+      "duration_days": 8
+    },
+    {
+      "id": "f2d72163-dfbc-44c6-bfc5-5205879af66e",
+      "employee_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "type": "Sick",
+      "start_date": "2026-07-06T18:44:31.708Z",
+      "end_date": "2026-07-10T23:55:42.765Z",
+      "status": "Pending",
+      "duration_days": 9
+    },
+    {
+      "id": "2c66bae2-68e2-4ded-a180-0287cc263aba",
+      "employee_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "type": "Unpaid",
+      "start_date": "2026-01-06T00:06:32.437Z",
+      "end_date": "2026-01-09T01:53:19.855Z",
+      "status": "Approved",
+      "duration_days": 7
+    },
+    {
+      "id": "b81523ed-5376-441c-ba43-f41dba1a6b6c",
+      "employee_id": "b2d22e97-950d-4973-95c4-a59d3a41762c",
+      "type": "Annual",
+      "start_date": "2026-10-02T03:17:47.583Z",
+      "end_date": "2026-10-04T22:10:49.253Z",
+      "status": "Approved",
+      "duration_days": 2
+    },
+    {
+      "id": "96bb3b25-9064-4921-b88b-02679f77ac0d",
+      "employee_id": "b2d22e97-950d-4973-95c4-a59d3a41762c",
+      "type": "Unpaid",
+      "start_date": "2024-11-30T13:28:48.395Z",
+      "end_date": "2024-11-30T14:57:32.015Z",
+      "status": "Pending",
+      "duration_days": 6
+    },
+    {
+      "id": "cdca84b2-16f5-47c2-a735-1204289de0d8",
+      "employee_id": "2543efde-dbb5-4c06-9e98-40ca32fe524d",
+      "type": "Maternity",
+      "start_date": "2025-02-28T01:29:26.924Z",
+      "end_date": "2025-03-09T08:32:54.768Z",
+      "status": "Approved",
+      "duration_days": 8
+    },
+    {
+      "id": "6ac77576-9250-4123-8fa6-5c889dd15bba",
+      "employee_id": "2543efde-dbb5-4c06-9e98-40ca32fe524d",
+      "type": "Annual",
+      "start_date": "2026-08-08T23:01:48.528Z",
+      "end_date": "2026-08-17T01:24:26.590Z",
+      "status": "Approved",
+      "duration_days": 1
+    },
+    {
+      "id": "65430716-1dda-4788-9d80-6f2bbc2d9c9f",
+      "employee_id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "type": "Maternity",
+      "start_date": "2026-05-16T02:53:32.786Z",
+      "end_date": "2026-05-21T04:57:11.962Z",
+      "status": "Approved",
+      "duration_days": 7
+    },
+    {
+      "id": "506ccd68-33bb-4c93-a16a-c70190b8c99a",
+      "employee_id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "type": "Unpaid",
+      "start_date": "2023-10-01T06:15:37.777Z",
+      "end_date": "2023-10-05T04:33:11.835Z",
+      "status": "Pending",
+      "duration_days": 3
+    },
+    {
+      "id": "caaee7e8-9c22-469f-a763-49b1d36314da",
+      "employee_id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "type": "Sick",
+      "start_date": "2026-12-04T21:21:36.327Z",
+      "end_date": "2026-12-05T07:24:03.540Z",
+      "status": "Approved",
+      "duration_days": 1
+    },
+    {
+      "id": "1648951e-23a4-45b9-9d87-f89487afeb40",
+      "employee_id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "type": "Maternity",
+      "start_date": "2024-03-21T11:24:16.116Z",
+      "end_date": "2024-03-22T15:25:59.962Z",
+      "status": "Pending",
+      "duration_days": 8
+    },
+    {
+      "id": "36a9987f-e53b-4084-b0ee-16693dea3336",
+      "employee_id": "61bd0e50-a56f-4849-b25f-511ac60352a9",
+      "type": "Sick",
+      "start_date": "2026-06-14T00:09:14.425Z",
+      "end_date": "2026-06-23T23:43:48.279Z",
+      "status": "Pending",
+      "duration_days": 3
+    },
+    {
+      "id": "cc4649a3-80d1-4722-a787-562c99d190c0",
+      "employee_id": "61bd0e50-a56f-4849-b25f-511ac60352a9",
+      "type": "Maternity",
+      "start_date": "2026-04-01T07:08:59.892Z",
+      "end_date": "2026-04-09T04:52:00.812Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "f9fbea24-fd78-4fb4-b062-4abe9ed7a6db",
+      "employee_id": "61bd0e50-a56f-4849-b25f-511ac60352a9",
+      "type": "Annual",
+      "start_date": "2024-09-30T00:45:56.152Z",
+      "end_date": "2024-10-04T02:08:00.503Z",
+      "status": "Approved",
+      "duration_days": 7
+    },
+    {
+      "id": "5426d086-5514-4a93-96af-8c34a37a922f",
+      "employee_id": "a4a6a9c4-a7e1-482b-b006-9c0982fd6fb0",
+      "type": "Maternity",
+      "start_date": "2024-01-08T10:09:04.363Z",
+      "end_date": "2024-01-12T03:58:46.897Z",
+      "status": "Approved",
+      "duration_days": 9
+    },
+    {
+      "id": "3ba91157-a205-460c-a22b-ce96dfc4d2e1",
+      "employee_id": "a4a6a9c4-a7e1-482b-b006-9c0982fd6fb0",
+      "type": "Annual",
+      "start_date": "2026-11-27T10:47:25.246Z",
+      "end_date": "2026-11-28T04:22:35.926Z",
+      "status": "Approved",
+      "duration_days": 3
+    },
+    {
+      "id": "52159e96-ace9-4b85-8ead-29c60cf33adc",
+      "employee_id": "a4a6a9c4-a7e1-482b-b006-9c0982fd6fb0",
+      "type": "Annual",
+      "start_date": "2025-11-15T09:53:08.839Z",
+      "end_date": "2025-11-23T13:52:25.732Z",
+      "status": "Pending",
+      "duration_days": 5
+    },
+    {
+      "id": "cad25868-73e6-47b6-8cd8-d87573b3abbc",
+      "employee_id": "f2560243-bb49-4d9c-aa66-a173c725746c",
+      "type": "Annual",
+      "start_date": "2023-07-10T20:16:36.561Z",
+      "end_date": "2023-07-17T13:22:57.058Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "199a62c0-f52b-4aae-826c-5bdab2685d76",
+      "employee_id": "f2560243-bb49-4d9c-aa66-a173c725746c",
+      "type": "Maternity",
+      "start_date": "2023-07-14T10:16:54.111Z",
+      "end_date": "2023-07-22T06:44:24.843Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "3a196f2e-47d3-4868-b520-b964a9bf44b0",
+      "employee_id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "type": "Annual",
+      "start_date": "2025-04-24T17:41:00.928Z",
+      "end_date": "2025-04-30T21:57:01.111Z",
+      "status": "Pending",
+      "duration_days": 4
+    },
+    {
+      "id": "42056701-d16f-4398-8c3e-f38713c3e133",
+      "employee_id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "type": "Maternity",
+      "start_date": "2026-05-09T16:36:01.089Z",
+      "end_date": "2026-05-16T02:23:39.638Z",
+      "status": "Pending",
+      "duration_days": 9
+    },
+    {
+      "id": "593d5006-4671-4758-a17a-4e16be20a589",
+      "employee_id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "type": "Unpaid",
+      "start_date": "2023-10-03T21:40:58.279Z",
+      "end_date": "2023-10-12T16:45:54.518Z",
+      "status": "Approved",
+      "duration_days": 8
+    },
+    {
+      "id": "6aadfdba-13c2-44bd-82e0-f6184be8bdf8",
+      "employee_id": "bd5ac45d-d53f-467a-a212-8f578ab25b00",
+      "type": "Annual",
+      "start_date": "2026-10-21T14:05:50.460Z",
+      "end_date": "2026-10-23T12:29:31.592Z",
+      "status": "Rejected",
+      "duration_days": 10
+    },
+    {
+      "id": "f848f22b-b8d2-4052-b7de-12a894bc9efd",
+      "employee_id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "type": "Maternity",
+      "start_date": "2021-12-05T14:43:00.449Z",
+      "end_date": "2021-12-08T10:36:50.842Z",
+      "status": "Pending",
+      "duration_days": 10
+    },
+    {
+      "id": "c9d8bf53-b5a6-459a-be55-8308099376f5",
+      "employee_id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "type": "Unpaid",
+      "start_date": "2026-02-16T10:23:34.649Z",
+      "end_date": "2026-02-25T05:50:54.555Z",
+      "status": "Pending",
+      "duration_days": 6
+    },
+    {
+      "id": "8b23967b-b629-48bd-aa2b-d2f3651ee8f6",
+      "employee_id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "type": "Sick",
+      "start_date": "2025-08-27T02:50:49.962Z",
+      "end_date": "2025-09-02T01:09:28.597Z",
+      "status": "Approved",
+      "duration_days": 2
+    },
+    {
+      "id": "b4000bfe-caa6-4d7a-b7b7-e3af792f74af",
+      "employee_id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "type": "Maternity",
+      "start_date": "2026-10-30T20:08:17.087Z",
+      "end_date": "2026-10-31T21:05:10.380Z",
+      "status": "Approved",
+      "duration_days": 9
+    },
+    {
+      "id": "28bcc1f2-6f58-4b82-9fea-66492431e067",
+      "employee_id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "type": "Maternity",
+      "start_date": "2025-10-30T07:01:48.163Z",
+      "end_date": "2025-11-04T22:18:59.989Z",
+      "status": "Approved",
+      "duration_days": 4
+    },
+    {
+      "id": "b0c1bf9b-b98c-4b54-a535-ea4a8c9b1efd",
+      "employee_id": "e3265bcf-8f3b-4d9b-b009-1f2afa2f9c14",
+      "type": "Maternity",
+      "start_date": "2024-06-08T11:23:50.087Z",
+      "end_date": "2024-06-17T00:32:18.751Z",
+      "status": "Rejected",
+      "duration_days": 9
+    },
+    {
+      "id": "96bcaf4f-1735-4860-9aaf-b63796d105ed",
+      "employee_id": "e3265bcf-8f3b-4d9b-b009-1f2afa2f9c14",
+      "type": "Sick",
+      "start_date": "2025-08-14T08:42:33.156Z",
+      "end_date": "2025-08-15T13:03:36.115Z",
+      "status": "Rejected",
+      "duration_days": 5
+    },
+    {
+      "id": "10141faa-000d-41fd-a83a-1fd4dd9d8f4f",
+      "employee_id": "49eb586f-7839-491f-99ef-9ebb8199376e",
+      "type": "Unpaid",
+      "start_date": "2025-07-31T14:35:17.277Z",
+      "end_date": "2025-08-03T20:29:13.460Z",
+      "status": "Pending",
+      "duration_days": 8
+    },
+    {
+      "id": "ed7661b7-19fb-461d-aed6-f3d891270ddc",
+      "employee_id": "fe6fe81f-619e-44f5-9f86-c5a16734e618",
+      "type": "Sick",
+      "start_date": "2022-11-04T00:13:00.508Z",
+      "end_date": "2022-11-07T08:29:13.178Z",
+      "status": "Pending",
+      "duration_days": 10
+    },
+    {
+      "id": "273fd5a1-7cbe-45af-8dec-e56486beba9b",
+      "employee_id": "fe6fe81f-619e-44f5-9f86-c5a16734e618",
+      "type": "Sick",
+      "start_date": "2024-01-23T10:36:21.285Z",
+      "end_date": "2024-01-27T03:12:05.236Z",
+      "status": "Pending",
+      "duration_days": 6
+    },
+    {
+      "id": "ac31d928-921d-4d4a-9f3a-bb30440c5094",
+      "employee_id": "ac3ae417-baf0-413d-9031-228e011fd623",
+      "type": "Annual",
+      "start_date": "2024-12-13T06:19:29.234Z",
+      "end_date": "2024-12-14T10:44:45.848Z",
+      "status": "Approved",
+      "duration_days": 8
+    },
+    {
+      "id": "ba75cd29-830e-48d0-bc38-3d02f7c71855",
+      "employee_id": "aab347ac-4f74-40f7-8cd6-8d6daae14277",
+      "type": "Sick",
+      "start_date": "2026-11-04T19:33:41.224Z",
+      "end_date": "2026-11-06T20:50:29.531Z",
+      "status": "Rejected",
+      "duration_days": 6
+    },
+    {
+      "id": "33510786-455e-4b83-a46e-7cdea2308d51",
+      "employee_id": "ebac7c9c-6aa3-4bd7-b0ce-b6d8f43c721d",
+      "type": "Unpaid",
+      "start_date": "2025-05-31T07:36:29.866Z",
+      "end_date": "2025-06-02T13:28:28.798Z",
+      "status": "Approved",
+      "duration_days": 9
+    },
+    {
+      "id": "4006ea9b-b2ae-4907-848c-b297d5bfa52e",
+      "employee_id": "ebac7c9c-6aa3-4bd7-b0ce-b6d8f43c721d",
+      "type": "Unpaid",
+      "start_date": "2026-09-15T16:56:54.890Z",
+      "end_date": "2026-09-22T18:09:17.453Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "e95abae9-685d-4326-aa78-553a2a9beeb2",
+      "employee_id": "7241ee23-91db-4db9-a5f3-0a3cbc63a141",
+      "type": "Unpaid",
+      "start_date": "2022-08-08T08:00:51.550Z",
+      "end_date": "2022-08-13T06:23:49.644Z",
+      "status": "Approved",
+      "duration_days": 4
+    },
+    {
+      "id": "9c38bedd-5cc3-4f89-b672-08e64ea2cb5b",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "type": "Unpaid",
+      "start_date": "2025-04-07T20:26:59.593Z",
+      "end_date": "2025-04-09T06:42:40.553Z",
+      "status": "Pending",
+      "duration_days": 1
+    },
+    {
+      "id": "bb0c7a41-c192-4f0f-a7c6-fbc89fb2422c",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "type": "Unpaid",
+      "start_date": "2024-06-06T03:52:43.206Z",
+      "end_date": "2024-06-10T15:31:48.967Z",
+      "status": "Pending",
+      "duration_days": 3
+    },
+    {
+      "id": "d917c3da-06ea-4ac7-a729-472935626a01",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "type": "Sick",
+      "start_date": "2024-09-24T08:43:45.111Z",
+      "end_date": "2024-10-01T12:36:21.771Z",
+      "status": "Approved",
+      "duration_days": 2
+    },
+    {
+      "id": "5836024f-7181-4e02-9c6c-bba80512affe",
+      "employee_id": "28920d36-6462-4b56-bdc9-2d0d27226bdf",
+      "type": "Annual",
+      "start_date": "2026-04-24T02:11:16.613Z",
+      "end_date": "2026-04-28T06:10:24.916Z",
+      "status": "Approved",
+      "duration_days": 10
+    },
+    {
+      "id": "f50d0ef4-1776-44c4-8045-7ec7253dffe0",
+      "employee_id": "28920d36-6462-4b56-bdc9-2d0d27226bdf",
+      "type": "Unpaid",
+      "start_date": "2025-11-11T19:50:05.642Z",
+      "end_date": "2025-11-17T13:40:28.607Z",
+      "status": "Rejected",
+      "duration_days": 10
+    },
+    {
+      "id": "5c811135-461d-4fc1-be25-8f224568f7d3",
+      "employee_id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "type": "Unpaid",
+      "start_date": "2025-05-05T03:14:08.399Z",
+      "end_date": "2025-05-08T10:11:50.364Z",
+      "status": "Approved",
+      "duration_days": 10
+    },
+    {
+      "id": "360c5fd6-bea4-473d-84c8-025e8efb0a5b",
+      "employee_id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "type": "Maternity",
+      "start_date": "2024-12-14T12:43:09.039Z",
+      "end_date": "2024-12-18T18:17:05.839Z",
+      "status": "Approved",
+      "duration_days": 9
+    },
+    {
+      "id": "4bda9f08-4837-403b-b3eb-57a844ea7f46",
+      "employee_id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "type": "Maternity",
+      "start_date": "2022-06-11T01:08:31.581Z",
+      "end_date": "2022-06-12T09:42:45.189Z",
+      "status": "Approved",
+      "duration_days": 8
+    },
+    {
+      "id": "1aea6dc3-fcac-4705-adf6-98a3c401cd61",
+      "employee_id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "type": "Unpaid",
+      "start_date": "2025-06-07T10:28:20.272Z",
+      "end_date": "2025-06-07T13:40:01.518Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "9ba40880-ceaf-4d8c-9ea9-039aa1598194",
+      "employee_id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "type": "Annual",
+      "start_date": "2026-11-17T04:18:22.279Z",
+      "end_date": "2026-11-19T07:48:06.807Z",
+      "status": "Approved",
+      "duration_days": 10
+    },
+    {
+      "id": "e780f315-8a51-428e-a8c5-ac37c6af5d70",
+      "employee_id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "type": "Maternity",
+      "start_date": "2026-04-19T20:49:37.449Z",
+      "end_date": "2026-04-25T14:15:44.006Z",
+      "status": "Rejected",
+      "duration_days": 9
+    },
+    {
+      "id": "d107b5e6-cc5b-4f1e-a472-c6162ad78e95",
+      "employee_id": "6728a76e-ed64-4673-b3d5-5fccf88bbfda",
+      "type": "Sick",
+      "start_date": "2026-01-09T11:11:55.689Z",
+      "end_date": "2026-01-16T18:42:40.841Z",
+      "status": "Rejected",
+      "duration_days": 9
+    },
+    {
+      "id": "af003c20-074f-422c-9633-2f3c9931203a",
+      "employee_id": "6728a76e-ed64-4673-b3d5-5fccf88bbfda",
+      "type": "Annual",
+      "start_date": "2026-06-07T16:07:25.532Z",
+      "end_date": "2026-06-13T00:43:35.320Z",
+      "status": "Approved",
+      "duration_days": 4
+    },
+    {
+      "id": "4ff4a5e4-6764-49ba-b66a-f4c2882dac73",
+      "employee_id": "02e1a483-31f6-4b9a-833c-798bbf7e0fc0",
+      "type": "Unpaid",
+      "start_date": "2023-12-12T18:46:51.900Z",
+      "end_date": "2023-12-20T02:42:07.728Z",
+      "status": "Pending",
+      "duration_days": 3
+    },
+    {
+      "id": "50d73271-c27a-4174-96cb-0b33ec57d0a7",
+      "employee_id": "02e1a483-31f6-4b9a-833c-798bbf7e0fc0",
+      "type": "Unpaid",
+      "start_date": "2023-05-28T11:50:46.167Z",
+      "end_date": "2023-06-06T02:41:31.164Z",
+      "status": "Pending",
+      "duration_days": 2
+    },
+    {
+      "id": "ab142372-4172-4270-8093-551c5c58caf3",
+      "employee_id": "27bd466d-fb86-4312-baa9-e1245bb2580f",
+      "type": "Maternity",
+      "start_date": "2024-11-25T04:02:30.440Z",
+      "end_date": "2024-11-29T19:18:10.937Z",
+      "status": "Rejected",
+      "duration_days": 8
+    },
+    {
+      "id": "6dafd19f-5866-462a-a882-672e4b50a5a5",
+      "employee_id": "1059fcbb-4ecd-4ecf-9aa9-9f3a1d31e0d5",
+      "type": "Sick",
+      "start_date": "2026-09-11T20:10:02.020Z",
+      "end_date": "2026-09-13T18:22:58.511Z",
+      "status": "Approved",
+      "duration_days": 1
+    },
+    {
+      "id": "5b159450-7da7-48e3-b414-685e83cccbfb",
+      "employee_id": "1059fcbb-4ecd-4ecf-9aa9-9f3a1d31e0d5",
+      "type": "Unpaid",
+      "start_date": "2026-12-18T07:40:26.548Z",
+      "end_date": "2026-12-23T12:08:11.236Z",
+      "status": "Approved",
+      "duration_days": 1
+    },
+    {
+      "id": "a366f047-13ae-48c3-b9e5-633f0801151e",
+      "employee_id": "aac99c8c-9234-44b2-8d8e-89e4fb006a10",
+      "type": "Annual",
+      "start_date": "2026-04-26T01:55:35.547Z",
+      "end_date": "2026-05-04T14:32:51.777Z",
+      "status": "Pending",
+      "duration_days": 8
+    },
+    {
+      "id": "c688f105-88fd-4dc0-99a4-e02f6cd9a42e",
+      "employee_id": "46341bf1-0321-46fe-bddc-d13dd431a5fa",
+      "type": "Annual",
+      "start_date": "2026-07-28T06:52:19.948Z",
+      "end_date": "2026-07-30T00:41:42.267Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "4fa694fe-1f74-423f-8287-dcf7fa889dd9",
+      "employee_id": "46341bf1-0321-46fe-bddc-d13dd431a5fa",
+      "type": "Unpaid",
+      "start_date": "2021-08-23T06:10:42.506Z",
+      "end_date": "2021-08-27T16:41:47.398Z",
+      "status": "Approved",
+      "duration_days": 8
+    },
+    {
+      "id": "73d21cc6-9714-42fa-bb28-b12eaeaa97b5",
+      "employee_id": "b902e441-949f-4a6d-a9a1-dbf408ba9bc1",
+      "type": "Annual",
+      "start_date": "2025-03-03T07:18:03.434Z",
+      "end_date": "2025-03-08T21:34:01.522Z",
+      "status": "Pending",
+      "duration_days": 5
+    },
+    {
+      "id": "157d63b3-c028-44fa-98e6-640914d9949e",
+      "employee_id": "9475f842-c8a3-4259-b547-70492b8c64c9",
+      "type": "Maternity",
+      "start_date": "2026-01-01T05:18:00.977Z",
+      "end_date": "2026-01-07T11:25:45.566Z",
+      "status": "Approved",
+      "duration_days": 1
+    },
+    {
+      "id": "5347be12-4dd9-4d92-8e13-ae699cbaf570",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "type": "Annual",
+      "start_date": "2026-06-21T02:53:28.960Z",
+      "end_date": "2026-07-01T00:40:25.746Z",
+      "status": "Pending",
+      "duration_days": 1
+    },
+    {
+      "id": "518d6079-2241-4c44-8c9a-bdbb33317ce8",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "type": "Sick",
+      "start_date": "2024-11-16T22:35:00.862Z",
+      "end_date": "2024-11-22T10:12:28.979Z",
+      "status": "Approved",
+      "duration_days": 5
+    },
+    {
+      "id": "6b35e0ec-2385-471e-822b-3022bbf31ca8",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "type": "Sick",
+      "start_date": "2025-10-22T13:06:18.306Z",
+      "end_date": "2025-10-31T09:18:28.514Z",
+      "status": "Approved",
+      "duration_days": 7
+    },
+    {
+      "id": "51e4c366-0173-4cd2-9b9a-17c87425e603",
+      "employee_id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "type": "Unpaid",
+      "start_date": "2025-10-13T00:36:19.178Z",
+      "end_date": "2025-10-15T08:02:36.607Z",
+      "status": "Approved",
+      "duration_days": 5
+    },
+    {
+      "id": "dda4d9e4-4100-43f6-894f-41ec96cea043",
+      "employee_id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "type": "Maternity",
+      "start_date": "2026-07-01T04:06:13.132Z",
+      "end_date": "2026-07-09T07:16:27.862Z",
+      "status": "Approved",
+      "duration_days": 10
+    },
+    {
+      "id": "e891dd85-7d4b-4de5-ad5f-e422d36c3eba",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "type": "Annual",
+      "start_date": "2023-10-31T09:45:15.885Z",
+      "end_date": "2023-11-04T07:18:01.090Z",
+      "status": "Approved",
+      "duration_days": 10
+    },
+    {
+      "id": "1f245ae3-ab9a-408b-bac1-26ed97106564",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "type": "Unpaid",
+      "start_date": "2025-10-02T07:23:58.447Z",
+      "end_date": "2025-10-08T02:11:20.450Z",
+      "status": "Pending",
+      "duration_days": 1
+    },
+    {
+      "id": "6d11731b-438b-46c9-9ba4-49de84d0897a",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "type": "Maternity",
+      "start_date": "2025-12-14T06:23:42.944Z",
+      "end_date": "2025-12-15T04:56:03.996Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "07660515-927f-4690-899e-b7ab1603ac22",
+      "employee_id": "244a1cae-7c7c-430e-81d1-15914b251015",
+      "type": "Unpaid",
+      "start_date": "2026-03-22T01:15:41.855Z",
+      "end_date": "2026-03-28T09:58:56.053Z",
+      "status": "Approved",
+      "duration_days": 6
+    },
+    {
+      "id": "66dbfe6d-c4ec-49a6-908b-aff7cb6dc429",
+      "employee_id": "244a1cae-7c7c-430e-81d1-15914b251015",
+      "type": "Maternity",
+      "start_date": "2025-06-12T09:58:30.156Z",
+      "end_date": "2025-06-16T07:16:58.625Z",
+      "status": "Approved",
+      "duration_days": 4
+    },
+    {
+      "id": "c0dee625-04b5-46c8-93f0-52dff3c2a66e",
+      "employee_id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "type": "Annual",
+      "start_date": "2026-04-28T02:49:02.125Z",
+      "end_date": "2026-05-05T11:57:06.067Z",
+      "status": "Approved",
+      "duration_days": 9
+    },
+    {
+      "id": "7d71342e-f2c3-42cb-9e9a-b6233d1bae55",
+      "employee_id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "type": "Sick",
+      "start_date": "2026-05-29T10:07:42.355Z",
+      "end_date": "2026-06-08T02:41:52.402Z",
+      "status": "Pending",
+      "duration_days": 7
+    },
+    {
+      "id": "aa1eb4b0-0eb4-49db-8866-835ff8b0554d",
+      "employee_id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "type": "Unpaid",
+      "start_date": "2022-12-18T12:04:44.313Z",
+      "end_date": "2022-12-24T20:11:12.770Z",
+      "status": "Approved",
+      "duration_days": 5
+    },
+    {
+      "id": "82b7ce3d-044a-4547-81ca-6873224b56be",
+      "employee_id": "8c222fc7-1e3f-41dd-b12d-3a755ddde63a",
+      "type": "Unpaid",
+      "start_date": "2024-10-29T02:16:46.097Z",
+      "end_date": "2024-11-04T21:16:00.739Z",
+      "status": "Pending",
+      "duration_days": 3
+    },
+    {
+      "id": "eabf21b3-528e-4026-b541-65a08ed513cf",
+      "employee_id": "e686370e-ffd6-4965-950c-794e1aa7b9ab",
+      "type": "Maternity",
+      "start_date": "2025-10-12T02:37:46.490Z",
+      "end_date": "2025-10-15T05:40:56.154Z",
+      "status": "Approved",
+      "duration_days": 9
+    },
+    {
+      "id": "bc2fa83d-a855-4e74-86e1-b22891eeb89f",
+      "employee_id": "e686370e-ffd6-4965-950c-794e1aa7b9ab",
+      "type": "Sick",
+      "start_date": "2026-08-06T06:27:49.281Z",
+      "end_date": "2026-08-12T17:50:41.356Z",
+      "status": "Rejected",
+      "duration_days": 8
+    }
+  ],
+  "social_support_tickets": [
+    {
+      "id": "755a689e-6d7e-4c35-a3f2-7f3ff8a5b3ef",
+      "requester_id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "category": "Santé Mentale",
+      "priority": "Urgent",
+      "status": "Résolu",
+      "is_anonymous": false,
+      "title": "Comminor suus inflammatio degusto officia.",
+      "description": "Calamitas creator curis desino civitas. Blandior cimentarius dolor balbus. Supra amaritudo decipio sulum depraedor.",
+      "created_at": "2026-02-07T10:59:40.266Z"
+    },
+    {
+      "id": "e20f39ca-cd21-400d-9046-8491853acf5e",
+      "requester_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "category": "Handicap",
+      "priority": "Medium",
+      "status": "Ouvert",
+      "is_anonymous": false,
+      "title": "Cruciamentum adaugeo abeo turba cetera.",
+      "description": "Abbas centum vetus trucido tenus officia absorbeo tergo audio virtus. Minus suffragium adinventitias. Admiratio amicitia damnatio amissio defessus asperiores.",
+      "created_at": "2026-01-04T15:03:00.696Z"
+    },
+    {
+      "id": "416e285f-1b94-4230-9de7-5ceb4bb3e7d0",
+      "requester_id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "category": "Famille",
+      "priority": "Urgent",
+      "status": "Ouvert",
+      "is_anonymous": false,
+      "title": "Supra sponte aggredior cursus tactus.",
+      "description": "Modi varietas corrumpo. Iure amicitia vulnus. Depono solum vapulus uterque.",
+      "created_at": "2026-01-20T19:44:00.508Z"
+    },
+    {
+      "id": "76a751ee-f396-49ac-8160-4d1ac5b788ff",
+      "requester_id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "category": "Logement",
+      "priority": "Medium",
+      "status": "Ouvert",
+      "is_anonymous": true,
+      "title": "Thalassinus eos placeat coadunatio spero.",
+      "description": "Ullam rerum ventito velit perspiciatis tamquam soluta vorago incidunt placeat. Stultus ventosus inflammatio curis. Caput centum confido abutor.",
+      "created_at": "2026-02-15T22:04:20.942Z"
+    },
+    {
+      "id": "9fc97dc7-57eb-4194-ab72-ffe5f300a69e",
+      "requester_id": "e3265bcf-8f3b-4d9b-b009-1f2afa2f9c14",
+      "category": "Finances",
+      "priority": "Urgent",
+      "status": "Ouvert",
+      "is_anonymous": false,
+      "title": "Charisma patior quam congregatio solum.",
+      "description": "Delectatio cuppedia sodalitas trucido cum. Demonstro tandem vulgivagus esse venio tabesco. Aegre vita voluptatem asper ustilo decens corpus ustulo.",
+      "created_at": "2026-02-03T08:07:45.957Z"
+    },
+    {
+      "id": "afc1ce06-129e-423f-82c1-fd089aabf127",
+      "requester_id": "49eb586f-7839-491f-99ef-9ebb8199376e",
+      "category": "Logement",
+      "priority": "Urgent",
+      "status": "En cours",
+      "is_anonymous": false,
+      "title": "Crebro adfero degero super terreo.",
+      "description": "Vulgo sapiente consuasor debitis deripio thalassinus cupiditas degenero. Casso bene taceo claustrum brevis cado acervus angustus umbra. Torqueo sublime amplitudo ager autem utroque.",
+      "created_at": "2026-01-05T07:33:31.628Z"
+    },
+    {
+      "id": "a6627d25-98b2-47aa-897f-2c73e944abd8",
+      "requester_id": "244a1cae-7c7c-430e-81d1-15914b251015",
+      "category": "Logement",
+      "priority": "High",
+      "status": "Ouvert",
+      "is_anonymous": false,
+      "title": "Cum caute eos tamdiu sequi.",
+      "description": "Tenax comes solus. Sponte ullus spes cohors cognomen patrocinor. Quae decet tutis amita bellum dolores sollers tolero.",
+      "created_at": "2026-02-16T03:00:00.279Z"
+    }
+  ],
+  "employee_skills": [
+    {
+      "id": "8ba5f4d4-96b6-4dac-ab56-cbfbe5c79b6a",
+      "employee_id": "23d6f198-a499-428e-ae5c-3e4bd1d87adf",
+      "skill_name": "AWS",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "f67b1677-bc15-4ec0-b549-1b3a4d53cce8",
+      "employee_id": "23d6f198-a499-428e-ae5c-3e4bd1d87adf",
+      "skill_name": "Design",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "dcbdbdd0-2946-47e6-a3c8-1ffd7865c308",
+      "employee_id": "23d6f198-a499-428e-ae5c-3e4bd1d87adf",
+      "skill_name": "SQL",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "4e5f44b5-7a8b-4ffd-860b-72c56559e87f",
+      "employee_id": "23d6f198-a499-428e-ae5c-3e4bd1d87adf",
+      "skill_name": "Project Management",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "ce28fe6a-06ec-4426-ad31-262a227697ea",
+      "employee_id": "b0be5bc9-cb9f-43d6-8f53-13c97891d6ca",
+      "skill_name": "Python",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "9745a976-137f-4031-a529-e381df13539a",
+      "employee_id": "b0be5bc9-cb9f-43d6-8f53-13c97891d6ca",
+      "skill_name": "Excel",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "5bbbb0fe-accc-471f-abbf-bb4bcb848952",
+      "employee_id": "b0be5bc9-cb9f-43d6-8f53-13c97891d6ca",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "81575c03-af7e-4818-a633-72c4215f340a",
+      "employee_id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "skill_name": "Design",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "dd849ae6-53da-4284-a11b-c73199d29190",
+      "employee_id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "skill_name": "Project Management",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "574e6587-148d-4a99-8616-fd56754f1bf4",
+      "employee_id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "skill_name": "SQL",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "fa5e9bc0-ea9e-4ae7-bc7d-b9a62ef46d77",
+      "employee_id": "700b545e-58dc-46f2-a6f8-119785e3b9a5",
+      "skill_name": "Python",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "9c747624-8055-4339-8836-2a181f946785",
+      "employee_id": "cd660c01-04f4-4c2c-b2e9-ccef170c2182",
+      "skill_name": "Project Management",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "496c3bcc-5d6b-4abf-88d1-b65b0f2adb9e",
+      "employee_id": "cd660c01-04f4-4c2c-b2e9-ccef170c2182",
+      "skill_name": "React",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "f646cc2f-c6ff-4091-bfa8-4a7da9e6e8aa",
+      "employee_id": "cd660c01-04f4-4c2c-b2e9-ccef170c2182",
+      "skill_name": "SQL",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "f9dfe1f6-11e2-4557-ba92-07aff05e634a",
+      "employee_id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "6cff6f68-cbc2-4477-ba68-fb4ab061f075",
+      "employee_id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "skill_name": "Python",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "d190285b-79c6-4e71-85f2-aded791fc126",
+      "employee_id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "skill_name": "React",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "eb19b74b-df86-4cfc-8206-ea1976bd01e4",
+      "employee_id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "skill_name": "AWS",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "06efb99d-1fcc-4b29-98f7-fb4ae6a89447",
+      "employee_id": "5fdb3104-a321-4141-9800-b5651159e893",
+      "skill_name": "Project Management",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "f5e2a718-0468-4618-a79e-229c650e6720",
+      "employee_id": "c63303ea-41df-4574-b9e4-cf0c3097f425",
+      "skill_name": "Communication",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "837b040b-9113-4743-a564-6680993b50fd",
+      "employee_id": "c63303ea-41df-4574-b9e4-cf0c3097f425",
+      "skill_name": "Leadership",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "dbdcfa66-c6d7-42e0-bf6b-9614b4dc8b4d",
+      "employee_id": "c63303ea-41df-4574-b9e4-cf0c3097f425",
+      "skill_name": "React",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "4886c54d-ceb2-4dd9-9af8-ec46c6b04021",
+      "employee_id": "c63303ea-41df-4574-b9e4-cf0c3097f425",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "d575619b-39b1-4231-a495-ae6beac93428",
+      "employee_id": "23129d9a-9627-42b3-ada7-8228a9257a8b",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "cd8ae0bd-6b1e-4761-845e-f12181d84d6f",
+      "employee_id": "23129d9a-9627-42b3-ada7-8228a9257a8b",
+      "skill_name": "React",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "3cf88d4e-4773-4688-824f-35ffa0004be6",
+      "employee_id": "23129d9a-9627-42b3-ada7-8228a9257a8b",
+      "skill_name": "Communication",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "474f1d23-9159-4ce5-a7b8-ff0e4cafc4d0",
+      "employee_id": "60b67d93-5490-4d14-84b4-0e74f796c3e6",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "8030f4c2-a176-44a5-a051-e902c2987cb3",
+      "employee_id": "60b67d93-5490-4d14-84b4-0e74f796c3e6",
+      "skill_name": "Communication",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "37407ccd-c18b-4e26-b8aa-40a65def647c",
+      "employee_id": "60b67d93-5490-4d14-84b4-0e74f796c3e6",
+      "skill_name": "React",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "34ad2a02-2445-4a3f-b8a6-988598e6334d",
+      "employee_id": "60b67d93-5490-4d14-84b4-0e74f796c3e6",
+      "skill_name": "Leadership",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "6b894f70-fe23-4fa2-ad01-82087c7a2524",
+      "employee_id": "60b67d93-5490-4d14-84b4-0e74f796c3e6",
+      "skill_name": "Project Management",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "4f535fa0-51ca-4456-8455-de8667c75ea7",
+      "employee_id": "b9eb5b2d-63be-4f4f-8ed7-cb79f615ab81",
+      "skill_name": "Design",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "0e9fad5c-0d3c-4881-b977-63a3048f0fc3",
+      "employee_id": "b9eb5b2d-63be-4f4f-8ed7-cb79f615ab81",
+      "skill_name": "Project Management",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "47aa07ca-55c0-4a2a-8c6a-b3fc70a6e620",
+      "employee_id": "b9eb5b2d-63be-4f4f-8ed7-cb79f615ab81",
+      "skill_name": "Python",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "de8ff111-09ad-4554-b3a0-8602ca76845e",
+      "employee_id": "b9eb5b2d-63be-4f4f-8ed7-cb79f615ab81",
+      "skill_name": "AWS",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "fe88c59a-b9e3-4912-8550-08728760a608",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "skill_name": "Leadership",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "7187d164-3942-4287-9988-e1ba9c8820e7",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "skill_name": "Design",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "cc6c8237-19e0-48a0-bf9f-17fcb6af5532",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "skill_name": "Excel",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "de29d87d-70ff-4971-9b82-f7be89ee7cd5",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "skill_name": "Project Management",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "c0b0b97a-4a76-4486-8a45-22a41d7e7d65",
+      "employee_id": "10e444d1-0a94-463e-9b0d-7df82be13420",
+      "skill_name": "AWS",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "aae9152c-1a7c-475e-a038-87ec1cbefb9c",
+      "employee_id": "4e92fd14-70c5-491a-9ddb-e9fe1bc92027",
+      "skill_name": "AWS",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "a5bf5461-8ea3-4181-9c85-f0013498252c",
+      "employee_id": "4e92fd14-70c5-491a-9ddb-e9fe1bc92027",
+      "skill_name": "React",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "0399766b-fe01-477a-900a-04de02bbf78d",
+      "employee_id": "4e92fd14-70c5-491a-9ddb-e9fe1bc92027",
+      "skill_name": "Python",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "65541a2f-6f2f-4832-8956-8cc699081811",
+      "employee_id": "4e92fd14-70c5-491a-9ddb-e9fe1bc92027",
+      "skill_name": "Design",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "a5567faa-8408-45d4-b9cf-c24bc64b1489",
+      "employee_id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "a4251686-7c5d-496a-9732-3db346b94764",
+      "employee_id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "skill_name": "Leadership",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "576de596-d55a-4885-b9b3-947240da7af9",
+      "employee_id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "skill_name": "Communication",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "d7bdc337-5b86-46cc-ab11-26c4f505af5a",
+      "employee_id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "skill_name": "AWS",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "f7572c90-8be1-412d-98dd-0e37a578e4d1",
+      "employee_id": "9a57c67d-e944-496c-9563-b6007737202f",
+      "skill_name": "SQL",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "3abbc425-5764-460d-9e68-7baff4f7d8ba",
+      "employee_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "skill_name": "Leadership",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "09587f0a-8a73-4cd1-b67f-d8b39df38537",
+      "employee_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "skill_name": "Excel",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "6963d2a9-757e-4de3-aa48-b7f8f51e9337",
+      "employee_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "skill_name": "Design",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "0bfbc57c-7454-48c9-9ed5-d096271d5515",
+      "employee_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "76fc588e-98b2-486f-bda5-5857aa6a3227",
+      "employee_id": "11821aaa-a868-4e4f-8fb7-123f88c4f2e8",
+      "skill_name": "Agile",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "3d618c95-e7c1-48aa-bfce-abb61d1aa765",
+      "employee_id": "b2d22e97-950d-4973-95c4-a59d3a41762c",
+      "skill_name": "Communication",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "e4502171-1db3-4a2e-b9c5-bf0439152323",
+      "employee_id": "b2d22e97-950d-4973-95c4-a59d3a41762c",
+      "skill_name": "Design",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "8cbbb6c0-e184-43bd-90ff-70e8389d3182",
+      "employee_id": "b2d22e97-950d-4973-95c4-a59d3a41762c",
+      "skill_name": "AWS",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "9dc51ded-a180-4758-8f79-9ee1ce145c8d",
+      "employee_id": "2543efde-dbb5-4c06-9e98-40ca32fe524d",
+      "skill_name": "Excel",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "95e9e862-8db1-406c-8c60-fcdc54e4106b",
+      "employee_id": "2543efde-dbb5-4c06-9e98-40ca32fe524d",
+      "skill_name": "Python",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "6c7809b6-8dc0-40bb-ae1a-6b3fbbc46502",
+      "employee_id": "2543efde-dbb5-4c06-9e98-40ca32fe524d",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "80301697-09eb-412e-a417-7171864650d0",
+      "employee_id": "2543efde-dbb5-4c06-9e98-40ca32fe524d",
+      "skill_name": "Design",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "b7058a25-4493-413c-a7ce-eb2c3b1ee16a",
+      "employee_id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "e91fbc5b-8c03-4b50-a39e-50243cf8b374",
+      "employee_id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "skill_name": "AWS",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "2fee7e01-f906-4525-a59e-b3fc6f9eb416",
+      "employee_id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "skill_name": "SQL",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "d3e380fa-abfb-4b5e-8107-b3a4f6577cfc",
+      "employee_id": "a62a76aa-453e-4ecb-87e8-cf177ab926b5",
+      "skill_name": "Excel",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "6097dfa0-6634-4183-bc30-2013a1fbc0c6",
+      "employee_id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "skill_name": "Excel",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "59e22a7c-8600-4818-9dd5-6f60d30b1f50",
+      "employee_id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "skill_name": "SQL",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "f6ee1ce7-407d-4deb-b412-d0d390b829c8",
+      "employee_id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "skill_name": "Design",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "0deb20b3-0b8d-4a1d-a644-c4c1737a61fb",
+      "employee_id": "9be1c95b-9c4e-47a6-b2d6-be959c31decf",
+      "skill_name": "AWS",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "37995ce4-131f-4c71-9883-33b867ddd5c7",
+      "employee_id": "61bd0e50-a56f-4849-b25f-511ac60352a9",
+      "skill_name": "Communication",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "59175f49-9b7c-43e7-8971-5133d9e2f080",
+      "employee_id": "61bd0e50-a56f-4849-b25f-511ac60352a9",
+      "skill_name": "Project Management",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "00124ced-15c3-4f9e-9f27-cd1c7b00867c",
+      "employee_id": "61bd0e50-a56f-4849-b25f-511ac60352a9",
+      "skill_name": "Excel",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "37a63d09-5e70-4797-9b60-db8f30a4130f",
+      "employee_id": "a4a6a9c4-a7e1-482b-b006-9c0982fd6fb0",
+      "skill_name": "Leadership",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "6d1699b1-02ae-494a-a1e2-8b0c943784bc",
+      "employee_id": "a4a6a9c4-a7e1-482b-b006-9c0982fd6fb0",
+      "skill_name": "Communication",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "e008bb40-b512-4cd5-9575-3bbf34e8dd7d",
+      "employee_id": "a4a6a9c4-a7e1-482b-b006-9c0982fd6fb0",
+      "skill_name": "React",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "53d8d881-7a2a-48e0-be2f-36a26ffeec56",
+      "employee_id": "f2560243-bb49-4d9c-aa66-a173c725746c",
+      "skill_name": "Agile",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "d7361a5e-f200-47fb-82d8-454907b902d0",
+      "employee_id": "f2560243-bb49-4d9c-aa66-a173c725746c",
+      "skill_name": "Excel",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "27c0a5ec-591f-40e4-9920-b81abc13f6e7",
+      "employee_id": "f2560243-bb49-4d9c-aa66-a173c725746c",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "c4f690d7-7117-4bb2-a228-58f52e46d404",
+      "employee_id": "f2560243-bb49-4d9c-aa66-a173c725746c",
+      "skill_name": "Leadership",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "81332eff-67fe-4250-902e-cd5417268691",
+      "employee_id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "skill_name": "Agile",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "251bca5e-1740-4cc3-b47e-b460b8845477",
+      "employee_id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "skill_name": "AWS",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "f0233c0f-98c9-4ca9-aa88-de610f4d2f95",
+      "employee_id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "skill_name": "Excel",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "561dadc6-5298-4022-b41f-70768983eaf2",
+      "employee_id": "fd37cdf9-98be-4867-bd4c-2e5befd4f670",
+      "skill_name": "SQL",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "490f2286-e673-4ff9-b592-e96d226d42ed",
+      "employee_id": "bd5ac45d-d53f-467a-a212-8f578ab25b00",
+      "skill_name": "Project Management",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "62996bed-38bb-40e2-a19f-575f98015e20",
+      "employee_id": "bd5ac45d-d53f-467a-a212-8f578ab25b00",
+      "skill_name": "SQL",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "55f1206f-fd03-4df6-ad14-1304a19a8f07",
+      "employee_id": "bd5ac45d-d53f-467a-a212-8f578ab25b00",
+      "skill_name": "Agile",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "76913b72-e558-4e36-8c70-6645062597e6",
+      "employee_id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "skill_name": "Agile",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "d9e055bf-553d-41d2-8bbc-899de12e7fe0",
+      "employee_id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "skill_name": "React",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "2e571d98-09a2-492b-979f-ca69cf7eef0d",
+      "employee_id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "skill_name": "AWS",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "dfaa6979-3992-4bc3-9a45-5de9efd8756e",
+      "employee_id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "skill_name": "Leadership",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "f9959dba-7634-47aa-860b-bd4a8811474e",
+      "employee_id": "9c3b80a4-86c3-48c3-9fbf-4001976b5b5a",
+      "skill_name": "SQL",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "c38dbc93-d66f-4a4e-ab43-e8a695afd810",
+      "employee_id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "skill_name": "Leadership",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "a0911d93-f455-46b8-b101-f2325425d4b7",
+      "employee_id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "skill_name": "Agile",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "c16b5918-36a7-49c5-8f95-ae27469ed1db",
+      "employee_id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "skill_name": "AWS",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "827d6f0a-c76c-46a1-9fa7-1e86517318d2",
+      "employee_id": "71fed5c9-420f-48e4-a098-22bd6c5f6081",
+      "skill_name": "Design",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "2c51794e-95a7-4e07-a7c6-23a74b968167",
+      "employee_id": "e3265bcf-8f3b-4d9b-b009-1f2afa2f9c14",
+      "skill_name": "Design",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "b8144a3c-24b9-47bd-b436-f5e3d6f94ad4",
+      "employee_id": "e3265bcf-8f3b-4d9b-b009-1f2afa2f9c14",
+      "skill_name": "Leadership",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "60dc36c7-8f9e-41b6-9670-435895029cb7",
+      "employee_id": "e3265bcf-8f3b-4d9b-b009-1f2afa2f9c14",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "52998af8-9d9c-4491-b306-fd1a13ee9aa7",
+      "employee_id": "49eb586f-7839-491f-99ef-9ebb8199376e",
+      "skill_name": "Python",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "965751d6-b6c9-4598-a3ec-e1fcd9beb473",
+      "employee_id": "49eb586f-7839-491f-99ef-9ebb8199376e",
+      "skill_name": "Communication",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "ab37f86e-dae6-4543-aa70-bd79fce69988",
+      "employee_id": "49eb586f-7839-491f-99ef-9ebb8199376e",
+      "skill_name": "React",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "e5bf0bb5-f403-42a1-a4b3-25956236b255",
+      "employee_id": "fe6fe81f-619e-44f5-9f86-c5a16734e618",
+      "skill_name": "AWS",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "7b674312-3f8c-46e8-8525-3a7a3cc4f518",
+      "employee_id": "fe6fe81f-619e-44f5-9f86-c5a16734e618",
+      "skill_name": "Project Management",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "6314e464-0282-4055-bedc-786606aae1c4",
+      "employee_id": "fe6fe81f-619e-44f5-9f86-c5a16734e618",
+      "skill_name": "SQL",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "e32adaae-0264-464c-ae63-4374f3ea90eb",
+      "employee_id": "ac3ae417-baf0-413d-9031-228e011fd623",
+      "skill_name": "AWS",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "d876f319-ce95-47cc-b78a-5beb4e929ee3",
+      "employee_id": "ac3ae417-baf0-413d-9031-228e011fd623",
+      "skill_name": "SQL",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "3dbd6434-1946-4255-b541-581bf0868e56",
+      "employee_id": "ac3ae417-baf0-413d-9031-228e011fd623",
+      "skill_name": "Python",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "accbdb97-fa7b-48f2-90a1-17f761701751",
+      "employee_id": "aab347ac-4f74-40f7-8cd6-8d6daae14277",
+      "skill_name": "Project Management",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "2e84cedb-9bf8-4af7-ad4a-e73e23366fcd",
+      "employee_id": "aab347ac-4f74-40f7-8cd6-8d6daae14277",
+      "skill_name": "Python",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "b9145cf0-10f5-4c5b-9c1e-41eb60ac6928",
+      "employee_id": "aab347ac-4f74-40f7-8cd6-8d6daae14277",
+      "skill_name": "Design",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "f7aaabd6-f1ba-4060-91e5-908e4142b1e9",
+      "employee_id": "ebac7c9c-6aa3-4bd7-b0ce-b6d8f43c721d",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "c4aaaf14-bcc1-4422-9e05-9634eb98d1ee",
+      "employee_id": "ebac7c9c-6aa3-4bd7-b0ce-b6d8f43c721d",
+      "skill_name": "Python",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "9de1edde-d16b-4250-8378-604ef6c75620",
+      "employee_id": "ebac7c9c-6aa3-4bd7-b0ce-b6d8f43c721d",
+      "skill_name": "AWS",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "1e3b57a6-7b44-461d-945e-deae988f7ffc",
+      "employee_id": "7241ee23-91db-4db9-a5f3-0a3cbc63a141",
+      "skill_name": "AWS",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "d38e259a-4fce-480e-aa2b-98e4fb25e950",
+      "employee_id": "7241ee23-91db-4db9-a5f3-0a3cbc63a141",
+      "skill_name": "Python",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "4eb5c161-2194-4e6a-a800-bcf50c364620",
+      "employee_id": "7241ee23-91db-4db9-a5f3-0a3cbc63a141",
+      "skill_name": "SQL",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "eae4690c-47fe-4789-ac85-d225f4b9f3a1",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "08c09f6a-fd55-4d2a-885f-3cd93f0b287e",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "skill_name": "Communication",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "a68d988d-b69f-4388-badd-1ed27ee3ba6e",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "skill_name": "Excel",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "7e35dd87-4c66-4e48-8be8-ff523c636148",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "skill_name": "React",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "7fccb7c4-9d7a-4d97-be6d-10a11808e0de",
+      "employee_id": "e2fdf2aa-e3e6-44a0-bff0-fac554636f07",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "d83b1d1e-c449-4bc4-a6c2-9b754f491e09",
+      "employee_id": "28920d36-6462-4b56-bdc9-2d0d27226bdf",
+      "skill_name": "React",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "9ce799f2-a503-4dfa-9716-ff21f258f4ad",
+      "employee_id": "28920d36-6462-4b56-bdc9-2d0d27226bdf",
+      "skill_name": "Project Management",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "699eeb4a-c4bd-4918-a34b-5efcd4bfd392",
+      "employee_id": "28920d36-6462-4b56-bdc9-2d0d27226bdf",
+      "skill_name": "Agile",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "2ec04d08-3440-4092-ace5-b77cd6b0fd79",
+      "employee_id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "81946ec6-3f2b-4c09-bc9b-9abac877343f",
+      "employee_id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "skill_name": "React",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "5b9d3f6f-7111-488b-95ae-e7db06c920e1",
+      "employee_id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "skill_name": "SQL",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "3095e8ce-8c29-4ae8-aa30-60bcf019da40",
+      "employee_id": "d49984a9-b7b5-4a77-93df-73964c0e06f4",
+      "skill_name": "Python",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "8449db00-31ce-4d1d-8693-3475575e78f5",
+      "employee_id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "6499c30d-6075-44cb-836d-b29690d41e7c",
+      "employee_id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "skill_name": "Excel",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "cb2e9342-6bbc-4ccf-83ab-6aad1a01baa7",
+      "employee_id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "skill_name": "Communication",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "18e724ba-1c16-42e9-ae30-461380d42cba",
+      "employee_id": "faa360fc-c80e-4a22-8b49-2e42981b75da",
+      "skill_name": "Python",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "10f78ed1-78df-4442-81af-d3ac93e177e8",
+      "employee_id": "6728a76e-ed64-4673-b3d5-5fccf88bbfda",
+      "skill_name": "Leadership",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "e5eaea90-c6fe-46d6-9761-9c27a1a68674",
+      "employee_id": "6728a76e-ed64-4673-b3d5-5fccf88bbfda",
+      "skill_name": "Python",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "c376b7c1-4f9a-4ab1-bc5f-254801a693b8",
+      "employee_id": "6728a76e-ed64-4673-b3d5-5fccf88bbfda",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "83255736-cc3d-4448-b826-a08606dbb6fc",
+      "employee_id": "6728a76e-ed64-4673-b3d5-5fccf88bbfda",
+      "skill_name": "Design",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "689aa80a-679e-4fdd-b14b-22449de3306f",
+      "employee_id": "02e1a483-31f6-4b9a-833c-798bbf7e0fc0",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "c059e3cb-e589-449a-928f-7147d914b656",
+      "employee_id": "02e1a483-31f6-4b9a-833c-798bbf7e0fc0",
+      "skill_name": "Communication",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "d34c4e9b-6b42-482b-be6c-6ce7d2800ac3",
+      "employee_id": "02e1a483-31f6-4b9a-833c-798bbf7e0fc0",
+      "skill_name": "React",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "413f87d0-6626-4d6e-afe4-c65b2c1c4b83",
+      "employee_id": "27bd466d-fb86-4312-baa9-e1245bb2580f",
+      "skill_name": "SQL",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "787420dd-f5f9-4a78-94a8-6f555fa71fbd",
+      "employee_id": "27bd466d-fb86-4312-baa9-e1245bb2580f",
+      "skill_name": "Communication",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "fa0c6a64-ff91-4a86-860b-45c02ca6951d",
+      "employee_id": "27bd466d-fb86-4312-baa9-e1245bb2580f",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "2082b261-f576-4602-a6c2-6780dde999e9",
+      "employee_id": "27bd466d-fb86-4312-baa9-e1245bb2580f",
+      "skill_name": "AWS",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "083dec89-8de8-41f4-809a-3f2c3f8cb813",
+      "employee_id": "27bd466d-fb86-4312-baa9-e1245bb2580f",
+      "skill_name": "Agile",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "237d9525-8925-40cf-896b-fc8ec26bee22",
+      "employee_id": "1059fcbb-4ecd-4ecf-9aa9-9f3a1d31e0d5",
+      "skill_name": "React",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "946fc564-e54e-48a6-842b-ea578b16bf12",
+      "employee_id": "1059fcbb-4ecd-4ecf-9aa9-9f3a1d31e0d5",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "20ba8ae7-10ef-4890-91a2-2f9bc6a67a17",
+      "employee_id": "1059fcbb-4ecd-4ecf-9aa9-9f3a1d31e0d5",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "31da7f95-6102-468d-a9b7-5de6969ff03f",
+      "employee_id": "aac99c8c-9234-44b2-8d8e-89e4fb006a10",
+      "skill_name": "Excel",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "e628215b-f0f3-4318-9a4f-894e1acf370c",
+      "employee_id": "aac99c8c-9234-44b2-8d8e-89e4fb006a10",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "9a630c67-ccda-4e9a-b77b-02408f634d4b",
+      "employee_id": "aac99c8c-9234-44b2-8d8e-89e4fb006a10",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "d92869b5-92a1-4e7f-a98e-88e1d37a218c",
+      "employee_id": "aac99c8c-9234-44b2-8d8e-89e4fb006a10",
+      "skill_name": "AWS",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "9d48ba29-2d71-49c9-9317-c2a12e138dd0",
+      "employee_id": "46341bf1-0321-46fe-bddc-d13dd431a5fa",
+      "skill_name": "Excel",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "23a6745a-25eb-41bb-aa25-c8451abd935e",
+      "employee_id": "46341bf1-0321-46fe-bddc-d13dd431a5fa",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Débutant",
+      "interested_in_training": false
+    },
+    {
+      "id": "5f0865e6-2e2e-4ade-a2b5-021594b9798f",
+      "employee_id": "46341bf1-0321-46fe-bddc-d13dd431a5fa",
+      "skill_name": "SQL",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "0100757a-50a5-4b82-955c-ee8e9fa7ce27",
+      "employee_id": "b902e441-949f-4a6d-a9a1-dbf408ba9bc1",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "9f68cbbf-b519-436f-89cc-0d19b8e0186a",
+      "employee_id": "b902e441-949f-4a6d-a9a1-dbf408ba9bc1",
+      "skill_name": "Communication",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "9c85dc3d-2255-4619-a918-23fb4a2f312f",
+      "employee_id": "b902e441-949f-4a6d-a9a1-dbf408ba9bc1",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "2be86675-e5bc-42c0-abd3-da06b782f976",
+      "employee_id": "b902e441-949f-4a6d-a9a1-dbf408ba9bc1",
+      "skill_name": "Excel",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "294a6712-53cc-4017-a9a2-1bec19c94053",
+      "employee_id": "b902e441-949f-4a6d-a9a1-dbf408ba9bc1",
+      "skill_name": "Leadership",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "f1e711d1-7f77-447b-8e72-4d37adcbbd5d",
+      "employee_id": "9475f842-c8a3-4259-b547-70492b8c64c9",
+      "skill_name": "SQL",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "d38371b0-0394-45b4-a7cd-f0610fec1666",
+      "employee_id": "9475f842-c8a3-4259-b547-70492b8c64c9",
+      "skill_name": "AWS",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "dc78ba4f-d0ac-4a19-b613-c40f0bb5f59e",
+      "employee_id": "9475f842-c8a3-4259-b547-70492b8c64c9",
+      "skill_name": "Project Management",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "dfc92728-9bcc-4912-967b-663acbe435d3",
+      "employee_id": "9475f842-c8a3-4259-b547-70492b8c64c9",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "6a7814bd-8f6d-4490-a020-2a69adfb637c",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "skill_name": "Project Management",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "6b401d8c-b60f-4d04-b013-4fbd2f19db74",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "skill_name": "JavaScript",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "8ef2aaba-ab4a-4d49-93e0-fe224e32c1aa",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "skill_name": "AWS",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "b1768a3d-3283-4204-abc5-0374627fa9f2",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "skill_name": "Python",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "718f29e1-77dc-46d7-bc75-18daabd0ec91",
+      "employee_id": "1957b5d1-844c-47c0-824e-2824c0b0c9be",
+      "skill_name": "Agile",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "2f2d7027-79c1-46e8-9ac9-c53a4d3867a2",
+      "employee_id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "skill_name": "Python",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "e6f0d5c8-4f88-4ec9-bc85-c169e3cd9fc6",
+      "employee_id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "skill_name": "Communication",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "0dc6401a-b2e3-4dd1-a087-bcfe8b4deb96",
+      "employee_id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "skill_name": "Design",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "bfc02fec-69b6-4803-a293-bd978dd7bfde",
+      "employee_id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "skill_name": "Agile",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "e8e9baff-3245-4142-9192-6e8ec5366b35",
+      "employee_id": "bfa7ba22-dd51-49a3-96bc-5e83bb3b8616",
+      "skill_name": "SQL",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "80baf991-a673-4474-880f-81f448cb9ec8",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "skill_name": "SQL",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "7d308261-37be-4e61-9994-a93943644b43",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "skill_name": "Leadership",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "4d3cd142-7e10-4920-b150-7b78b5bf06e6",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "skill_name": "Communication",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "fe767064-d1d7-410b-ad2a-64ea90d244b5",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "skill_name": "Project Management",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "67dd36fa-5658-4b1a-901c-0e7ec2228759",
+      "employee_id": "b560edae-576f-492a-b921-ee3c8854caf9",
+      "skill_name": "Excel",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "20bcd8c4-7cad-4e2b-84fb-f823a02f943b",
+      "employee_id": "244a1cae-7c7c-430e-81d1-15914b251015",
+      "skill_name": "Leadership",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "2c06330b-4643-481e-8488-9e24ffa879ca",
+      "employee_id": "244a1cae-7c7c-430e-81d1-15914b251015",
+      "skill_name": "Excel",
+      "proficiency_level": "Avancé",
+      "interested_in_training": false
+    },
+    {
+      "id": "073faa89-9d63-409a-a068-bb1fcffba2c5",
+      "employee_id": "244a1cae-7c7c-430e-81d1-15914b251015",
+      "skill_name": "Communication",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "410b8bb8-4862-4b51-87ba-06f8f07f9637",
+      "employee_id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "skill_name": "SQL",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "4916b29c-b4f7-4329-8fd9-71b0030706af",
+      "employee_id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "skill_name": "AWS",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "018b378e-5743-434f-ac15-4db7b6636225",
+      "employee_id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "skill_name": "Communication",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "7a9cbb21-0a10-46db-9cc0-de948cd4408f",
+      "employee_id": "9df3fc8d-c353-4d19-aaac-09a6945b9b37",
+      "skill_name": "Design",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "1ce90d33-f3ce-44a3-8d6b-8215915799bf",
+      "employee_id": "8c222fc7-1e3f-41dd-b12d-3a755ddde63a",
+      "skill_name": "Leadership",
+      "proficiency_level": "Avancé",
+      "interested_in_training": true
+    },
+    {
+      "id": "3fdf9f7b-dc01-4d09-85d3-c6e4c7f318db",
+      "employee_id": "8c222fc7-1e3f-41dd-b12d-3a755ddde63a",
+      "skill_name": "Project Management",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": true
+    },
+    {
+      "id": "fa297017-316f-470a-9463-29972de320bc",
+      "employee_id": "8c222fc7-1e3f-41dd-b12d-3a755ddde63a",
+      "skill_name": "Communication",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "28e2956b-44fc-4071-9b4a-30a4dec7e3cb",
+      "employee_id": "8c222fc7-1e3f-41dd-b12d-3a755ddde63a",
+      "skill_name": "Design",
+      "proficiency_level": "Intermédiaire",
+      "interested_in_training": false
+    },
+    {
+      "id": "00d9caac-8b3c-442b-961a-a06f8e7cc10a",
+      "employee_id": "e686370e-ffd6-4965-950c-794e1aa7b9ab",
+      "skill_name": "Excel",
+      "proficiency_level": "Expert",
+      "interested_in_training": false
+    },
+    {
+      "id": "052819ac-d9ce-4df9-9561-221b62e13643",
+      "employee_id": "e686370e-ffd6-4965-950c-794e1aa7b9ab",
+      "skill_name": "Agile",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    },
+    {
+      "id": "4b0f1c60-33da-4326-980a-ef4390af32b6",
+      "employee_id": "e686370e-ffd6-4965-950c-794e1aa7b9ab",
+      "skill_name": "Communication",
+      "proficiency_level": "Expert",
+      "interested_in_training": true
+    },
+    {
+      "id": "25d2aed7-33b5-4e73-a91f-9c00b6b3e3b5",
+      "employee_id": "e686370e-ffd6-4965-950c-794e1aa7b9ab",
+      "skill_name": "AWS",
+      "proficiency_level": "Débutant",
+      "interested_in_training": true
+    }
+  ]
+}
