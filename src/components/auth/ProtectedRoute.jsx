@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export const ProtectedRoute = ({ allowedRoles = [], children }) => {
-    const { user, isAuthenticated, isLoading } = useAuth();
+    const { user, isLoading } = useAuth();
     const location = useLocation();
 
     if (isLoading) {
@@ -17,16 +17,23 @@ export const ProtectedRoute = ({ allowedRoles = [], children }) => {
         );
     }
 
-    if (!isAuthenticated) {
-        // Redirect to login (assuming we had a login page), saving the attempted URL
-        // return <Navigate to="/login" state={{ from: location }} replace />;
-
-        // For this mockup, we just redirect home if absolutely no user exists
-        return <Navigate to="/" replace />;
+    if (!user) {
+        // Redirect to login, saving the attempted URL
+        return <Navigate to="/login" replace />;
     }
 
+    // Role mapping since DB uses ADMIN/HR/MANAGER and frontend expects Administrator/HR
+    const roleMapping = {
+        'ADMIN': 'Administrator',
+        'HR': 'HR',
+        'MANAGER': 'Manager',
+        'EMPLOYEE': 'Employee'
+    };
+
+    const userFrontendRole = roleMapping[user.role] || user.role;
+
     // If allowedRoles is provided and user's role is not in the list
-    if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    if (allowedRoles.length > 0 && !allowedRoles.includes(userFrontendRole)) {
         return <Navigate to="/unauthorized" replace />;
     }
 
@@ -35,11 +42,14 @@ export const ProtectedRoute = ({ allowedRoles = [], children }) => {
 
 // Component Wrapper to conditionally render UI elements based on permissions
 export const RequirePermission = ({ permission, children, fallback = null }) => {
-    const { hasPermission, isLoading } = useAuth();
+    const { user, isLoading } = useAuth();
 
     if (isLoading) return null;
 
-    if (hasPermission(permission)) {
+    // Simplified auth check for UI elements based on User Role.  To enhance later.
+    const hasPerm = user && (user.role === 'ADMIN' || user.role === 'HR');
+
+    if (hasPerm || permission === 'view:own') {
         return children;
     }
 

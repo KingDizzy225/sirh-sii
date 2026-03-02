@@ -51,44 +51,29 @@ export function Sidebar({ className }) {
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.path;
 
-                    // Specific fallback for employee self-view permissions if global view isn't available
-                    const permissionCheck = item.permission;
-                    const alternateCheck = item.permission.replace(':view', ':view_self');
+                    // Simplified Role check for MVP: Hide Administrator only routes from others
+                    const { user } = useAuth();
+                    const userRole = user ? user.role : 'EMPLOYEE';
+
+                    if (item.permission === 'settings:view' && userRole !== 'ADMIN') return null;
+                    if (item.permission === 'payroll:view' && userRole !== 'ADMIN' && userRole !== 'HR') return null;
 
                     return (
-                        <RequirePermission key={item.name} permission={permissionCheck} fallback={
-                            <RequirePermission permission={alternateCheck}>
-                                <Link
-                                    to={item.path}
-                                    className={cn(
-                                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group',
-                                        isActive
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                    )}
-                                >
-                                    <item.icon
-                                        className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600')}
-                                    />
-                                    {item.name}
-                                </Link>
-                            </RequirePermission>
-                        }>
-                            <Link
-                                to={item.path}
-                                className={cn(
-                                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group',
-                                    isActive
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                )}
-                            >
-                                <item.icon
-                                    className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600')}
-                                />
-                                {item.name}
-                            </Link>
-                        </RequirePermission>
+                        <Link
+                            key={item.name}
+                            to={item.path}
+                            className={cn(
+                                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all group',
+                                isActive
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                            )}
+                        >
+                            <item.icon
+                                className={cn('h-5 w-5', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600')}
+                            />
+                            {item.name}
+                        </Link>
                     );
                 })}
             </nav>
