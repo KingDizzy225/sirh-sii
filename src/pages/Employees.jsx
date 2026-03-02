@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Papa from 'papaparse';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Plus, Search, MoreHorizontal, CheckCircle2, X } from 'lucide-react';
+import { Check, X, Search, Calendar as CalendarIcon, CheckCircle2, ChevronDown, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
@@ -62,6 +63,8 @@ export function Employees() {
     const [notification, setNotification] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedEmployees, setSelectedEmployees] = useState([]);
+    const fileInputRef = useRef(null);
 
     // Initialisation API
     useEffect(() => {
@@ -173,6 +176,112 @@ export function Employees() {
 
     const handleExport = () => {
         showNotification('Annuaire des employés exporté avec succès en CSV.');
+    };
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedEmployees(employees.map(emp => emp.id));
+        } else {
+            setSelectedEmployees([]);
+        }
+    };
+
+    const handleSelectEmployee = (id, checked) => {
+        if (checked) {
+            setSelectedEmployees(prev => [...prev, id]);
+        } else {
+            setSelectedEmployees(prev => prev.filter(empId => empId !== id));
+        }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedEmployees.length === 0) return;
+        if (!confirm(`Toutes les données associées à ces ${selectedEmployees.length} employés seront définitivement effacées. Continuer ?`)) return;
+
+        try {
+            const token = localStorage.getItem('sirh_token');
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+            const res = await fetch(`${API_URL}/api/employees/bulk`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ ids: selectedEmployees })
+            });
+
+            if (res.ok) {
+                const remainingEmployees = employees.filter(emp => !selectedEmployees.includes(emp.id));
+                setEmployees(remainingEmployees);
+                localStorage.setItem('sirh_employees', JSON.stringify(remainingEmployees));
+                setSelectedEmployees([]);
+                showNotification(`${selectedEmployees.length} employé(s) supprimé(s) définitivement.`);
+            } else {
+                throw new Error("Erreur serveur lors de la suppression.");
+            }
+        } catch (error) {
+            console.error("Delete Error", error);
+            showNotification("Erreur de connexion. Impossible de supprimer.");
+        }
+    };
+
+    const triggerImport = () => {
+        if (fileInputRef.current) fileInputRef.current.click();
+    };
+
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (results) => {
+                try {
+                    const token = localStorage.getItem('sirh_token');
+                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                    const res = await fetch(`${API_URL}/api/employees/bulk`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ employees: results.data })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        showNotification(data.message);
+                        // Reload list from server to get new IDs properly
+                        fetch(`${API_URL}/api/employees`, { headers: { 'Authorization': `Bearer ${token}` } })
+                            .then(r => r.json())
+                            .then(json => {
+                                const mapped = json.map(emp => ({
+                                    id: emp.id,
+                                    name: `${emp.firstName} ${emp.lastName}`,
+                                    role: emp.positionTitle || 'Poste Non Assigné',
+                                    systemRole: emp.role || 'Employee',
+                                    department: emp.department || 'Non assigné',
+                                    status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
+                                    email: emp.email,
+                                    phone: '+225 01234567',
+                                    sex: 'Non spécifié',
+                                    onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
+                                }));
+                                setEmployees(mapped.length > 0 ? mapped : initialEmployees);
+                            });
+                    } else {
+                        throw new Error('Erreur Server Bulk Import');
+                    }
+                } catch (error) {
+                    console.error("Erreur Import CSV:", error);
+                    showNotification("Erreur lors de l'importation. Vérifiez le format du CSV (colonnes firstName, lastName, email obligatoires).");
+                }
+                event.target.value = null; // reset
+            },
+            error: (error) => showNotification("Impossible de lire ce fichier CSV : " + error.message)
+        });
     };
 
     const handleRowAction = (name) => {
@@ -314,6 +423,19 @@ export function Employees() {
                     <p className="text-slate-500 mt-1">Gérez les membres de votre équipe et leurs permissions d'accès.</p>
                 </div>
                 <div className="flex items-center space-x-2">
+                    <input
+                        type="file"
+                        accept=".csv"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleFileUpload}
+                    />
+                    {selectedEmployees.length > 0 && (
+                        <Button variant="destructive" className="gap-2 shadow-sm" onClick={handleDeleteSelected}>
+                            <Trash2 size={16} /> Supprimer ({selectedEmployees.length})
+                        </Button>
+                    )}
+                    <Button variant="outline" onClick={triggerImport}>Importer CSV</Button>
                     <Button variant="outline" onClick={handleExport}>Exporter CSV</Button>
                     <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" onClick={() => setIsAddModalOpen(true)}>
                         <Plus size={16} /> Ajouter un Employé
@@ -335,6 +457,14 @@ export function Employees() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[40px]">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-slate-300 w-4 h-4 cursor-pointer accent-blue-600"
+                                        checked={selectedEmployees.length === employees.length && employees.length > 0}
+                                        onChange={handleSelectAll}
+                                    />
+                                </TableHead>
                                 <TableHead>Employé</TableHead>
                                 <TableHead>Rôle</TableHead>
                                 <TableHead>Département</TableHead>
@@ -346,7 +476,15 @@ export function Employees() {
                         </TableHeader>
                         <TableBody>
                             {employees.map((emp) => (
-                                <TableRow key={emp.id}>
+                                <TableRow key={emp.id} className={selectedEmployees.includes(emp.id) ? "bg-blue-50/50" : ""}>
+                                    <TableCell>
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-slate-300 w-4 h-4 cursor-pointer accent-blue-600"
+                                            checked={selectedEmployees.includes(emp.id)}
+                                            onChange={(e) => handleSelectEmployee(emp.id, e.target.checked)}
+                                        />
+                                    </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-medium text-muted-foreground">

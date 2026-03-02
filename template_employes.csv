@@ -1,0 +1,5 @@
+firstName,lastName,email,role,department,positionTitle,status,hireDate
+Koffi,Amani,koffi.amani@entreprise.com,Employee,IT,Développeur Backend,ACTIVE,2026-01-15
+Awa,Traore,awa.traore@entreprise.com,HR,Ressources Humaines,Chargée de Recrutement,ACTIVE,2026-03-10
+Moussa,Kone,moussa.kone@entreprise.com,Manager,Ventes,Directeur Commercial,ACTIVE,2025-11-01
+Fatou,Diallo,fatou.diallo@entreprise.com,Employee,Marketing,Spécialiste SEO,ACTIVE,2026-05-20

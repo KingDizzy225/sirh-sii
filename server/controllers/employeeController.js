@@ -74,3 +74,63 @@ exports.deleteEmployee = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete employee' });
     }
 };
+
+// Delete multiple employees (Bulk)
+exports.deleteMultipleEmployees = async (req, res) => {
+    try {
+        const { ids } = req.body;
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'Array of employee IDs is required' });
+        }
+
+        const deleteResult = await prisma.employee.deleteMany({
+            where: {
+                id: { in: ids }
+            }
+        });
+
+        res.status(200).json({ message: `Successfully deleted ${deleteResult.count} employees`, count: deleteResult.count });
+    } catch (error) {
+        console.error('Error deleting multiple employees:', error);
+        res.status(500).json({ error: 'Failed to delete multiple employees' });
+    }
+};
+
+// Import multiple employees (CSV bulk)
+exports.importBulkEmployees = async (req, res) => {
+    try {
+        const { employees } = req.body;
+
+        if (!Array.isArray(employees) || employees.length === 0) {
+            return res.status(400).json({ error: 'Array of employees is required' });
+        }
+
+        // Format data properly for Prisma
+        const dataToInsert = employees.map(emp => ({
+            firstName: emp.firstName,
+            lastName: emp.lastName,
+            email: emp.email || `${emp.firstName.toLowerCase()}.${emp.lastName.toLowerCase()}@entreprise.com`,
+            role: emp.role || 'Employee',
+            department: emp.department || 'Ressources Humaines',
+            positionTitle: emp.positionTitle || 'Poste Non Assigné',
+            status: emp.status || 'ACTIVE',
+            hireDate: emp.hireDate ? new Date(emp.hireDate) : new Date()
+        }));
+
+        // Prisma createMany (skipDuplicates true allows ignoring existing emails instead of failing the whole batch)
+        const createResult = await prisma.employee.createMany({
+            data: dataToInsert,
+            skipDuplicates: true
+        });
+
+        res.status(201).json({
+            message: `Successfully imported ${createResult.count} out of ${employees.length} employees (duplicates skipped)`,
+            count: createResult.count
+        });
+
+    } catch (error) {
+        console.error('Error importing employees:', error);
+        res.status(500).json({ error: 'Failed to import employees' });
+    }
+};
