@@ -9,7 +9,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors()); // Allow cross-origin requests from the React frontend
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || '*', // Autoriser le frontend en prod ou tout le monde en dev
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions)); // Allow cross-origin requests from the React frontend
 app.use(express.json()); // Parse JSON bodies
 
 // Health Check Route
@@ -23,7 +27,14 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 const employeeRoutes = require('./routes/employeeRoutes');
+const leaveRoutes = require('./routes/leaveRoutes');
+const payrollRoutes = require('./routes/payrollRoutes');
+const recruitmentRoutes = require('./routes/recruitmentRoutes');
+
 app.use('/api/employees', employeeRoutes);
+app.use('/api/leaves', leaveRoutes);
+app.use('/api/payroll', payrollRoutes);
+app.use('/api/recruitment', recruitmentRoutes);
 
 // Start the server
 app.listen(PORT, () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -15,69 +15,131 @@ const initialLeaveRequests = [
 ];
 
 export function Leaves() {
-    const [leaveRequests, setLeaveRequests] = useState(initialLeaveRequests);
+    const [leaveRequests, setLeaveRequests] = useState([]);
+    const [employeesList, setEmployeesList] = useState([]);
     const [notification, setNotification] = useState(null);
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [leaveForm, setLeaveForm] = useState({
-        employee: '',
+        employeeId: '',
         type: 'Congé Annuel',
         startDate: '',
         endDate: '',
         reason: ''
     });
 
+    const fetchLeaves = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/leaves`);
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                // Formatting for display
+                const mapped = data.map(leave => {
+                    const sDate = new Date(leave.startDate);
+                    const eDate = new Date(leave.endDate);
+                    const diffDays = Math.ceil(Math.abs(eDate - sDate) / (1000 * 60 * 60 * 24)) + 1;
+                    const shortMonths = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+
+                    return {
+                        id: leave.id,
+                        employee: leave.employee ? `${leave.employee.firstName} ${leave.employee.lastName}` : 'Employé Inconnu',
+                        type: leave.type,
+                        duration: `${sDate.getDate()} ${shortMonths[sDate.getMonth()]} - ${eDate.getDate()} ${shortMonths[eDate.getMonth()]} (${diffDays} Jours)`,
+                        status: leave.status === 'APPROVED' ? 'Approuvé' : leave.status === 'REJECTED' ? 'Rejeté' : 'En attente',
+                        appliedOn: new Date(leave.createdAt).toLocaleDateString('fr-FR')
+                    };
+                });
+                setLeaveRequests(mapped);
+            }
+        } catch (error) {
+            console.error('Failed to fetch real leaves', error);
+            setLeaveRequests(initialLeaveRequests); // Fallback mock
+        }
+    };
+
+    const fetchEmployees = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/employees`);
+            const data = await res.json();
+            if (Array.isArray(data)) setEmployeesList(data);
+        } catch (error) {
+            console.error('Failed to fetch employees for leave form');
+        }
+    };
+
+    useEffect(() => {
+        Promise.all([fetchLeaves(), fetchEmployees()]).finally(() => setIsLoading(false));
+    }, []);
+
     const showNotification = (message) => {
         setNotification(message);
-        setTimeout(() => setNotification(null), 3000); // Hide after 3 seconds
+        setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleApprove = (id) => {
-        setLeaveRequests(prev => prev.map(req =>
-            req.id === id ? { ...req, status: 'Approuvé' } : req
-        ));
-        showNotification(`Demande ${id} approuvée avec succès.`);
+    const handleApprove = async (id) => {
+        try {
+            await fetch(`http://localhost:3000/api/leaves/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'APPROVED' })
+            });
+            setLeaveRequests(prev => prev.map(req =>
+                req.id === id ? { ...req, status: 'Approuvé' } : req
+            ));
+            showNotification(`Demande approuvée avec succès sur la Base de Données.`);
+        } catch (e) { showNotification("Erreur lors de l'approbation."); }
     };
 
-    const handleReject = (id) => {
-        setLeaveRequests(prev => prev.map(req =>
-            req.id === id ? { ...req, status: 'Rejeté' } : req
-        ));
-        showNotification(`Demande ${id} rejetée avec succès.`);
+    const handleReject = async (id) => {
+        try {
+            await fetch(`http://localhost:3000/api/leaves/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'REJECTED' })
+            });
+            setLeaveRequests(prev => prev.map(req =>
+                req.id === id ? { ...req, status: 'Rejeté' } : req
+            ));
+            showNotification(`Demande rejetée avec succès sur la Base de Données.`);
+        } catch (e) { showNotification("Erreur lors du rejet."); }
     };
 
-    const handleLeaveSubmit = (e) => {
+    const handleLeaveSubmit = async (e) => {
         e.preventDefault();
-        if (!leaveForm.employee || !leaveForm.startDate || !leaveForm.endDate) {
+        if (!leaveForm.employeeId || !leaveForm.startDate || !leaveForm.endDate) {
             showNotification('Veuillez remplir tous les champs obligatoires.');
             return;
         }
 
-        // Extremely simple duration string generation
-        const sDate = new Date(leaveForm.startDate);
-        const eDate = new Date(leaveForm.endDate);
-        const diffTime = Math.abs(eDate - sDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/leaves`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    employeeId: leaveForm.employeeId,
+                    type: leaveForm.type,
+                    startDate: leaveForm.startDate,
+                    endDate: leaveForm.endDate,
+                    reason: leaveForm.reason
+                })
+            });
 
-        const shortMonths = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
-        const durationStr = `${sDate.getDate()} ${shortMonths[sDate.getMonth()]} - ${eDate.getDate()} ${shortMonths[eDate.getMonth()]} (${diffDays} Jours)`;
-
-        const today = new Date();
-        const appliedOnStr = `${String(today.getDate()).padStart(2, '0')} ${shortMonths[today.getMonth()]} ${today.getFullYear()}`;
-
-        const newRequest = {
-            id: `LR-10${leaveRequests.length + 21}`,
-            employee: leaveForm.employee,
-            type: leaveForm.type,
-            duration: durationStr,
-            status: 'En attente',
-            appliedOn: appliedOnStr
-        };
-
-        setLeaveRequests([newRequest, ...leaveRequests]);
-        setIsLeaveModalOpen(false);
-        setLeaveForm({ employee: '', type: 'Congé Annuel', startDate: '', endDate: '', reason: '' });
-        showNotification('Demande de congé soumise avec succès.');
+            if (res.ok) {
+                await fetchLeaves(); // Refresh true data
+                setIsLeaveModalOpen(false);
+                setLeaveForm({ employeeId: '', type: 'Congé Annuel', startDate: '', endDate: '', reason: '' });
+                showNotification('Demande de congé enregistrée dans PostgreSQL avec succès.');
+            } else {
+                showNotification("Erreur API lors de la création.");
+            }
+        } catch (error) {
+            console.error(error);
+            showNotification("Erreur serveur.");
+        }
     };
 
     const pendingCount = leaveRequests.filter(req => req.status === 'En attente').length;
@@ -119,13 +181,18 @@ export function Leaves() {
                             <div className="px-6 py-6 overflow-y-auto">
                                 <form id="request-leave-form" onSubmit={handleLeaveSubmit} className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700">Nom de l'Employé</label>
-                                        <Input
-                                            value={leaveForm.employee}
-                                            onChange={(e) => setLeaveForm({ ...leaveForm, employee: e.target.value })}
-                                            placeholder="ex. Jean Dupont"
+                                        <label className="text-sm font-medium text-slate-700">Employé</label>
+                                        <select
+                                            value={leaveForm.employeeId}
+                                            onChange={(e) => setLeaveForm({ ...leaveForm, employeeId: e.target.value })}
+                                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
                                             required
-                                        />
+                                        >
+                                            <option value="" disabled>Sélectionner un employé</option>
+                                            {employeesList.map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.positionTitle})</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700">Type de Congé</label>

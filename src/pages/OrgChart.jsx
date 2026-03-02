@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -8,24 +8,16 @@ import { Button } from '../components/ui/button';
 
 import seedData from '../../seed_output.json';
 
-const buildHierarchy = () => {
+const buildHierarchy = (employees) => {
     try {
-        const stored = localStorage.getItem('sirh_employees');
-        let employees = [];
-        if (stored) {
-            employees = JSON.parse(stored);
-        } else if (seedData && seedData.employees && seedData.employees.length > 0) {
-            employees = seedData.employees;
-        }
-
         if (!employees || employees.length === 0) return null;
 
         // Group employees by department to create a pseudo-structure
-        // In a true Position Management system we'd use reports_to_position_id,
-        // but here we only have department and role.
+        // In a true Position Management system we'd use reports_to_position_id (or managerId),
+        // but here we only have department and role, and the DB is fresh.
 
         // 1. Find CEO or top Admin
-        const ceoIndex = employees.findIndex(e => e.role === 'Administrator' || e.position_title?.toLowerCase().includes('ceo') || e.position_title?.toLowerCase().includes('chief') || e.systemRole === 'Administrator');
+        const ceoIndex = employees.findIndex(e => e.role === 'Administrator' || (e.positionTitle || '').toLowerCase().includes('ceo') || (e.positionTitle || '').toLowerCase().includes('chief') || e.systemRole === 'Administrator');
         const ceo = ceoIndex !== -1 ? employees[ceoIndex] : employees[0];
 
         // Remove CEO from pool
@@ -51,12 +43,12 @@ const buildHierarchy = () => {
             // Limit children to max 4 per manager for visual sanity in a demo
             const directReports = deptPool.slice(0, 4).map(emp => ({
                 id: emp.id,
-                title: emp.position_title,
+                title: emp.positionTitle || emp.role,
                 department: deptName,
                 incumbent: {
-                    name: `${emp.first_name} ${emp.last_name}`,
+                    name: `${emp.firstName} ${emp.lastName}`,
                     role: emp.role,
-                    avatar: emp.first_name[0]
+                    avatar: emp.firstName ? emp.firstName[0] : '!'
                 },
                 children: []
             }));
@@ -73,12 +65,12 @@ const buildHierarchy = () => {
 
             return {
                 id: manager.id,
-                title: manager.position_title,
+                title: manager.positionTitle || manager.role,
                 department: deptName,
                 incumbent: {
-                    name: `${manager.first_name} ${manager.last_name}`,
+                    name: `${manager.firstName} ${manager.lastName}`,
                     role: manager.role,
-                    avatar: manager.first_name[0]
+                    avatar: manager.firstName ? manager.firstName[0] : '!'
                 },
                 children: directReports
             };
@@ -86,17 +78,18 @@ const buildHierarchy = () => {
 
         return {
             id: ceo.id,
-            title: ceo.position_title || "Directeur Général",
+            title: ceo.positionTitle || "Directeur Général",
             department: "Direction",
             incumbent: {
-                name: `${ceo.first_name} ${ceo.last_name}`,
+                name: `${ceo.firstName} ${ceo.lastName}`,
                 role: "CEO",
-                avatar: ceo.first_name[0]
+                avatar: ceo.firstName ? ceo.firstName[0] : '!'
             },
             children: children
         };
 
     } catch (e) {
+        console.error("Erreur de construction hiérarchie:", e);
         return null;
     }
 };
@@ -163,15 +156,31 @@ const OrgNode = ({ node }) => {
 
 export function OrgChart() {
     const [zoom, setZoom] = useState(1);
-    const [data, setData] = useState(() => {
-        return buildHierarchy() || {
-            id: "error",
-            title: "Erreur de chargement des données",
-            department: "Système",
-            incumbent: { name: "Admin Système", role: "Admin", avatar: "!" },
-            children: []
-        };
-    });
+    const [data, setData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    useEffect(() => {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        fetch(`${API_URL}/api/employees`)
+            .then(res => res.json())
+            .then(apiEmployees => {
+                if (apiEmployees && apiEmployees.length > 0) {
+                    setData(buildHierarchy(apiEmployees));
+                } else {
+                    // Fallback visually if no data in db
+                    setData({
+                        id: "error",
+                        title: "Base de données vide",
+                        department: "Système",
+                        incumbent: { name: "Aucun employé", role: "N/A", avatar: "!" },
+                        children: []
+                    });
+                }
+            })
+            .catch(err => {
+                console.error("Erreur de récupération employés:", err);
+            })
+            .finally(() => setIsLoading(false));
+    }, []);
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
@@ -206,7 +215,12 @@ export function OrgChart() {
                     className="flex justify-center transition-transform origin-top duration-200 ease-out min-w-max min-h-max"
                     style={{ transform: `scale(${zoom})`, paddingBottom: '100px' }}
                 >
-                    <OrgNode node={data} />
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center p-12 text-slate-500">
+                            <span className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></span>
+                            <p>Chargement de l'organigramme depuis la Base de Données...</p>
+                        </div>
+                    ) : (data && <OrgNode node={data} />)}
                 </div>
             </div>
         </div>

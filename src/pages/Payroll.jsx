@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -15,10 +15,35 @@ const initialPayrollCycles = [
 ];
 
 export function Payroll() {
-    const [payrollCycles, setPayrollCycles] = useState(initialPayrollCycles);
+    const [payslips, setPayslips] = useState([]);
+    const [employees, setEmployees] = useState([]);
     const [notification, setNotification] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [payrollForm, setPayrollForm] = useState({ period: '', type: 'Regular', note: '', gtaImported: false, extraHours: 0, nightHours: 0, expensesImported: false, expensesTotal: 0 });
+    const [isLoading, setIsLoading] = useState(true);
+    const [payrollForm, setPayrollForm] = useState({ employeeId: '', period: '', baseSalary: 1500000, type: 'Regular', note: '', gtaImported: false, extraHours: 0, nightHours: 0, expensesImported: false, expensesTotal: 0 });
+
+    const fetchPayslipsAndEmployees = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const [payRes, empRes] = await Promise.all([
+                fetch(`${API_URL}/api/payroll`),
+                fetch(`${API_URL}/api/employees`)
+            ]);
+            const pays = await payRes.json();
+            const emps = await empRes.json();
+
+            if (Array.isArray(pays)) setPayslips(pays);
+            if (Array.isArray(emps)) setEmployees(emps);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPayslipsAndEmployees();
+    }, []);
 
     const showNotification = (message) => {
         setNotification(message);
@@ -26,7 +51,6 @@ export function Payroll() {
     };
 
     const handleImportGTA = () => {
-        // Simuler la récupération des heures depuis le backend GTA
         setTimeout(() => {
             setPayrollForm({ ...payrollForm, gtaImported: true, extraHours: 145, nightHours: 82 });
             showNotification('Le temps de travail GTA approuvé a été importé avec succès.');
@@ -34,35 +58,47 @@ export function Payroll() {
     };
 
     const handleImportExpenses = () => {
-        // Simuler la récupération des notes de frais
         setTimeout(() => {
             setPayrollForm({ ...payrollForm, expensesImported: true, expensesTotal: 813000 });
             showNotification('Notes de frais approuvées importées.');
         }, 800);
     };
 
-    const handleRunPayrollSubmit = (e) => {
+    const handleRunPayrollSubmit = async (e) => {
         e.preventDefault();
-        if (!payrollForm.period) {
-            showNotification('Veuillez spécifier la période de la paie.');
+        if (!payrollForm.period || !payrollForm.employeeId) {
+            showNotification('Veuillez spécifier la période et un employé.');
             return;
         }
 
-        const newId = `PAY-${payrollForm.period.replace(' ', '-').substring(0, 7).toUpperCase()}`;
+        try {
+            // Création d'une fiche de paie individuelle pour déclencher l'Audit Trail en base
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/payroll`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    employeeId: payrollForm.employeeId,
+                    periodStart: new Date(payrollForm.period + '-01'), // Ex: "2026-10-01"
+                    periodEnd: new Date(payrollForm.period + '-28'),
+                    baseSalary: Number(payrollForm.baseSalary),
+                    bonuses: payrollForm.expensesImported ? payrollForm.expensesTotal : 0,
+                    deductions: 0
+                })
+            });
 
-        const newCycle = {
-            id: newId,
-            period: payrollForm.period,
-            totalEmployees: 180,
-            amount: '567 120 000 FCFA',
-            status: 'En cours',
-            date: new Date().toLocaleDateString('fr-FR', { month: 'short', day: 'numeric', year: 'numeric' })
-        };
-
-        setPayrollCycles([newCycle, ...payrollCycles]);
-        setIsModalOpen(false);
-        setPayrollForm({ period: '', type: 'Régulier', note: '', gtaImported: false, extraHours: 0, nightHours: 0, expensesImported: false, expensesTotal: 0 });
-        showNotification(`L'exécution de la paie ${payrollForm.type.toLowerCase()} pour ${payrollForm.period} a été initiée.`);
+            if (res.ok) {
+                await fetchPayslipsAndEmployees();
+                setIsModalOpen(false);
+                setPayrollForm({ employeeId: '', period: '', baseSalary: 1500000, type: 'Régulier', note: '', gtaImported: false, extraHours: 0, nightHours: 0, expensesImported: false, expensesTotal: 0 });
+                showNotification(`Fiche de paie validée sur Serveur. Trace Audit enregistrée.`);
+            } else {
+                showNotification(`Erreur serveur lors de la création.`);
+            }
+        } catch (err) {
+            console.error(err);
+            showNotification("Le serveur API n'est pas joignable.");
+        }
     };
 
     const handleExport = (id) => {
@@ -143,11 +179,36 @@ export function Payroll() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-slate-700">Période de Paie</label>
+                                            <label className="text-sm font-medium text-slate-700">Employé</label>
+                                            <select
+                                                value={payrollForm.employeeId}
+                                                onChange={(e) => setPayrollForm({ ...payrollForm, employeeId: e.target.value })}
+                                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
+                                                required
+                                            >
+                                                <option value="" disabled>Sélectionner un employé</option>
+                                                {employees.map(emp => (
+                                                    <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.positionTitle})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Période (Mois-Année)</label>
                                             <Input
+                                                type="month"
                                                 value={payrollForm.period}
                                                 onChange={(e) => setPayrollForm({ ...payrollForm, period: e.target.value })}
-                                                placeholder="ex. Novembre 2026"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Salaire de Base Fixe</label>
+                                            <Input
+                                                type="number"
+                                                value={payrollForm.baseSalary}
+                                                onChange={(e) => setPayrollForm({ ...payrollForm, baseSalary: e.target.value })}
                                                 required
                                             />
                                         </div>
@@ -236,31 +297,39 @@ export function Payroll() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>ID du Cycle</TableHead>
-                                <TableHead>Période</TableHead>
-                                <TableHead>Employés Payés</TableHead>
-                                <TableHead>Montant Total</TableHead>
+                                <TableHead>Employé</TableHead>
+                                <TableHead>Période Générée</TableHead>
+                                <TableHead>Salaire Net</TableHead>
+                                <TableHead>Date Versement</TableHead>
                                 <TableHead>Statut</TableHead>
-                                <TableHead className="text-right">Exporter</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {payrollCycles.map((cycle) => (
-                                <TableRow key={cycle.id}>
-                                    <TableCell className="font-medium text-slate-900">{cycle.id}</TableCell>
-                                    <TableCell className="text-slate-600">{cycle.period}</TableCell>
-                                    <TableCell className="text-slate-600">{cycle.totalEmployees}</TableCell>
-                                    <TableCell className="font-semibold text-slate-800">{cycle.amount}</TableCell>
+                            {payslips.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                                        Aucune fiche de paie générée dans la base de données PostgreSQL .
+                                    </TableCell>
+                                </TableRow>
+                            ) : payslips.map((slip) => (
+                                <TableRow key={slip.id}>
+                                    <TableCell className="font-medium text-slate-900">
+                                        {slip.employee ? `${slip.employee.firstName} ${slip.employee.lastName}` : slip.employeeId}
+                                    </TableCell>
+                                    <TableCell className="text-slate-600">{new Date(slip.periodStart).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</TableCell>
+                                    <TableCell className="font-semibold text-emerald-700">{slip.netSalary.toLocaleString()} FCFA</TableCell>
+                                    <TableCell className="text-slate-600">{new Date(slip.createdAt).toLocaleDateString('fr-FR')}</TableCell>
                                     <TableCell>
-                                        <Badge variant={cycle.status === 'En cours' ? 'blue' : 'secondary'}>
-                                            {cycle.status}
+                                        <Badge variant={slip.status === 'PAID' ? 'success' : 'blue'}>
+                                            {slip.status}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleExport(cycle.id)}
+                                            onClick={() => handleExport(slip.id)}
                                             className="h-8 text-blue-600 hover:bg-blue-50"
                                         >
                                             <Download size={14} className="mr-2" /> PDF

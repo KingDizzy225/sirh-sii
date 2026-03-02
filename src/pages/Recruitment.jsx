@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -28,10 +28,34 @@ const STAGES = [
 ];
 
 export function Recruitment() {
-    const [jobs, setJobs] = useState(initialJobs);
-    const [candidates, setCandidates] = useState(initialCandidates);
+    const [jobs, setJobs] = useState([]);
+    const [candidates, setCandidates] = useState([]);
     const [notification, setNotification] = useState(null);
     const [activeJobId, setActiveJobId] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchData = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const [jobsRes, candsRes] = await Promise.all([
+                fetch(`${API_URL}/api/recruitment/jobs`),
+                fetch(`${API_URL}/api/recruitment/applicants`)
+            ]);
+            const jobsData = await jobsRes.json();
+            const candsData = await candsRes.json();
+
+            if (Array.isArray(jobsData)) setJobs(jobsData);
+            if (Array.isArray(candsData)) setCandidates(candsData);
+        } catch (e) {
+            console.error("API Recruitment non joignable");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     // Modal states
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
@@ -49,64 +73,89 @@ export function Recruitment() {
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleJobSubmit = (e) => {
+    const handleJobSubmit = async (e) => {
         e.preventDefault();
         if (!jobForm.title || !jobForm.department) {
             showNotification('Le titre et le département sont obligatoires.');
             return;
         }
 
-        const newJob = {
-            id: Date.now(),
-            title: jobForm.title,
-            department: jobForm.department,
-            location: jobForm.location || 'À distance',
-            status: jobForm.status,
-            contractType: jobForm.contractType,
-            experienceLevel: jobForm.experienceLevel,
-            description: jobForm.description,
-            requirements: jobForm.requirements,
-            postedAt: 'À l\'instant'
-        };
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/recruitment/jobs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: jobForm.title,
+                    department: jobForm.department,
+                    location: jobForm.location || 'À distance',
+                    type: jobForm.contractType,
+                    experience: jobForm.experienceLevel,
+                    description: jobForm.description,
+                    requirements: jobForm.requirements
+                })
+            });
 
-        setJobs([newJob, ...jobs]);
-        setIsJobModalOpen(false);
-        setJobForm({ title: '', department: '', location: '', status: 'Actif', contractType: 'CDI', experienceLevel: 'Intermédiaire', description: '', requirements: '' });
-        showNotification('Nouvelle offre d\'emploi créée avec succès.');
+            if (res.ok) {
+                await fetchData();
+                setIsJobModalOpen(false);
+                setJobForm({ title: '', department: '', location: '', status: 'Actif', contractType: 'CDI', experienceLevel: 'Intermédiaire', description: '', requirements: '' });
+                showNotification(`Offre d'emploi publiée avec succès.`);
+            }
+        } catch (e) { console.error(e); }
     };
 
-    const handleCandidateSubmit = (e) => {
+    const handleCandidateSubmit = async (e) => {
         e.preventDefault();
-        if (!candidateForm.firstName || !candidateForm.lastName) {
-            showNotification('Le nom du candidat est obligatoire.');
+        if (!candidateForm.firstName || !candidateForm.lastName || !candidateForm.email) {
+            showNotification('Le nom, prénom et email sont obligatoires.');
             return;
         }
 
-        const newDoc = {
-            id: Date.now(),
-            jobId: activeJobId || jobs[0].id,
-            firstName: candidateForm.firstName,
-            lastName: candidateForm.lastName,
-            email: candidateForm.email,
-            stage: 'SCREENING',
-            score: null
-        };
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/recruitment/applicants`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jobOfferId: activeJobId,
+                    firstName: candidateForm.firstName,
+                    lastName: candidateForm.lastName,
+                    email: candidateForm.email,
+                    phone: candidateForm.phone || ''
+                })
+            });
 
-        setCandidates([...candidates, newDoc]);
-        setIsCandidateModalOpen(false);
-        setCandidateForm({ firstName: '', lastName: '', email: '', phone: '' });
-        showNotification(`${candidateForm.firstName} a été ajouté au pipeline avec succès.`);
+            if (res.ok) {
+                await fetchData();
+                setIsCandidateModalOpen(false);
+                setCandidateForm({ firstName: '', lastName: '', email: '', phone: '' });
+                showNotification(`${candidateForm.firstName} a été ajouté au pipeline.`);
+            }
+        } catch (e) { console.error(e); }
     };
 
-    const moveCandidate = (candidateId, newStage) => {
+    const moveCandidate = async (candidateId, newStage) => {
         const candidate = candidates.find(c => c.id === candidateId);
-        setCandidates(candidates.map(c => c.id === candidateId ? { ...c, stage: newStage } : c));
+        // Mise à jour optimiste
+        setCandidates(candidates.map(c => c.id === candidateId ? { ...c, stage: newStage, status: newStage } : c));
 
-        if (newStage === 'HIRED' && candidate.stage !== 'HIRED') {
-            // Simulate Webhook Trigger
-            setTimeout(() => {
-                showNotification(`Webhook Déclenché : Notification envoyée sur Slack #annonces-rh pour ${candidate.firstName} ${candidate.lastName} !`);
-            }, 500);
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            await fetch(`${API_URL}/api/recruitment/applicants/${candidateId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStage })
+            });
+
+            if (newStage === 'HIRED' && candidate.status !== 'HIRED' && candidate.stage !== 'HIRED') {
+                setTimeout(() => {
+                    showNotification(`Webhook Déclenché : Notification envoyée sur Slack #annonces-rh pour ${candidate.firstName} ${candidate.lastName} !`);
+                }, 500);
+            }
+        } catch (e) {
+            console.error(e);
+            await fetchData(); // Rollback in case of error
         }
     };
 
@@ -466,8 +515,8 @@ export function Recruitment() {
                                         <div className="flex items-center gap-2 mt-1">
                                             <p className="text-sm text-slate-500 font-medium">{job.department}</p>
                                             <span className="text-slate-300">•</span>
-                                            <Badge variant="outline" className="text-[10px] font-semibold text-slate-600 bg-slate-50">{job.contractType}</Badge>
-                                            <Badge variant="outline" className="text-[10px] font-semibold text-slate-600 bg-slate-50">{job.experienceLevel}</Badge>
+                                            <Badge variant="outline" className="text-[10px] font-semibold text-slate-600 bg-slate-50">{job.type}</Badge>
+                                            <Badge variant="outline" className="text-[10px] font-semibold text-slate-600 bg-slate-50">{job.experience}</Badge>
                                         </div>
                                     </div>
                                     <Badge variant={job.status === 'Actif' ? 'success' : job.status === 'Urgent' ? 'destructive' : 'secondary'}>
@@ -477,7 +526,7 @@ export function Recruitment() {
 
                                 <div className="flex justify-between text-sm text-slate-500 mb-6 border-b border-slate-100 pb-4">
                                     <div className="flex items-center gap-1.5"><MapPin size={14} /> {job.location}</div>
-                                    <div className="flex items-center gap-1.5"><Clock size={14} /> {job.postedAt}</div>
+                                    <div className="flex items-center gap-1.5"><Clock size={14} /> {new Date(job.createdAt).toLocaleDateString('fr-FR')}</div>
                                 </div>
 
                                 <div className="flex items-center justify-between text-sm font-medium">
@@ -492,7 +541,7 @@ export function Recruitment() {
                 // VIEW 2: KANBAN PIPELINE
                 <div className="flex gap-4 overflow-x-auto pb-4 pt-4 hide-scrollbar">
                     {STAGES.map(stage => {
-                        const stageCandidates = candidates.filter(c => c.jobId === activeJobId && c.stage === stage.id);
+                        const stageCandidates = candidates.filter(c => c.jobOfferId === activeJobId && (c.stage === stage.id || c.status === stage.id));
                         return (
                             <div key={stage.id} className="min-w-[300px] max-w-[320px] flex-shrink-0 flex flex-col h-auto">
                                 <div className="flex items-center gap-2 mb-3">

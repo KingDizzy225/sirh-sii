@@ -21,13 +21,10 @@ model Employee {
   status          String    // 'ACTIVE', 'ON_LEAVE', 'TERMINATED'
   hireDate        DateTime  @map("hire_date")
   positionTitle   String    @map("position_title")
-  managerId       String?   @map("manager_id") // ID du manager direct
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  manager         Employee? @relation("Hierarchy", fields: [managerId], references: [id])
-  subordinates    Employee[] @relation("Hierarchy")
   payrolls        Payroll[]
   leaves          Leave[]
   skills          EmployeeSkill[]
@@ -148,37 +145,4 @@ model AuditLog {
   newData     String?  @map("new_data") // JSON en string
   ipAddress   String?  @map("ip_address")
   createdAt   DateTime @default(now()) @map("created_at")
-}
-
-// ----------------------------------------------------
-// 8. RECRUTEMENT (JOB OFFERS & APPLICANTS)
-// ----------------------------------------------------
-
-model JobOffer {
-  id              String    @id @default(uuid())
-  title           String
-  department      String
-  location        String    // ex: 'Abidjan', 'Remote', 'Dakar'
-  type            String    // 'CDI', 'CDD', 'Stage', 'Freelance'
-  status          String    // 'Active', 'Closed', 'Draft'
-  experienceMode  String    @default("Junior") @map("experience_mode")
-  description     String?
-  createdAt       DateTime  @default(now()) @map("created_at")
-  
-  applicants      Applicant[]
-}
-
-model Applicant {
-  id              String    @id @default(uuid())
-  jobOfferId      String    @map("job_offer_id")
-  firstName       String    @map("first_name")
-  lastName        String    @map("last_name")
-  email           String
-  phone           String?
-  status          String    // 'Applied', 'Screening', 'Interview', 'Offered', 'Hired', 'Rejected'
-  matchScore      Int       @default(0) @map("match_score") // Score de correspondance (ex: 85)
-  source          String    @default("LinkedIn")
-  appliedDate     DateTime  @default(now()) @map("applied_date")
-  
-  jobOffer        JobOffer  @relation(fields: [jobOfferId], references: [id])
 }

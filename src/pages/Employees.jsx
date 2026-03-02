@@ -65,7 +65,8 @@ export function Employees() {
 
     // Initialisation API
     useEffect(() => {
-        fetch('http://localhost:3000/api/employees')
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        fetch(`${API_URL}/api/employees`)
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map(emp => ({
@@ -120,7 +121,8 @@ export function Employees() {
 
         try {
             // Push towards real Backend Postgres API
-            const res = await fetch('http://localhost:3000/api/employees', {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/employees`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -174,7 +176,8 @@ export function Employees() {
     const handleRoleChange = async (empId, newRole) => {
         // Envoi de la requête au Backend pour simuler une modification (Audit Trail l'interceptera si câblé)
         try {
-            await fetch(`http://localhost:3000/api/employees/${empId}`, {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            await fetch(`${API_URL}/api/employees/${empId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ role: newRole })
