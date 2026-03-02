@@ -26,15 +26,20 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+const authRoutes = require('./routes/authRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const payrollRoutes = require('./routes/payrollRoutes');
 const recruitmentRoutes = require('./routes/recruitmentRoutes');
 
-app.use('/api/employees', employeeRoutes);
-app.use('/api/leaves', leaveRoutes);
-app.use('/api/payroll', payrollRoutes);
-app.use('/api/recruitment', recruitmentRoutes);
+const verifyToken = require('./middleware/authMiddleware');
+
+app.use('/api/auth', authRoutes);
+// Toutes les routes définies après ceci nécessitent un Token valide
+app.use('/api/employees', verifyToken, employeeRoutes);
+app.use('/api/leaves', verifyToken, leaveRoutes);
+app.use('/api/payroll', verifyToken, payrollRoutes);
+app.use('/api/recruitment', verifyToken, recruitmentRoutes);
 
 // Start the server
 app.listen(PORT, () => {

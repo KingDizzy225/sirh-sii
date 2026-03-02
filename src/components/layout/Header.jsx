@@ -3,11 +3,8 @@ import { Search, Bell, Menu, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export function Header({ onMenuClick }) {
-    const { user, switchRole } = useAuth();
+    const { user, logout } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-    // Provide some preset roles for demonstrating the RBAC features
-    const devRoles = ['Administrator', 'HR', 'Employee', 'Social Worker'];
 
     if (!user) return null; // Safe guard if rendering before context is fully populated
 
@@ -50,29 +47,18 @@ export function Header({ onMenuClick }) {
                         <ChevronDown size={16} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
 
-                    {/* Developer Role Switcher Dropdown */}
+                    {/* User Dropdown */}
                     {isDropdownOpen && (
                         <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-slate-100 bg-white shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                            <div className="px-4 py-2 border-b border-slate-100 mb-2">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Dev: Changer Rôle</p>
+                            <div className="px-4 py-3 border-b border-slate-100 mb-2">
+                                <p className="text-sm font-semibold text-slate-800">{user.name}</p>
+                                <p className="text-xs text-slate-500 truncate">{user.email}</p>
                             </div>
 
-                            {devRoles.map((role) => (
-                                <button
-                                    key={role}
-                                    onClick={() => {
-                                        switchRole(role);
-                                        setIsDropdownOpen(false);
-                                    }}
-                                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${user.role === role ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700 hover:bg-slate-50'}`}
-                                >
-                                    {role}
-                                </button>
-                            ))}
-
-                            <div className="h-px bg-slate-100 my-2"></div>
-
-                            <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                            <button
+                                onClick={logout}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            >
                                 <LogOut size={16} /> Déconnexion
                             </button>
                         </div>

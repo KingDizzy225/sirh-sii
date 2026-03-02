@@ -24,10 +24,12 @@ export function Payroll() {
 
     const fetchPayslipsAndEmployees = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
+            const authConfig = { headers: { 'Authorization': `Bearer ${token}` } };
+
             const [payRes, empRes] = await Promise.all([
-                fetch(`${API_URL}/api/payroll`),
-                fetch(`${API_URL}/api/employees`)
+                fetch(`${API_URL}/api/payroll`, authConfig),
+                fetch(`${API_URL}/api/employees`, authConfig)
             ]);
             const pays = await payRes.json();
             const emps = await empRes.json();
@@ -73,10 +75,13 @@ export function Payroll() {
 
         try {
             // Création d'une fiche de paie individuelle pour déclencher l'Audit Trail en base
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
             const res = await fetch(`${API_URL}/api/payroll`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     employeeId: payrollForm.employeeId,
                     periodStart: new Date(payrollForm.period + '-01'), // Ex: "2026-10-01"

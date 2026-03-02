@@ -160,7 +160,10 @@ export function OrgChart() {
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        fetch(`${API_URL}/api/employees`)
+        const token = localStorage.getItem('sirh_token');
+        fetch(`${API_URL}/api/employees`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(apiEmployees => {
                 if (apiEmployees && apiEmployees.length > 0) {

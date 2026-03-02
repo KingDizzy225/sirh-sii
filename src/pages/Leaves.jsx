@@ -32,7 +32,10 @@ export function Leaves() {
     const fetchLeaves = async () => {
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const res = await fetch(`${API_URL}/api/leaves`);
+            const token = localStorage.getItem('sirh_token');
+            const res = await fetch(`${API_URL}/api/leaves`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             if (Array.isArray(data)) {
                 // Formatting for display
@@ -62,7 +65,10 @@ export function Leaves() {
     const fetchEmployees = async () => {
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const res = await fetch(`${API_URL}/api/employees`);
+            const token = localStorage.getItem('sirh_token');
+            const res = await fetch(`${API_URL}/api/employees`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             if (Array.isArray(data)) setEmployeesList(data);
         } catch (error) {
@@ -81,9 +87,14 @@ export function Leaves() {
 
     const handleApprove = async (id) => {
         try {
-            await fetch(`http://localhost:3000/api/leaves/${id}/status`, {
+            const token = localStorage.getItem('sirh_token');
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            await fetch(`${API_URL}/api/leaves/${id}/status`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ status: 'APPROVED' })
             });
             setLeaveRequests(prev => prev.map(req =>
@@ -95,9 +106,14 @@ export function Leaves() {
 
     const handleReject = async (id) => {
         try {
-            await fetch(`http://localhost:3000/api/leaves/${id}/status`, {
+            const token = localStorage.getItem('sirh_token');
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            await fetch(`${API_URL}/api/leaves/${id}/status`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ status: 'REJECTED' })
             });
             setLeaveRequests(prev => prev.map(req =>
@@ -116,9 +132,13 @@ export function Leaves() {
 
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
             const res = await fetch(`${API_URL}/api/leaves`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     employeeId: leaveForm.employeeId,
                     type: leaveForm.type,

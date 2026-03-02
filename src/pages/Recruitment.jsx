@@ -36,10 +36,12 @@ export function Recruitment() {
 
     const fetchData = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
+            const authConfig = { headers: { 'Authorization': `Bearer ${token}` } };
+
             const [jobsRes, candsRes] = await Promise.all([
-                fetch(`${API_URL}/api/recruitment/jobs`),
-                fetch(`${API_URL}/api/recruitment/applicants`)
+                fetch(`${API_URL}/api/recruitment/jobs`, authConfig),
+                fetch(`${API_URL}/api/recruitment/applicants`, authConfig)
             ]);
             const jobsData = await jobsRes.json();
             const candsData = await candsRes.json();
@@ -82,9 +84,13 @@ export function Recruitment() {
 
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
             const res = await fetch(`${API_URL}/api/recruitment/jobs`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     title: jobForm.title,
                     department: jobForm.department,
@@ -114,9 +120,13 @@ export function Recruitment() {
 
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
             const res = await fetch(`${API_URL}/api/recruitment/applicants`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     jobOfferId: activeJobId,
                     firstName: candidateForm.firstName,
@@ -142,9 +152,13 @@ export function Recruitment() {
 
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
             await fetch(`${API_URL}/api/recruitment/applicants/${candidateId}/status`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ status: newStage })
             });
 

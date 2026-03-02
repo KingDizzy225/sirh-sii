@@ -66,7 +66,10 @@ export function Employees() {
     // Initialisation API
     useEffect(() => {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        fetch(`${API_URL}/api/employees`)
+        const token = localStorage.getItem('sirh_token');
+        fetch(`${API_URL}/api/employees`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map(emp => ({
@@ -121,10 +124,13 @@ export function Employees() {
 
         try {
             // Push towards real Backend Postgres API
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
             const res = await fetch(`${API_URL}/api/employees`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     firstName: formData.firstName,
                     lastName: formData.lastName,
@@ -176,10 +182,13 @@ export function Employees() {
     const handleRoleChange = async (empId, newRole) => {
         // Envoi de la requête au Backend pour simuler une modification (Audit Trail l'interceptera si câblé)
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
             await fetch(`${API_URL}/api/employees/${empId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ role: newRole })
             });
             const updated = employees.map(emp =>
