@@ -160,8 +160,8 @@ export function Employees() {
             showNotification(`Profil créé sur Base de données globale pour ${formData.firstName}.`);
 
         } catch (error) {
-            console.error(error);
-            showNotification("Erreur de connexion au serveur Backend.");
+            console.error("Détails de l'erreur frontend :", error);
+            showNotification(error.message || "Erreur de connexion au serveur Backend.");
         }
     };
 
