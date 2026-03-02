@@ -5,11 +5,15 @@ import { Input } from '../components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Save } from 'lucide-react';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
+import { useAuth } from '../context/AuthContext';
 
 export function Settings() {
     const [notification, setNotification] = useState(null);
     const [activeTab, setActiveTab] = useState('Integrations');
     const [logoPath, setLogoPath] = useState(null);
+    const { user } = useAuth();
+    const [usersList, setUsersList] = useState([]);
+    const [isFetchingUsers, setIsFetchingUsers] = useState(false);
 
     const showNotification = (message) => {
         setNotification(message);
@@ -43,6 +47,7 @@ export function Settings() {
         'Company Profile': 'Profil de l\'Entreprise',
         'Preferences': 'Préférences',
         'Security': 'Sécurité du Compte',
+        'Access Management': 'Comptes et Rôles',
         'Integrations': 'Intégrations',
         'Notifications': 'Notifications',
         'Billing': 'Facturation'
@@ -105,6 +110,7 @@ export function Settings() {
                     {renderTabButton('Company Profile')}
                     {renderTabButton('Preferences')}
                     {renderTabButton('Security')}
+                    {user?.role === 'ADMIN' && renderTabButton('Access Management')}
                     {renderTabButton('Integrations', 'settings:manage')}
                     {renderTabButton('Notifications')}
                     {renderTabButton('Billing', 'settings:manage')}
@@ -274,6 +280,140 @@ export function Settings() {
                                         <div className="flex justify-end gap-3 mt-6">
                                             <Button type="button" variant="outline" onClick={handleDiscard}>Annuler</Button>
                                             <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Mettre à jour la sécurité</Button>
+                                        </div>
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'Access Management' && user?.role === 'ADMIN' && (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Gestion des Utilisateurs</CardTitle>
+                                        <CardDescription>Visualisez tous les comptes ayant accès au système SIIRH.</CardDescription>
+                                    </div>
+                                    <Button size="sm" onClick={async () => {
+                                        setIsFetchingUsers(true);
+                                        try {
+                                            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                                            const res = await fetch(`${API_URL}/api/auth/users`, {
+                                                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+                                            });
+                                            if (res.ok) {
+                                                const data = await res.json();
+                                                setUsersList(data);
+                                            }
+                                        } catch (err) {
+                                            console.error(err);
+                                        } finally {
+                                            setIsFetchingUsers(false);
+                                        }
+                                    }} variant="outline" className="h-8">
+                                        {isFetchingUsers ? 'Chargement...' : 'Actualiser la liste'}
+                                    </Button>
+                                </CardHeader>
+                                <CardContent>
+                                    {usersList.length === 0 ? (
+                                        <div className="text-center py-6 text-slate-500">
+                                            Cliquez sur "Actualiser la liste" pour afficher les comptes.
+                                        </div>
+                                    ) : (
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="bg-slate-50 border-b">
+                                                    <tr>
+                                                        <th className="px-4 py-3 font-medium text-slate-500">Nom Complet</th>
+                                                        <th className="px-4 py-3 font-medium text-slate-500">Email</th>
+                                                        <th className="px-4 py-3 font-medium text-slate-500">Rôle (Accès)</th>
+                                                        <th className="px-4 py-3 font-medium text-slate-500">Date de création</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y">
+                                                    {usersList.map(u => (
+                                                        <tr key={u.id}>
+                                                            <td className="px-4 py-3 font-medium">{u.name}</td>
+                                                            <td className="px-4 py-3 text-slate-600">{u.email}</td>
+                                                            <td className="px-4 py-3">
+                                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                                                                    u.role === 'HR' ? 'bg-blue-100 text-blue-700' :
+                                                                        'bg-slate-100 text-slate-700'
+                                                                    }`}>
+                                                                    {u.role}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-slate-500">
+                                                                {new Date(u.createdAt).toLocaleDateString('fr-FR')}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Créer un Nouveau Compte</CardTitle>
+                                    <CardDescription>Générez un accès pour un nouvel employé ou manager.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target);
+                                        const payload = Object.fromEntries(formData);
+
+                                        try {
+                                            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                                            const res = await fetch(`${API_URL}/api/auth/users`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'Authorization': `Bearer ${localStorage.getItem('sirh_token')}`
+                                                },
+                                                body: JSON.stringify(payload)
+                                            });
+                                            if (res.ok) {
+                                                showNotification('Compte utilisateur créé avec succès !');
+                                                e.target.reset();
+                                            } else {
+                                                const data = await res.json();
+                                                showNotification(data.error || 'Erreur de création');
+                                            }
+                                        } catch (err) {
+                                            showNotification('Erreur serveur');
+                                        }
+                                    }} className="space-y-4 max-w-2xl">
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium leading-none text-slate-700">Nom Complet</label>
+                                                <Input name="name" required placeholder="Ex: Jean Dupont" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium leading-none text-slate-700">Adresse Email</label>
+                                                <Input name="email" type="email" required placeholder="jean.dupont@siirh.com" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium leading-none text-slate-700">Mot de Passe Provisoire</label>
+                                                <Input name="password" required placeholder="••••••••" minLength="6" />
+                                            </div>
+                                            <div className="space-y-2 flex flex-col">
+                                                <label className="text-sm font-medium leading-none text-slate-700">Rôle d'Accès</label>
+                                                <select name="role" required className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2">
+                                                    <option value="MANAGER">Manager / Employé Standard</option>
+                                                    <option value="HR">Ressources Humaines (RH)</option>
+                                                    <option value="ADMIN">Administrateur Système</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-end mt-4">
+                                            <Button type="submit" className="bg-slate-900 text-white hover:bg-slate-800">
+                                                Générer le Compte
+                                            </Button>
                                         </div>
                                     </form>
                                 </CardContent>
