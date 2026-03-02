@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Home, Users, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { RequirePermission } from '../auth/ProtectedRoute';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
     { name: 'Tableau de bord', path: '/', icon: Home, permission: 'dashboard:view' },
@@ -32,6 +32,8 @@ const navItems = [
 
 export function Sidebar({ className }) {
     const location = useLocation();
+    const { user } = useAuth();
+    const userRole = user ? user.role : 'EMPLOYEE';
 
     return (
         <div className={cn('flex h-screen w-64 flex-col border-r bg-slate-50 shadow-sm', className)}>
@@ -52,9 +54,6 @@ export function Sidebar({ className }) {
                     const isActive = location.pathname === item.path;
 
                     // Simplified Role check for MVP: Hide Administrator only routes from others
-                    const { user } = useAuth();
-                    const userRole = user ? user.role : 'EMPLOYEE';
-
                     if (item.permission === 'settings:view' && userRole !== 'ADMIN') return null;
                     if (item.permission === 'payroll:view' && userRole !== 'ADMIN' && userRole !== 'HR') return null;
 
