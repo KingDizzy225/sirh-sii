@@ -28,6 +28,7 @@ import { HSE } from './pages/HSE';
 import { Assets } from './pages/Assets';
 import { Analytics } from './pages/Analytics';
 import { Compensation } from './pages/Compensation';
+import { Trainings } from './pages/Trainings';
 import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
 
@@ -72,7 +73,7 @@ const AppContent = () => {
       )}
 
       <Sidebar
-        className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset - y - 0 left - 0 z - 50 transform transition - transform duration - 300 ease -in -out md:relative md: translate - x - 0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} `}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
@@ -180,6 +181,12 @@ const AppContent = () => {
             <Route path="/compensation" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Compensation />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/trainings" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Trainings />
               </ProtectedRoute>
             } />
 

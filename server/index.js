@@ -31,6 +31,7 @@ const employeeRoutes = require('./routes/employeeRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const payrollRoutes = require('./routes/payrollRoutes');
 const recruitmentRoutes = require('./routes/recruitmentRoutes');
+const trainingRoutes = require('./routes/trainingRoutes'); // Added trainingRoutes
 
 const verifyToken = require('./middleware/authMiddleware');
 
@@ -40,6 +41,7 @@ app.use('/api/employees', verifyToken, employeeRoutes);
 app.use('/api/leaves', verifyToken, leaveRoutes);
 app.use('/api/payroll', verifyToken, payrollRoutes);
 app.use('/api/recruitment', verifyToken, recruitmentRoutes);
+app.use('/api/trainings', verifyToken, trainingRoutes);
 
 // Start the server
 app.listen(PORT, () => {
