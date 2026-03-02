@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------
+// 1. EMPLOYEES & CORE SYSTEM
+// ----------------------------------------------------
+
+model Employee {
+  id              String    @id @default(uuid())
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  email           String    @unique
+  role            String    // 'Employee', 'Manager', 'HR', 'Administrator', 'Social Worker'
+  department      String
+  status          String    // 'ACTIVE', 'ON_LEAVE', 'TERMINATED'
+  hireDate        DateTime  @map("hire_date")
+  positionTitle   String    @map("position_title")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  payrolls        Payroll[]
+  leaves          Leave[]
+  skills          EmployeeSkill[]
+  supportTickets  SupportTicket[] @relation("SupportTickets")
+  assets          AssetAssignment[]
+}
+
+// ----------------------------------------------------
+// 2. PAIE (PAYROLL)
+// ----------------------------------------------------
+
+model Payroll {
+  id              String    @id @default(uuid())
+  employeeId      String    @map("employee_id")
+  period          DateTime  // Représente le mois de paie (ex: 2026-01-01)
+  baseSalary      Float     @map("base_salary")
+  bonus           Float     @default(0)
+  deductions      Float     @default(0)
+  status          String    // 'Draft', 'Approved', 'Paid'
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+}
+
+// ----------------------------------------------------
+// 3. CONGÉS & ABSENCES (LEAVES)
+// ----------------------------------------------------
+
+model Leave {
+  id              String    @id @default(uuid())
+  employeeId      String    @map("employee_id")
+  type            String    // 'Annual', 'Sick', 'Maternity', 'Unpaid'
+  startDate       DateTime  @map("start_date")
+  endDate         DateTime  @map("end_date")
+  status          String    // 'Pending', 'Approved', 'Rejected'
+  durationDays    Float     @map("duration_days")
+  reason          String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+}
+
+// ----------------------------------------------------
+// 4. ASSISTANT SOCIAL (SUPPORT TICKETS)
+// ----------------------------------------------------
+
+model SupportTicket {
+  id              String    @id @default(uuid())
+  requesterId     String?   @map("requester_id") // Nullable if anonymous
+  category        String    // 'Logement', 'Famille', 'Finances', etc.
+  priority        String    // 'Low', 'Medium', 'High', 'Urgent'
+  status          String    // 'Ouvert', 'En cours', 'Résolu', 'Fermé'
+  isAnonymous     Boolean   @default(false) @map("is_anonymous")
+  title           String
+  description     String
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  requester       Employee? @relation("SupportTickets", fields: [requesterId], references: [id])
+}
+
+// ----------------------------------------------------
+// 5. GPEC (COMPÉTENCES)
+// ----------------------------------------------------
+
+model EmployeeSkill {
+  id                  String    @id @default(uuid())
+  employeeId          String    @map("employee_id")
+  skillName           String    @map("skill_name")
+  proficiencyLevel    String    @map("proficiency_level") // 'Débutant', 'Intermédiaire', 'Avancé', 'Expert'
+  interestedInTraining Boolean  @default(false) @map("interested_in_training")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  employee            Employee  @relation(fields: [employeeId], references: [id])
+}
+
+// ----------------------------------------------------
+// 6. MATÉRIEL (ASSET MANAGEMENT)
+// ----------------------------------------------------
+
+model Asset {
+  id              String    @id @default(uuid())
+  assetTag        String    @unique @map("asset_tag")
+  category        String
+  model           String
+  status          String    // 'Available', 'Assigned', 'In Repair', 'Retired'
+  departmentOwner String    @map("department_owner")
+  purchaseDate    DateTime? @map("purchase_date")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  assignments     AssetAssignment[]
+}
+
+model AssetAssignment {
+  id                 String    @id @default(uuid())
+  assetId            String    @map("asset_id")
+  employeeId         String    @map("employee_id")
+  assignedDate       DateTime  @default(now()) @map("assigned_date")
+  returnedDate       DateTime? @map("returned_date")
+  returnCondition    String?   @map("return_condition")
+  
+  asset              Asset     @relation(fields: [assetId], references: [id])
+  employee           Employee  @relation(fields: [employeeId], references: [id])
+}
+
+// ----------------------------------------------------
+// 7. COMPLIANCE (AUDIT TRAIL)
+// ----------------------------------------------------
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id") // ID de l'utilisateur qui a fait l'action
+  action      String   // PUT, PATCH, DELETE
+  tableName   String   @map("table_name")
+  recordId    String   @map("record_id")
+  oldData     String?  @map("old_data") // JSON en string
+  newData     String?  @map("new_data") // JSON en string
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+}

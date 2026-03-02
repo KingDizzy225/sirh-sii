@@ -6,15 +6,10 @@
  * (Payroll, Employees, Settings) et enregistre les modifications dans 'Audit_Logs'.
  */
 
-// Simulation de l'insertion dans la base de données (ex: Prisma, Sequelize, pg)
-const db = {
-    audit_Logs: {
-        create: async (data) => {
-            console.log('[AUDIT TRAIL] Nouvelle entrée enregistrée :', data);
-            // Logique réelle d'insertion en BDD ici
-        }
-    }
-};
+// Import the real Prisma client
+const prisma = require('../prismaClient');
+
+// We no longer need the mock db object
 
 /**
  * Fonction asynchrone pour intercepter et journaliser les changements.
@@ -84,7 +79,9 @@ const auditTrailMiddleware = async (req, res, next) => {
             };
 
             // Ne pas bloquer la réponse client, exécuter en tâche de fond
-            db.audit_Logs.create(auditPayload).catch(err => {
+            prisma.auditLog.create(auditPayload).then(() => {
+                console.log(`[AUDIT TRAIL] Trace enregistrée pour ${resource}/${targetId}`);
+            }).catch(err => {
                 console.error("[AUDIT ERROR] Échec de l'enregistrement de l'audit:", err);
             });
         }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -58,9 +58,37 @@ const roleLabels = {
 };
 
 export function Employees() {
-    const [employees, setEmployees] = useState(initialEmployees);
+    const [employees, setEmployees] = useState([]);
     const [notification, setNotification] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Initialisation API
+    useEffect(() => {
+        fetch('http://localhost:3000/api/employees')
+            .then(res => res.json())
+            .then(data => {
+                const mapped = data.map(emp => ({
+                    id: emp.id,
+                    name: `${emp.firstName} ${emp.lastName}`,
+                    role: emp.positionTitle || 'Poste Non Assigné',
+                    systemRole: emp.role || 'Employee',
+                    department: emp.department || 'Non assigné',
+                    status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
+                    email: emp.email,
+                    phone: '+225 01234567', // A ajouter dans la BDD dans le futur
+                    sex: 'Non spécifié',
+                    onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
+                }));
+                // Combine with local mock fallback if API is empty
+                setEmployees(mapped.length > 0 ? mapped : initialEmployees);
+            })
+            .catch(err => {
+                console.error('API non joignable, fallback local:', err);
+                setEmployees(initialEmployees);
+            })
+            .finally(() => setIsLoading(false));
+    }, []);
 
     // Form state corresponding to user request
     const [formData, setFormData] = useState({
@@ -81,7 +109,7 @@ export function Employees() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleAddEmployeeSubmit = (e) => {
+    const handleAddEmployeeSubmit = async (e) => {
         e.preventDefault();
 
         // Ensure name and surname are provided
@@ -90,25 +118,49 @@ export function Employees() {
             return;
         }
 
-        const newEmp = {
-            id: `EMP00${employees.length + 1}`,
-            name: `${formData.firstName} ${formData.lastName}`,
-            role: formData.position || 'Poste Non Assigné',
-            systemRole: 'Employee', // Default role for new hires
-            department: 'Non assigné', // Defaulting as it wasn't specified in form requirements
-            status: 'Actif',
-            email: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}@entreprise.com`,
-            phone: formData.phone,
-            sex: formData.sex,
-            onboardingProgress: 0
-        };
+        try {
+            // Push towards real Backend Postgres API
+            const res = await fetch('http://localhost:3000/api/employees', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}@entreprise.com`,
+                    role: 'Employee',
+                    department: 'Ressources Humaines', // Simplified default
+                    positionTitle: formData.position || 'Poste Non Assigné',
+                    status: 'ACTIVE'
+                })
+            });
 
-        const updatedEmployees = [newEmp, ...employees];
-        setEmployees(updatedEmployees);
-        localStorage.setItem('sirh_employees', JSON.stringify(updatedEmployees));
-        setIsAddModalOpen(false);
-        setFormData({ firstName: '', lastName: '', phone: '', position: '', sex: 'Homme' }); // Reset form
-        showNotification(`Profil créé pour ${formData.firstName}. Le workflow d'intégration standard a été déclenché automatiquement.`);
+            const dbEmp = await res.json();
+            if (!res.ok) throw new Error(dbEmp.error || "Erreur création API");
+
+            const newEmp = {
+                id: dbEmp.id || `EMP00${employees.length + 1}`,
+                name: `${dbEmp.firstName} ${dbEmp.lastName}`,
+                role: dbEmp.positionTitle,
+                systemRole: dbEmp.role,
+                department: dbEmp.department,
+                status: 'Actif',
+                email: dbEmp.email,
+                phone: formData.phone,
+                sex: formData.sex,
+                onboardingProgress: 0
+            };
+
+            const updatedEmployees = [newEmp, ...employees];
+            setEmployees(updatedEmployees);
+            localStorage.setItem('sirh_employees', JSON.stringify(updatedEmployees)); // Keeps fallback
+            setIsAddModalOpen(false);
+            setFormData({ firstName: '', lastName: '', phone: '', position: '', sex: 'Homme' }); // Reset form
+            showNotification(`Profil créé sur Base de données globale pour ${formData.firstName}.`);
+
+        } catch (error) {
+            console.error(error);
+            showNotification("Erreur de connexion au serveur Backend.");
+        }
     };
 
     const handleExport = () => {
@@ -119,13 +171,23 @@ export function Employees() {
         showNotification(`Menu contextuel ouvert pour ${name}`);
     };
 
-    const handleRoleChange = (empId, newRole) => {
-        const updated = employees.map(emp =>
-            emp.id === empId ? { ...emp, systemRole: newRole } : emp
-        );
-        setEmployees(updated);
-        localStorage.setItem('sirh_employees', JSON.stringify(updated));
-        showNotification(`Niveau d'accès système mis à jour avec succès : ${newRole}`);
+    const handleRoleChange = async (empId, newRole) => {
+        // Envoi de la requête au Backend pour simuler une modification (Audit Trail l'interceptera si câblé)
+        try {
+            await fetch(`http://localhost:3000/api/employees/${empId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole })
+            });
+            const updated = employees.map(emp =>
+                emp.id === empId ? { ...emp, systemRole: newRole } : emp
+            );
+            setEmployees(updated);
+            localStorage.setItem('sirh_employees', JSON.stringify(updated));
+            showNotification(`Accès métier mis à jour en BDD avec succès : ${newRole}`);
+        } catch (e) {
+            showNotification("Erreur de modification Backend.");
+        }
     };
 
     return (
