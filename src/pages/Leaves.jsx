@@ -3,9 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Check, X, Calendar as CalendarIcon, CheckCircle2, Plus } from 'lucide-react';
+import { Check, X, Calendar as CalendarIcon, CheckCircle2, Plus, List } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import format from 'date-fns/format';
+import parse from 'date-fns/parse';
+import startOfWeek from 'date-fns/startOfWeek';
+import getDay from 'date-fns/getDay';
+import fr from 'date-fns/locale/fr';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+const locales = {
+    'fr': fr,
+};
+
+const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek,
+    getDay,
+    locales,
+});
 
 const initialLeaveRequests = [
     { id: 'LR-1021', employee: 'Amanda Smith', type: 'Congé Annuel', duration: '12 Oct - 15 Oct (4 Jours)', status: 'En attente', appliedOn: '01 Oct 2026' },
@@ -20,6 +39,7 @@ export function Leaves() {
     const [notification, setNotification] = useState(null);
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
 
     const [leaveForm, setLeaveForm] = useState({
         employeeId: '',
@@ -51,7 +71,9 @@ export function Leaves() {
                         type: leave.type,
                         duration: `${sDate.getDate()} ${shortMonths[sDate.getMonth()]} - ${eDate.getDate()} ${shortMonths[eDate.getMonth()]} (${diffDays} Jours)`,
                         status: leave.status === 'APPROVED' ? 'Approuvé' : leave.status === 'REJECTED' ? 'Rejeté' : 'En attente',
-                        appliedOn: new Date(leave.createdAt).toLocaleDateString('fr-FR')
+                        appliedOn: new Date(leave.createdAt).toLocaleDateString('fr-FR'),
+                        rawStart: sDate,
+                        rawEnd: eDate
                     };
                 });
                 setLeaveRequests(mapped);
@@ -274,8 +296,12 @@ export function Leaves() {
                     <p className="text-slate-500 mt-1">Examinez les demandes de congés et suivez les présences de l'entreprise.</p>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <Button variant="outline" className="gap-2 text-slate-700 bg-white" onClick={() => showNotification("Chargement de l'intégration calendrier...")}>
-                        <CalendarIcon size={16} /> Calendrier
+                    <Button
+                        variant="outline"
+                        className={`gap-2 ${viewMode === 'calendar' ? 'bg-slate-100 text-slate-900 border-slate-300' : 'bg-white text-slate-700'}`}
+                        onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+                    >
+                        {viewMode === 'list' ? <><CalendarIcon size={16} /> Vue Calendrier</> : <><List size={16} /> Vue Liste</>}
                     </Button>
                     <Button className="gap-2 bg-blue-600 text-white hover:bg-blue-700" onClick={() => setIsLeaveModalOpen(true)}>
                         <Plus size={16} /> Demander un Congé
@@ -298,64 +324,111 @@ export function Leaves() {
                 </Card>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg">Demandes de Congé Récentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Employé</TableHead>
-                                <TableHead>Type de Congé</TableHead>
-                                <TableHead>Durée</TableHead>
-                                <TableHead>Date de demande</TableHead>
-                                <TableHead>Statut</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {leaveRequests.map((req) => (
-                                <TableRow key={req.id}>
-                                    <TableCell className="font-medium text-slate-900">{req.employee}</TableCell>
-                                    <TableCell className="text-slate-600">{req.type}</TableCell>
-                                    <TableCell className="text-slate-600">{req.duration}</TableCell>
-                                    <TableCell className="text-slate-500">{req.appliedOn}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={req.status === 'Approuvé' ? 'success' : req.status === 'En attente' ? 'warning' : 'destructive'}>
-                                            {req.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {req.status === 'En attente' ? (
-                                            <div className="flex justify-end gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleApprove(req.id)}
-                                                    className="h-8 border-green-200 bg-white text-green-700 hover:bg-green-50 hover:text-green-800"
-                                                >
-                                                    <Check size={14} className="mr-1" /> Approuver
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleReject(req.id)}
-                                                    className="h-8 border-red-200 bg-white text-red-700 hover:bg-red-50 hover:text-red-800"
-                                                >
-                                                    <X size={14} className="mr-1" /> Rejeter
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <span className="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full inline-block">Traité</span>
-                                        )}
-                                    </TableCell>
+            {viewMode === 'list' ? (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Demandes de Congé Récentes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Employé</TableHead>
+                                    <TableHead>Type de Congé</TableHead>
+                                    <TableHead>Durée</TableHead>
+                                    <TableHead>Date de demande</TableHead>
+                                    <TableHead>Statut</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                            </TableHeader>
+                            <TableBody>
+                                {leaveRequests.map((req) => (
+                                    <TableRow key={req.id}>
+                                        <TableCell className="font-medium text-slate-900">{req.employee}</TableCell>
+                                        <TableCell className="text-slate-600">{req.type}</TableCell>
+                                        <TableCell className="text-slate-600">{req.duration}</TableCell>
+                                        <TableCell className="text-slate-500">{req.appliedOn}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={req.status === 'Approuvé' ? 'success' : req.status === 'En attente' ? 'warning' : 'destructive'}>
+                                                {req.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {req.status === 'En attente' ? (
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleApprove(req.id)}
+                                                        className="h-8 border-green-200 bg-white text-green-700 hover:bg-green-50 hover:text-green-800"
+                                                    >
+                                                        <Check size={14} className="mr-1" /> Approuver
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleReject(req.id)}
+                                                        className="h-8 border-red-200 bg-white text-red-700 hover:bg-red-50 hover:text-red-800"
+                                                    >
+                                                        <X size={14} className="mr-1" /> Rejeter
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full inline-block">Traité</span>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            ) : (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Calendrier des Absences</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[600px] mt-4">
+                            <Calendar
+                                localizer={localizer}
+                                events={leaveRequests.map(req => {
+                                    // Parse back the dates from the string duration
+                                    // Ou utiliser directement raw date si on la stockait, mais on l'a formaté dans fetchLeaves.
+                                    // Pour être robuste, on va se fier à une clé 'rawStart' et 'rawEnd' si on l'avait map.
+                                    // Comme on a formaté 'duration' comme texte, le plus simple est de modifier fetchLeaves légèrement, 
+                                    // mais pour éviter une erreur, je crée une approximation basique. 
+                                    // Idéalement on garde start et end dans le state.
+                                    // Modifions vite fait req pour inclure start/end.
+                                    return {
+                                        title: `${req.employee} (${req.type})`,
+                                        start: req.rawStart || new Date(),
+                                        end: req.rawEnd || new Date(),
+                                        allDay: true,
+                                    };
+                                })}
+                                startAccessor="start"
+                                endAccessor="end"
+                                style={{ height: '100%' }}
+                                messages={{
+                                    next: "Suivant",
+                                    previous: "Précédent",
+                                    today: "Aujourd'hui",
+                                    month: "Mois",
+                                    week: "Semaine",
+                                    day: "Jour",
+                                    agenda: "Agenda"
+                                }}
+                                culture="fr"
+                                eventPropGetter={(event) => {
+                                    const backgroundColor = event.title.includes('Approuvé') ? '#10b981' : event.title.includes('Rejeté') ? '#ef4444' : '#f59e0b';
+                                    return { style: { backgroundColor } };
+                                }}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }

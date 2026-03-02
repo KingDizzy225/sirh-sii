@@ -19,14 +19,19 @@ exports.createLeave = async (req, res) => {
     try {
         const { employeeId, type, startDate, endDate, reason } = req.body;
 
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const durationDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+
         const newLeave = await prisma.leave.create({
             data: {
                 employeeId,
                 type,
-                startDate: new Date(startDate),
-                endDate: new Date(endDate),
+                startDate: start,
+                endDate: end,
                 reason,
-                status: 'PENDING'
+                status: 'PENDING',
+                durationDays
             },
             include: { employee: true }
         });
