@@ -24,6 +24,7 @@ export function Payroll() {
 
     const fetchPayslipsAndEmployees = async () => {
         try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
             const token = localStorage.getItem('sirh_token');
             const authConfig = { headers: { 'Authorization': `Bearer ${token}` } };
 
@@ -75,6 +76,7 @@ export function Payroll() {
 
         try {
             // Création d'une fiche de paie individuelle pour déclencher l'Audit Trail en base
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
             const token = localStorage.getItem('sirh_token');
             const res = await fetch(`${API_URL}/api/payroll`, {
                 method: 'POST',
