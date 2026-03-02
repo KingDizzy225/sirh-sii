@@ -62,3 +62,52 @@ exports.getProfile = async (req, res) => {
         res.status(500).json({ error: 'Erreur de récupération de profil' });
     }
 };
+
+exports.updateCredentials = async (req, res) => {
+    try {
+        const { email, currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+
+        // 1. Chercher l'utilisateur
+        const user = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        }
+
+        // 2. Vérifier le mot de passe actuel
+        if (!currentPassword) {
+            return res.status(400).json({ error: 'Mot de passe actuel requis' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Le mot de passe actuel est incorrect' });
+        }
+
+        // 3. Préparer les données de mise à jour
+        const updateData = {};
+        if (email && email.trim() !== '') {
+            updateData.email = email.trim();
+        }
+        if (newPassword && newPassword.trim() !== '') {
+            updateData.password = await bcrypt.hash(newPassword, 10);
+        }
+
+        // 4. Mettre à jour en base de données
+        if (Object.keys(updateData).length > 0) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: updateData
+            });
+        }
+
+        res.status(200).json({ message: 'Identifiants mis à jour avec succès' });
+    } catch (error) {
+        console.error('Update credentials error:', error);
+        res.status(500).json({ error: 'Erreur Serveur lors de la mise à jour' });
+    }
+};
+

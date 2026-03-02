@@ -42,7 +42,7 @@ export function Sidebar({ className }) {
                     <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white">
                         <Users size={18} />
                     </div>
-                    SIRH <span className="text-blue-600">Pro</span>
+                    SIIRH <span className="text-blue-600">Pro</span>
                 </h1>
             </div>
 

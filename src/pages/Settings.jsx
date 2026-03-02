@@ -42,6 +42,7 @@ export function Settings() {
     const tabNames = {
         'Company Profile': 'Profil de l\'Entreprise',
         'Preferences': 'Préférences',
+        'Security': 'Sécurité du Compte',
         'Integrations': 'Intégrations',
         'Notifications': 'Notifications',
         'Billing': 'Facturation'
@@ -103,6 +104,7 @@ export function Settings() {
                 <div className="md:col-span-1 flex flex-col gap-1 pr-4">
                     {renderTabButton('Company Profile')}
                     {renderTabButton('Preferences')}
+                    {renderTabButton('Security')}
                     {renderTabButton('Integrations', 'settings:manage')}
                     {renderTabButton('Notifications')}
                     {renderTabButton('Billing', 'settings:manage')}
@@ -139,7 +141,7 @@ export function Settings() {
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium leading-none text-slate-700">Raison Sociale</label>
-                                            <Input defaultValue="SIRH-SII Global Solutions Ltd." />
+                                            <Input defaultValue="SIIRH-SII Global Solutions Ltd." />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium leading-none text-slate-700">Numéro d'Immatriculation</label>
@@ -147,7 +149,7 @@ export function Settings() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium leading-none text-slate-700">Email de Support</label>
-                                            <Input defaultValue="hr-support@sirh-sii.com" type="email" />
+                                            <Input defaultValue="hr-support@siirh-sii.com" type="email" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium leading-none text-slate-700">Devise par Défaut</label>
@@ -214,6 +216,68 @@ export function Settings() {
                                 <Button variant="outline" onClick={handleDiscard}>Annuler les Modifications</Button>
                                 <Button onClick={handleSave}>Enregistrer les Préférences</Button>
                             </div>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'Security' && (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Sécurité & Identifiants</CardTitle>
+                                    <CardDescription>Mettez à jour votre mot de passe et votre adresse email de connexion.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    <form onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        const formData = new FormData(e.target);
+                                        const email = formData.get('email');
+                                        const currentPassword = formData.get('currentPassword');
+                                        const newPassword = formData.get('newPassword');
+
+                                        try {
+                                            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                                            const res = await fetch(`${API_URL}/api/auth/update-credentials`, {
+                                                method: 'PUT',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'Authorization': `Bearer ${localStorage.getItem('sirh_token')}`
+                                                },
+                                                body: JSON.stringify({ email, currentPassword, newPassword })
+                                            });
+                                            if (res.ok) {
+                                                showNotification('Identifiants mis à jour. Veuillez vous reconnecter.');
+                                                setTimeout(() => {
+                                                    localStorage.removeItem('sirh_token');
+                                                    localStorage.removeItem('sirh_user');
+                                                    window.location.href = '/login';
+                                                }, 2000);
+                                            } else {
+                                                const data = await res.json();
+                                                showNotification(data.error || 'Erreur lors de la mise à jour');
+                                            }
+                                        } catch (err) {
+                                            showNotification('Erreur serveur');
+                                        }
+                                    }} className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium leading-none text-slate-700">Nouvelle adresse email (optionnel)</label>
+                                            <Input name="email" type="email" placeholder="Nouvelle adresse pour la connexion" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium leading-none text-slate-700">Mot de passe actuel</label>
+                                            <Input name="currentPassword" type="password" required placeholder="Nécessaire pour enregistrer les modifications" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium leading-none text-slate-700">Nouveau mot de passe (optionnel)</label>
+                                            <Input name="newPassword" type="password" placeholder="Laissez vide si vous ne changez que l'email" />
+                                        </div>
+                                        <div className="flex justify-end gap-3 mt-6">
+                                            <Button type="button" variant="outline" onClick={handleDiscard}>Annuler</Button>
+                                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Mettre à jour la sécurité</Button>
+                                        </div>
+                                    </form>
+                                </CardContent>
+                            </Card>
                         </motion.div>
                     )}
 
@@ -344,7 +408,7 @@ export function Settings() {
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="bg-slate-50 border rounded-lg p-6">
-                                        <h3 className="font-bold text-slate-900 mb-1">Forfait SIRH Enterprise</h3>
+                                        <h3 className="font-bold text-slate-900 mb-1">Forfait SIIRH Enterprise</h3>
                                         <p className="text-sm text-slate-500 mb-4">Vous êtes actuellement facturé 4 500 000 FCFA annuellement.</p>
                                         <Button onClick={() => showNotification('Redirection vers le Portail Client Stripe...')} className="bg-slate-900 text-white hover:bg-slate-800">Gérer l'Abonnement</Button>
                                     </div>

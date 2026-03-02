@@ -43,7 +43,7 @@ export function Login() {
                     <div className="h-16 w-16 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg -rotate-6 transform hover:rotate-0 transition-transform cursor-pointer">
                         <span className="text-white font-bold text-2xl">SII</span>
                     </div>
-                    <h1 className="mt-4 text-3xl font-bold text-slate-900">SIRH Entreprise</h1>
+                    <h1 className="mt-4 text-3xl font-bold text-slate-900">SIIRH Entreprise</h1>
                     <p className="text-slate-500 mt-2">Connectez-vous à votre espace personnel</p>
                 </div>
 
@@ -66,7 +66,7 @@ export function Login() {
                                     <Input
                                         type="email"
                                         required
-                                        placeholder="admin@sirh.com"
+                                        placeholder="admin@siirh.com"
                                         className="pl-10"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -99,7 +99,7 @@ export function Login() {
 
                             <div className="text-center text-sm text-slate-500 pt-4 border-t border-slate-100">
                                 Comptes de test : <br />
-                                <span className="font-semibold text-slate-700">admin@sirh.com</span> ou <span className="font-semibold text-slate-700">drh@sirh.com</span><br />
+                                <span className="font-semibold text-slate-700">admin@siirh.com</span> ou <span className="font-semibold text-slate-700">drh@siirh.com</span><br />
                                 Mot de passe : <span className="font-semibold text-slate-700">sirh</span>
                             </div>
                         </form>
