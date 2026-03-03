@@ -2,6 +2,13 @@
 module.exports = {
 	darkMode: ["class"],
 	content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+	safelist: [
+		'md:translate-x-0',
+		'-translate-x-full',
+		'translate-x-0',
+		'md:hidden',
+		'md:relative'
+	],
 	theme: {
 		extend: {
 			fontFamily: {

@@ -13,28 +13,39 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Mock Data
-const MOCK_COMPANY_DOCUMENTS = [
-    { id: 'DOC-001', title: 'Manuel de l\'Employé 2026', type: 'application/pdf', size: '2.4 Mo', uploadDate: '15 Jan 2026' },
-    { id: 'DOC-002', title: 'Politique de Télétravail', type: 'application/pdf', size: '850 Ko', uploadDate: '20 Nov 2025' },
-    { id: 'DOC-003', title: 'Formulaire de Note de Frais', type: 'application/msword', size: '120 Ko', uploadDate: '01 Fév 2026' }
-];
-
-const MOCK_PERSONAL_DOCUMENTS = [
-    { id: 'PDOC-101', title: 'Contrat de Travail - S. Jenkins', type: 'application/pdf', size: '1.2 Mo', uploadDate: '10 Mar 2024' },
-    { id: 'PDOC-102', title: 'Évaluation de Performance T3', type: 'application/pdf', size: '450 Ko', uploadDate: '05 Oct 2025' },
-    { id: 'PDOC-103', title: 'Autorisation de Dépôt Direct', type: 'application/pdf', size: '85 Ko', uploadDate: '12 Mar 2024' }
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function Documents() {
-    const { user, hasPermission } = useAuth();
+    const { user, hasPermission, token } = useAuth();
     const [activeTab, setActiveTab] = useState('company');
-    const [companyDocs, setCompanyDocs] = useState(MOCK_COMPANY_DOCUMENTS);
-    const [personalDocs, setPersonalDocs] = useState(MOCK_PERSONAL_DOCUMENTS);
+    const [companyDocs, setCompanyDocs] = useState([]);
+    const [personalDocs, setPersonalDocs] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [notification, setNotification] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
+
+    React.useEffect(() => {
+        const fetchDocs = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/documents`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+
+                    const pDocs = data.filter(d => d.type === 'Personnel' || d.type === 'Paie' || d.type === 'Identité');
+                    const cDocs = data.filter(d => d.type === 'Entreprise' || d.type === 'Contrat' || d.type === 'Autre');
+
+                    setPersonalDocs(pDocs);
+                    setCompanyDocs(cDocs);
+                }
+            } catch (err) {
+                console.error("Erreur chargement docs", err);
+            }
+        };
+        if (token) fetchDocs();
+    }, [token]);
 
     const showNotification = (message) => {
         setNotification(message);
@@ -64,38 +75,61 @@ export function Documents() {
         handleFiles(files);
     };
 
-    const handleFiles = (files) => {
+    const handleFiles = async (files) => {
         if (!files || files.length === 0) return;
 
         const file = files[0];
-        const newDoc = {
-            id: `DOC-NEW-${Math.floor(Math.random() * 10000)}`,
-            title: file.name,
-            type: file.type || 'application/pdf', // fallback
-            size: (file.size / 1024 > 1024) ? `${(file.size / 1024 / 1024).toFixed(1)} Mo` : `${(file.size / 1024).toFixed(0)} Ko`,
-            uploadDate: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-        };
 
-        // Mocking an upload simulation
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('title', file.name);
+        formData.append('type', activeTab === 'company' ? 'Entreprise' : 'Personnel');
+
         setUploadProgress(10);
-        const interval = setInterval(() => {
-            setUploadProgress(prev => {
-                if (prev >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        setUploadProgress(0);
-                        if (activeTab === 'company') {
-                            setCompanyDocs(prevDocs => [newDoc, ...prevDocs]);
-                        } else {
-                            setPersonalDocs(prevDocs => [newDoc, ...prevDocs]);
-                        }
-                        showNotification(`${file.name} téléchargé avec succès dans le dossier ${activeTab === 'company' ? 'Entreprise' : 'Personnel'}.`);
-                    }, 500);
-                    return 100;
-                }
-                return prev + 25;
+        try {
+            const res = await fetch(`${API_URL}/api/documents/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
             });
-        }, 300);
+
+            if (res.ok) {
+                const newDoc = await res.json();
+                setUploadProgress(100);
+                setTimeout(() => {
+                    setUploadProgress(0);
+                    if (activeTab === 'company') {
+                        setCompanyDocs(prev => [newDoc, ...prev]);
+                    } else {
+                        setPersonalDocs(prev => [newDoc, ...prev]);
+                    }
+                    showNotification(`${file.name} téléversé avec succès.`);
+                }, 500);
+            } else {
+                throw new Error("Upload failed");
+            }
+        } catch (error) {
+            setUploadProgress(0);
+            showNotification(`Erreur lors du téléversement de ${file.name}`);
+        }
+    };
+
+    const handleDelete = async (docId, title) => {
+        try {
+            const res = await fetch(`${API_URL}/api/documents/${docId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setCompanyDocs(prev => prev.filter(d => d.id !== docId));
+                setPersonalDocs(prev => prev.filter(d => d.id !== docId));
+                showNotification(`${title} supprimé avec succès.`);
+            }
+        } catch (err) {
+            showNotification(`Erreur lors de la suppression.`);
+        }
     };
 
     const getFileIcon = (type) => {
@@ -126,11 +160,11 @@ export function Documents() {
                                 {getFileIcon(doc.type)}
                             </div>
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={() => showNotification(`Téléchargement de ${doc.title}...`)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" onClick={() => window.open(`${API_URL}${doc.filePath}`, '_blank')}>
                                     <Download size={16} />
                                 </Button>
                                 <RequirePermission permission="documents:manage">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={() => showNotification(`Suppression de ${doc.title}...`)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={() => handleDelete(doc.id, doc.title)}>
                                         <Trash2 size={16} />
                                     </Button>
                                 </RequirePermission>
@@ -141,8 +175,8 @@ export function Documents() {
                                 {doc.title}
                             </h4>
                             <div className="flex justify-between items-center text-xs text-slate-500 mt-3 pt-3 border-t">
-                                <span>{doc.size}</span>
-                                <span>{doc.uploadDate}</span>
+                                <span>{(doc.fileSize / 1024 > 1024) ? `${(doc.fileSize / 1024 / 1024).toFixed(1)} Mo` : `${(doc.fileSize / 1024).toFixed(0)} Ko`}</span>
+                                <span>{new Date(doc.createdAt).toLocaleDateString('fr-FR')}</span>
                             </div>
                         </CardContent>
                     </Card>

@@ -31,7 +31,11 @@ const employeeRoutes = require('./routes/employeeRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const payrollRoutes = require('./routes/payrollRoutes');
 const recruitmentRoutes = require('./routes/recruitmentRoutes');
-const trainingRoutes = require('./routes/trainingRoutes'); // Added trainingRoutes
+const trainingRoutes = require('./routes/trainingRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const performanceRoutes = require('./routes/performanceRoutes');
+const documentRoutes = require('./routes/documentRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const verifyToken = require('./middleware/authMiddleware');
 
@@ -42,6 +46,15 @@ app.use('/api/leaves', verifyToken, leaveRoutes);
 app.use('/api/payroll', verifyToken, payrollRoutes);
 app.use('/api/recruitment', verifyToken, recruitmentRoutes);
 app.use('/api/trainings', verifyToken, trainingRoutes);
+app.use('/api/analytics', verifyToken, analyticsRoutes);
+app.use('/api/performance', verifyToken, performanceRoutes);
+app.use('/api/documents', verifyToken, documentRoutes);
+app.use('/api/notifications', verifyToken, notificationRoutes);
+
+// Servir statiquement les fichiers uploadés
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // Start the server
 app.listen(PORT, () => {

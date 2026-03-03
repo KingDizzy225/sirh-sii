@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -6,12 +6,9 @@ import { Input } from '../components/ui/input';
 import { Target, Star, MessageSquare, Plus, ArrowRight, CheckCircle2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Mock Data
-const initialGoals = [
-    { id: 1, title: 'Lancer la campagne marketing T3', category: 'Objectif Commercial', progress: 75, status: 'En bonne voie', due: '30 Sep 2026' },
-    { id: 2, title: 'Obtenir la certification AWS', category: 'Dév. Professionnel', progress: 30, status: 'À risque', due: '15 Nov 2026' },
-    { id: 3, title: 'Recruter 3 Ingénieurs Seniors', category: 'Objectif Commercial', progress: 100, status: 'Terminé', due: '01 Août 2026' }
-];
+import { useAuth } from '../context/AuthContext';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const initialReviews = [
     { id: 1, cycle: 'Mi-année 2026', reviewer: 'Sarah Jenkins', rating: 'Dépasse les attentes', status: 'Finalisé', date: '15 Juil 2026' },
@@ -24,10 +21,12 @@ const initialFeedbacks = [
 ];
 
 export function Performance() {
+    const { user } = useAuth();
+    const token = localStorage.getItem('sirh_token');
     const [activeTab, setActiveTab] = useState('goals');
 
-    const [goals, setGoals] = useState(initialGoals);
-    const [reviews, setReviews] = useState(initialReviews);
+    const [goals, setGoals] = useState([]);
+    const [reviews, setReviews] = useState([]);
     const [feedbacks, setFeedbacks] = useState(initialFeedbacks);
     const [notification, setNotification] = useState(null);
 
@@ -37,50 +36,88 @@ export function Performance() {
     const [isEvalModalOpen, setIsEvalModalOpen] = useState(false);
 
     // Form States
-    const [goalForm, setGoalForm] = useState({ title: '', category: 'Personal Development', due: '' });
+    const [goalForm, setGoalForm] = useState({ title: '', category: 'Dév. Professionnel', due: '' });
     const [feedbackForm, setFeedbackForm] = useState({ peerName: '', context: '' });
     const [evalForm, setEvalForm] = useState({ reflection: '', achievements: '' });
+
+    useEffect(() => {
+        const fetchPerformanceData = async () => {
+            try {
+                const goalsRes = await fetch(`${API_URL}/api/performance/goals`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (goalsRes.ok) {
+                    const data = await goalsRes.json();
+                    setGoals(data);
+                }
+
+                const reviewsRes = await fetch(`${API_URL}/api/performance/reviews`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (reviewsRes.ok) {
+                    const data = await reviewsRes.json();
+                    setReviews(data);
+                }
+            } catch (err) {
+                console.error("Erreur de chargement des performances:", err);
+            }
+        };
+
+        if (token) fetchPerformanceData();
+    }, [token]);
 
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleNewGoalSubmit = (e) => {
+    const handleNewGoalSubmit = async (e) => {
         e.preventDefault();
         if (!goalForm.title || !goalForm.due) {
             showNotification('Veuillez remplir les champs obligatoires.');
             return;
         }
 
-        const shortMonths = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
-        const d = new Date(goalForm.due);
-        const dueStr = `${String(d.getDate()).padStart(2, '0')} ${shortMonths[d.getMonth()]} ${d.getFullYear()}`;
+        try {
+            const res = await fetch(`${API_URL}/api/performance/goals`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: goalForm.title,
+                    category: goalForm.category,
+                    dueDate: goalForm.due
+                })
+            });
 
-        const newGoal = {
-            id: Date.now(),
-            title: goalForm.title,
-            category: goalForm.category,
-            progress: 0,
-            status: 'En bonne voie',
-            due: dueStr
-        };
-        setGoals([newGoal, ...goals]);
-        setIsGoalModalOpen(false);
-        setGoalForm({ title: '', category: 'Dév. Professionnel', due: '' });
-        showNotification('Nouvel objectif créé avec succès');
+            if (res.ok) {
+                const newGoal = await res.json();
+                setGoals([newGoal, ...goals]);
+                setIsGoalModalOpen(false);
+                setGoalForm({ title: '', category: 'Dév. Professionnel', due: '' });
+                showNotification('Nouvel objectif créé avec succès');
+            }
+        } catch (err) {
+            showNotification('Erreur de création de l\'objectif');
+        }
     };
 
-    const handleUpdateGoal = (id) => {
-        setGoals(prev => prev.map(goal => {
-            if (goal.id === id) {
-                const newProgress = Math.min(goal.progress + 25, 100);
-                const newStatus = newProgress === 100 ? 'Terminé' : goal.status;
-                return { ...goal, progress: newProgress, status: newStatus };
+    const handleUpdateGoal = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/api/performance/goals/${id}/progress`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const updatedGoal = await res.json();
+                setGoals(prev => prev.map(goal => goal.id === id ? updatedGoal : goal));
+                showNotification(`Progression mise à jour : ${updatedGoal.progress}%`);
             }
-            return goal;
-        }));
-        showNotification('Progression de l\'objectif mise à jour');
+        } catch (err) {
+            showNotification('Erreur de mise à jour');
+        }
     };
 
     const handleFeedbackSubmit = (e) => {
@@ -94,30 +131,37 @@ export function Performance() {
         showNotification(`Demande de feedback envoyée à ${feedbackForm.peerName}`);
     };
 
-    const handleEvaluationSubmit = (e) => {
+    const handleEvaluationSubmit = async (e) => {
         e.preventDefault();
         if (!evalForm.reflection) {
             showNotification('Veuillez fournir votre auto-évaluation.');
             return;
         }
 
-        const shortMonths = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
-        const today = new Date();
-        const dateStr = `${String(today.getDate()).padStart(2, '0')} ${shortMonths[today.getMonth()]} ${today.getFullYear()}`;
+        try {
+            const res = await fetch(`${API_URL}/api/performance/reviews/self-eval`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    reflection: evalForm.reflection,
+                    achievements: evalForm.achievements,
+                    cycle: 'Annuel 2026'
+                })
+            });
 
-        const newReview = {
-            id: Date.now(),
-            cycle: 'Annuel 2026',
-            reviewer: 'En attente de revue',
-            rating: 'En attente du Manager',
-            status: 'Brouillon Soumis',
-            date: dateStr
-        };
-
-        setReviews([newReview, ...reviews]);
-        setIsEvalModalOpen(false);
-        setEvalForm({ reflection: '', achievements: '' });
-        showNotification('Brouillon de l\'auto-évaluation annuelle 2026 soumis avec succès');
+            if (res.ok) {
+                const newReview = await res.json();
+                setReviews([newReview, ...reviews]);
+                setIsEvalModalOpen(false);
+                setEvalForm({ reflection: '', achievements: '' });
+                showNotification('Auto-évaluation annuelle soumise avec succès');
+            }
+        } catch (err) {
+            showNotification('Erreur serveur de soumission');
+        }
     };
 
     return (
@@ -400,7 +444,7 @@ export function Performance() {
                                         <div className="flex justify-between items-start mb-4">
                                             <div>
                                                 <h4 className="text-lg font-bold text-slate-900">{goal.title}</h4>
-                                                <p className="text-sm text-slate-500 mt-1">{goal.category} • Échéance : {goal.due}</p>
+                                                <p className="text-sm text-slate-500 mt-1">{goal.category} • Échéance : {new Date(goal.dueDate).toLocaleDateString('fr-FR')}</p>
                                             </div>
                                             <Badge variant={
                                                 goal.status === 'Terminé' ? 'success' :
@@ -462,16 +506,16 @@ export function Performance() {
                                         <div>
                                             <h4 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{review.cycle}</h4>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-sm font-medium text-slate-700">Manager : {review.reviewer}</span>
+                                                <span className="text-sm font-medium text-slate-700">Manager : {review.reviewerName}</span>
                                                 <span className="text-slate-300">•</span>
-                                                <span className="text-sm text-slate-500">{review.date}</span>
+                                                <span className="text-slate-500">{new Date(review.reviewDate).toLocaleDateString('fr-FR')}</span>
                                             </div>
                                         </div>
 
                                         <div className="flex items-center gap-6">
                                             <div className="text-right">
                                                 <div className="text-sm text-slate-500 mb-0.5">Note Finale</div>
-                                                <Badge variant={review.rating.includes('Dépasse') ? 'success' : 'blue'}>{review.rating}</Badge>
+                                                <Badge variant={review?.rating?.includes?.('Dépasse') ? 'success' : 'blue'}>{review?.rating || 'Non noté'}</Badge>
                                             </div>
                                             <Button variant="ghost" size="icon" className="shrink-0 text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-all rounded-full" onClick={() => showNotification(`Ouverture de la revue : ${review.cycle}`)}>
                                                 <ArrowRight size={20} />

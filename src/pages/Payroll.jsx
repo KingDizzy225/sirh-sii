@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { DollarSign, Download, PlayCircle, CheckCircle2, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
+import Papa from 'papaparse';
 
 const initialPayrollCycles = [
     { id: 'PAY-2026-10', period: 'Octobre 2026', totalEmployees: 180, amount: '567 120 000 FCFA', status: 'En cours', date: '28 Oct 2026' },
@@ -109,7 +110,25 @@ export function Payroll() {
     };
 
     const handleExport = (id) => {
-        showNotification(`Fiches de paie exportées pour le cycle ${id}`);
+        if (payslips.length === 0) return showNotification('Aucune donnée de paie à exporter.');
+        const csv = Papa.unparse(payslips.map(p => ({
+            "Période": new Date(p.periodStart).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+            "Employé": `${p.employee?.firstName || ''} ${p.employee?.lastName || ''}`,
+            "Salaire de Base": p.baseSalary,
+            "Primes": p.bonuses,
+            "Déductions": p.deductions,
+            "Net à Payer": p.netSalary,
+            "Statut": p.status
+        })));
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Rapport_Paie_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification(`Fiches de paie globales exportées avec succès en CSV !`);
     };
 
     return (

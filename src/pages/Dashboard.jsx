@@ -1,118 +1,114 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, Timer, HeartPulse } from 'lucide-react';
+import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, Timer, HeartPulse, Loader2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
-const turnoverByDept = [
-    { name: 'Ingénierie', rate: 4.2 },
-    { name: 'Ventes', rate: 12.5 },
-    { name: 'Marketing', rate: 8.1 },
-    { name: 'RH', rate: 3.2 },
-    { name: 'Finance', rate: 5.4 },
-];
-
-const timeToHireData = [
-    { month: 'Mai', days: 45 },
-    { month: 'Juin', days: 42 },
-    { month: 'Juil', days: 38 },
-    { month: 'Août', days: 35 },
-    { month: 'Sept', days: 31 },
-    { month: 'Oct', days: 28 },
-];
-
-const genderPayGapData = [
-    { department: 'Ingénierie', male: 95, female: 92 },
-    { department: 'Ventes', male: 78, female: 75 },
-    { department: 'Marketing', male: 68, female: 70 },
-    { department: 'RH', male: 65, female: 65 },
-    { department: 'Finance', male: 85, female: 81 },
-];
-
-const monthlyTurnover = [
-    { name: 'Janv', rate: 2.1 },
-    { name: 'Févr', rate: 1.8 },
-    { name: 'Mars', rate: 1.5 },
-    { name: 'Avr', rate: 2.5 },
-    { name: 'Mai', rate: 1.2 },
-    { name: 'Juin', rate: 0.8 },
-    { name: 'Juil', rate: 1.1 },
-];
-
-const agePyramidData = [
-    { ageGroup: '18-25', male: 12, female: 15 },
-    { ageGroup: '26-35', male: 45, female: 38 },
-    { ageGroup: '36-45', male: 30, female: 28 },
-    { ageGroup: '46-55', male: 18, female: 14 },
-    { ageGroup: '56+', male: 8, female: 5 },
-];
-
-const mobilityVsHiringData = [
-    { name: 'Promotions Internes', value: 35, color: '#8b5cf6' },
-    { name: 'Recrutements Externes', value: 65, color: '#3b82f6' },
-];
-
-const stats = [
-    {
-        title: 'Délai Moyen d\'Embauche',
-        value: '28 Jours',
-        change: '-3 Jours',
-        icon: Timer,
-        color: 'text-emerald-600',
-        bg: 'bg-emerald-100',
-    },
-    {
-        title: 'Taux de Rotation Légal',
-        value: '6.4%',
-        change: '-0.5%',
-        icon: Activity,
-        color: 'text-rose-600',
-        bg: 'bg-rose-100',
-    },
-    {
-        title: 'Coût du Turnover',
-        value: '85M FCFA',
-        change: '+7M',
-        icon: Activity,
-        color: 'text-rose-600',
-        bg: 'bg-rose-100',
-    },
-    {
-        title: 'Taux d\'Absentéisme',
-        value: '2.8%',
-        change: '-0.2%',
-        icon: Users,
-        color: 'text-amber-600',
-        bg: 'bg-amber-100',
-    },
-    {
-        title: 'Écart de Rémunération',
-        value: '3.2%',
-        change: '-1.1%',
-        icon: Scale,
-        color: 'text-amber-600',
-        bg: 'bg-amber-100',
-    },
-    {
-        title: 'Total Employés',
-        value: '180',
-        change: '+12%',
-        icon: Users,
-        color: 'text-blue-600',
-        bg: 'bg-blue-100',
-    },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function Dashboard() {
+    const { token } = useAuth();
     const [notification, setNotification] = useState(null);
     const [showSurvey, setShowSurvey] = useState(true);
     const [surveyScore, setSurveyScore] = useState(null);
     const [surveyComment, setSurveyComment] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [analyticsData, setAnalyticsData] = useState(null);
+
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/analytics/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setAnalyticsData(data);
+                }
+            } catch (err) {
+                console.error("Failed to load analytics", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (token) {
+            fetchAnalytics();
+        } else {
+            setLoading(false);
+        }
+    }, [token]);
 
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full min-h-[calc(100vh-4rem)]">
+                <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+            </div>
+        );
+    }
+
+    const turnoverByDept = analyticsData?.charts?.turnoverByDept || [];
+    const timeToHireData = analyticsData?.charts?.timeToHireData || [];
+    const genderPayGapData = analyticsData?.charts?.genderPayGapData || [];
+    const monthlyTurnover = analyticsData?.charts?.monthlyTurnover || [];
+    const agePyramidData = analyticsData?.charts?.agePyramidData || [];
+    const mobilityVsHiringData = analyticsData?.charts?.mobilityVsHiringData || [];
+
+    const stats = [
+        {
+            title: 'Délai Moyen d\'Embauche',
+            value: `${analyticsData?.stats?.avgTimeToHire || 28} Jours`,
+            change: '-3 Jours',
+            icon: Timer,
+            color: 'text-emerald-600',
+            bg: 'bg-emerald-100',
+        },
+        {
+            title: 'Taux de Rotation Légal',
+            value: `${analyticsData?.stats?.globalTurnover || 6.4}%`,
+            change: '-0.5%',
+            icon: Activity,
+            color: 'text-rose-600',
+            bg: 'bg-rose-100',
+        },
+        {
+            title: 'Coût du Turnover',
+            value: `${analyticsData?.stats?.turnoverCost || 85}M FCFA`,
+            change: '+7M',
+            icon: Activity,
+            color: 'text-rose-600',
+            bg: 'bg-rose-100',
+        },
+        {
+            title: 'Taux d\'Absentéisme',
+            value: `${analyticsData?.stats?.absenceRate || 2.8}%`,
+            change: '-0.2%',
+            icon: Users,
+            color: 'text-amber-600',
+            bg: 'bg-amber-100',
+        },
+        {
+            title: 'Écart de Rémunération',
+            value: `${analyticsData?.stats?.payGap || 3.2}%`,
+            change: '-1.1%',
+            icon: Scale,
+            color: 'text-amber-600',
+            bg: 'bg-amber-100',
+        },
+        {
+            title: 'Total Employés',
+            value: `${analyticsData?.stats?.activeEmployees || 0}`,
+            change: '+12%',
+            icon: Users,
+            color: 'text-blue-600',
+            bg: 'bg-blue-100',
+        },
+    ];
 
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50/50 min-h-[calc(100vh-4rem)] relative">

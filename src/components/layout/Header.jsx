@@ -1,10 +1,49 @@
-import React, { useState } from 'react';
-import { Search, Bell, Menu, ChevronDown, LogOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Bell, Menu, ChevronDown, LogOut, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export function Header({ onMenuClick }) {
-    const { user, logout } = useAuth();
+    const { user, logout, token } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isNotifOpen, setIsNotifOpen] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+
+    useEffect(() => {
+        if (token) {
+            fetch(`${API_URL}/api/notifications`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) setNotifications(data);
+                })
+                .catch(err => console.error("Erreur notifs", err));
+        }
+    }, [token]);
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    const markAsRead = async (id) => {
+        try {
+            await fetch(`${API_URL}/api/notifications/${id}/read`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+        } catch (e) { }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await fetch(`${API_URL}/api/notifications/read-all`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch (e) { }
+    };
 
     if (!user) return null; // Safe guard if rendering before context is fully populated
 
@@ -25,12 +64,52 @@ export function Header({ onMenuClick }) {
             </div>
 
             <div className="flex items-center gap-4">
-                <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
-                        3
-                    </span>
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={() => setIsNotifOpen(!isNotifOpen)}
+                        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                        <Bell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </button>
+
+                    {isNotifOpen && (
+                        <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-100 bg-white shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                            <div className="px-4 py-3 border-b border-slate-100 mb-2 flex justify-between items-center">
+                                <p className="text-sm font-semibold text-slate-800">Notifications</p>
+                                {unreadCount > 0 && (
+                                    <button onClick={markAllAsRead} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                        <Check size={14} /> Tout lire
+                                    </button>
+                                )}
+                            </div>
+                            <div className="max-h-80 overflow-y-auto">
+                                {notifications.length > 0 ? (
+                                    notifications.map(notif => (
+                                        <div
+                                            key={notif.id}
+                                            onClick={() => !notif.isRead && markAsRead(notif.id)}
+                                            className={`px-4 py-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
+                                        >
+                                            <p className={`text-sm line-clamp-2 ${!notif.isRead ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
+                                                {notif.message}
+                                            </p>
+                                            <p className="text-xs text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleDateString()} à {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="px-4 py-6 text-center text-slate-500 text-sm">
+                                        Aucune notification
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 <div className="relative border-l pl-4">
                     <button

@@ -41,7 +41,7 @@ export const ProtectedRoute = ({ allowedRoles = [], children }) => {
 };
 
 // Component Wrapper to conditionally render UI elements based on permissions
-export const RequirePermission = ({ permission, children, fallback = null }) => {
+export const RequirePermission = ({ permission, children, fallbackPath = "/dashboard", fallback = null }) => {
     const { user, isLoading } = useAuth();
 
     if (isLoading) return null;
@@ -51,6 +51,10 @@ export const RequirePermission = ({ permission, children, fallback = null }) => 
 
     if (hasPerm || permission === 'view:own') {
         return children;
+    }
+
+    if (fallbackPath) {
+        return <Navigate to={fallbackPath} replace />;
     }
 
     return fallback;

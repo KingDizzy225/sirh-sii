@@ -34,6 +34,10 @@ model Employee {
   supportTickets  SupportTicket[] @relation("SupportTickets")
   assets          AssetAssignment[]
   participations  TrainingParticipation[]
+  performanceGoals PerformanceGoal[] @relation("GoalOwner")
+  performanceReviews PerformanceReview[] @relation("ReviewSubject")
+  documents       EmployeeDocument[] @relation("EmployeeDocs")
+  notifications   Notification[] @relation("EmployeeNotifications")
 }
 
 // ----------------------------------------------------
@@ -222,4 +226,71 @@ model TrainingParticipation {
   employee          Employee        @relation(fields: [employeeId], references: [id])
 
   @@unique([sessionId, employeeId]) // Un employé ne peut pas participer deux fois à la même session unique
+}
+
+// ----------------------------------------------------
+// 10. PERFORMANCE & REVIEW
+// ----------------------------------------------------
+
+model PerformanceGoal {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  title           String
+  category        String   // 'Dév. Professionnel', 'Objectif Commercial', 'Leadership'
+  progress        Int      @default(0)
+  status          String   @default("En bonne voie") // 'En bonne voie', 'À risque', 'Terminé'
+  dueDate         DateTime @map("due_date")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  employee        Employee @relation("GoalOwner", fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model PerformanceReview {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  reviewerName    String   @map("reviewer_name")
+  cycle           String   // ex: 'Annuel 2026', 'Mi-année 2026'
+  rating          String   @default("En attente") // 'Dépasse les attentes', 'Répond aux attentes', etc.
+  status          String   @default("Brouillon") // 'Brouillon Soumis', 'Finalisé'
+  reviewDate      DateTime @default(now()) @map("review_date")
+  achievements    String?
+  reflection      String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  employee        Employee @relation("ReviewSubject", fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 11. GESTION ÉLECTRONIQUE DE DOCUMENTS (GED)
+// ----------------------------------------------------
+
+model EmployeeDocument {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  title           String   // Ex: 'Contrat de Travail', 'Fiche de paie Mai'
+  type            String   // Ex: 'Paie', 'Contrat', 'Identité', 'Autre'
+  filePath        String   @map("file_path") // Le chemin du fichier (ex: /uploads/...)
+  fileSize        Int      @default(0) @map("file_size") // en octets
+  uploadedBy      String   @map("uploaded_by") // Nom ou ID de la personne ayant uploadé
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  employee        Employee @relation("EmployeeDocs", fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 12. NOTIFICATIONS & ALERTES
+// ----------------------------------------------------
+
+model Notification {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  message         String
+  type            String   @default("Info") // 'Info', 'Alerte', 'Succès'
+  isRead          Boolean  @default(false) @map("is_read")
+  link            String?  // Lien web de redirection si on clique sur la notif
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  employee        Employee @relation("EmployeeNotifications", fields: [employeeId], references: [id], onDelete: Cascade)
 }

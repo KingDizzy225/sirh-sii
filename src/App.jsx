@@ -72,14 +72,15 @@ const AppContent = () => {
         />
       )}
 
+      {/* Sidebar Overlay and positioning */}
       <Sidebar
-        className={`fixed inset - y - 0 left - 0 z - 50 transform transition - transform duration - 300 ease -in -out md:relative md: translate - x - 0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} `}
+        className={`fixed inset-y-0 left-0 z-50 shrink-0 transition-all duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
-      <div className="flex flex-col flex-1 overflow-hidden w-full relative">
+      <div className="flex flex-col flex-1 overflow-hidden relative">
         <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
-        <main className="flex-1 overflow-y-auto w-full">
+        <main className="flex-1 overflow-y-auto">
           <Routes>
             {/* Everyone can view the dashboard */}
             <Route path="/" element={<Dashboard />} />

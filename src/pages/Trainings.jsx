@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Plus, BookOpen, GraduationCap, X, Calendar, Clock, User } from 'lucide-react';
+import { Plus, BookOpen, GraduationCap, X, Calendar, Clock, User, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Papa from 'papaparse';
 import { useAuth } from '../context/AuthContext';
 
 export function Trainings() {
@@ -94,6 +95,25 @@ export function Trainings() {
         }
     };
 
+    const handleExport = () => {
+        if (trainings.length === 0) return alert('Aucune formation à exporter.');
+        const csv = Papa.unparse(trainings.map(t => ({
+            "Titre": t.title,
+            "Formateur": t.trainerName,
+            "Date": new Date(t.date).toLocaleDateString('fr-FR'),
+            "Durée (H)": t.durationHours,
+            "Nombre de participants": t.participations.length
+        })));
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Cahier_Formation_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -101,12 +121,18 @@ export function Trainings() {
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Cahier de Formation</h1>
                     <p className="text-slate-500 mt-1">Gérez et consultez les modules de formation réalisés.</p>
                 </div>
-                {['ADMIN', 'HR'].includes(user?.role) && (
-                    <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2">
-                        <Plus size={18} />
-                        Ajouter une formation
+                <div className="flex gap-3">
+                    <Button onClick={handleExport} variant="outline" className="flex items-center gap-2">
+                        <Download size={18} />
+                        Exporter CSV
                     </Button>
-                )}
+                    {['ADMIN', 'HR'].includes(user?.role) && (
+                        <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2">
+                            <Plus size={18} />
+                            Ajouter une formation
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {loading ? (

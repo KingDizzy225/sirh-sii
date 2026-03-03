@@ -38,12 +38,14 @@ export function Sidebar({ className }) {
     return (
         <div className={cn('flex h-screen w-64 flex-col border-r bg-slate-50 shadow-sm', className)}>
             <div className="flex h-16 items-center border-b px-6">
-                <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white">
                         <Users size={18} />
                     </div>
-                    SIIRH <span className="text-blue-600">Pro</span>
-                </h1>
+                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                        SIIRH <span className="text-blue-600">Pro</span>
+                    </h1>
+                </div>
             </div>
 
             <nav className="flex-1 space-y-1 px-4 py-6 overflow-y-auto">

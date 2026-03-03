@@ -36,6 +36,7 @@ export function Recruitment() {
 
     const fetchData = async () => {
         try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
             const token = localStorage.getItem('sirh_token');
             const authConfig = { headers: { 'Authorization': `Bearer ${token}` } };
 

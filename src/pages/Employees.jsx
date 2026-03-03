@@ -175,7 +175,34 @@ export function Employees() {
     };
 
     const handleExport = () => {
-        showNotification('Annuaire des employés exporté avec succès en CSV.');
+        if (employees.length === 0) {
+            showNotification('Aucune donnée à exporter.');
+            return;
+        }
+        try {
+            const csv = Papa.unparse(employees.map(emp => ({
+                ID: emp.id,
+                Nom: emp.name,
+                Poste: emp.role,
+                Département: emp.department,
+                Statut: emp.status,
+                Email: emp.email,
+                Téléphone: emp.phone || '',
+                Sexe: emp.sex || ''
+            })));
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Annuaire_Employes_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showNotification('Annuaire des employés exporté avec succès en CSV.');
+        } catch (error) {
+            console.error("Export error", error);
+            showNotification('Erreur lors de l\'export CSV.');
+        }
     };
 
     const handleSelectAll = (e) => {
