@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -6,78 +6,116 @@ import { Input } from '../components/ui/input';
 import { Receipt, Plus, Upload, Check, X, DollarSign, Calendar as CalendarIcon, FileImage } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
-const initialExpenses = [
-    { id: 'EXP-101', employee: 'Sarah Jenkins', amount: 30000, currency: 'FCFA', category: 'Repas', date: '24 Oct 2026', merchant: 'Le Bistro', status: 'Approuvé' },
-    { id: 'EXP-102', employee: 'John Doe', amount: 75000, currency: 'FCFA', category: 'Transport', date: '23 Oct 2026', merchant: 'SNCF', status: 'En attente' },
-    { id: 'EXP-103', employee: 'Amanda Smith', amount: 225000, currency: 'FCFA', category: 'Hébergement', date: '21 Oct 2026', merchant: 'Hotel Mercure', status: 'En attente' },
-    { id: 'EXP-104', employee: 'Sarah Jenkins', amount: 10000, currency: 'FCFA', category: 'Transport', date: '20 Oct 2026', merchant: 'Uber', status: 'Remboursé' },
-    { id: 'EXP-105', employee: 'Sarah Jenkins', amount: 55000, currency: 'FCFA', category: 'Équipement', date: '15 Oct 2026', merchant: 'Amazon', status: 'Rejeté', rejectionReason: 'Approbation du budget matériel manquante' }
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function Expenses() {
+    const { token, user } = useAuth();
     const [activeTab, setActiveTab] = useState('my-expenses');
-    const [expenses, setExpenses] = useState(initialExpenses);
+    const [expenses, setExpenses] = useState([]);
     const [notification, setNotification] = useState(null);
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
-    const currentUser = 'Sarah Jenkins';
+    const currentUser = user?.name || '';
 
     const [expenseForm, setExpenseForm] = useState({
         amount: '',
-        category: 'Meals',
+        category: 'Repas',
         date: '',
         merchant: '',
         description: ''
     });
+
+    useEffect(() => {
+        if (token) fetchExpenses();
+    }, [token]);
+
+    const fetchExpenses = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/expenses`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setExpenses(await res.json());
+            }
+        } catch (error) {
+            console.error("Failed to fetch expenses", error);
+        }
+    };
 
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleExpenseSubmit = (e) => {
+    const handleExpenseSubmit = async (e) => {
         e.preventDefault();
         if (!expenseForm.amount || !expenseForm.date || !expenseForm.merchant) {
-            showNotification('Please fill in required fields.');
+            showNotification('Veuillez remplir les champs obligatoires.');
             return;
         }
 
-        const shortMonths = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
-        const d = new Date(expenseForm.date);
-        const dateStr = `${String(d.getDate()).padStart(2, '0')} ${shortMonths[d.getMonth()]} ${d.getFullYear()}`;
+        try {
+            const res = await fetch(`${API_URL}/api/expenses`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ...expenseForm,
+                    currency: 'FCFA',
+                    amount: parseFloat(expenseForm.amount)
+                })
+            });
 
-        const newExpense = {
-            id: `EXP-10${expenses.length + 6}`,
-            employee: currentUser,
-            amount: parseFloat(expenseForm.amount),
-            currency: 'FCFA',
-            category: expenseForm.category,
-            date: dateStr,
-            merchant: expenseForm.merchant,
-            status: 'En attente'
-        };
-
-        setExpenses([newExpense, ...expenses]);
-        setIsExpenseModalOpen(false);
-        setExpenseForm({ amount: '', category: 'Repas', date: '', merchant: '', description: '' });
-        showNotification('Note de frais soumise avec succès.');
+            if (res.ok) {
+                setIsExpenseModalOpen(false);
+                setExpenseForm({ amount: '', category: 'Repas', date: '', merchant: '', description: '' });
+                showNotification('Note de frais soumise avec succès.');
+                fetchExpenses();
+            } else {
+                showNotification('Erreur lors de la soumission.');
+            }
+        } catch (error) {
+            console.error(error);
+            showNotification("Erreur de connexion serveur.");
+        }
     };
 
-    const handleApprove = (id) => {
-        setExpenses(prev => prev.map(exp => exp.id === id ? { ...exp, status: 'Approuvé' } : exp));
-        showNotification(`Note de frais ${id} approuvée`);
+    const handleApprove = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/api/expenses/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ status: 'Approuvé' })
+            });
+            if (res.ok) {
+                showNotification(`Note de frais approuvée`);
+                fetchExpenses();
+            }
+        } catch (error) { console.error(error); }
     };
 
-    const handleReject = (id) => {
-        setExpenses(prev => prev.map(exp => exp.id === id ? { ...exp, status: 'Rejeté', rejectionReason: 'Examen par le responsable : hors politique' } : exp));
-        showNotification(`Note de frais ${id} rejetée`);
+    const handleReject = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/api/expenses/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ status: 'Rejeté', rejectionReason: 'Hors politique' })
+            });
+            if (res.ok) {
+                showNotification(`Note de frais rejetée`);
+                fetchExpenses();
+            }
+        } catch (error) { console.error(error); }
     };
 
     const myExpenses = expenses.filter(e => e.employee === currentUser);
-    const pendingApprovals = expenses.filter(e => e.status === 'Pending' && e.employee !== currentUser);
+    const pendingApprovals = expenses.filter(e => e.status === 'En attente' && e.employee !== currentUser);
 
-    const totalPending = pendingApprovals.reduce((acc, curr) => acc + curr.amount, 0);
+    const totalPending = pendingApprovals.reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-[calc(100vh-4rem)] relative">
@@ -247,13 +285,13 @@ export function Expenses() {
                         <Card>
                             <CardHeader className="pb-2 text-sm font-medium text-slate-500">En Examen</CardHeader>
                             <CardContent className="text-3xl font-bold text-amber-600">
-                                {myExpenses.filter(e => e.status === 'En attente').reduce((a, b) => a + b.amount, 0).toFixed(0)} FCFA
+                                {myExpenses.filter(e => e.status === 'En attente').reduce((a, b) => a + (b.amount || 0), 0).toFixed(0)} FCFA
                             </CardContent>
                         </Card>
                         <Card>
-                            <CardHeader className="pb-2 text-sm font-medium text-slate-500">Remboursées (Année)</CardHeader>
+                            <CardHeader className="pb-2 text-sm font-medium text-slate-500">Remboursées (Totales)</CardHeader>
                             <CardContent className="text-3xl font-bold text-emerald-600">
-                                {myExpenses.filter(e => e.status === 'Remboursé').reduce((a, b) => a + b.amount, 0).toFixed(0)} FCFA
+                                {myExpenses.filter(e => e.status === 'Approuvé' || e.status === 'Remboursé').reduce((a, b) => a + (b.amount || 0), 0).toFixed(0)} FCFA
                             </CardContent>
                         </Card>
                     </div>
@@ -280,7 +318,7 @@ export function Expenses() {
                                             <TableCell className="text-slate-600 font-medium">{exp.date}</TableCell>
                                             <TableCell className="text-slate-900">{exp.merchant}</TableCell>
                                             <TableCell className="text-slate-500">{exp.category}</TableCell>
-                                            <TableCell className="font-semibold text-slate-900">{exp.amount.toFixed(0)} {exp.currency}</TableCell>
+                                            <TableCell className="font-semibold text-slate-900">{(exp.amount||0).toFixed(0)} {exp.currency}</TableCell>
                                             <TableCell>
                                                 <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:bg-blue-50 px-2" onClick={() => showNotification(`Ouverture du justificatif pour ${exp.merchant}`)}><FileImage size={14} className="mr-1.5" /> Voir</Button>
                                             </TableCell>
@@ -291,6 +329,9 @@ export function Expenses() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
+                                    {myExpenses.length === 0 && (
+                                        <TableRow><TableCell colSpan={6} className="text-center text-slate-500 text-sm h-16">Aucune dépense trouvée.</TableCell></TableRow>
+                                    )}
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -338,7 +379,7 @@ export function Expenses() {
                                                     <div className="text-slate-500 text-xs">{exp.date}</div>
                                                 </TableCell>
                                                 <TableCell className="text-slate-500">{exp.category}</TableCell>
-                                                <TableCell className="font-bold text-slate-900">{exp.amount.toFixed(0)} {exp.currency}</TableCell>
+                                                <TableCell className="font-bold text-slate-900">{(exp.amount||0).toFixed(0)} {exp.currency}</TableCell>
                                                 <TableCell>
                                                     <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:bg-blue-50 px-2" onClick={() => showNotification(`Ouverture du justificatif de ${exp.employee}`)}><FileImage size={14} /></Button>
                                                 </TableCell>

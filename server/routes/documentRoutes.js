@@ -1,30 +1,35 @@
 const express = require('express');
 const router = express.Router();
+const documentController = require('../controllers/documentController');
+const aiDocumentController = require('../controllers/aiDocumentController');
+const verifyToken = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/roleMiddleware');
 const multer = require('multer');
 const path = require('path');
-const documentController = require('../controllers/documentController');
-const verifyToken = require('../middleware/authMiddleware');
+const fs = require('fs');
 
-// === Configuration multer ===
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, '../uploads/documents');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '..', 'uploads'));
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
 
-const upload = multer({
-    storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB Max
-});
+const upload = multer({ storage });
 
-// === ROUTES ===
-router.post('/upload', verifyToken, upload.single('document'), documentController.uploadDocument);
 router.get('/', verifyToken, documentController.getDocuments);
-router.delete('/:docId', verifyToken, documentController.deleteDocument);
+router.post('/upload', verifyToken, requireRole(['HR', 'ADMIN']), upload.single('file'), documentController.uploadDocument);
+// router.post('/generate', verifyToken, documentController.generateAndSignDocument); // Disabled
+router.post('/ai-generate', verifyToken, aiDocumentController.generateAIDocument);
+router.delete('/:id', verifyToken, requireRole(['HR', 'ADMIN']), documentController.deleteDocument);
 
 module.exports = router;

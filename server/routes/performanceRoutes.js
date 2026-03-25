@@ -12,4 +12,8 @@ router.patch('/goals/:goalId/progress', verifyToken, performanceController.updat
 router.get('/reviews', verifyToken, performanceController.getReviews);
 router.post('/reviews/self-eval', verifyToken, performanceController.submitSelfEval);
 
+// === FEEDBACKS ===
+router.get('/feedbacks', verifyToken, performanceController.getFeedbacks);
+router.post('/feedbacks', verifyToken, performanceController.requestFeedback);
+
 module.exports = router;

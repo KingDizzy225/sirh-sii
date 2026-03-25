@@ -49,13 +49,39 @@ exports.updateLeaveStatus = async (req, res) => {
         const { id } = req.params;
         const { status } = req.body; // 'APPROVED', 'REJECTED'
 
-        const updatedLeave = await prisma.leave.update({
-            where: { id },
-            data: { status },
-            include: { employee: true }
+        const existingLeave = await prisma.leave.findUnique({ where: { id } });
+        if (!existingLeave) {
+            return res.status(404).json({ error: 'Leave request not found' });
+        }
+
+        let balanceDeduction = 0;
+        if (status === 'APPROVED' && existingLeave.status !== 'APPROVED') {
+            balanceDeduction = existingLeave.durationDays;
+        } else if (status !== 'APPROVED' && existingLeave.status === 'APPROVED') {
+            // Reverting an approval
+            balanceDeduction = -existingLeave.durationDays;
+        }
+
+        const result = await prisma.$transaction(async (tx) => {
+            await tx.leave.update({
+                where: { id },
+                data: { status }
+            });
+
+            if (balanceDeduction !== 0) {
+                await tx.employee.update({
+                    where: { id: existingLeave.employeeId },
+                    data: { annualLeaveBalance: { decrement: balanceDeduction } }
+                });
+            }
+
+            return await tx.leave.findUnique({
+                where: { id },
+                include: { employee: true }
+            });
         });
 
-        res.status(200).json(updatedLeave);
+        res.status(200).json(result);
     } catch (error) {
         console.error('Error updating leave status:', error);
         res.status(500).json({ error: 'Failed to update leave status' });

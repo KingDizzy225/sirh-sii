@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { Dashboard } from './pages/Dashboard';
+import { EmployeePortal } from './pages/EmployeePortal';
 import { Employees } from './pages/Employees';
 import { OrgChart } from './pages/OrgChart';
 import { Leaves } from './pages/Leaves';
@@ -43,6 +44,7 @@ const Unauthorized = () => (
 const AppContent = () => {
   const { user, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentDomain, setCurrentDomain] = useState('Home'); // 'Home', 'Myself', 'My Team', 'People', 'Process', 'Reports'
 
   if (isLoading) {
     return (
@@ -62,7 +64,7 @@ const AppContent = () => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 font-sans relative">
+    <div className="flex flex-col h-screen overflow-hidden bg-slate-50 font-sans relative">
 
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
@@ -72,27 +74,63 @@ const AppContent = () => {
         />
       )}
 
-      {/* Sidebar Overlay and positioning */}
-      <Sidebar
-        className={`fixed inset-y-0 left-0 z-50 shrink-0 transition-all duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}
-        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      {/* Full Width Top Navigation (Header) */}
+      <Header 
+        onMenuClick={() => setIsMobileMenuOpen(true)} 
+        currentDomain={currentDomain}
+        setCurrentDomain={setCurrentDomain}
       />
 
-      <div className="flex flex-col flex-1 overflow-hidden relative">
-        <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
-        <main className="flex-1 overflow-y-auto">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Contextual Sidebar */}
+        <Sidebar
+          className={`fixed inset-y-0 left-0 z-50 shrink-0 transition-all duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+          currentDomain={currentDomain}
+        />
+        
+        <main className="flex-1 overflow-y-auto bg-slate-50/50 p-6">
           <Routes>
-            {/* Everyone can view the dashboard */}
-            <Route path="/" element={<Dashboard />} />
+            {/* Redirect root based on role */}
+            <Route path="/" element={
+              user.role === 'EMPLOYEE' ? <Navigate to="/my-space" replace /> : <Dashboard />
+            } />
+            
+            {/* Everyone can view their space */}
+            <Route path="/my-space" element={<EmployeePortal />} />
 
-            {/* Employee Viewing Routes */}
-            <Route path="/employees" element={<Employees />} />
-            <Route path="/org-chart" element={<OrgChart />} />
+            {/* Employee Accessible Routes (Self-Service) */}
             <Route path="/leaves" element={<Leaves />} />
-            <Route path="/timesheet" element={<Timesheet />} />
             <Route path="/expenses" element={<Expenses />} />
-            <Route path="/performance" element={<Performance />} />
-            <Route path="/learning" element={<Learning />} />
+            
+            {/* Restricted Directory Routes */}
+            <Route path="/employees" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Employees />
+              </ProtectedRoute>
+            } />
+            <Route path="/org-chart" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <OrgChart />
+              </ProtectedRoute>
+            } />
+            
+            {/* Other Restricted Routes */}
+            <Route path="/timesheet" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Timesheet />
+              </ProtectedRoute>
+            } />
+            <Route path="/performance" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Performance />
+              </ProtectedRoute>
+            } />
+            <Route path="/learning" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Learning />
+              </ProtectedRoute>
+            } />
 
             {/* Restricted Routes */}
             <Route path="/engagement" element={
@@ -114,7 +152,7 @@ const AppContent = () => {
             } />
 
             <Route path="/payroll" element={
-              <ProtectedRoute allowedRoles={['Administrator']}>
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
                 <Payroll />
               </ProtectedRoute>
             } />
@@ -166,9 +204,8 @@ const AppContent = () => {
                 <HSE />
               </ProtectedRoute>
             } />
-
             <Route path="/assets" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
                 <Assets />
               </ProtectedRoute>
             } />

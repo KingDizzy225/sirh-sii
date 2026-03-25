@@ -15,11 +15,6 @@ const initialReviews = [
     { id: 2, cycle: 'Annuel 2025', reviewer: 'Sarah Jenkins', rating: 'Répond aux attentes', status: 'Finalisé', date: '10 Jan 2026' }
 ];
 
-const initialFeedbacks = [
-    { id: 1, provider: 'Michael Dam', relationship: 'Collègue', strengths: 'Excellent collaborateur, très bonne qualité de code.', areas: 'Pourrait communiquer les blocages plus tôt.', date: 'Il y a 1 semaine' },
-    { id: 2, provider: 'Anonyme', relationship: 'Subordonné direct', strengths: 'Manager d\'un grand soutien, libère la voie pour l\'équipe.', areas: 'Rien de spécifique.', date: 'Il y a 3 semaines' }
-];
-
 export function Performance() {
     const { user } = useAuth();
     const token = localStorage.getItem('sirh_token');
@@ -27,7 +22,7 @@ export function Performance() {
 
     const [goals, setGoals] = useState([]);
     const [reviews, setReviews] = useState([]);
-    const [feedbacks, setFeedbacks] = useState(initialFeedbacks);
+    const [feedbacks, setFeedbacks] = useState([]);
     const [notification, setNotification] = useState(null);
 
     // Modal States
@@ -57,6 +52,14 @@ export function Performance() {
                 if (reviewsRes.ok) {
                     const data = await reviewsRes.json();
                     setReviews(data);
+                }
+
+                const feedbacksRes = await fetch(`${API_URL}/api/performance/feedbacks`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (feedbacksRes.ok) {
+                    const data = await feedbacksRes.json();
+                    setFeedbacks(data);
                 }
             } catch (err) {
                 console.error("Erreur de chargement des performances:", err);
@@ -120,15 +123,36 @@ export function Performance() {
         }
     };
 
-    const handleFeedbackSubmit = (e) => {
+    const handleFeedbackSubmit = async (e) => {
         e.preventDefault();
         if (!feedbackForm.peerName) {
             showNotification('Veuillez indiquer le nom d\'un collègue.');
             return;
         }
-        setIsFeedbackModalOpen(false);
-        setFeedbackForm({ peerName: '', context: '' });
-        showNotification(`Demande de feedback envoyée à ${feedbackForm.peerName}`);
+
+        try {
+            const res = await fetch(`${API_URL}/api/performance/feedbacks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    peerName: feedbackForm.peerName,
+                    context: feedbackForm.context
+                })
+            });
+
+            if (res.ok) {
+                const newFeedback = await res.json();
+                setFeedbacks([newFeedback, ...feedbacks]);
+                setIsFeedbackModalOpen(false);
+                setFeedbackForm({ peerName: '', context: '' });
+                showNotification(`Demande de feedback envoyée à ${feedbackForm.peerName}`);
+            }
+        } catch (err) {
+            showNotification('Erreur réseau lors de la demande de feedback');
+        }
     };
 
     const handleEvaluationSubmit = async (e) => {
@@ -542,7 +566,7 @@ export function Performance() {
                                     <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
                                         <div>
                                             <CardTitle className="text-base text-slate-900">Feedback de {feedback.relationship}</CardTitle>
-                                            <CardDescription className="text-xs mt-0.5">{feedback.date}</CardDescription>
+                                            <CardDescription className="text-xs mt-0.5">{new Date(feedback.date).toLocaleDateString('fr-FR')}</CardDescription>
                                         </div>
                                         <Badge variant="secondary" className="font-normal text-xs">{feedback.provider}</Badge>
                                     </CardHeader>

@@ -10,6 +10,7 @@ router.use(auditTrail);
 router.get('/', employeeController.getAllEmployees);
 // Note: /bulk must be BEFORE /:id to prevent "bulk" being treated as an id
 router.post('/bulk', employeeController.importBulkEmployees);
+router.get('/profile', employeeController.getProfile);
 router.post('/', employeeController.createEmployee);
 router.delete('/bulk', employeeController.deleteMultipleEmployees);
 router.put('/:id', employeeController.updateEmployee);

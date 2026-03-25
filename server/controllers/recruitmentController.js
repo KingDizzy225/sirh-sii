@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const bcrypt = require('bcryptjs');
 
 // =============== JOB OFFERS ===============
 
@@ -98,7 +99,61 @@ exports.createApplicant = async (req, res) => {
 exports.updateApplicantStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body; // 'NEW', 'REVIEWING', 'INTERVIEW', 'OFFER', 'REJECTED'
+        const { status } = req.body; 
+
+        if (status === 'HIRED') {
+            const applicant = await prisma.applicant.findUnique({
+                where: { id },
+                include: { jobOffer: true }
+            });
+
+            if (!applicant) {
+                return res.status(404).json({ error: 'Applicant not found' });
+            }
+
+            const result = await prisma.$transaction(async (tx) => {
+                const updatedApp = await tx.applicant.update({
+                    where: { id },
+                    data: { status }
+                });
+
+                // Evite les doublons si cliqué multiples fois
+                const existingEmployee = await tx.employee.findUnique({ where: { email: applicant.email } });
+                
+                if (!existingEmployee) {
+                    await tx.employee.create({
+                        data: {
+                            firstName: applicant.firstName,
+                            lastName: applicant.lastName,
+                            email: applicant.email,
+                            role: 'Employee',
+                            department: applicant.jobOffer.department,
+                            positionTitle: applicant.jobOffer.title,
+                            hireDate: new Date(),
+                            status: 'ACTIVE',
+                        }
+                    });
+
+                    const defaultPassword = 'Welcome2026!';
+                    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+                    
+                    const existingUser = await tx.user.findUnique({ where: { email: applicant.email }});
+                    if (!existingUser) {
+                        await tx.user.create({
+                            data: {
+                                name: `${applicant.firstName} ${applicant.lastName}`,
+                                email: applicant.email,
+                                password: hashedPassword,
+                                role: 'EMPLOYEE'
+                            }
+                        });
+                    }
+                }
+                
+                return updatedApp;
+            });
+            return res.status(200).json(result);
+        }
 
         const updatedApplicant = await prisma.applicant.update({
             where: { id },

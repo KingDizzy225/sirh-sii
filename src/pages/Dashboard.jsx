@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function Dashboard() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [notification, setNotification] = useState(null);
     const [showSurvey, setShowSurvey] = useState(true);
     const [surveyScore, setSurveyScore] = useState(null);
@@ -19,15 +19,23 @@ export function Dashboard() {
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/analytics/dashboard`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setAnalyticsData(data);
+                const [statsRes, chartsRes] = await Promise.all([
+                    fetch(`${API_URL}/api/dashboard/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch(`${API_URL}/api/analytics/dashboard`, { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+                
+                if (statsRes.ok && chartsRes.ok) {
+                    const statsData = await statsRes.json();
+                    const chartsData = await chartsRes.json();
+                    
+                    setAnalyticsData({
+                        ...statsData,
+                        charts: chartsData.charts,
+                        advancedStats: chartsData.stats
+                    });
                 }
             } catch (err) {
-                console.error("Failed to load analytics", err);
+                console.error("Failed to load dashboard stats", err);
             } finally {
                 setLoading(false);
             }
@@ -61,53 +69,37 @@ export function Dashboard() {
 
     const stats = [
         {
-            title: 'Délai Moyen d\'Embauche',
-            value: `${analyticsData?.stats?.avgTimeToHire || 28} Jours`,
-            change: '-3 Jours',
+            title: 'Total Employés',
+            value: analyticsData?.totalEmployees || 0,
+            change: 'Actif',
+            icon: Users,
+            color: 'text-blue-600',
+            bg: 'bg-blue-100',
+        },
+        {
+            title: 'Congés Actifs',
+            value: analyticsData?.activeLeaves || 0,
+            change: 'Aujourd\'hui',
             icon: Timer,
             color: 'text-emerald-600',
             bg: 'bg-emerald-100',
         },
         {
-            title: 'Taux de Rotation Légal',
-            value: `${analyticsData?.stats?.globalTurnover || 6.4}%`,
-            change: '-0.5%',
+            title: 'Frais en Attente',
+            value: analyticsData?.pendingExpenses || 0,
+            change: 'À examiner',
             icon: Activity,
             color: 'text-rose-600',
             bg: 'bg-rose-100',
         },
         {
-            title: 'Coût du Turnover',
-            value: `${analyticsData?.stats?.turnoverCost || 85}M FCFA`,
-            change: '+7M',
-            icon: Activity,
-            color: 'text-rose-600',
-            bg: 'bg-rose-100',
-        },
-        {
-            title: 'Taux d\'Absentéisme',
-            value: `${analyticsData?.stats?.absenceRate || 2.8}%`,
-            change: '-0.2%',
-            icon: Users,
-            color: 'text-amber-600',
-            bg: 'bg-amber-100',
-        },
-        {
-            title: 'Écart de Rémunération',
-            value: `${analyticsData?.stats?.payGap || 3.2}%`,
-            change: '-1.1%',
+            title: 'Matériel Disponible',
+            value: analyticsData?.availableAssets || 0,
+            change: 'En stock',
             icon: Scale,
             color: 'text-amber-600',
             bg: 'bg-amber-100',
-        },
-        {
-            title: 'Total Employés',
-            value: `${analyticsData?.stats?.activeEmployees || 0}`,
-            change: '+12%',
-            icon: Users,
-            color: 'text-blue-600',
-            bg: 'bg-blue-100',
-        },
+        }
     ];
 
     return (
@@ -126,12 +118,17 @@ export function Dashboard() {
                 )}
             </AnimatePresence>
 
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900">Tableau de bord</h2>
-                <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between space-y-2 mb-8">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                        Bonjour, {user?.name.split(' ')[0] || 'Utilisateur'} !
+                    </h2>
+                    <p className="text-slate-500 mt-1">Voici ce qui se passe aujourd'hui.</p>
+                </div>
+                <div className="flex items-center space-x-2 mt-4 md:mt-0">
                     <button
                         onClick={() => showNotification("Le rapport RH global a été téléchargé en PDF.")}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+                        className="inline-flex items-center justify-center rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-5 py-2"
                     >
                         Télécharger Rapport
                     </button>
@@ -144,9 +141,9 @@ export function Dashboard() {
                         initial={{ opacity: 0, y: -20, height: 0 }}
                         animate={{ opacity: 1, y: 0, height: 'auto' }}
                         exit={{ opacity: 0, scale: 0.95, height: 0, margin: 0 }}
-                        className="bg-indigo-600 rounded-xl shadow-lg border-0 overflow-hidden mb-6"
+                        className="bg-primary hover:bg-primary/95 text-white rounded-2xl shadow-sm border-0 overflow-hidden mb-6 transition-colors"
                     >
-                        <div className="p-6 text-white">
+                        <div className="p-6">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <h3 className="text-xl font-bold mb-1">Sondage Pulse : Bilan T4</h3>
@@ -226,7 +223,7 @@ export function Dashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1, duration: 0.4 }}
                     >
-                        <Card>
+                        <Card className="rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium text-slate-600">
                                     {stat.title}
@@ -256,7 +253,7 @@ export function Dashboard() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
                 >
-                    <Card className="h-full">
+                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
                         <CardHeader>
                             <CardTitle>Écart Salarial (Salaire Moyen kFCFA)</CardTitle>
                         </CardHeader>
@@ -269,7 +266,7 @@ export function Dashboard() {
                                         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dx={-10} />
                                         <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                                         <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                        <Bar dataKey="male" name="Salaire Moyen Hommes" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="male" name="Salaire Moyen Hommes" fill="#78bc1b" radius={[4, 4, 0, 0]} />
                                         <Bar dataKey="female" name="Salaire Moyen Femmes" fill="#ec4899" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -284,7 +281,7 @@ export function Dashboard() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.5, duration: 0.5 }}
                 >
-                    <Card className="h-full">
+                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
                         <CardHeader>
                             <CardTitle>Activité Récente</CardTitle>
                         </CardHeader>
@@ -324,7 +321,7 @@ export function Dashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6, duration: 0.4 }}
                 >
-                    <Card className="h-full">
+                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-base">Taux de Rotation par Département (%)</CardTitle>
                         </CardHeader>
@@ -350,7 +347,7 @@ export function Dashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.7, duration: 0.4 }}
                 >
-                    <Card className="h-full">
+                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-base">Tendance du Délai d'Embauche (Jours)</CardTitle>
                         </CardHeader>
@@ -377,7 +374,7 @@ export function Dashboard() {
                     transition={{ delay: 0.8, duration: 0.4 }}
                     className="md:col-span-2 lg:col-span-1"
                 >
-                    <Card className="h-full">
+                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-base">Tendance Globale du Turnover (%)</CardTitle>
                         </CardHeader>
@@ -410,7 +407,7 @@ export function Dashboard() {
                     transition={{ delay: 0.9, duration: 0.4 }}
                     className="md:col-span-1"
                 >
-                    <Card className="h-full">
+                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-base">Pyramide des Âges & Ancienneté</CardTitle>
                         </CardHeader>
@@ -424,7 +421,7 @@ export function Dashboard() {
                                         <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                                         <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
                                         {/* To make a standard age pyramid, males are negative and females are positive, but Recharts handles it via stackOffset="sign" with data mapping, so we'll just stack them side-by-side or standard stacked for visual simplicity here */}
-                                        <Bar dataKey="male" name="Hommes" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+                                        <Bar dataKey="male" name="Hommes" stackId="a" fill="#78bc1b" radius={[0, 0, 0, 0]} />
                                         <Bar dataKey="female" name="Femmes" stackId="a" fill="#ec4899" radius={[0, 4, 4, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -440,7 +437,7 @@ export function Dashboard() {
                     transition={{ delay: 1.0, duration: 0.4 }}
                     className="md:col-span-1 lg:col-span-2"
                 >
-                    <Card className="h-full">
+                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-base">Source d'Embauche : Interne vs Externe</CardTitle>
                         </CardHeader>

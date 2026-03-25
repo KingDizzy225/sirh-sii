@@ -1,14 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const payrollController = require('../controllers/payrollController');
-const auditTrail = require('../middleware/auditTrail');
+const verifyToken = require('../middleware/authMiddleware');
+const { getPayrolls, getMyPayrolls, runPayroll } = require('../controllers/payrollController');
 
-// Apply Audit Trail - Crucial for financial changes
-router.use(auditTrail);
+// Accès administrateur / RH
+router.get('/', verifyToken, getPayrolls);
+router.post('/run', verifyToken, runPayroll);
 
-// Payroll Routes
-router.get('/', payrollController.getAllPayrolls);
-router.post('/', payrollController.createPayroll);
-router.put('/:id/status', payrollController.updatePayrollStatus);
+// Accès collaborateur (Self-service : voir ses fiches)
+router.get('/my', verifyToken, getMyPayrolls);
 
 module.exports = router;

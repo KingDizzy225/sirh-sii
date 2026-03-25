@@ -169,4 +169,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+# Local Databases
+server/prisma/*.db
+server/prisma/*.db-journal
+server/uploads/
 node_modules

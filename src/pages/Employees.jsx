@@ -9,48 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
 
-import seedData from '../../seed_output.json';
-
-const fallbackEmployees = [
-    { id: 'EMP001', name: 'Sarah Jenkins', role: 'Directrice RH', systemRole: 'Administrator', department: 'Ressources Humaines', status: 'Actif', email: 'sarah.j@company.com', phone: '+1 234-567-8900', sex: 'Femme', onboardingProgress: 100 },
-    { id: 'EMP002', name: 'Michael Dam', role: 'Ingénieur Frontend', systemRole: 'Employee', department: 'Ingénierie', status: 'Actif', email: 'michael.d@company.com', phone: '+1 234-567-8901', sex: 'Homme', onboardingProgress: 100 },
-    { id: 'EMP003', name: 'Amanda Smith', role: 'Responsable Marketing', systemRole: 'Employee', department: 'Marketing', status: 'En congé', email: 'amanda.s@company.com', phone: '+1 234-567-8902', sex: 'Femme', onboardingProgress: 100 },
-    { id: 'EMP004', name: 'John Doe', role: 'Commercial', systemRole: 'Employee', department: 'Ventes', status: 'Actif', email: 'john.d@company.com', phone: '+1 234-567-8903', sex: 'Homme', onboardingProgress: 100 },
-    { id: 'EMP005', name: 'Robert Fox', role: 'Product Designer', systemRole: 'Employee', department: 'Design', status: 'Actif', email: 'robert.f@company.com', phone: '+1 234-567-8904', sex: 'Homme', onboardingProgress: 100 },
-    { id: 'EMP006', name: 'Lisa Ray', role: 'Ingénieur Backend', systemRole: 'Employee', department: 'Ingénierie', status: 'Ancien employé', email: 'lisa.r@company.com', phone: '+1 234-567-8905', sex: 'Femme', onboardingProgress: 40 },
-];
-
-const mapSeededEmployees = () => {
-    try {
-        if (!seedData || !seedData.employees || seedData.employees.length === 0) return fallbackEmployees;
-
-        return seedData.employees.map((emp, index) => ({
-            id: `EMP${String(index + 1).padStart(3, '0')}`,
-            name: `${emp.first_name} ${emp.last_name}`,
-            role: emp.position_title,
-            systemRole: emp.role === 'Employee' ? 'Employee' : emp.role,
-            department: emp.department,
-            status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
-            email: emp.email,
-            phone: `+225 01${Math.floor(10000000 + Math.random() * 89999999)}`,
-            sex: 'Non spécifié',
-            onboardingProgress: emp.status === 'ACTIVE' ? 100 : Math.floor(Math.random() * 80) + 20
-        }));
-    } catch (e) {
-        return fallbackEmployees;
-    }
-};
-
-const getInitialEmployees = () => {
-    const stored = localStorage.getItem('sirh_employees');
-    if (stored) return JSON.parse(stored);
-    const initial = mapSeededEmployees();
-    localStorage.setItem('sirh_employees', JSON.stringify(initial));
-    return initial;
-};
-
-const initialEmployees = getInitialEmployees();
-
 const roleLabels = {
     'Administrator': 'Administrateur',
     'HR': 'RH',
@@ -67,7 +25,7 @@ export function Employees() {
     const fileInputRef = useRef(null);
 
     // Initialisation API
-    useEffect(() => {
+    const loadEmployees = () => {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
         const token = localStorage.getItem('sirh_token');
         fetch(`${API_URL}/api/employees`, {
@@ -75,26 +33,33 @@ export function Employees() {
         })
             .then(res => res.json())
             .then(data => {
-                const mapped = data.map(emp => ({
-                    id: emp.id,
-                    name: `${emp.firstName} ${emp.lastName}`,
-                    role: emp.positionTitle || 'Poste Non Assigné',
-                    systemRole: emp.role || 'Employee',
-                    department: emp.department || 'Non assigné',
-                    status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
-                    email: emp.email,
-                    phone: '+225 01234567', // A ajouter dans la BDD dans le futur
-                    sex: 'Non spécifié',
-                    onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
-                }));
-                // Combine with local mock fallback if API is empty
-                setEmployees(mapped.length > 0 ? mapped : initialEmployees);
+                if(Array.isArray(data)){
+                    const mapped = data.map(emp => ({
+                        id: emp.id,
+                        name: `${emp.firstName} ${emp.lastName}`,
+                        role: emp.positionTitle || 'Poste Non Assigné',
+                        systemRole: emp.role || 'Employee',
+                        department: emp.department || 'Non assigné',
+                        status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
+                        email: emp.email,
+                        phone: '+225 01234567', // A ajouter dans la BDD dans le futur
+                        sex: 'Non spécifié',
+                        onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
+                    }));
+                    setEmployees(mapped);
+                } else {
+                    setEmployees([]);
+                }
             })
             .catch(err => {
-                console.error('API non joignable, fallback local:', err);
-                setEmployees(initialEmployees);
+                console.error('API non joignable:', err);
+                showNotification("Erreur lors du chargement des employés depuis la base de données.");
             })
             .finally(() => setIsLoading(false));
+    };
+
+    useEffect(() => {
+        loadEmployees();
     }, []);
 
     // Form state corresponding to user request
@@ -148,25 +113,11 @@ export function Employees() {
             const dbEmp = await res.json();
             if (!res.ok) throw new Error(dbEmp.error || "Erreur création API");
 
-            const newEmp = {
-                id: dbEmp.id || `EMP00${employees.length + 1}`,
-                name: `${dbEmp.firstName} ${dbEmp.lastName}`,
-                role: dbEmp.positionTitle,
-                systemRole: dbEmp.role,
-                department: dbEmp.department,
-                status: 'Actif',
-                email: dbEmp.email,
-                phone: formData.phone,
-                sex: formData.sex,
-                onboardingProgress: 0
-            };
-
             const updatedEmployees = [newEmp, ...employees];
             setEmployees(updatedEmployees);
-            localStorage.setItem('sirh_employees', JSON.stringify(updatedEmployees)); // Keeps fallback
             setIsAddModalOpen(false);
             setFormData({ firstName: '', lastName: '', phone: '', position: '', sex: 'Homme' }); // Reset form
-            showNotification(`Profil créé sur Base de données globale pour ${formData.firstName}.`);
+            showNotification(`Employé ajouté à la base de données globale.`);
 
         } catch (error) {
             console.error("Détails de l'erreur frontend :", error);
@@ -241,9 +192,8 @@ export function Employees() {
             if (res.ok) {
                 const remainingEmployees = employees.filter(emp => !selectedEmployees.includes(emp.id));
                 setEmployees(remainingEmployees);
-                localStorage.setItem('sirh_employees', JSON.stringify(remainingEmployees));
                 setSelectedEmployees([]);
-                showNotification(`${selectedEmployees.length} employé(s) supprimé(s) définitivement.`);
+                showNotification(`${selectedEmployees.length} employé(s) supprimé(s) définitivement de la base de données.`);
             } else {
                 throw new Error("Erreur serveur lors de la suppression.");
             }
@@ -280,24 +230,7 @@ export function Employees() {
                     if (res.ok) {
                         const data = await res.json();
                         showNotification(data.message);
-                        // Reload list from server to get new IDs properly
-                        fetch(`${API_URL}/api/employees`, { headers: { 'Authorization': `Bearer ${token}` } })
-                            .then(r => r.json())
-                            .then(json => {
-                                const mapped = json.map(emp => ({
-                                    id: emp.id,
-                                    name: `${emp.firstName} ${emp.lastName}`,
-                                    role: emp.positionTitle || 'Poste Non Assigné',
-                                    systemRole: emp.role || 'Employee',
-                                    department: emp.department || 'Non assigné',
-                                    status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
-                                    email: emp.email,
-                                    phone: '+225 01234567',
-                                    sex: 'Non spécifié',
-                                    onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
-                                }));
-                                setEmployees(mapped.length > 0 ? mapped : initialEmployees);
-                            });
+                        loadEmployees(); // Refresh directly from the server after CSV insertion
                     } else {
                         throw new Error('Erreur Server Bulk Import');
                     }
@@ -331,7 +264,6 @@ export function Employees() {
                 emp.id === empId ? { ...emp, systemRole: newRole } : emp
             );
             setEmployees(updated);
-            localStorage.setItem('sirh_employees', JSON.stringify(updated));
             showNotification(`Accès métier mis à jour en BDD avec succès : ${newRole}`);
         } catch (e) {
             showNotification("Erreur de modification Backend.");

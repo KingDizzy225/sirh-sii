@@ -7,18 +7,31 @@ import { Send, Lock, Key, CheckCircle2, AlertTriangle, MessageSquare, PlusCircle
 import { cn } from '@/lib/utils';
 
 export function Support() {
-    // Local state for the tickets stored in the browser
     const [savedTickets, setSavedTickets] = useState([]);
     const [activeTicket, setActiveTicket] = useState(null);
     const [newMessage, setNewMessage] = useState('');
     const [notification, setNotification] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Load tickets from local storage on component mount
+    const loadSavedTickets = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
+            const res = await fetch(`${API_URL}/api/support/tickets`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const tickets = await res.json();
+                setSavedTickets(tickets);
+            }
+        } catch (error) {
+            console.error('Erreur chargement des tickets', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const loadSavedTickets = () => {
-            const tickets = JSON.parse(localStorage.getItem('sirh_support_tickets') || '[]');
-            setSavedTickets(tickets);
-        };
         loadSavedTickets();
     }, []);
 
@@ -30,66 +43,85 @@ export function Support() {
     const generateId = () => `TKT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
     const generateToken = () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-    const handleCreateTicket = (e) => {
+    const handleCreateTicket = async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
 
-        const newId = generateId();
-        const newToken = generateToken();
-        const now = new Date().toISOString();
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
+            const res = await fetch(`${API_URL}/api/support/tickets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: 'Demande Assistante Sociale',
+                    description: newMessage,
+                    category: 'Général',
+                    priority: 'Medium',
+                    isAnonymous: true
+                })
+            });
 
-        const newTicketRecord = {
-            id: newId,
-            token: newToken,
-            status: 'Ouvert',
-            created_at: now,
-            messages: [
-                {
-                    id: Math.random().toString(36).substring(2, 9),
-                    sender: 'Employé',
-                    body: newMessage,
-                    timestamp: now
-                }
-            ]
-        };
+            if (res.ok) {
+                const createdTicket = await res.json();
+                
+                await fetch(`${API_URL}/api/support/tickets/${createdTicket.id}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ body: newMessage, sender: 'Employé' })
+                });
 
-        // In a real app, this would be an API call, and ONLY the ID and token would be stored locally.
-        // The messages would be fetched using the token.
-        // For this frontend mockup, we simulate the database by putting the whole object in local storage,
-        // but we emphasize that the ID and Token is what grants access.
-        const updatedTickets = [...savedTickets, newTicketRecord];
-        localStorage.setItem('sirh_support_tickets', JSON.stringify(updatedTickets));
-        setSavedTickets(updatedTickets);
-
-        setNewMessage('');
-        setActiveTicket(newTicketRecord);
-        showNotification(`Ticket créé de manière sécurisée. Conservez votre clé d'accès.`);
+                await loadSavedTickets();
+                setNewMessage('');
+                setActiveTicket(null);
+                showNotification(`Demande créée de manière sécurisée et anonyme.`);
+            } else {
+                showNotification(`Erreur lors de la création.`);
+            }
+        } catch (error) {
+            showNotification(`Erreur serveur lors de la connexion.`);
+        }
     };
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !activeTicket) return;
 
-        const now = new Date().toISOString();
-        const newMsgObj = {
-            id: Math.random().toString(36).substring(2, 9),
-            sender: 'Employé',
-            body: newMessage,
-            timestamp: now
-        };
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
+            const res = await fetch(`${API_URL}/api/support/tickets/${activeTicket.id}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ body: newMessage, sender: 'Employé' })
+            });
 
-        // Mocking the backend update
-        const updatedTicket = {
-            ...activeTicket,
-            messages: [...activeTicket.messages, newMsgObj]
-        };
+            if (res.ok) {
+                const newMsgObj = await res.json();
+                const updatedTicket = {
+                    ...activeTicket,
+                    messages: [...(activeTicket.messages || []), newMsgObj]
+                };
 
-        const updatedTickets = savedTickets.map(t => t.id === activeTicket.id ? updatedTicket : t);
-        localStorage.setItem('sirh_support_tickets', JSON.stringify(updatedTickets));
-
-        setSavedTickets(updatedTickets);
-        setActiveTicket(updatedTicket);
-        setNewMessage('');
+                const updatedTickets = savedTickets.map(t => t.id === activeTicket.id ? updatedTicket : t);
+                setSavedTickets(updatedTickets);
+                setActiveTicket(updatedTicket);
+                setNewMessage('');
+            } else {
+                showNotification(`Erreur de distribution du message.`);
+            }
+        } catch (error) {
+            showNotification(`Réseau instable, message non envoyé.`);
+        }
     };
 
     const handleOpenTicket = (ticket) => {
@@ -145,7 +177,9 @@ export function Support() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
-                            {savedTickets.length === 0 ? (
+                            {isLoading ? (
+                                <div className="text-center py-8 text-slate-500">Chargement...</div>
+                            ) : savedTickets.length === 0 ? (
                                 <div className="text-center py-8 text-slate-500 flex flex-col items-center">
                                     <MessageSquare size={32} className="text-slate-300 mb-3" />
                                     <p className="text-sm">Aucun ticket actif trouvé.</p>
@@ -168,7 +202,7 @@ export function Support() {
                                                 {ticket.status}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-slate-500 truncate mt-2">{ticket.messages[0]?.body}</p>
+                                        <p className="text-xs text-slate-500 truncate mt-2">{ticket.description || 'Nouveau ticket'}</p>
                                     </div>
                                 ))
                             )}
@@ -209,7 +243,7 @@ export function Support() {
                                             {activeTicket === 'new' ? (
                                                 <><AlertTriangle size={12} className="text-amber-400" /> Un jeton unique sera généré sur votre appareil.</>
                                             ) : (
-                                                <><Key size={12} className="text-emerald-400" /> Sécurisé par clé locale : <span className="font-mono text-[10px] text-slate-500 ml-1">{activeTicket.token.substring(0, 8)}...</span></>
+                                                <><Key size={12} className="text-emerald-400" /> Sécurisé par ID de session : <span className="font-mono text-[10px] text-slate-500 ml-1">{activeTicket.id.split('-')[0]}...</span></>
                                             )}
                                         </CardDescription>
                                     </div>
@@ -217,37 +251,30 @@ export function Support() {
                             </CardHeader>
 
                             <CardContent className="flex-1 p-0 flex flex-col bg-slate-50">
-                                {/* Chat History Area */}
-                                <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                                    {activeTicket === 'new' ? (
-                                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 flex items-start gap-3">
-                                            <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" />
-                                            <div>
-                                                <p className="font-semibold mb-1">Avis de Confidentialité</p>
-                                                <p>Décrivez votre situation ci-dessous sans informations permettant de vous identifier pour rester anonyme. L'assistante sociale vous répondra ici.</p>
+                                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                                        {activeTicket === 'new' && (
+                                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 flex items-start gap-3">
+                                                <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" />
+                                                <div>
+                                                    <p className="font-semibold mb-1">Avis de Confidentialité</p>
+                                                    <p>Décrivez votre situation ci-dessous sans informations permettant de vous identifier pour rester anonyme. L'assistante sociale vous répondra sur cette interface sécurisée.</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        activeTicket.messages.map((msg) => (
+                                        )}
+                                        {activeTicket !== 'new' && Array.isArray(activeTicket?.messages) && activeTicket.messages.map((msg) => (
                                             <div key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === 'Employé' ? "ml-auto items-end" : "mr-auto items-start")}>
                                                 <div className="text-[10px] font-medium text-slate-400 mb-1 px-1 uppercase tracking-wider">
-                                                    {msg.sender === 'Employé' ? 'Vous' : 'Assistante Sociale'}
+                                                    {msg.sender === 'Employé' ? 'Vous' : 'Assistante'}
                                                 </div>
-                                                <div className={cn(
-                                                    "px-4 py-3 rounded-2xl text-sm shadow-sm",
-                                                    msg.sender === 'Employé'
-                                                        ? "bg-slate-900 text-white rounded-tr-sm"
-                                                        : "bg-white border text-slate-800 rounded-tl-sm"
-                                                )}>
+                                                <div className={cn("px-4 py-3 text-sm shadow-sm", msg.sender === 'Employé' ? "bg-slate-900 text-white rounded-2xl rounded-tr-sm" : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm")}>
                                                     {msg.body}
                                                 </div>
                                                 <div className="text-[9px] text-slate-400 mt-1 px-1">
-                                                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
+                                        ))}
+                                    </div>
 
                                 {/* Message Input Area */}
                                 <div className="p-4 bg-white border-t border-slate-100">

@@ -6,17 +6,18 @@ import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useAuth } from '../context/AuthContext';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
+import { AIDocumentModal } from '../components/ui/AIDocumentModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     FileText, UploadCloud, Download, Trash2, Shield,
-    Folder, FolderOpen, File, CheckCircle2, Lock, Search
+    Folder, FolderOpen, File, CheckCircle2, Lock, Search, PlusCircle, PenTool, Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function Documents() {
-    const { user, hasPermission, token } = useAuth();
+    const { user, hasPermission, token, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('company');
     const [companyDocs, setCompanyDocs] = useState([]);
     const [personalDocs, setPersonalDocs] = useState([]);
@@ -24,6 +25,9 @@ export function Documents() {
     const [isDragging, setIsDragging] = useState(false);
     const [notification, setNotification] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
+
+    const [showAIModal, setShowAIModal] = useState(false);
+    const [isAIGenerating, setIsAIGenerating] = useState(false);
 
     React.useEffect(() => {
         const fetchDocs = async () => {
@@ -39,6 +43,8 @@ export function Documents() {
 
                     setPersonalDocs(pDocs);
                     setCompanyDocs(cDocs);
+                } else if (res.status === 401 || res.status === 403) {
+                    logout();
                 }
             } catch (err) {
                 console.error("Erreur chargement docs", err);
@@ -81,9 +87,10 @@ export function Documents() {
         const file = files[0];
 
         const formData = new FormData();
-        formData.append('document', file);
+        formData.append('file', file);
         formData.append('title', file.name);
         formData.append('type', activeTab === 'company' ? 'Entreprise' : 'Personnel');
+        formData.append('employeeId', user?.id);
 
         setUploadProgress(10);
         try {
@@ -129,6 +136,49 @@ export function Documents() {
             }
         } catch (err) {
             showNotification(`Erreur lors de la suppression.`);
+        }
+    };
+
+    const handleAIGenerate = async (type, formData) => {
+        setIsAIGenerating(true);
+        try {
+            const res = await fetch(`${API_URL}/api/documents/ai-generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ type, formData })
+            });
+
+            if (res.ok) {
+                const newDoc = await res.json();
+                if (newDoc.type === 'Contrat' || newDoc.type === 'Entreprise' || newDoc.type === 'Autre') {
+                    setCompanyDocs(prev => [newDoc, ...prev]);
+                    setActiveTab('company');
+                } else {
+                    setPersonalDocs(prev => [newDoc, ...prev]);
+                    setActiveTab('personal');
+                }
+                setShowAIModal(false);
+                showNotification(`Le document IA "${type}" a été généré avec succès.`);
+            } else {
+                if (res.status === 401 || res.status === 403) {
+                    logout();
+                    showNotification("Session expirée. Veuillez vous reconnecter.");
+                    return;
+                }
+                let errorMsg = `Code ${res.status}`;
+                try {
+                    const errData = await res.json();
+                    if (errData.error) errorMsg = errData.error;
+                } catch(e) {}
+                showNotification(`Échec: ${errorMsg}`);
+            }
+        } catch(e) {
+            showNotification(`Erreur système: ${e.message}`);
+        } finally {
+            setIsAIGenerating(false);
         }
     };
 
@@ -205,10 +255,13 @@ export function Documents() {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                         <Folder className="text-blue-600 h-8 w-8" />
-                        Documents
+                        GED & Contrats
                     </h2>
-                    <p className="text-slate-500 mt-1">Gérez les politiques de l'entreprise et vos dossiers personnels.</p>
+                    <p className="text-slate-500 mt-1">Gérez et stockez de manière sécurisée les politiques et documents RH (PDF, Word).</p>
                 </div>
+                <Button onClick={() => setShowAIModal(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 shadow-sm font-medium">
+                    <Sparkles size={16} className="text-indigo-200" /> Générer un Document IA
+                </Button>
             </div>
 
             <Tabs defaultValue="company" className="w-full" onValueChange={setActiveTab}>
@@ -313,6 +366,15 @@ export function Documents() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <AnimatePresence>
+                <AIDocumentModal 
+                    isOpen={showAIModal} 
+                    onClose={() => setShowAIModal(false)} 
+                    onGenerate={handleAIGenerate} 
+                    isGenerating={isAIGenerating} 
+                />
+            </AnimatePresence>
         </div>
     );
 }

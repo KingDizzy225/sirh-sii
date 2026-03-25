@@ -14,73 +14,109 @@ export function SupportDashboard() {
     const [replyMessage, setReplyMessage] = useState('');
     const [notification, setNotification] = useState(null);
 
-    // Poll local storage to simulate live updates (since employee might submit a ticket in another tab)
-    useEffect(() => {
-        const fetchTickets = () => {
-            const tickets = JSON.parse(localStorage.getItem('sirh_support_tickets') || '[]');
-            // Sort by most recent first based on created_at or last message
-            tickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            setAllTickets(tickets);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const token = localStorage.getItem('sirh_token');
 
-            // If active ticket was updated elsewhere, sync it
-            if (activeTicket) {
-                const updatedActive = tickets.find(t => t.id === activeTicket.id);
-                if (updatedActive) setActiveTicket(updatedActive);
+    // Poll API to simulate live updates
+    useEffect(() => {
+        const fetchTickets = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/support/tickets`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const tickets = await res.json();
+                    setAllTickets(tickets);
+
+                    if (activeTicket) {
+                        const updatedActive = tickets.find(t => t.id === activeTicket.id);
+                        if (updatedActive) setActiveTicket(updatedActive);
+                    }
+                }
+            } catch (err) {
+                // handle silently
             }
         };
 
         fetchTickets();
-        const interval = setInterval(fetchTickets, 3000); // Check every 3 seconds
+        const interval = setInterval(fetchTickets, 5000); // API polling
         return () => clearInterval(interval);
-    }, [activeTicket]);
+    }, [activeTicket, API_URL, token]);
 
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleSendReply = (e) => {
+    const handleSendReply = async (e) => {
         e.preventDefault();
         if (!replyMessage.trim() || !activeTicket) return;
 
-        const now = new Date().toISOString();
-        const newMsgObj = {
-            id: Math.random().toString(36).substring(2, 9),
-            sender: 'Assistante Sociale',
-            body: replyMessage,
-            timestamp: now
-        };
+        try {
+            // Send Message
+            const resMsg = await fetch(`${API_URL}/api/support/tickets/${activeTicket.id}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ body: replyMessage, sender: 'Assistante Sociale' })
+            });
 
-        // Mock database update
-        const updatedTicket = {
-            ...activeTicket,
-            status: 'Répondu',
-            updated_at: now,
-            messages: [...activeTicket.messages, newMsgObj]
-        };
+            if (resMsg.ok) {
+                const newMsgObj = await resMsg.json();
+                
+                // Update Status
+                await fetch(`${API_URL}/api/support/tickets/${activeTicket.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: 'Répondu' })
+                });
 
-        const currentTickets = JSON.parse(localStorage.getItem('sirh_support_tickets') || '[]');
-        const updatedTickets = currentTickets.map(t => t.id === activeTicket.id ? updatedTicket : t);
+                const updatedTicket = {
+                    ...activeTicket,
+                    status: 'Répondu',
+                    updatedAt: new Date().toISOString(),
+                    messages: [...(activeTicket.messages || []), newMsgObj]
+                };
 
-        localStorage.setItem('sirh_support_tickets', JSON.stringify(updatedTickets));
-        setAllTickets(updatedTickets);
-        setActiveTicket(updatedTicket);
-        setReplyMessage('');
-        showNotification('Réponse envoyée avec succès.');
+                setAllTickets(prev => prev.map(t => t.id === activeTicket.id ? updatedTicket : t));
+                setActiveTicket(updatedTicket);
+                setReplyMessage('');
+                showNotification('Réponse envoyée avec succès.');
+            } else {
+                showNotification('Erreur réseau.');
+            }
+        } catch (error) {
+            showNotification('Erreur serveur.');
+        }
     };
 
-    const handleCloseTicket = (e) => {
+    const handleCloseTicket = async (e) => {
         e.stopPropagation();
         if (!activeTicket) return;
 
-        const updatedTicket = { ...activeTicket, status: 'Fermé', updated_at: new Date().toISOString() };
-        const currentTickets = JSON.parse(localStorage.getItem('sirh_support_tickets') || '[]');
-        const updatedTickets = currentTickets.map(t => t.id === activeTicket.id ? updatedTicket : t);
+        try {
+            const res = await fetch(`${API_URL}/api/support/tickets/${activeTicket.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: 'Fermé' })
+            });
 
-        localStorage.setItem('sirh_support_tickets', JSON.stringify(updatedTickets));
-        setAllTickets(updatedTickets);
-        setActiveTicket(null);
-        showNotification(`Ticket ${activeTicket.id} fermé.`);
+            if (res.ok) {
+                setAllTickets(prev => prev.map(t => t.id === activeTicket.id ? { ...t, status: 'Fermé' } : t));
+                setActiveTicket(null);
+                showNotification(`Ticket ${activeTicket.id} fermé.`);
+            }
+        } catch (error) {
+            showNotification("Impossibilité de fermer le ticket.");
+        }
     };
 
     const openCount = allTickets.filter(t => t.status === 'Ouvert').length;
@@ -180,7 +216,7 @@ export function SupportDashboard() {
                                             </p>
                                             <div className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
                                                 <Clock size={10} />
-                                                {new Date(ticket.messages[ticket.messages.length - 1]?.timestamp).toLocaleDateString()}
+                                                {ticket.messages && ticket.messages.length > 0 ? new Date(ticket.messages[ticket.messages.length - 1]?.createdAt || Date.now()).toLocaleDateString() : new Date(ticket.createdAt).toLocaleDateString()}
                                             </div>
                                         </div>
                                     ))}
@@ -219,7 +255,7 @@ export function SupportDashboard() {
                             <CardContent className="flex-1 p-0 flex flex-col bg-slate-50/50">
                                 {/* Chat History Area */}
                                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                                    {activeTicket.messages.map((msg) => (
+                                    {activeTicket.messages && activeTicket.messages.map((msg) => (
                                         <div key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === 'Assistante Sociale' ? "ml-auto items-end" : "mr-auto items-start")}>
                                             <div className="text-[10px] font-medium text-slate-400 mb-1 px-1 uppercase tracking-wider">
                                                 {msg.sender === 'Employé' ? 'Expéditeur Anonyme' : 'Vous'}
@@ -233,7 +269,7 @@ export function SupportDashboard() {
                                                 {msg.body}
                                             </div>
                                             <div className="text-[9px] text-slate-400 mt-1 px-1">
-                                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
                                     ))}

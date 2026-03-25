@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const bcrypt = require('bcryptjs');
 
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
@@ -13,11 +14,35 @@ exports.getAllEmployees = async (req, res) => {
     }
 };
 
-// Create a new employee
+// Get profile for the currently logged-in user
+exports.getProfile = async (req, res) => {
+    try {
+        const { email } = req.user; // Get email from verified JWT
+        
+        const employee = await prisma.employee.findUnique({
+            where: { email },
+            include: {
+                manager: true, // Fetch manager details if applicable
+            }
+        });
+
+        if (!employee) {
+            return res.status(404).json({ error: 'Profil employé introuvable pour cet utilisateur' });
+        }
+
+        res.status(200).json(employee);
+    } catch (error) {
+        console.error('Error fetching employee profile:', error);
+        res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+};
+
+// Create a new employee and auto-provision their User account for Self-Service
 exports.createEmployee = async (req, res) => {
     try {
         const { firstName, lastName, email, role, department, positionTitle, hireDate, status } = req.body;
 
+        // Execute sequentially to ensure both are created
         const newEmployee = await prisma.employee.create({
             data: {
                 firstName,
@@ -28,6 +53,19 @@ exports.createEmployee = async (req, res) => {
                 positionTitle,
                 hireDate: hireDate ? new Date(hireDate) : new Date(),
                 status: status || 'ACTIVE',
+            }
+        });
+
+        // Automatically create User for Self-Service Portal access
+        const defaultPassword = 'Welcome2026!';
+        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+        
+        await prisma.user.create({
+            data: {
+                name: `${firstName} ${lastName}`,
+                email,
+                password: hashedPassword,
+                role: role === 'Administrator' ? 'ADMIN' : (role === 'HR' ? 'HR' : (role === 'Manager' ? 'MANAGER' : 'EMPLOYEE'))
             }
         });
 
@@ -123,6 +161,24 @@ exports.importBulkEmployees = async (req, res) => {
             data: dataToInsert,
             skipDuplicates: true
         });
+
+        // Automatically create User accounts for Self-Service
+        if (createResult.count > 0) {
+            const defaultPassword = 'Welcome2026!';
+            const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+            
+            const usersToInsert = dataToInsert.map(emp => ({
+                name: `${emp.firstName} ${emp.lastName}`,
+                email: emp.email,
+                password: hashedPassword,
+                role: emp.role === 'Administrator' ? 'ADMIN' : (emp.role === 'HR' ? 'HR' : (emp.role === 'Manager' ? 'MANAGER' : 'EMPLOYEE'))
+            }));
+
+            await prisma.user.createMany({
+                data: usersToInsert,
+                skipDuplicates: true
+            });
+        }
 
         res.status(201).json({
             message: `Successfully imported ${createResult.count} out of ${employees.length} employees (duplicates skipped)`,

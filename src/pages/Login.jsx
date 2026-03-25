@@ -66,7 +66,7 @@ export function Login() {
                                     <Input
                                         type="email"
                                         required
-                                        placeholder="admin@siirh.com"
+                                        placeholder="admin@sirh.com"
                                         className="pl-10"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -99,8 +99,8 @@ export function Login() {
 
                             <div className="text-center text-sm text-slate-500 pt-4 border-t border-slate-100">
                                 Comptes de test : <br />
-                                <span className="font-semibold text-slate-700">admin@siirh.com</span> ou <span className="font-semibold text-slate-700">drh@siirh.com</span><br />
-                                Mot de passe : <span className="font-semibold text-slate-700">sirh</span>
+                                <span className="font-semibold text-slate-700">admin@</span>, <span className="font-semibold text-slate-700">drh@</span>, <span className="font-semibold text-slate-700">manager1@</span> ou <span className="font-semibold text-slate-700">rh1@sirh.com</span><br />
+                                Mot de passe : <span className="font-semibold text-slate-700">SIIRH</span>
                             </div>
                         </form>
                     </CardContent>

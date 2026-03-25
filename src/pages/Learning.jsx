@@ -1,39 +1,123 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { BookOpen, Video, Award, Clock, PlayCircle, Users, CheckCircle2, Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Mock DB structure combining Employee and Courses logic
-const initialCourses = [
-    { id: 1, title: 'Bases de la Sécurité de l\'Information', category: 'Conformité', totalModules: 5, timeEst: '2 heures', coverBg: 'bg-blue-600', activeLearners: 142 },
-    { id: 2, title: 'Concepts Avancés de React', category: 'Technique', totalModules: 12, timeEst: '8 heures', coverBg: 'bg-emerald-600', activeLearners: 34 },
-    { id: 3, title: 'Donner un Feedback Efficace', category: 'Savoir-être', totalModules: 3, timeEst: '45 min', coverBg: 'bg-indigo-600', activeLearners: 89 },
-    { id: 4, title: 'Formation Anti-Harcèlement 2026', category: 'Conformité', totalModules: 4, timeEst: '1.5 heures', coverBg: 'bg-rose-600', activeLearners: 215 },
-];
-
-const initialEmployeeProgress = [
-    { employeeId: 'EMP-001', name: 'Sarah Jenkins', role: 'Directrice RH', courseId: 1, modulesCompleted: 5, status: 'Terminé' },
-    { employeeId: 'EMP-001', name: 'Sarah Jenkins', role: 'Directrice RH', courseId: 3, modulesCompleted: 1, status: 'En cours' },
-    { employeeId: 'EMP-002', name: 'Michael Dam', role: 'Ingénieur Frontend', courseId: 2, modulesCompleted: 8, status: 'En cours' },
-    { employeeId: 'EMP-003', name: 'David Chen', role: 'Analyste Financier', courseId: 1, modulesCompleted: 0, status: 'Non commencé' },
-];
+import { useAuth } from '../context/AuthContext';
 
 export function Learning() {
+    const { user } = useAuth();
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const token = localStorage.getItem('sirh_token');
+    const isAdminOrHR = user?.role === 'ADMIN' || user?.role === 'HR';
+
     const [activeTab, setActiveTab] = useState('catalog');
-    const [courses, setCourses] = useState(initialCourses);
-    const [employeeProgress, setEmployeeProgress] = useState(initialEmployeeProgress);
+    const [courses, setCourses] = useState([]);
+    const [employeeProgress, setEmployeeProgress] = useState([]);
     const [notification, setNotification] = useState(null);
+
+    useEffect(() => {
+        const fetchLearningData = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/trainings`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    const mappedCourses = data.map((c, i) => {
+                        const colors = ['bg-blue-600', 'bg-emerald-600', 'bg-indigo-600', 'bg-rose-600', 'bg-amber-600'];
+                        return {
+                            ...c,
+                            coverBg: colors[i % colors.length],
+                            category: 'Catalogue Interne',
+                            totalModules: Math.ceil(c.durationHours / 2) || 1,
+                            timeEst: `${c.durationHours} heures`,
+                            activeLearners: c.participations ? c.participations.length : 0
+                        };
+                    });
+                    setCourses(mappedCourses);
+                    
+                    let globalProgress = [];
+                    mappedCourses.forEach(course => {
+                        if (course.participations) {
+                            course.participations.forEach(p => {
+                                globalProgress.push({
+                                    employeeId: p.employeeId,
+                                    name: `${p.employee.firstName} ${p.employee.lastName}`,
+                                    role: p.employee.department,
+                                    courseId: course.id,
+                                    modulesCompleted: p.completionStatus === 'Completed' ? course.totalModules : Math.floor(course.totalModules / 2),
+                                    status: p.completionStatus
+                                });
+                            });
+                        }
+                    });
+                    setEmployeeProgress(globalProgress);
+                }
+            } catch (err) {
+                console.error("Erreur Fetch Learning Data:", err);
+            }
+        };
+
+        if (token) fetchLearningData();
+    }, [token]);
 
     // Modal state
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isAddCourseModalOpen, setIsAddCourseModalOpen] = useState(false);
     const [assignForm, setAssignForm] = useState({ name: '', courseId: '' });
+    const [courseForm, setCourseForm] = useState({ title: '', description: '', trainerName: '', date: '', durationHours: '' });
 
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
+    };
+
+    const handleAddCourseSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_URL}/api/trainings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: courseForm.title,
+                    description: courseForm.description,
+                    trainerName: courseForm.trainerName,
+                    date: courseForm.date,
+                    durationHours: courseForm.durationHours,
+                    participantIds: []
+                })
+            });
+
+            if (res.ok) {
+                const newCourse = await res.json();
+                
+                const colors = ['bg-blue-600', 'bg-emerald-600', 'bg-indigo-600', 'bg-rose-600', 'bg-amber-600'];
+                const formattedCourse = {
+                    ...newCourse,
+                    coverBg: colors[courses.length % colors.length],
+                    category: 'Nouveau Catalogue',
+                    totalModules: Math.ceil(newCourse.durationHours / 2) || 1,
+                    timeEst: `${newCourse.durationHours} heures`,
+                    activeLearners: 0
+                };
+                
+                setCourses([formattedCourse, ...courses]);
+                setIsAddCourseModalOpen(false);
+                setCourseForm({ title: '', description: '', trainerName: '', date: '', durationHours: '' });
+                showNotification('Nouveau cours publié avec succès au catalogue !');
+            } else {
+                showNotification('Erreur réseau lors de la création');
+            }
+        } catch (err) {
+            showNotification('Serveur injoignable');
+        }
     };
 
     const handleAssignSubmit = (e) => {
@@ -58,11 +142,29 @@ export function Learning() {
         showNotification(`Cours attribué avec succès à ${assignForm.name}`);
     };
 
-    const handleRegister = (courseId) => {
-        setCourses(prev => prev.map(c =>
-            c.id === courseId ? { ...c, activeLearners: c.activeLearners + 1 } : c
-        ));
-        showNotification('Inscription au cours réussie');
+    const handleRegister = async (courseId) => {
+        try {
+            const res = await fetch(`${API_URL}/api/trainings/enroll`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ sessionId: courseId })
+            });
+
+            if (res.ok) {
+                setCourses(prev => prev.map(c =>
+                    c.id === courseId ? { ...c, activeLearners: c.activeLearners + 1 } : c
+                ));
+                showNotification('Inscription au cours réussie !');
+            } else {
+                const errData = await res.json();
+                showNotification(errData.error || 'Erreur d\'inscription');
+            }
+        } catch (err) {
+            showNotification('Erreur réseau');
+        }
     };
 
     const handleResume = () => {
@@ -121,7 +223,87 @@ export function Learning() {
                 )}
             </AnimatePresence>
 
-            {/* Modal Overlay */}
+            {/* Modals Overlay */}
+            <AnimatePresence>
+                {isAddCourseModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                                <h3 className="text-lg font-bold text-slate-900">Publier une Nouvelle Formation</h3>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100" onClick={() => setIsAddCourseModalOpen(false)}>
+                                    <X size={18} />
+                                </Button>
+                            </div>
+
+                            <div className="px-6 py-6 overflow-y-auto">
+                                <form id="add-course-form" onSubmit={handleAddCourseSubmit} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Titre de la formation</label>
+                                        <Input
+                                            value={courseForm.title}
+                                            onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
+                                            placeholder="ex. Management 3.0"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Description</label>
+                                        <textarea
+                                            value={courseForm.description}
+                                            onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                                            className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            placeholder="Description du contenu de la capsule..."
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Nom du Formateur</label>
+                                        <Input
+                                            value={courseForm.trainerName}
+                                            onChange={(e) => setCourseForm({ ...courseForm, trainerName: e.target.value })}
+                                            placeholder="ex. Alice Martin"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Date Prévue</label>
+                                            <Input
+                                                type="date"
+                                                value={courseForm.date}
+                                                onChange={(e) => setCourseForm({ ...courseForm, date: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Durée (Heures)</label>
+                                            <Input
+                                                type="number"
+                                                step="0.5"
+                                                value={courseForm.durationHours}
+                                                onChange={(e) => setCourseForm({ ...courseForm, durationHours: e.target.value })}
+                                                placeholder="ex. 2.5"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
+                                <Button type="button" variant="outline" onClick={() => setIsAddCourseModalOpen(false)}>Annuler</Button>
+                                <Button type="submit" form="add-course-form" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">Publier le Cours</Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <AnimatePresence>
                 {isAssignModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
@@ -182,6 +364,14 @@ export function Learning() {
                     <p className="text-slate-500 mt-1">Découvrez les modules de formation et suivez votre conformité.</p>
                 </div>
                 <div className="flex items-center space-x-2">
+                    {isAdminOrHR && activeTab === 'catalog' && (
+                        <Button
+                            onClick={() => setIsAddCourseModalOpen(true)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-2"
+                        >
+                            <Plus size={18} /> Nouveau Cours
+                        </Button>
+                    )}
                     {activeTab === 'progress' && (
                         <Button
                             onClick={() => setIsAssignModalOpen(true)}

@@ -1,30 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Laptop, Smartphone, Car, Plus, Search, CheckCircle2, X } from 'lucide-react';
+import { Laptop, Smartphone, Car, Plus, Search, CheckCircle2, X, AlertTriangle, Users } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
-// Mock Data
-const initialAssets = [
-    { id: 'AST-001', tag: 'IT-MAC-001', category: 'Laptop', name: 'MacBook Pro M2 14"', status: 'Assigné', assignedTo: 'Sarah Jenkins', department: 'Ressources Humaines', date: '2023-01-15', condition: 'Bon' },
-    { id: 'AST-002', tag: 'IT-MAC-002', category: 'Laptop', name: 'MacBook Pro M2 14"', status: 'Disponible', assignedTo: '-', department: 'Ingénierie', date: '2023-06-20', condition: 'Neuf' },
-    { id: 'AST-003', tag: 'IT-PHO-001', category: 'Mobile Phone', name: 'iPhone 14 Pro', status: 'Assigné', assignedTo: 'John Doe', department: 'Ventes', date: '2022-11-05', condition: 'Bon' },
-    { id: 'AST-004', tag: 'VH-CAR-001', category: 'Vehicle', name: 'Peugeot 208', status: 'Assigné', assignedTo: 'Amanda Smith', department: 'Marketing', date: '2021-04-12', condition: 'Réparation requise' },
-    { id: 'AST-005', tag: 'IT-MAC-003', category: 'Laptop', name: 'MacBook Air M1', status: 'En réparation', assignedTo: '-', department: 'IT', date: '2020-09-30', condition: 'Écran cassé' },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function Assets() {
-    const [assets, setAssets] = useState(initialAssets);
+    const { token } = useAuth();
+    const [assets, setAssets] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [notification, setNotification] = useState(null);
 
+    const [form, setForm] = useState({ category: 'Laptop', model: '', assetTag: '', departmentOwner: '' });
+
+    useEffect(() => {
+        if (token) fetchAssets();
+    }, [token]);
+
+    const fetchAssets = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/assets`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) setAssets(await res.json());
+        } catch (error) {
+            console.error("Failed to fetch assets", error);
+        }
+    };
+
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
+    };
+
+    const handleAddAsset = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/assets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(form)
+            });
+            if (res.ok) {
+                showNotification("L'équipement a été ajouté à l'inventaire avec succès.");
+                setIsAddModalOpen(false);
+                setForm({ category: 'Laptop', model: '', assetTag: '', departmentOwner: '' });
+                fetchAssets(); // Refresh list
+            } else {
+                showNotification("Erreur lors de l'ajout.");
+            }
+        } catch (error) {
+            console.error(error);
+            showNotification("Erreur de connexion serveur.");
+        }
     };
 
     const getCategoryIcon = (category) => {
@@ -218,32 +254,45 @@ export function Assets() {
                             <div className="p-6 space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Catégorie</label>
-                                    <select className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
-                                        <option>Laptop</option>
-                                        <option>Mobile Phone</option>
-                                        <option>Vehicle</option>
-                                        <option>Access Badge</option>
+                                    <select 
+                                        value={form.category}
+                                        onChange={(e) => setForm({...form, category: e.target.value})}
+                                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                                    >
+                                        <option value="Laptop">Laptop</option>
+                                        <option value="Mobile Phone">Mobile Phone</option>
+                                        <option value="Vehicle">Vehicle</option>
+                                        <option value="Access Badge">Access Badge</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Modèle / Description</label>
-                                    <Input placeholder="ex: Dell XPS 15" />
+                                    <Input 
+                                        placeholder="ex: Dell XPS 15" 
+                                        value={form.model}
+                                        onChange={(e) => setForm({...form, model: e.target.value})}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Tag / N° de Série (Optionnel)</label>
-                                    <Input placeholder="Généré automatiquement si vide" />
+                                    <Input 
+                                        placeholder="Généré automatiquement si vide" 
+                                        value={form.assetTag}
+                                        onChange={(e) => setForm({...form, assetTag: e.target.value})}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Département Propriétaire</label>
-                                    <Input placeholder="ex: IT, R&D..." />
+                                    <Input 
+                                        placeholder="ex: IT, R&D..." 
+                                        value={form.departmentOwner}
+                                        onChange={(e) => setForm({...form, departmentOwner: e.target.value})}
+                                    />
                                 </div>
                             </div>
                             <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
                                 <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Annuler</Button>
-                                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => {
-                                    showNotification("Le nouvel équipement a été ajouté à l'inventaire en statut 'Disponible'.");
-                                    setIsAddModalOpen(false);
-                                }}>
+                                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleAddAsset}>
                                     Ajouter à l'inventaire
                                 </Button>
                             </div>

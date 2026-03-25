@@ -139,3 +139,52 @@ exports.submitSelfEval = async (req, res) => {
         res.status(500).json({ error: "Erreur serveur de soumission." });
     }
 };
+
+// ----------------------------------------------------
+// FEEDBACKS 360
+// ----------------------------------------------------
+
+exports.getFeedbacks = async (req, res) => {
+    try {
+        const { id, role } = req.user;
+        let feedbacks;
+
+        if (role === 'ADMIN' || role === 'HR') {
+            feedbacks = await prisma.performanceFeedback.findMany({
+                include: { employee: { select: { firstName: true, lastName: true } } },
+                orderBy: { date: 'desc' }
+            });
+        } else {
+            feedbacks = await prisma.performanceFeedback.findMany({
+                where: { employeeId: id },
+                orderBy: { date: 'desc' }
+            });
+        }
+
+        res.status(200).json(feedbacks);
+    } catch (error) {
+        console.error("Erreur Fetch Feedbacks:", error);
+        res.status(500).json({ error: "Erreur lors de la récupération des feedbacks." });
+    }
+};
+
+exports.requestFeedback = async (req, res) => {
+    try {
+        const { id } = req.user;
+        const { peerName, context } = req.body;
+
+        const newFeedback = await prisma.performanceFeedback.create({
+            data: {
+                employeeId: id,
+                provider: peerName,
+                relationship: 'Collègue',
+                context
+            }
+        });
+
+        res.status(201).json(newFeedback);
+    } catch (error) {
+        console.error("Erreur Request Feedback:", error);
+        res.status(500).json({ error: "Erreur lors de la demande de feedback." });
+    }
+};

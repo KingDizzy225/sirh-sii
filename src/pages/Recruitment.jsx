@@ -6,19 +6,6 @@ import { Input } from '../components/ui/input';
 import { MapPin, Clock, Plus, UserPlus, CheckCircle2, X, ArrowRight, Star, ThumbsUp, ThumbsDown, ArrowLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const initialJobs = [
-    { id: 1, title: 'Senior Frontend Engineer', department: 'Engineering', location: 'À distance', status: 'Actif', postedAt: 'il y a 5 jours', contractType: 'CDI', experienceLevel: 'Senior', description: 'Nous recherchons un Développeur Frontend Senior expérimenté...', requirements: 'React, TypeScript, 5+ années d\'expérience' },
-    { id: 2, title: 'Product Marketing Manager', department: 'Marketing', location: 'Abidjan, CI', status: 'Actif', postedAt: 'il y a 12 jours', contractType: 'CDI', experienceLevel: 'Intermédiaire', description: 'Pilotez notre stratégie marketing produit...', requirements: '3+ années d\'expérience en marketing B2B' },
-    { id: 3, title: 'Customer Support Lead', department: 'Support', location: 'Dakar, SN', status: 'Urgent', postedAt: 'il y a 2 jours', contractType: 'Consultant', experienceLevel: 'Lead', description: 'Dirigez notre équipe de support client en Afrique de l\'Ouest...', requirements: 'Expérience en leadership, Zendesk' },
-];
-
-const initialCandidates = [
-    { id: 101, jobId: 1, firstName: 'Alex', lastName: 'Martin', email: 'alex@example.com', stage: 'SCREENING', score: null },
-    { id: 102, jobId: 1, firstName: 'Sarah', lastName: 'Jenkins', email: 'sarah@example.com', stage: 'INTERVIEW', score: null },
-    { id: 103, jobId: 1, firstName: 'Michael', lastName: 'Dam', email: 'michael@example.com', stage: 'OFFER', score: 4.8 },
-    { id: 104, jobId: 2, firstName: 'Emily', lastName: 'Chen', email: 'emily@example.com', stage: 'SCREENING', score: null },
-];
-
 const STAGES = [
     { id: 'SCREENING', label: 'Sélection', color: 'text-slate-500', bg: 'bg-slate-100' },
     { id: 'INTERVIEW', label: 'Entretien', color: 'text-blue-500', bg: 'bg-blue-100' },

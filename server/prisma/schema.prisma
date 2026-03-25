@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ----------------------------------------------------
@@ -24,6 +24,7 @@ model Employee {
   managerId       String?   @map("manager_id") // ID du manager direct
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
+  annualLeaveBalance Float  @default(30) @map("annual_leave_balance")
 
   // Relations
   manager         Employee? @relation("Hierarchy", fields: [managerId], references: [id])
@@ -36,8 +37,10 @@ model Employee {
   participations  TrainingParticipation[]
   performanceGoals PerformanceGoal[] @relation("GoalOwner")
   performanceReviews PerformanceReview[] @relation("ReviewSubject")
+  performanceFeedbacks PerformanceFeedback[] @relation("FeedbackSubject")
   documents       EmployeeDocument[] @relation("EmployeeDocs")
   notifications   Notification[] @relation("EmployeeNotifications")
+  expenses        Expense[]
 }
 
 // ----------------------------------------------------
@@ -45,16 +48,23 @@ model Employee {
 // ----------------------------------------------------
 
 model Payroll {
-  id              String    @id @default(uuid())
-  employeeId      String    @map("employee_id")
-  period          DateTime  // Représente le mois de paie (ex: 2026-01-01)
-  baseSalary      Float     @map("base_salary")
-  bonus           Float     @default(0)
-  deductions      Float     @default(0)
-  status          String    // 'Draft', 'Approved', 'Paid'
-  createdAt       DateTime  @default(now()) @map("created_at")
+  id                      String    @id @default(uuid())
+  employeeId              String    @map("employee_id")
+  period                  DateTime  // Représente le mois de paie (ex: 2026-01-01)
+  baseSalary              Float     @map("base_salary")
+  bonus                   Float     @default(0)
+  deductions              Float     @default(0)
+  overtimeHours           Float     @default(0)   @map("overtime_hours")
+  leaveDays               Float     @default(0)   @map("leave_days")
+  employerContributions   Float     @default(0)   @map("employer_contributions")
+  employeeContributions   Float     @default(0)   @map("employee_contributions")
+  netSalary               Float     @default(0)   @map("net_salary")
+  pdfPath                 String?   @map("pdf_path")
+  status                  String    @default("DRAFT") // 'DRAFT', 'APPROVED', 'PAID'
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt     @map("updated_at")
 
-  employee        Employee  @relation(fields: [employeeId], references: [id])
+  employee                Employee  @relation(fields: [employeeId], references: [id])
 }
 
 // ----------------------------------------------------
@@ -92,6 +102,17 @@ model SupportTicket {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   requester       Employee? @relation("SupportTickets", fields: [requesterId], references: [id])
+  messages        SupportMessage[] @relation("TicketMessages")
+}
+
+model SupportMessage {
+  id              String   @id @default(uuid())
+  ticketId        String   @map("ticket_id")
+  sender          String   // 'Employé' ou 'Assistante'
+  body            String
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  ticket          SupportTicket @relation("TicketMessages", fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
 // ----------------------------------------------------
@@ -261,6 +282,20 @@ model PerformanceReview {
   employee        Employee @relation("ReviewSubject", fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
+model PerformanceFeedback {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  provider        String
+  relationship    String   @default("Collègue")
+  strengths       String?  @default("En attente de retour...")
+  areas           String?  @default("En attente de retour...")
+  context         String?
+  date            DateTime @default(now())
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  employee        Employee @relation("FeedbackSubject", fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
 // ----------------------------------------------------
 // 11. GESTION ÉLECTRONIQUE DE DOCUMENTS (GED)
 // ----------------------------------------------------
@@ -293,4 +328,24 @@ model Notification {
   createdAt       DateTime @default(now()) @map("created_at")
 
   employee        Employee @relation("EmployeeNotifications", fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 13. NOTES DE FRAIS (EXPENSES)
+// ----------------------------------------------------
+
+model Expense {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  amount          Float
+  currency        String   @default("FCFA")
+  category        String   // 'Équipement', 'Déplacement', 'Repas', 'Hébergement', 'Autre'
+  merchant        String?
+  date            DateTime
+  status          String   @default("En attente") // 'En attente', 'Approuvé', 'Rejeté'
+  rejectionReason String?  @map("rejection_reason")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
