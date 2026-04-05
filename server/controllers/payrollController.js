@@ -10,123 +10,133 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Helper: Calcul de l'ITS (Impôt sur Traitement et Salaires) Côte d'Ivoire
+// Barème simplifié sur le salaire net imposable (après déduction CNPS, CMU)
+const calculateITS = (netImposable) => {
+    if (netImposable <= 75000) return 0;
+    if (netImposable <= 240000) return (netImposable - 75000) * 0.16;
+    if (netImposable <= 800000) return 26400 + (netImposable - 240000) * 0.21;
+    return 144000 + (netImposable - 800000) * 0.24;
+};
+
+const formatFCFA = (amount) => {
+    return new Intl.NumberFormat('fr-CI').format(Math.round(amount)) + ' FCFA';
+};
+
 // Helper function to generate PDF
 const generatePayslipPDF = async (payroll, employee) => {
     return new Promise((resolve, reject) => {
         try {
             const fileName = `payslip_${payroll.id}.pdf`;
             const filePath = path.join(uploadsDir, fileName);
-            const doc = new PDFDocument({ margin: 50 });
+            const doc = new PDFDocument({ margin: 50, size: 'A4' });
             
             const writeStream = fs.createWriteStream(filePath);
             doc.pipe(writeStream);
 
-            // --- HEADER ---
-            doc.fontSize(20).text('FICHE DE PAIE', { align: 'center' });
-            doc.moveDown();
-            
-            // Company Info
-            doc.fontSize(10).text('Société: SIRH-SII', 50, 100);
-            doc.text('Adresse: 123 Avenue des Champs-Élysées, 75008 Paris');
-            doc.text('SIRET: 123 456 789 00012');
-            
-            // Employee Info
-            doc.text(`Employé: ${employee.firstName} ${employee.lastName}`, 350, 100);
-            doc.text(`Poste: ${employee.positionTitle}`, 350, 115);
-            doc.text(`Département: ${employee.department}`, 350, 130);
-            
-            doc.moveDown(3);
-            
-            // Period
+            const gross = payroll.grossSalary || payroll.baseSalary;
+
+            // --- Cotisations Ivoiriennes ---
+            const cnps = gross * 0.063;          // CNPS Retraite salarié : 6.3%
+            const cmu = 1000;                     // CMU : forfait 1000 FCFA/mois
+            const netImposable = gross - cnps - cmu;
+            const its = calculateITS(netImposable); // ITS : barème progressif CI
+            const totalDeductions = cnps + cmu + its + (payroll.deductions || 0);
+            const net = gross - totalDeductions;
+
+            // ---- LOGO ----
+            const logoPath = path.join(__dirname, '../../public/logo.png');
+            if (fs.existsSync(logoPath)) {
+                doc.image(logoPath, 50, 40, { width: 100 });
+            }
+
+            // ---- HEADER ----
+            doc.fontSize(18).fillColor('#1e3a8a').font('Helvetica-Bold')
+               .text('BULLETIN DE PAIE', { align: 'center' });
+            doc.fontSize(10).fillColor('#64748b').font('Helvetica')
+               .text('Document Officiel – Côte d\'Ivoire', { align: 'center' });
+            doc.moveDown(0.5);
+
+            // Ligne séparatrice
+            doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#1e3a8a').stroke();
+            doc.moveDown(0.8);
+
+            // ---- INFO ENTREPRISE & EMPLOYÉ ----
+            const topY = doc.y;
+            doc.fillColor('#1e3a8a').font('Helvetica-Bold').fontSize(9).text('EMPLOYEUR', 50, topY);
+            doc.fillColor('#374151').font('Helvetica').fontSize(9)
+               .text('SII Côte d\'Ivoire', 50, topY + 13)
+               .text('Abidjan, Plateau – Côte d\'Ivoire', 50, topY + 25)
+               .text('N° Employeur CNPS : [À RENSEIGNER]', 50, topY + 37);
+
+            doc.fillColor('#1e3a8a').font('Helvetica-Bold').fontSize(9).text('EMPLOYÉ(E)', 320, topY);
+            doc.fillColor('#374151').font('Helvetica').fontSize(9)
+               .text(`${employee.firstName} ${employee.lastName}`, 320, topY + 13)
+               .text(`Poste : ${employee.positionTitle || 'N/A'}`, 320, topY + 25)
+               .text(`Département : ${employee.department || 'N/A'}`, 320, topY + 37);
+
+            doc.moveDown(4.5);
+
+            // ---- PÉRIODE ----
             const periodDate = new Date(payroll.period);
-            const periodStr = periodDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            doc.fontSize(12).text(`Période de paie : ${periodStr.toUpperCase()}`, { align: 'center', underline: true });
-            doc.moveDown(2);
+            const periodStr = periodDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase();
+            doc.roundedRect(50, doc.y, 495, 24, 4).fill('#eff6ff');
+            doc.fillColor('#1e3a8a').font('Helvetica-Bold').fontSize(11)
+               .text(`PÉRIODE : ${periodStr}`, 50, doc.y - 20, { align: 'center' });
+            doc.moveDown(1.5);
+
+            // ---- TABLEAU DES ÉLÉMENTS ----
+            const tableTop = doc.y;
+            const col = [50, 250, 350, 450];
             
-            // --- TABLE ---
-            const startY = doc.y;
-            doc.fontSize(10).font('Helvetica-Bold');
-            doc.text('Description', 50, startY);
-            doc.text('Base', 250, startY);
-            doc.text('Taux', 350, startY);
-            doc.text('Montant', 450, startY);
+            // En-têtes colonnes
+            doc.fillColor('#1e3a8a').font('Helvetica-Bold').fontSize(9);
+            doc.text('LIBELLÉ', col[0], tableTop);
+            doc.text('BASE', col[1], tableTop);
+            doc.text('TAUX', col[2], tableTop);
+            doc.text('MONTANT', col[3], tableTop, { width: 95, align: 'right' });
+            doc.moveTo(50, tableTop + 14).lineTo(545, tableTop + 14).strokeColor('#1e3a8a').lineWidth(1.5).stroke();
+            doc.lineWidth(0.5);
+            let y = tableTop + 22;
+
+            const addRow = (label, base, taux, montant, bold = false) => {
+                doc.fillColor(bold ? '#111827' : '#374151').font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(9);
+                doc.text(label, col[0], y, { width: 195 });
+                doc.text(base || '-', col[1], y, { width: 95 });
+                doc.text(taux || '-', col[2], y, { width: 95 });
+                doc.text(montant, col[3], y, { width: 95, align: 'right' });
+                y += 18;
+            };
+
+            // Gains
+            doc.fillColor('#15803d').font('Helvetica-Bold').fontSize(8).text('▸ GAINS', 50, y); y += 14;
+            addRow('Salaire Brut de Base', '-', '-', formatFCFA(payroll.baseSalary));
+            if ((payroll.bonus || 0) > 0) addRow('Prime / Bonus', '-', '-', formatFCFA(payroll.bonus));
+            doc.moveTo(50, y).lineTo(545, y).strokeColor('#d1d5db').stroke(); y += 8;
+            addRow('SALAIRE BRUT', '-', '-', formatFCFA(gross), true);
+            y += 6;
+
+            // Retenues
+            doc.fillColor('#b91c1c').font('Helvetica-Bold').fontSize(8).text('▸ COTISATIONS ET RETENUES SALARIALES', 50, y); y += 14;
+            addRow('CNPS – Retraite (Salarié)', formatFCFA(gross), '6,30 %', '- ' + formatFCFA(cnps));
+            addRow('CMU – Couverture Maladie', 'Forfait', '—', '- ' + formatFCFA(cmu));
+            addRow('ITS – Impôt sur Traitement et Salaire', formatFCFA(netImposable), 'Barème CI', '- ' + formatFCFA(its));
+            if ((payroll.deductions || 0) > 0) addRow('Autres Retenues', '-', '-', '- ' + formatFCFA(payroll.deductions));
             
-            doc.moveTo(50, startY + 15).lineTo(500, startY + 15).stroke();
+            doc.moveTo(50, y).lineTo(545, y).strokeColor('#d1d5db').stroke(); y += 8;
+
+            // Net à Payer
+            doc.roundedRect(50, y, 495, 30, 4).fill('#1e3a8a');
+            doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(14)
+               .text('NET À PAYER', 60, y + 8)
+               .text(formatFCFA(net), col[3] - 40, y + 8, { width: 135, align: 'right' });
+            y += 45;
+
+            // Pied de page
+            doc.fillColor('#64748b').font('Helvetica').fontSize(8)
+               .text(`Fait à Abidjan, le ${new Date().toLocaleDateString('fr-FR')}`, 50, y)
+               .text('Ce bulletin de paie doit être conservé sans limitation de durée.', { align: 'center' });
             
-            let currentY = startY + 25;
-            doc.font('Helvetica');
-            
-            // Base Salary
-            doc.text('Salaire de base', 50, currentY);
-            doc.text(payroll.baseSalary.toFixed(2) + ' €', 250, currentY);
-            doc.text('-', 350, currentY);
-            doc.text(payroll.baseSalary.toFixed(2) + ' €', 450, currentY);
-            currentY += 20;
-            
-            let grossSalary = payroll.baseSalary;
-            
-            // Variables
-            if (payroll.overtimeHours > 0) {
-                const overtimeAmount = (payroll.baseSalary / 151.67) * 1.25 * payroll.overtimeHours;
-                doc.text(`Heures Supplémentaires (${payroll.overtimeHours}h)`, 50, currentY);
-                doc.text(payroll.overtimeHours.toString(), 250, currentY);
-                doc.text('+25%', 350, currentY);
-                doc.text(overtimeAmount.toFixed(2) + ' €', 450, currentY);
-                grossSalary += overtimeAmount;
-                currentY += 20;
-            }
-            
-            if (payroll.leaveDays > 0) {
-                const leaveDeduction = (payroll.baseSalary / 22) * payroll.leaveDays;
-                doc.text(`Absences/Congés (${payroll.leaveDays}j)`, 50, currentY);
-                doc.text(payroll.leaveDays.toString(), 250, currentY);
-                doc.text('-', 350, currentY);
-                doc.text('-' + leaveDeduction.toFixed(2) + ' €', 450, currentY);
-                grossSalary -= leaveDeduction;
-                currentY += 20;
-            }
-            
-            if (payroll.bonus > 0) {
-                doc.text('Primes Exceptionnelles', 50, currentY);
-                doc.text('-', 250, currentY);
-                doc.text('-', 350, currentY);
-                doc.text(payroll.bonus.toFixed(2) + ' €', 450, currentY);
-                grossSalary += payroll.bonus;
-                currentY += 20;
-            }
-            
-            // Gross Salary Footer
-            doc.moveTo(50, currentY).lineTo(500, currentY).stroke();
-            currentY += 10;
-            doc.font('Helvetica-Bold');
-            doc.text('SALAIRE BRUT', 50, currentY);
-            doc.text(grossSalary.toFixed(2) + ' €', 450, currentY);
-            currentY += 20;
-            
-            // Contributions
-            doc.font('Helvetica');
-            doc.text('Cotisations Salariales (URSSAF, Retraite...)', 50, currentY);
-            doc.text(grossSalary.toFixed(2) + ' €', 250, currentY);
-            doc.text('22%', 350, currentY);
-            doc.text('-' + payroll.employeeContributions.toFixed(2) + ' €', 450, currentY);
-            currentY += 20;
-            
-            if (payroll.deductions > 0) {
-                doc.text('Autres Retenues', 50, currentY);
-                doc.text('-', 250, currentY);
-                doc.text('-', 350, currentY);
-                doc.text('-' + payroll.deductions.toFixed(2) + ' €', 450, currentY);
-                currentY += 20;
-            }
-            
-            // Net Salary Footer
-            doc.moveTo(50, currentY).lineTo(500, currentY).stroke();
-            currentY += 10;
-            doc.font('Helvetica-Bold').fontSize(14);
-            doc.text('NET A PAYER', 50, currentY);
-            doc.text(payroll.netSalary.toFixed(2) + ' €', 400, currentY);
-            
-            // End
             doc.end();
             writeStream.on('finish', () => {
                 resolve(`/uploads/payslips/${fileName}`);
@@ -168,30 +178,33 @@ const getMyPayrolls = async (req, res) => {
 
 const runPayroll = async (req, res) => {
     try {
-        const { payrolls } = req.body; // Array of payroll objects
+        const { payrolls } = req.body;
         const results = [];
         
         for (let p of payrolls) {
             const employee = await prisma.employee.findUnique({ where: { id: p.employeeId }});
             if (!employee) continue;
 
-            // Variables & calculations
             const base = parseFloat(p.baseSalary) || 0;
             const overtime = parseFloat(p.overtimeHours) || 0;
             const leaves = parseFloat(p.leaveDays) || 0;
             const bonus = parseFloat(p.bonus) || 0;
             const additionalDeductions = parseFloat(p.deductions) || 0;
 
-            const overtimeVal = (base / 151.67) * 1.25 * overtime;
-            const leaveDeduction = (base / 22) * leaves;
-            let gross = base + overtimeVal - leaveDeduction + bonus;
+            // Calculs ivoiriens
+            const overtimeVal = (base / 173.33) * 1.15 * overtime;  // 173.33h/mois standard CI
+            const leaveDeduction = (base / 26) * leaves;             // 26j ouvrés en CI
+            const gross = base + overtimeVal - leaveDeduction + bonus;
+
+            // Cotisations salariales CI
+            const cnps = gross * 0.063;                              // CNPS Retraite : 6.3%
+            const cmu = 1000;                                        // CMU : forfait CI
+            const netImposable = gross - cnps - cmu;
+            const its = calculateITS(netImposable);                  // ITS Barème progressif
+            const empContrib = cnps + cmu + its;
+            const employerContrib = gross * 0.15;                    // Part patronale CNPS ~15%
+            const net = gross - empContrib - additionalDeductions;
             
-            // Taxes
-            const empContrib = gross * 0.22;
-            const employerContrib = gross * 0.45;
-            let net = gross - empContrib - additionalDeductions;
-            
-            // Create payroll record
             let pr = await prisma.payroll.create({
                 data: {
                     employeeId: employee.id,
@@ -208,30 +221,43 @@ const runPayroll = async (req, res) => {
                 }
             });
 
-            // Generate PDF
             const pdfPath = await generatePayslipPDF({ 
                 ...pr, 
+                grossSalary: gross,
                 bonus, 
                 deductions: additionalDeductions, 
                 overtimeHours: overtime, 
                 leaveDays: leaves, 
-                employeeContributions: empContrib, 
                 netSalary: net,
                 baseSalary: base
             }, employee);
             
-            // Update PDF Path
-            pr = await prisma.payroll.update({
-                where: { id: pr.id },
-                data: { pdfPath }
-            });
-            
+            pr = await prisma.payroll.update({ where: { id: pr.id }, data: { pdfPath } });
             results.push(pr);
         }
-        res.status(201).json({ message: 'Payroll run successfully', count: results.length, data: results });
+        res.status(201).json({ message: 'Paie traitée avec succès', count: results.length, data: results });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll };
+const downloadPayslip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const payroll = await prisma.payroll.findUnique({ where: { id }, include: { employee: true } });
+        if (!payroll) return res.status(404).json({ error: 'Fiche de paie introuvable' });
+
+        // Regenerate PDF on demand if not found
+        const absolutePath = path.join(__dirname, '..', payroll.pdfPath || '');
+        if (!payroll.pdfPath || !fs.existsSync(absolutePath)) {
+            const newPath = await generatePayslipPDF(payroll, payroll.employee);
+            await prisma.payroll.update({ where: { id }, data: { pdfPath: newPath } });
+            return res.download(path.join(__dirname, '..', newPath));
+        }
+        res.download(absolutePath);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip };

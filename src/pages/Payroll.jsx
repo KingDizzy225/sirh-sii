@@ -63,7 +63,7 @@ export function Payroll() {
                 const vars = {};
                 data.forEach(emp => {
                     vars[emp.id] = {
-                        baseSalary: 2500, // Démo par défaut
+                        baseSalary: 350000, // Démo par défaut (FCFA)
                         overtimeHours: 0,
                         leaveDays: 0,
                         bonus: 0,
@@ -143,7 +143,7 @@ export function Payroll() {
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+        return new Intl.NumberFormat('fr-CI').format(Math.round(amount)) + ' FCFA';
     };
 
     const getMonthName = (dateStr) => {
@@ -229,11 +229,13 @@ export function Payroll() {
                                                 <Badge variant="success">Disponible</Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                {pay.pdfPath && (
-                                                    <a href={`${API_URL}${pay.pdfPath}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
-                                                        <Download size={18} />
-                                                    </a>
-                                                )}
+                                                <a
+                                                    href={`${API_URL}/api/payrolls/${pay.id}/download`}
+                                                    target="_blank" rel="noreferrer"
+                                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+                                                >
+                                                    <Download size={14} /> Télécharger
+                                                </a>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -283,7 +285,7 @@ export function Payroll() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="min-w-[200px]">Collaborateur</TableHead>
-                                            <TableHead>Salaire Fige (€)</TableHead>
+                                            <TableHead>Salaire Brut (FCFA)</TableHead>
                                             <TableHead>Hr Sup.</TableHead>
                                             <TableHead>Jours Abs.</TableHead>
                                             <TableHead>Prime (€)</TableHead>
@@ -373,11 +375,13 @@ export function Payroll() {
                                             <TableCell className="text-slate-600">{formatCurrency(pay.baseSalary + pay.bonus)}</TableCell>
                                             <TableCell className="font-bold text-slate-900">{formatCurrency(pay.netSalary)}</TableCell>
                                             <TableCell className="text-right">
-                                                {pay.pdfPath && (
-                                                    <a href={`${API_URL}${pay.pdfPath}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center p-2 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
-                                                        <FileText size={18} />
-                                                    </a>
-                                                )}
+                                                <a
+                                                    href={`${API_URL}/api/payrolls/${pay.id}/download`}
+                                                    target="_blank" rel="noreferrer"
+                                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-300 transition-colors"
+                                                    >
+                                                    <FileText size={14} /> PDF
+                                                </a>
                                             </TableCell>
                                         </TableRow>
                                     ))}

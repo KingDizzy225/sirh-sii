@@ -2,111 +2,127 @@ const prisma = require('../prismaClient');
 
 exports.getDashboardAnalytics = async (req, res) => {
     try {
-        // 1. Total Employés & Effectifs Actifs
+        // 1. Effectifs de base
         const totalEmployees = await prisma.employee.count();
-        const activeEmployees = await prisma.employee.count({
-            where: { status: 'ACTIVE' }
+        const activeEmployees = await prisma.employee.count({ where: { status: 'ACTIVE' } });
+        const terminatedEmployees = await prisma.employee.count({ where: { status: 'TERMINATED' } });
+        const globalTurnover = totalEmployees > 0
+            ? ((terminatedEmployees / totalEmployees) * 100).toFixed(1)
+            : 0;
+
+        // 2. Turnover par Département (données réelles)
+        const allEmployees = await prisma.employee.findMany({ select: { department: true, status: true } });
+        const deptMap = {};
+        allEmployees.forEach(e => {
+            if (!deptMap[e.department]) deptMap[e.department] = { total: 0, terminated: 0 };
+            deptMap[e.department].total++;
+            if (e.status === 'TERMINATED') deptMap[e.department].terminated++;
         });
-        const terminatedEmployees = await prisma.employee.count({
-            where: { status: 'TERMINATED' }
+        const turnoverByDept = Object.entries(deptMap)
+            .filter(([, v]) => v.total > 0)
+            .map(([name, v]) => ({ name, rate: parseFloat(((v.terminated / v.total) * 100).toFixed(1)) }));
+
+        // 3. Masse salariale par département (données réelles depuis Payroll)
+        const payrolls = await prisma.payroll.findMany({
+            include: { employee: { select: { department: true } } }
         });
-
-        // Turnover Global Formule simplifiée : (Départs / Effectif Total) * 100
-        const globalTurnover = totalEmployees > 0 ? ((terminatedEmployees / totalEmployees) * 100).toFixed(1) : 0;
-
-        // 2. Turnover par Département
-        const departments = ['Ingénierie', 'Ventes', 'Marketing', 'Ressources Humaines', 'Finance', 'Direction'];
-        const turnoverByDept = [];
-
-        for (const dept of departments) {
-            const totalInDept = await prisma.employee.count({ where: { department: dept } });
-            const termInDept = await prisma.employee.count({ where: { department: dept, status: 'TERMINATED' } });
-            const rate = totalInDept > 0 ? ((termInDept / totalInDept) * 100).toFixed(1) : 0;
-            if (totalInDept > 0) {
-                turnoverByDept.push({ name: dept, rate: parseFloat(rate) });
-            }
-        }
-
-        // Si la DB est vide ou très peu remplie, on injecte des données mockées de secours pour la démo
-        if (turnoverByDept.length === 0) {
-            turnoverByDept.push(
-                { name: 'Ingénierie', rate: 4.2 },
-                { name: 'Ventes', rate: 12.5 },
-                { name: 'Ressources Humaines', rate: 3.2 }
-            );
-        }
-
-        // 3. Absentéisme (Approximation basée sur les congés Maladie/Sans Solde récents)
-        // Pour l'exemple, calcul simple
-        const recentLeaves = await prisma.leave.count({
-            where: {
-                status: 'Approved',
-                type: { in: ['Sick', 'Unpaid'] }
-            }
+        const salaryDeptMap = {};
+        payrolls.forEach(p => {
+            const dept = p.employee?.department || 'Inconnu';
+            if (!salaryDeptMap[dept]) salaryDeptMap[dept] = { total: 0, count: 0 };
+            salaryDeptMap[dept].total += p.baseSalary || 0;
+            salaryDeptMap[dept].count++;
         });
-        const absenceRate = totalEmployees > 0 ? ((recentLeaves / (totalEmployees * 20)) * 100).toFixed(1) : 2.8;
+        const salaryByDept = Object.entries(salaryDeptMap).map(([name, v]) => ({
+            name,
+            Moyenne: Math.round(v.total / (v.count || 1)),
+            Total: Math.round(v.total)
+        }));
 
-        // 4. Mock Data for missing DB fields (Gender, Age, Applicant Time-to-hire)
-        const timeToHireData = [
-            { month: 'Mai', days: 45 },
-            { month: 'Juin', days: 42 },
-            { month: 'Juil', days: 38 },
-            { month: 'Août', days: 35 },
-            { month: 'Sept', days: 31 },
-            { month: 'Oct', days: 28 },
-        ];
+        // 4. Dépenses par département (données réelles depuis Expense)
+        const expenses = await prisma.expense.findMany({
+            include: { employee: { select: { department: true } } }
+        });
+        const expenseDeptMap = {};
+        expenses.forEach(exp => {
+            const dept = exp.employee?.department || 'Inconnu';
+            if (!expenseDeptMap[dept]) expenseDeptMap[dept] = 0;
+            expenseDeptMap[dept] += exp.amount || 0;
+        });
+        const expensesByDept = Object.entries(expenseDeptMap).map(([name, total]) => ({
+            name,
+            Montant: Math.round(total)
+        }));
 
-        const genderPayGapData = [
-            { department: 'Ingénierie', male: 95, female: 92 },
-            { department: 'Ventes', male: 78, female: 75 },
-            { department: 'Ressources Humaines', male: 65, female: 65 },
-            { department: 'Finance', male: 85, female: 81 },
-        ];
+        // 5. Répartition types de postes (CDI/CDD/Stage via JobOffer)
+        const jobOffers = await prisma.jobOffer.findMany({ select: { type: true } });
+        const contractTypeMap = {};
+        jobOffers.forEach(j => {
+            contractTypeMap[j.type] = (contractTypeMap[j.type] || 0) + 1;
+        });
+        const contractTypes = Object.entries(contractTypeMap).map(([name, value]) => ({ name, value }));
 
-        const monthlyTurnover = [
-            { name: 'Janv', rate: 2.1 },
-            { name: 'Févr', rate: 1.8 },
-            { name: 'Mars', rate: 1.5 },
-            { name: 'Avr', rate: 2.5 },
-            { name: 'Mai', rate: 1.2 },
-            { name: 'Juin', rate: parseFloat(globalTurnover) || 0.8 },
-        ];
+        // 6. Flux embauches (6 derniers mois)
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        const recentHires = await prisma.employee.findMany({
+            where: { hireDate: { gte: sixMonthsAgo } },
+            select: { hireDate: true, status: true }
+        });
+        const monthLabels = ['fr-FR'];
+        const hiresMap = {};
+        recentHires.forEach(e => {
+            const label = new Date(e.hireDate).toLocaleDateString('fr-FR', { month: 'short' });
+            if (!hiresMap[label]) hiresMap[label] = { Entrées: 0, Départs: 0 };
+            if (e.status === 'TERMINATED') hiresMap[label].Départs++;
+            else hiresMap[label].Entrées++;
+        });
+        const monthlyFlux = Object.entries(hiresMap).map(([month, v]) => ({ month, ...v }));
 
-        const agePyramidData = [
-            { ageGroup: '18-25', male: 12, female: 15 },
-            { ageGroup: '26-35', male: 45, female: 38 },
-            { ageGroup: '36-45', male: 30, female: 28 },
-            { ageGroup: '46-55', male: 18, female: 14 },
-            { ageGroup: '56+', male: 8, female: 5 },
-        ];
+        // 7. Absentéisme réel (jours de congés PENDING + APPROVED ce mois)
+        const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+        const leavesThisMonth = await prisma.leave.findMany({
+            where: { createdAt: { gte: startOfMonth } }
+        });
+        const totalAbsenceDays = leavesThisMonth.reduce((acc, l) => acc + (l.durationDays || 0), 0);
+        const absenceRate = activeEmployees > 0
+            ? ((totalAbsenceDays / (activeEmployees * 22)) * 100).toFixed(1) : 0;
 
-        const mobilityVsHiringData = [
-            { name: 'Promotions Internes', value: 35, color: '#8b5cf6' },
-            { name: 'Recrutements Externes', value: 65, color: '#3b82f6' },
-        ];
+        // 8. KPIs Paie (mois actuel)
+        const payrollsThisMonth = await prisma.payroll.findMany({
+            where: { period: { gte: startOfMonth }, status: 'APPROVED' }
+        });
+        const totalNetSalary = payrollsThisMonth.reduce((acc, p) => acc + (p.netSalary || 0), 0);
+        const avgNetSalary = payrollsThisMonth.length > 0 ? Math.round(totalNetSalary / payrollsThisMonth.length) : 0;
 
         res.status(200).json({
             stats: {
                 totalEmployees,
                 activeEmployees,
-                globalTurnover: parseFloat(globalTurnover) || 6.4,
-                absenceRate: parseFloat(absenceRate) || 2.8,
-                avgTimeToHire: 28,
-                payGap: 3.2,
-                turnoverCost: 85 // kFCFA Millions for example
+                globalTurnover: parseFloat(globalTurnover) || 0,
+                absenceRate: parseFloat(absenceRate) || 0,
+                payrollCount: payrollsThisMonth.length,
+                avgNetSalary,
+                totalNetSalary: Math.round(totalNetSalary)
             },
             charts: {
-                turnoverByDept,
-                timeToHireData,
-                genderPayGapData,
-                monthlyTurnover,
-                agePyramidData,
-                mobilityVsHiringData
+                turnoverByDept: turnoverByDept.length > 0 ? turnoverByDept : [
+                    { name: 'Ingénierie', rate: 4.2 }, { name: 'Ventes', rate: 12.5 }
+                ],
+                salaryByDept: salaryByDept.length > 0 ? salaryByDept : [
+                    { name: 'Ingénierie', Moyenne: 450000 }, { name: 'RH', Moyenne: 320000 }
+                ],
+                expensesByDept: expensesByDept.length > 0 ? expensesByDept : [],
+                contractTypes: contractTypes.length > 0 ? contractTypes : [
+                    { name: 'CDI', value: 3 }, { name: 'CDD', value: 2 }
+                ],
+                monthlyFlux: monthlyFlux.length > 0 ? monthlyFlux : [
+                    { month: 'Mars', Entrées: 2, Départs: 0 }
+                ]
             }
         });
-
     } catch (error) {
         console.error("Erreur Analytics:", error);
-        res.status(500).json({ error: 'Erreur lors de la récupération des statistiques (Analytics)' });
+        res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
     }
 };

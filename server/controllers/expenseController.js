@@ -1,4 +1,20 @@
 const prisma = require('../prismaClient');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const receiptDir = path.join(__dirname, '../uploads/receipts');
+if (!fs.existsSync(receiptDir)) fs.mkdirSync(receiptDir, { recursive: true });
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, receiptDir),
+    filename: (req, file, cb) => cb(null, `receipt_${Date.now()}${path.extname(file.originalname)}`)
+});
+exports.upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif|pdf/;
+    cb(null, allowed.test(path.extname(file.originalname).toLowerCase()));
+}});
+
 
 // Get expenses (all for admin/manager, personal for employee)
 exports.getExpenses = async (req, res) => {
@@ -60,7 +76,8 @@ exports.createExpense = async (req, res) => {
                 category,
                 merchant,
                 date: date ? new Date(date) : new Date(),
-                status: 'En attente'
+                status: 'En attente',
+                receiptPath: req.file ? `/uploads/receipts/${req.file.filename}` : null
             }
         });
 

@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const { sendLeaveRequestEmail } = require('../services/emailService');
 
 // Get all leaves
 exports.getAllLeaves = async (req, res) => {
@@ -35,6 +36,18 @@ exports.createLeave = async (req, res) => {
             },
             include: { employee: true }
         });
+
+        // Notify employee by email
+        if (newLeave.employee?.email) {
+            sendLeaveRequestEmail(
+                newLeave.employee.email,
+                `${newLeave.employee.firstName} ${newLeave.employee.lastName}`,
+                `${newLeave.employee.firstName} ${newLeave.employee.lastName}`,
+                type,
+                startDate,
+                endDate
+            ).catch(console.error);
+        }
 
         res.status(201).json(newLeave);
     } catch (error) {

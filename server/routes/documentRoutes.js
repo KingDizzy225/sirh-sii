@@ -30,6 +30,7 @@ router.get('/', verifyToken, documentController.getDocuments);
 router.post('/upload', verifyToken, requireRole(['HR', 'ADMIN']), upload.single('file'), documentController.uploadDocument);
 // router.post('/generate', verifyToken, documentController.generateAndSignDocument); // Disabled
 router.post('/ai-generate', verifyToken, aiDocumentController.generateAIDocument);
+router.post('/:id/sign', verifyToken, aiDocumentController.signDocument);
 router.delete('/:id', verifyToken, requireRole(['HR', 'ADMIN']), documentController.deleteDocument);
 
 module.exports = router;

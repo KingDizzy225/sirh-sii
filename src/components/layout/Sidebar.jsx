@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -9,12 +9,15 @@ const getAllNavItems = () => [
     { name: 'Vue d\'ensemble', path: '/', icon: Home, domain: 'Home', permission: 'dashboard:view' },
     { name: 'Générateur Workflows', path: '/workflows', icon: Settings, domain: 'Home', permission: 'workflows:view' },
     { name: 'Tableau Tâches', path: '/task-board', icon: CheckSquare, domain: 'Home', permission: 'dashboard:view' },
+    { name: 'Annonces', path: '/announcements', icon: Megaphone, domain: 'Home', permission: 'myself:view' },
 
     // MYSELF
     { name: 'Mon Profil', path: '/my-space', icon: User, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Absences', path: '/leaves', icon: Calendar, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Dépenses', path: '/expenses', icon: Receipt, domain: 'Myself', permission: 'myself:view' },
+    { name: 'Avance sur Salaire', path: '/advances', icon: Banknote, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Fiches de Paie', path: '/payroll', icon: FileText, domain: 'Myself', permission: 'myself:view' },
+    { name: 'Récompenses', path: '/rewards', icon: Trophy, domain: 'Myself', permission: 'myself:view' },
     { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Myself', permission: 'myself:view' },
     
     // MY TEAM
@@ -28,6 +31,7 @@ const getAllNavItems = () => [
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'People', permission: 'onboarding:view' },
     { name: 'Qualité de vie (QVT)', path: '/engagement', icon: HeartPulse, domain: 'People', permission: 'employees:edit' },
     { name: 'Santé & Sécurité', path: '/hse', icon: Shield, domain: 'People', permission: 'employees:edit' },
+    { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'People', permission: 'employees:edit' },
 
     // PROCESS
     { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Process', permission: 'dashboard:view' },
@@ -36,12 +40,15 @@ const getAllNavItems = () => [
     { name: 'Suivi Formations', path: '/learning', icon: BookOpen, domain: 'Process', permission: 'learning:view' },
     { name: 'Catalogue Sessions', path: '/trainings', icon: GraduationCap, domain: 'Process', permission: 'learning:view' },
     { name: 'Compétences', path: '/skills', icon: Award, domain: 'Process', permission: 'skills:view' },
+    { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Process', permission: 'skills:view' },
+    { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'People', permission: 'skills:view' },
     { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Process', permission: 'documents:view_company' },
     
     // REPORTS
     { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Reports', permission: 'dashboard:view' },
     { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: FileText, domain: 'Reports', permission: 'support_tickets:manage' },
 ];
+
 
 export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home' }) {
     const location = useLocation();

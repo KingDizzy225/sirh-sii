@@ -156,33 +156,42 @@ exports.importBulkEmployees = async (req, res) => {
             hireDate: emp.hireDate ? new Date(emp.hireDate) : new Date()
         }));
 
-        // Prisma createMany (skipDuplicates true allows ignoring existing emails instead of failing the whole batch)
-        const createResult = await prisma.employee.createMany({
-            data: dataToInsert,
-            skipDuplicates: true
-        });
+        // Prisma SQLite doesn't support createMany skipDuplicates — use upsert loop
+        let created = 0;
+        let skipped = 0;
+        const defaultPassword = 'Welcome2026!';
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
-        // Automatically create User accounts for Self-Service
-        if (createResult.count > 0) {
-            const defaultPassword = 'Welcome2026!';
-            const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-            
-            const usersToInsert = dataToInsert.map(emp => ({
-                name: `${emp.firstName} ${emp.lastName}`,
-                email: emp.email,
-                password: hashedPassword,
-                role: emp.role === 'Administrator' ? 'ADMIN' : (emp.role === 'HR' ? 'HR' : (emp.role === 'Manager' ? 'MANAGER' : 'EMPLOYEE'))
-            }));
+        for (const emp of dataToInsert) {
+            try {
+                const existing = await prisma.employee.findUnique({ where: { email: emp.email } });
+                if (existing) { skipped++; continue; }
 
-            await prisma.user.createMany({
-                data: usersToInsert,
-                skipDuplicates: true
-            });
+                await prisma.employee.create({ data: emp });
+
+                // Auto-create User account
+                const userExists = await prisma.user.findUnique({ where: { email: emp.email } });
+                if (!userExists) {
+                    await prisma.user.create({
+                        data: {
+                            name: `${emp.firstName} ${emp.lastName}`,
+                            email: emp.email,
+                            password: hashedPassword,
+                            role: emp.role === 'Administrator' ? 'ADMIN' : (emp.role === 'HR' ? 'HR' : (emp.role === 'Manager' ? 'MANAGER' : 'EMPLOYEE'))
+                        }
+                    });
+                }
+                created++;
+            } catch (err) {
+                console.error(`Skipping ${emp.email}:`, err.message);
+                skipped++;
+            }
         }
 
         res.status(201).json({
-            message: `Successfully imported ${createResult.count} out of ${employees.length} employees (duplicates skipped)`,
-            count: createResult.count
+            message: `${created} employé(s) importé(s) avec succès${skipped > 0 ? `, ${skipped} ignoré(s) (doublons)` : ''}.`,
+            count: created
         });
 
     } catch (error) {

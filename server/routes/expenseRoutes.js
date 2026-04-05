@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const expenseController = require('../controllers/expenseController');
+const verifyToken = require('../middleware/authMiddleware');
 
-router.get('/', expenseController.getExpenses);
-router.post('/', expenseController.createExpense);
-router.put('/:id/status', expenseController.updateExpenseStatus);
+router.get('/', verifyToken, expenseController.getExpenses);
+router.post('/', verifyToken, expenseController.upload.single('receipt'), expenseController.createExpense);
+router.put('/:id/status', verifyToken, expenseController.updateExpenseStatus);
 
 module.exports = router;

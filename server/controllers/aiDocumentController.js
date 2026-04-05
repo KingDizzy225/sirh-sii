@@ -112,3 +112,74 @@ exports.generateAIDocument = async (req, res) => {
         res.status(500).json({ error: `Erreur IA: ${error.message}` });
     }
 };
+
+// Signer un document existant avec une signature image (canvas dataURL)
+exports.signDocument = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { signatureDataUrl } = req.body;
+
+        if (!signatureDataUrl) {
+            return res.status(400).json({ error: 'Données de signature manquantes.' });
+        }
+
+        const doc = await prisma.employeeDocument.findUnique({ where: { id } });
+        if (!doc) return res.status(404).json({ error: 'Document introuvable.' });
+
+        // Convertir le dataUrl en Buffer
+        const base64Data = signatureDataUrl.replace(/^data:image\/\w+;base64,/, '');
+        const sigBuffer = Buffer.from(base64Data, 'base64');
+
+        // Générer un nouveau nom de fichier signé
+        const originalPath = path.join(__dirname, '..', doc.filePath);
+        const signedFileName = `signed_${Date.now()}_${path.basename(doc.filePath)}`;
+        const signedFilePath = `/uploads/documents/${signedFileName}`;
+        const signedFullPath = path.join(__dirname, '..', 'uploads', 'documents', signedFileName);
+
+        // Créer un nouveau PDF "page de signature" à la suite du document original
+        const pdfDoc = new PDFDocument({ margin: 50 });
+        const writeStream = fs.createWriteStream(signedFullPath);
+        pdfDoc.pipe(writeStream);
+
+        pdfDoc.fontSize(14).fillColor('#1e3a8a').text('CERTIFICAT DE SIGNATURE ÉLECTRONIQUE', { align: 'center', underline: true });
+        pdfDoc.moveDown();
+        pdfDoc.fontSize(10).fillColor('#374151')
+            .text(`Document : ${doc.title}`)
+            .text(`Signé le : ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`)
+            .text(`Fait à Abidjan, Côte d'Ivoire`);
+        pdfDoc.moveDown(2);
+
+        // Insérer l'image de la signature
+        pdfDoc.image(sigBuffer, { fit: [300, 100], align: 'center' });
+        pdfDoc.moveDown(2);
+
+        pdfDoc.moveTo(50, pdfDoc.y).lineTo(300, pdfDoc.y).stroke();
+        pdfDoc.moveDown(0.5);
+        pdfDoc.fontSize(9).fillColor('#94a3b8').text('Signature Électronique de l\'Employé', 50);
+
+        pdfDoc.end();
+
+        await new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
+
+        const stats = fs.statSync(signedFullPath);
+
+        // Mettre à jour le document en base pour pointer vers le fichier signé
+        const updated = await prisma.employeeDocument.update({
+            where: { id },
+            data: {
+                filePath: signedFilePath,
+                fileSize: stats.size,
+                title: `${doc.title} [Signé]`,
+                updatedAt: new Date()
+            }
+        });
+
+        res.json({ message: 'Document signé avec succès.', document: updated });
+    } catch (error) {
+        console.error("=> [SIGN] Error:", error);
+        res.status(500).json({ error: `Erreur lors de la signature : ${error.message}` });
+    }
+};

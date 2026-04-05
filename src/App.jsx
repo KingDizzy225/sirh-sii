@@ -30,6 +30,12 @@ import { Assets } from './pages/Assets';
 import { Analytics } from './pages/Analytics';
 import { Compensation } from './pages/Compensation';
 import { Trainings } from './pages/Trainings';
+import { Announcements } from './pages/Announcements';
+import { SalaryAdvances } from './pages/SalaryAdvances';
+import { MedicalVisits } from './pages/MedicalVisits';
+import { Rewards } from './pages/Rewards';
+import { GPEC } from './pages/GPEC';
+import { TalentManagement } from './pages/TalentManagement';
 import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
 
@@ -225,6 +231,26 @@ const AppContent = () => {
             <Route path="/trainings" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Trainings />
+              </ProtectedRoute>
+            } />
+
+            {/* V4 Modules */}
+            <Route path="/announcements" element={<Announcements />} />
+            <Route path="/advances" element={<SalaryAdvances />} />
+            <Route path="/medical" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <MedicalVisits />
+              </ProtectedRoute>
+            } />
+            <Route path="/rewards" element={<Rewards />} />
+            <Route path="/gpec" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <GPEC />
+              </ProtectedRoute>
+            } />
+            <Route path="/talent-management" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <TalentManagement />
               </ProtectedRoute>
             } />
 

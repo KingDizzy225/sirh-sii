@@ -153,30 +153,28 @@ export function Documents() {
 
             if (res.ok) {
                 const newDoc = await res.json();
+                // Add to document list
                 if (newDoc.type === 'Contrat' || newDoc.type === 'Entreprise' || newDoc.type === 'Autre') {
                     setCompanyDocs(prev => [newDoc, ...prev]);
-                    setActiveTab('company');
                 } else {
                     setPersonalDocs(prev => [newDoc, ...prev]);
-                    setActiveTab('personal');
                 }
-                setShowAIModal(false);
-                showNotification(`Le document IA "${type}" a été généré avec succès.`);
+                // Do NOT close the modal — let it transition to the signature step
+                return newDoc;
             } else {
                 if (res.status === 401 || res.status === 403) {
                     logout();
                     showNotification("Session expirée. Veuillez vous reconnecter.");
-                    return;
+                    return null;
                 }
                 let errorMsg = `Code ${res.status}`;
-                try {
-                    const errData = await res.json();
-                    if (errData.error) errorMsg = errData.error;
-                } catch(e) {}
+                try { const errData = await res.json(); if (errData.error) errorMsg = errData.error; } catch(e) {}
                 showNotification(`Échec: ${errorMsg}`);
+                return null;
             }
         } catch(e) {
             showNotification(`Erreur système: ${e.message}`);
+            return null;
         } finally {
             setIsAIGenerating(false);
         }
@@ -368,11 +366,12 @@ export function Documents() {
             </Tabs>
 
             <AnimatePresence>
-                <AIDocumentModal 
-                    isOpen={showAIModal} 
-                    onClose={() => setShowAIModal(false)} 
-                    onGenerate={handleAIGenerate} 
-                    isGenerating={isAIGenerating} 
+                <AIDocumentModal
+                    isOpen={showAIModal}
+                    onClose={() => setShowAIModal(false)}
+                    onGenerate={handleAIGenerate}
+                    isGenerating={isAIGenerating}
+                    token={token}
                 />
             </AnimatePresence>
         </div>

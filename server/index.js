@@ -69,6 +69,22 @@ app.use('/api/assets', verifyToken, assetRoutes);
 app.use('/api/dashboard', verifyToken, dashboardRoutes);
 app.use('/api/support/tickets', verifyToken, supportRoutes);
 
+// V4 New Modules
+const announcementRoutes = require('./routes/announcementRoutes');
+const advanceRoutes = require('./routes/advanceRoutes');
+const medicalRoutes = require('./routes/medicalRoutes');
+const rewardsRoutes = require('./routes/rewardsRoutes');
+const gpecRoutes = require('./routes/gpecRoutes');
+const talentRoutes = require('./routes/talentRoutes');
+
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/advances', advanceRoutes);
+app.use('/api/medical', medicalRoutes);
+app.use('/api/rewards', rewardsRoutes);
+app.use('/api/gpec', gpecRoutes);
+app.use('/api/talents', verifyToken, talentRoutes);
+
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

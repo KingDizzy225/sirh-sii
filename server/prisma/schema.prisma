@@ -41,6 +41,11 @@ model Employee {
   documents       EmployeeDocument[] @relation("EmployeeDocs")
   notifications   Notification[] @relation("EmployeeNotifications")
   expenses        Expense[]
+  advances        SalaryAdvance[]
+  medicalVisits   MedicalVisit[]
+  points          EmployeePoints?
+  pointEvents     PointEvent[]
+  talentProfile   TalentProfile? @relation("EmployeeTalent")
 }
 
 // ----------------------------------------------------
@@ -349,3 +354,107 @@ model Expense {
 
   employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
+
+// ----------------------------------------------------
+// 14. MUR D'ANNONCES
+// ----------------------------------------------------
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  body      String
+  category  String   @default("Info") // 'Info', 'Urgent', 'Événement', 'Félicitations'
+  author    String
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+// ----------------------------------------------------
+// 15. AVANCES SUR SALAIRE
+// ----------------------------------------------------
+
+model SalaryAdvance {
+  id                  String    @id @default(uuid())
+  employeeId          String    @map("employee_id")
+  amount              Float
+  reason              String?
+  status              String    @default("En attente") // 'En attente', 'Approuvé', 'Rejeté', 'Déduit'
+  requestedAt         DateTime  @default(now()) @map("requested_at")
+  approvedAt          DateTime? @map("approved_at")
+  approvedBy          String?   @map("approved_by")
+  deductedOnPayrollId String?   @map("deducted_on_payroll_id")
+
+  employee            Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 16. MÉDECINE DU TRAVAIL
+// ----------------------------------------------------
+
+model MedicalVisit {
+  id           String   @id @default(uuid())
+  employeeId   String   @map("employee_id")
+  visitDate    DateTime @map("visit_date")
+  expiryDate   DateTime @map("expiry_date") // visitDate + 1 an
+  result       String   // 'Apte', 'Apte avec restrictions', 'Inapte temporaire', 'Inapte définitif'
+  restrictions String?
+  doctor       String?
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 17. GAMIFICATION & RÉCOMPENSES
+// ----------------------------------------------------
+
+model EmployeePoints {
+  id         String   @id @default(uuid())
+  employeeId String   @unique @map("employee_id")
+  total      Int      @default(0)
+
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model PointEvent {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+  points     Int
+  reason     String   // 'Objectif atteint', 'Formation suivie', 'Ancienneté', 'Manuel'
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 18. GPEC++ RÉFÉRENTIEL COMPÉTENCES
+// ----------------------------------------------------
+
+model SkillDefinition {
+  id          String @id @default(uuid())
+  name        String @unique
+  category    String // 'Technique', 'Managérial', 'Transversal'
+  description String?
+  criticality String @default("Normal") // 'Critique', 'Important', 'Normal'
+  createdAt   DateTime @default(now()) @map("created_at")
+}
+
+// ----------------------------------------------------
+// 19. GESTION DES TALENTS (TALENT MANAGEMENT)
+// ----------------------------------------------------
+
+model TalentProfile {
+  id              String   @id @default(uuid())
+  employeeId      String   @unique @map("employee_id")
+  potential       String   @default("Medium") // 'Low', 'Medium', 'High'
+  performance     String   @default("Medium") // 'Low', 'Medium', 'High'
+  flightRisk      String   @default("Low")    // 'Low', 'Medium', 'High'
+  readiness       String   @default("1-2 years") // 'Ready now', '1-2 years', '3-5 years'
+  lastAssessment  DateTime @default(now()) @map("last_assessment")
+
+  employee        Employee @relation("EmployeeTalent", fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+

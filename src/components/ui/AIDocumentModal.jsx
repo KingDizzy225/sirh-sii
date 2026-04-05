@@ -2,17 +2,58 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from './button';
 import { Input } from './input';
-import { Sparkles, FileText, CheckCircle2, Loader2, X } from 'lucide-react';
+import { SignaturePad } from './SignaturePad';
+import { Sparkles, FileText, CheckCircle2, Loader2, X, PenLine, SkipForward } from 'lucide-react';
 
-export function AIDocumentModal({ isOpen, onClose, onGenerate, isGenerating }) {
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+export function AIDocumentModal({ isOpen, onClose, onGenerate, isGenerating, token }) {
     const [type, setType] = useState('Attestation de travail');
     const [formData, setFormData] = useState({});
+    // Step 1 = form, Step 2 = signature
+    const [step, setStep] = useState(1);
+    const [generatedDoc, setGeneratedDoc] = useState(null);
+    const [signatureDataUrl, setSignatureDataUrl] = useState(null);
+    const [isSigning, setIsSigning] = useState(false);
+    const [signDone, setSignDone] = useState(false);
 
     if (!isOpen) return null;
+
+    const handleOpen = () => {
+        setStep(1);
+        setGeneratedDoc(null);
+        setSignatureDataUrl(null);
+        setSignDone(false);
+        setFormData({});
+    };
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
+
+    const handleGenerate = async () => {
+        const doc = await onGenerate(type, formData);
+        if (doc?.id) {
+            setGeneratedDoc(doc);
+            setStep(2);
+        }
+    };
+
+    const handleSign = async () => {
+        if (!signatureDataUrl || !generatedDoc) return;
+        setIsSigning(true);
+        try {
+            const res = await fetch(`${API_URL}/api/documents/${generatedDoc.id}/sign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ signatureDataUrl })
+            });
+            if (res.ok) setSignDone(true);
+        } catch (e) { console.error(e); }
+        finally { setIsSigning(false); }
+    };
+
+    const handleClose = () => { handleOpen(); onClose(); };
 
     const renderFormFields = () => {
         if (type === 'Attestation de travail') {
@@ -187,15 +228,17 @@ export function AIDocumentModal({ isOpen, onClose, onGenerate, isGenerating }) {
                         {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles />}
                         Génération IA de Document
                     </h3>
-                    <button onClick={onClose} className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors bg-transparent border-0 cursor-pointer">
+                    <button onClick={handleClose} className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors bg-transparent border-0 cursor-pointer">
                         <X size={20} />
                     </button>
                 </div>
                 
                 <div className="p-6 flex-1 overflow-y-auto min-h-0">
-                    <p className="text-sm text-slate-500 mb-6">
-                        Remplissez ce formulaire et laissez l'Intelligence Artificielle rédiger un document formel et juridique sur mesure pour vous.
-                    </p>
+                    {step === 1 ? (
+                    <>
+                        <p className="text-sm text-slate-500 mb-6">
+                            Remplissez ce formulaire et laissez l'Intelligence Artificielle rédiger un document formel et juridique sur mesure pour vous.
+                        </p>
 
                     <div className="space-y-6">
                         <div>
@@ -221,31 +264,73 @@ export function AIDocumentModal({ isOpen, onClose, onGenerate, isGenerating }) {
 
                         <div className="pt-4 border-t border-slate-100">
                             <label className="text-sm font-medium text-slate-700 block mb-1">Informations complémentaires (Optionnel)</label>
-                            <textarea 
-                                placeholder="Saisissez ici toute information spécifique, clause, ou mention à rajouter dans le document..." 
+                            <textarea
+                                placeholder="Saisissez ici toute information spécifique, clause, ou mention à rajouter dans le document..."
                                 rows={3}
                                 className="w-full border-slate-200 rounded-lg bg-white text-sm p-3 focus:ring-2 focus:ring-blue-500 outline-none border transition-all resize-none"
                                 onChange={(e) => handleInputChange('informationsAdditionnelles', e.target.value)}
                             />
                         </div>
                     </div>
+                    </>
+                    ) : (
+                    <div className="flex flex-col items-center gap-6 py-2">
+                        {signDone ? (
+                            <div className="flex flex-col items-center gap-3 py-6">
+                                <CheckCircle2 className="text-emerald-500" size={56} />
+                                <h4 className="text-lg font-bold text-slate-900">Document Signé avec Succès !</h4>
+                                <p className="text-sm text-slate-500 text-center">Un certificat de signature électronique a été généré et attaché au document.</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+                                    <CheckCircle2 className="text-emerald-600 shrink-0" size={22} />
+                                    <div>
+                                        <p className="text-sm font-semibold text-emerald-800">Document généré avec succès !</p>
+                                        <p className="text-xs text-emerald-600 mt-0.5">{generatedDoc?.title}</p>
+                                    </div>
+                                </div>
+                                <div className="w-full">
+                                    <p className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
+                                        <PenLine size={16} className="text-blue-600" />
+                                        Signez ce document (optionnel)
+                                    </p>
+                                    <SignaturePad onSign={setSignatureDataUrl} />
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    )}
                 </div>
                 
                 <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
-                    <Button variant="outline" onClick={onClose} disabled={isGenerating}>
-                        Annuler
-                    </Button>
-                    <Button 
-                        onClick={() => onGenerate(type, formData)} 
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[150px] shadow-md hover:shadow-lg transition-all"
-                        disabled={isGenerating}
-                    >
-                        {isGenerating ? (
-                            <><Loader2 size={16} className="animate-spin mr-2" /> Rédaction...</>
-                        ) : (
-                            <><Sparkles size={16} className="mr-2 relative -top-[1px]" />Générer le Document</>
-                        )}
-                    </Button>
+                    {step === 1 ? (
+                        <>
+                            <Button variant="outline" onClick={handleClose} disabled={isGenerating}>Annuler</Button>
+                            <Button
+                                onClick={handleGenerate}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[150px] shadow-md hover:shadow-lg transition-all"
+                                disabled={isGenerating}
+                            >
+                                {isGenerating ? <><Loader2 size={16} className="animate-spin mr-2" /> Rédaction...</> : <><Sparkles size={16} className="mr-2 relative -top-[1px]" />Générer le Document</>}
+                            </Button>
+                        </>
+                    ) : signDone ? (
+                        <Button onClick={handleClose} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                            <CheckCircle2 size={16} className="mr-2" /> Terminé !
+                        </Button>
+                    ) : (
+                        <>
+                            <Button variant="outline" onClick={handleClose}><SkipForward size={14} className="mr-1" /> Passer</Button>
+                            <Button
+                                onClick={handleSign}
+                                disabled={!signatureDataUrl || isSigning}
+                                className="bg-blue-700 hover:bg-blue-800 text-white min-w-[140px]"
+                            >
+                                {isSigning ? <><Loader2 size={14} className="animate-spin mr-2" />Signature...</> : <><PenLine size={14} className="mr-2" />Valider la Signature</>}
+                            </Button>
+                        </>
+                    )}
                 </div>
             </motion.div>
         </div>

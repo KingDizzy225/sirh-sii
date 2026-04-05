@@ -26,6 +26,7 @@ export function Expenses() {
         merchant: '',
         description: ''
     });
+    const [receiptFile, setReceiptFile] = useState(null);
 
     useEffect(() => {
         if (token) fetchExpenses();
@@ -57,22 +58,25 @@ export function Expenses() {
         }
 
         try {
+            const formData = new FormData();
+            formData.append('amount', expenseForm.amount);
+            formData.append('category', expenseForm.category);
+            formData.append('date', expenseForm.date);
+            formData.append('merchant', expenseForm.merchant);
+            formData.append('description', expenseForm.description);
+            formData.append('currency', 'FCFA');
+            if (receiptFile) formData.append('receipt', receiptFile);
+
             const res = await fetch(`${API_URL}/api/expenses`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    ...expenseForm,
-                    currency: 'FCFA',
-                    amount: parseFloat(expenseForm.amount)
-                })
+                headers: { 'Authorization': `Bearer ${token}` }, // NOTE: No Content-Type header -- let browser set multipart boundary
+                body: formData
             });
 
             if (res.ok) {
                 setIsExpenseModalOpen(false);
                 setExpenseForm({ amount: '', category: 'Repas', date: '', merchant: '', description: '' });
+                setReceiptFile(null);
                 showNotification('Note de frais soumise avec succès.');
                 fetchExpenses();
             } else {
@@ -221,14 +225,21 @@ export function Expenses() {
                                         />
                                     </div>
                                     <div className="space-y-2 pt-2 border-t border-slate-100">
-                                        <label className="text-sm font-medium text-slate-700">Reçu / Facture</label>
-                                        <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer group">
+                                        <label className="text-sm font-medium text-slate-700">Reçu / Facture (Optionnel)</label>
+                                        <label className="block border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer group">
+                                            <input type="file" className="hidden" accept="image/*,.pdf" onChange={(e) => setReceiptFile(e.target.files[0])} />
                                             <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                                 <Upload size={20} />
                                             </div>
-                                            <p className="text-sm font-medium text-slate-900">Cliquez pour télécharger ou glissez le reçu ici</p>
-                                            <p className="text-xs text-slate-500 mt-1">PDF, JPG ou PNG (Max. 5Mo)</p>
-                                        </div>
+                                            {receiptFile ? (
+                                                <p className="text-sm font-medium text-emerald-600">✅ {receiptFile.name}</p>
+                                            ) : (
+                                                <>
+                                                    <p className="text-sm font-medium text-slate-900">Cliquez pour joindre votre reçu</p>
+                                                    <p className="text-xs text-slate-500 mt-1">PDF, JPG ou PNG (Max. 5Mo)</p>
+                                                </>
+                                            )}
+                                        </label>
                                     </div>
                                 </form>
                             </div>

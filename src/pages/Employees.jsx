@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Check, X, Search, Calendar as CalendarIcon, CheckCircle2, ChevronDown, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { Check, X, Search, Calendar as CalendarIcon, CheckCircle2, ChevronDown, MoreHorizontal, Plus, Trash2, Pencil, Eye, UserX } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
@@ -22,7 +22,12 @@ export function Employees() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedEmployees, setSelectedEmployees] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [contextMenu, setContextMenu] = useState(null); // { emp, x, y }
+    const [editModal, setEditModal] = useState(null); // employee being edited
+    const [editForm, setEditForm] = useState({});
     const fileInputRef = useRef(null);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     // Initialisation API
     const loadEmployees = () => {
@@ -244,6 +249,62 @@ export function Employees() {
         });
     };
 
+    const openContextMenu = (e, emp) => {
+        e.stopPropagation();
+        const rect = e.currentTarget.getBoundingClientRect();
+        setContextMenu({ emp, x: rect.left - 160, y: rect.bottom + 4 });
+    };
+
+    const closeContextMenu = () => setContextMenu(null);
+
+    const openEdit = (emp) => {
+        setEditForm({
+            firstName: emp.name.split(' ')[0] || '',
+            lastName: emp.name.split(' ').slice(1).join(' ') || '',
+            email: emp.email,
+            positionTitle: emp.role,
+            department: emp.department,
+            status: emp.status === 'Actif' ? 'ACTIVE' : emp.status === 'En congé' ? 'ON_LEAVE' : 'TERMINATED'
+        });
+        setEditModal(emp);
+        closeContextMenu();
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('sirh_token');
+        try {
+            const res = await fetch(`${API_URL}/api/employees/${editModal.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(editForm)
+            });
+            if (res.ok) {
+                setEditModal(null);
+                loadEmployees();
+                showNotification('Employé mis à jour avec succès.');
+            } else {
+                showNotification('Erreur lors de la mise à jour.');
+            }
+        } catch { showNotification('Erreur de connexion.'); }
+    };
+
+    const handleDeleteOne = async (emp) => {
+        closeContextMenu();
+        if (!confirm(`Supprimer définitivement ${emp.name} ?`)) return;
+        const token = localStorage.getItem('sirh_token');
+        try {
+            const res = await fetch(`${API_URL}/api/employees/${emp.id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                loadEmployees();
+                showNotification(`${emp.name} supprimé.`);
+            }
+        } catch { showNotification('Erreur lors de la suppression.'); }
+    };
+
     const handleRowAction = (name) => {
         showNotification(`Menu contextuel ouvert pour ${name}`);
     };
@@ -271,7 +332,7 @@ export function Employees() {
     };
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-[calc(100vh-4rem)] relative">
+        <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-[calc(100vh-4rem)] relative" onClick={closeContextMenu}>
 
             {/* Notification Toast */}
             <AnimatePresence>
@@ -376,6 +437,73 @@ export function Employees() {
                 )}
             </AnimatePresence>
 
+            {/* Context Menu Dropdown */}
+            <AnimatePresence>
+                {contextMenu && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="fixed z-[200] bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 w-48 overflow-hidden"
+                        style={{ top: contextMenu.y, left: contextMenu.x }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button onClick={() => openEdit(contextMenu.emp)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium">
+                            <Pencil size={14} className="text-blue-500" /> Modifier l'employé
+                        </button>
+                        <div className="h-px bg-slate-100 my-1" />
+                        <button onClick={() => handleDeleteOne(contextMenu.emp)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-medium">
+                            <UserX size={14} /> Supprimer
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Edit Employee Modal */}
+            <AnimatePresence>
+                {editModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setEditModal(null)}>
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                            className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
+                            onClick={e => e.stopPropagation()}>
+                            <div className="px-6 py-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-600">
+                                <h3 className="text-lg font-bold text-white">Modifier l'Employé</h3>
+                                <button onClick={() => setEditModal(null)} className="text-white/80 hover:text-white bg-transparent border-0 cursor-pointer"><X size={20} /></button>
+                            </div>
+                            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Prénom</label>
+                                        <Input value={editForm.firstName || ''} onChange={e => setEditForm({...editForm, firstName: e.target.value})} /></div>
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Nom</label>
+                                        <Input value={editForm.lastName || ''} onChange={e => setEditForm({...editForm, lastName: e.target.value})} /></div>
+                                </div>
+                                <div><label className="text-sm font-medium text-slate-700 block mb-1">Email</label>
+                                    <Input type="email" value={editForm.email || ''} onChange={e => setEditForm({...editForm, email: e.target.value})} /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Poste</label>
+                                        <Input value={editForm.positionTitle || ''} onChange={e => setEditForm({...editForm, positionTitle: e.target.value})} /></div>
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Département</label>
+                                        <Input value={editForm.department || ''} onChange={e => setEditForm({...editForm, department: e.target.value})} /></div>
+                                </div>
+                                <div><label className="text-sm font-medium text-slate-700 block mb-1">Statut</label>
+                                    <select value={editForm.status || 'ACTIVE'} onChange={e => setEditForm({...editForm, status: e.target.value})}
+                                        className="w-full border border-slate-200 rounded-lg p-2.5 text-sm">
+                                        <option value="ACTIVE">Actif</option>
+                                        <option value="ON_LEAVE">En congé</option>
+                                        <option value="TERMINATED">Ancien employé</option>
+                                    </select></div>
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <Button type="button" variant="outline" onClick={() => setEditModal(null)}>Annuler</Button>
+                                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Sauvegarder</Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <div className="flex items-center justify-between space-y-2">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-slate-900">Employés</h2>
@@ -408,7 +536,8 @@ export function Employees() {
                         <CardTitle className="text-lg">Tous les Employés</CardTitle>
                         <div className="relative w-72">
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                            <Input placeholder="Rechercher des employés..." className="pl-9" />
+                            <Input placeholder="Rechercher des employés..." className="pl-9"
+                                value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
                     </div>
                 </CardHeader>
@@ -434,7 +563,12 @@ export function Employees() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {employees.map((emp) => (
+                            {employees.filter(emp =>
+                                !searchQuery ||
+                                emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                emp.department.toLowerCase().includes(searchQuery.toLowerCase())
+                            ).map((emp) => (
                                 <TableRow key={emp.id} className={selectedEmployees.includes(emp.id) ? "bg-blue-50/50" : ""}>
                                     <TableCell>
                                         <input
@@ -491,7 +625,7 @@ export function Employees() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRowAction(emp.name)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => openContextMenu(e, emp)}>
                                             <MoreHorizontal size={16} />
                                         </Button>
                                     </TableCell>
