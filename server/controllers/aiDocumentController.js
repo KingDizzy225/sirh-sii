@@ -58,8 +58,8 @@ exports.generateAIDocument = async (req, res) => {
         // Header
         const logoPath = path.join(__dirname, '..', '..', 'public', 'logo.png');
         if (fs.existsSync(logoPath)) {
-            pdfDoc.image(logoPath, pdfDoc.page.width / 2 - 75, 40, { width: 150 });
-            pdfDoc.moveDown(5);
+            pdfDoc.image(logoPath, { fit: [150, 100], align: 'center' });
+            pdfDoc.moveDown(2);
         } else {
             pdfDoc.fontSize(24).fillColor('#2563eb').text('SIRH-SII', { align: 'center' });
             pdfDoc.moveDown();
@@ -140,6 +140,13 @@ exports.signDocument = async (req, res) => {
         const pdfDoc = new PDFDocument({ margin: 50 });
         const writeStream = fs.createWriteStream(signedFullPath);
         pdfDoc.pipe(writeStream);
+
+        // Header Logo
+        const logoPath = path.join(__dirname, '..', '..', 'public', 'logo.png');
+        if (fs.existsSync(logoPath)) {
+            pdfDoc.image(logoPath, { fit: [150, 100], align: 'center' });
+            pdfDoc.moveDown(2);
+        }
 
         pdfDoc.fontSize(14).fillColor('#1e3a8a').text('CERTIFICAT DE SIGNATURE ÉLECTRONIQUE', { align: 'center', underline: true });
         pdfDoc.moveDown();
