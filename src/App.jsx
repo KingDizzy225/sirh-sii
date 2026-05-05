@@ -39,6 +39,17 @@ import { TalentManagement } from './pages/TalentManagement';
 import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
 
+// V5 New Components
+import { Offboarding } from './pages/Offboarding';
+import { ShiftScheduler } from './pages/ShiftScheduler';
+import { Benefits } from './pages/Benefits';
+import { Ethics } from './pages/Ethics';
+import { Subcontractors } from './pages/Subcontractors';
+import { DeiDashboard } from './pages/DeiDashboard';
+
+// V6 Enterprise
+import { FloatingChat } from './components/FloatingChat';
+
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
     <div className="text-4xl">🛑</div>
@@ -63,6 +74,7 @@ const AppContent = () => {
   if (!user) {
     return (
       <Routes>
+        <Route path="/ethics" element={<Ethics />} />
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Login />} />
       </Routes>
@@ -254,12 +266,40 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
+            {/* V5 Modules */}
+            <Route path="/offboarding" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Offboarding />
+              </ProtectedRoute>
+            } />
+            <Route path="/shifts" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <ShiftScheduler />
+              </ProtectedRoute>
+            } />
+            <Route path="/benefits" element={<Benefits />} />
+            <Route path="/ethics" element={<Ethics />} />
+            <Route path="/subcontractors" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Subcontractors />
+              </ProtectedRoute>
+            } />
+            <Route path="/dei-dashboard" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <DeiDashboard />
+              </ProtectedRoute>
+            } />
+
+
             {/* System Routes */}
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction!</div>} />
           </Routes>
         </main>
       </div>
+      
+      {/* Chatbot Flottant - Accessible depuis toutes les pages */}
+      <FloatingChat />
     </div>
   );
 };

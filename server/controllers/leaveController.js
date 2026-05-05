@@ -1,5 +1,5 @@
 const prisma = require('../prismaClient');
-const { sendLeaveRequestEmail } = require('../services/emailService');
+const { sendMail } = require('../lib/mailer');
 
 // Get all leaves
 exports.getAllLeaves = async (req, res) => {
@@ -39,14 +39,11 @@ exports.createLeave = async (req, res) => {
 
         // Notify employee by email
         if (newLeave.employee?.email) {
-            sendLeaveRequestEmail(
-                newLeave.employee.email,
-                `${newLeave.employee.firstName} ${newLeave.employee.lastName}`,
-                `${newLeave.employee.firstName} ${newLeave.employee.lastName}`,
-                type,
-                startDate,
-                endDate
-            ).catch(console.error);
+            sendMail({
+                to: newLeave.employee.email,
+                subject: `Nouvelle demande de congé : ${type}`,
+                html: `<h1>Demande envoyée</h1><p>Votre demande du ${startDate} au ${endDate} a bien été transmise à votre manager.</p>`
+            }).catch(console.error);
         }
 
         res.status(201).json(newLeave);
@@ -93,6 +90,15 @@ exports.updateLeaveStatus = async (req, res) => {
                 include: { employee: true }
             });
         });
+
+        // Envoi E-mail transactionnel de statut
+        if (result.employee?.email) {
+            sendMail({
+                to: result.employee.email,
+                subject: `Statut de votre demande de congé : ${status}`,
+                html: `<h1>Mise à jour</h1><p>Votre demande de congé a été marquée comme : <strong>${status}</strong>.</p>`
+            }).catch(console.error);
+        }
 
         res.status(200).json(result);
     } catch (error) {

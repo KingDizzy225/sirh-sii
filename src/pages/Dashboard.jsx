@@ -150,7 +150,7 @@ export function Dashboard() {
                                     <p className="text-indigo-100 text-sm">Quelle est la probabilité que vous recommandiez notre entreprise comme lieu de travail ?</p>
                                 </div>
                                 <div className="bg-indigo-500/50 px-3 py-1 rounded-full text-xs font-semibold tracking-wider text-indigo-100 backdrop-blur-sm border border-indigo-400/30">
-                                    100% ANONYME
+                                    Bilan Personnel
                                 </div>
                             </div>
 
@@ -199,11 +199,11 @@ export function Dashboard() {
                                                 <button
                                                     onClick={() => {
                                                         setShowSurvey(false);
-                                                        showNotification("Merci ! Vos commentaires ont été soumis de manière sécurisée et anonyme.");
+                                                        showNotification("Merci ! Vos commentaires ont été soumis de manière sécurisée.");
                                                     }}
                                                     className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold rounded-lg text-sm transition-colors shadow-lg"
                                                 >
-                                                    Soumettre Anonymement
+                                                    Soumettre
                                                 </button>
                                             </div>
                                         </motion.div>

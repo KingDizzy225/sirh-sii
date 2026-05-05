@@ -77,12 +77,29 @@ const rewardsRoutes = require('./routes/rewardsRoutes');
 const gpecRoutes = require('./routes/gpecRoutes');
 const talentRoutes = require('./routes/talentRoutes');
 
+// V5 New Modules
+const offboardingRoutes = require('./routes/offboardingRoutes');
+const shiftRoutes = require('./routes/shiftRoutes');
+const benefitsRoutes = require('./routes/benefitsRoutes');
+const ethicsRoutes = require('./routes/ethicsRoutes');
+const subcontractorRoutes = require('./routes/subcontractorRoutes');
+
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/advances', advanceRoutes);
 app.use('/api/medical', medicalRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/gpec', gpecRoutes);
 app.use('/api/talents', verifyToken, talentRoutes);
+
+app.use('/api/offboarding', verifyToken, offboardingRoutes); // offboardingRoutes internal verifyToken usage handles admin checks
+app.use('/api/shifts', verifyToken, shiftRoutes);
+app.use('/api/benefits', verifyToken, benefitsRoutes);
+app.use('/api/ethics', ethicsRoutes); // Public & Admin inside
+app.use('/api/subcontractors', verifyToken, subcontractorRoutes);
+
+// V6 Enterprise Upgrade - Chatbot IA
+const chatRoutes = require('./routes/chatRoutes');
+app.use('/api/chat', chatRoutes);
 
 
 // Global Error Logger for Express internals

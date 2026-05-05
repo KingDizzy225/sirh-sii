@@ -17,7 +17,6 @@ exports.createTicket = async (req, res) => {
                 category: category || 'Général',
                 priority: priority || 'Medium',
                 status: 'Ouvert',
-                isAnonymous: Boolean(isAnonymous),
                 requesterId
             }
         });

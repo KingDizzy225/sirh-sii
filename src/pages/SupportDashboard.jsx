@@ -141,7 +141,7 @@ export function SupportDashboard() {
             <div className="flex items-center justify-between space-y-2">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-slate-900">Tableau de Bord Assistante Sociale</h2>
-                    <p className="text-slate-500 mt-1">Gérez les demandes de support anonymes de manière sécurisée.</p>
+                    <p className="text-slate-500 mt-1">Gérez les demandes de support de manière sécurisée.</p>
                 </div>
             </div>
 
@@ -185,7 +185,7 @@ export function SupportDashboard() {
                     <Card className="h-[calc(100vh-20rem)] flex flex-col overflow-hidden border-slate-200">
                         <CardHeader className="bg-white border-b py-3 px-4">
                             <CardTitle className="text-sm font-bold flex items-center gap-2">
-                                <Users size={16} className="text-slate-500" /> Boîte de Réception Anonyme
+                                <Users size={16} className="text-slate-500" /> Boîte de Réception
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="flex-1 overflow-y-auto p-0">
@@ -234,15 +234,15 @@ export function SupportDashboard() {
                                 <MessageSquare size={28} />
                             </div>
                             <h3 className="text-lg font-medium text-slate-800 mb-1">Sélectionnez un Ticket</h3>
-                            <p className="text-slate-500 text-sm">Choisissez une demande anonyme dans la boîte de réception pour répondre.</p>
+                            <p className="text-slate-500 text-sm">Choisissez une demande dans la boîte de réception pour répondre.</p>
                         </div>
                     ) : (
                         <Card className="h-[calc(100vh-20rem)] flex flex-col overflow-hidden border-slate-200 shadow-sm">
                             <CardHeader className="bg-white border-b py-3 px-6 flex flex-row items-center justify-between">
                                 <div>
-                                    <div className="text-xs text-slate-500 font-medium uppercase tracking-widest mb-1">Identifiant Anonyme</div>
+                                    <div className="text-xs text-slate-500 font-medium uppercase tracking-widest mb-1">Requérant</div>
                                     <CardTitle className="text-xl flex items-center gap-2">
-                                        {activeTicket.id}
+                                        {activeTicket.requester?.firstName && activeTicket.requester?.lastName ? `${activeTicket.requester.firstName} ${activeTicket.requester.lastName}` : activeTicket.id}
                                     </CardTitle>
                                 </div>
                                 {activeTicket.status !== 'Fermé' && (
@@ -258,7 +258,7 @@ export function SupportDashboard() {
                                     {activeTicket.messages && activeTicket.messages.map((msg) => (
                                         <div key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === 'Assistante Sociale' ? "ml-auto items-end" : "mr-auto items-start")}>
                                             <div className="text-[10px] font-medium text-slate-400 mb-1 px-1 uppercase tracking-wider">
-                                                {msg.sender === 'Employé' ? 'Expéditeur Anonyme' : 'Vous'}
+                                                {msg.sender === 'Employé' ? (activeTicket.requester?.firstName ? `${activeTicket.requester.firstName} ${activeTicket.requester.lastName}` : 'Employé') : 'Vous'}
                                             </div>
                                             <div className={cn(
                                                 "px-4 py-3 rounded-2xl text-sm shadow-sm",

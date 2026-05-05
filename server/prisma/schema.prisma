@@ -25,6 +25,8 @@ model Employee {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   annualLeaveBalance Float  @default(30) @map("annual_leave_balance")
+  exitDate        DateTime? @map("exit_date")
+  offboardingStatus String? @default("N/A") @map("offboarding_status")
 
   // Relations
   manager         Employee? @relation("Hierarchy", fields: [managerId], references: [id])
@@ -46,6 +48,9 @@ model Employee {
   points          EmployeePoints?
   pointEvents     PointEvent[]
   talentProfile   TalentProfile? @relation("EmployeeTalent")
+  offboardingTasks OffboardingTask[]
+  shifts          ShiftSchedule[]
+  benefits        EmployeeBenefit[]
 }
 
 // ----------------------------------------------------
@@ -239,6 +244,7 @@ model TrainingSession {
   createdAt       DateTime  @default(now()) @map("created_at")
 
   participations  TrainingParticipation[]
+  modules         CourseModule[]
 }
 
 model TrainingParticipation {
@@ -251,8 +257,36 @@ model TrainingParticipation {
   session           TrainingSession @relation(fields: [sessionId], references: [id])
   employee          Employee        @relation(fields: [employeeId], references: [id])
 
+  moduleProgresses  ModuleProgress[]
+
   @@unique([sessionId, employeeId]) // Un employé ne peut pas participer deux fois à la même session unique
 }
+
+model CourseModule {
+  id              String   @id @default(uuid())
+  sessionId       String   @map("session_id")
+  title           String
+  content         String?  // Texte riche de la leçon
+  mediaUrl        String?  @map("media_url") // Lien externe vers PDF, YouTube, etc.
+  orderSequence   Int      @default(0) @map("order_sequence")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  session         TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  progresses      ModuleProgress[]
+}
+
+model ModuleProgress {
+  id                String   @id @default(uuid())
+  participationId   String   @map("participation_id")
+  moduleId          String   @map("module_id")
+  completedDate     DateTime @default(now()) @map("completed_date")
+
+  participation     TrainingParticipation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+  module            CourseModule          @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([participationId, moduleId])
+}
+
 
 // ----------------------------------------------------
 // 10. PERFORMANCE & REVIEW
@@ -455,6 +489,87 @@ model TalentProfile {
   lastAssessment  DateTime @default(now()) @map("last_assessment")
 
   employee        Employee @relation("EmployeeTalent", fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 20. OFFBOARDING & ALUMNI
+// ----------------------------------------------------
+
+model OffboardingTask {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  taskName        String   @map("task_name")
+  status          String   @default("Pending") // 'Pending', 'In Progress', 'Completed'
+  assignedTo      String?  @map("assigned_to")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 21. ROSTERING & SHIFT SCHEDULING
+// ----------------------------------------------------
+
+model ShiftSchedule {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  date            DateTime
+  startTime       String   @map("start_time") // ex: '08:00'
+  endTime         String   @map("end_time") // ex: '16:00'
+  type            String   @default("Morning") // 'Morning', 'Night', 'Standby'
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 22. BENEFITS & INSURANCE
+// ----------------------------------------------------
+
+model EmployeeBenefit {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  type            String   // 'Mutuelle', 'Transport', 'Retraite'
+  provider        String   // 'Allianz', 'Navigo'
+  planLevel       String   @map("plan_level") // 'Basic', 'Premium', 'Family'
+  status          String   @default("Active") // 'Active', 'Pending', 'Cancelled'
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 23. SUBCONTRACTORS & FREELANCE
+// ----------------------------------------------------
+
+model Subcontractor {
+  id              String   @id @default(uuid())
+  firstName       String   @map("first_name")
+  lastName        String   @map("last_name")
+  companyName     String   @map("company_name")
+  type            String   @default("Freelance") // 'Freelance', 'Interim', 'Consultant'
+  startDate       DateTime @map("start_date")
+  endDate         DateTime? @map("end_date")
+  status          String   @default("Active") // 'Active', 'Terminated'
+  rate            Float?   // Taux journalier ou mensuel
+  department      String?
+  createdAt       DateTime @default(now()) @map("created_at")
+}
+
+// ----------------------------------------------------
+// 24. WHISTLEBLOWING & ETHICS
+// ----------------------------------------------------
+
+model WhistleblowingReport {
+  id              String   @id @default(uuid())
+  trackingId      String   @unique @map("tracking_id") // ID pour que le lanceur d'alerte puisse suivre
+  category        String   // 'Harassment', 'Fraud', 'Safety', 'Discrimination'
+  description     String
+  status          String   @default("Submitted") // 'Submitted', 'Under Investigation', 'Resolved'
+  resolution      String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 }
 
 

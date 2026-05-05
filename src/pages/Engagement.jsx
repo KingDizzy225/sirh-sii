@@ -7,21 +7,21 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
 
-// Database Mock: Notice the STRICT absence of employee_id or name.
-// Just anonymous scores and timestamps.
+// Database Mock: Includes employee name to avoid anonymity.
+// Just scores and timestamps.
 const initialResponses = [
-    { id: 1, score: 9, comment: "Excellente collaboration en équipe.", date: "21 Oct 2026" },
-    { id: 2, score: 10, comment: "J'adore la nouvelle politique de télétravail !", date: "21 Oct 2026" },
-    { id: 3, score: 7, comment: "Bien, mais les avantages pourraient être améliorés.", date: "22 Oct 2026" },
-    { id: 4, score: 5, comment: "Trop de réunions.", date: "22 Oct 2026" },
-    { id: 5, score: 8, comment: "Mon manager me soutient.", date: "23 Oct 2026" },
-    { id: 6, score: 9, comment: "", date: "23 Oct 2026" },
-    { id: 7, score: 3, comment: "Le projet actuel est très stressant et désorganisé.", date: "24 Oct 2026" },
-    { id: 8, score: 10, comment: "Fier de travailler ici.", date: "24 Oct 2026" },
-    { id: 9, score: 9, comment: "", date: "24 Oct 2026" },
-    { id: 10, score: 6, comment: "Le salaire est en dessous de la moyenne du marché.", date: "25 Oct 2026" },
-    { id: 11, score: 8, comment: "Globalement satisfait.", date: "25 Oct 2026" },
-    { id: 12, score: 10, comment: "La meilleure entreprise pour laquelle j'ai travaillé !", date: "26 Oct 2026" },
+    { id: 1, score: 9, name: "Alice Durant", comment: "Excellente collaboration en équipe.", date: "21 Oct 2026" },
+    { id: 2, score: 10, name: "Marc Tremblay", comment: "J'adore la nouvelle politique de télétravail !", date: "21 Oct 2026" },
+    { id: 3, score: 7, name: "Sophie Martin", comment: "Bien, mais les avantages pourraient être améliorés.", date: "22 Oct 2026" },
+    { id: 4, score: 5, name: "Luc Dubois", comment: "Trop de réunions.", date: "22 Oct 2026" },
+    { id: 5, score: 8, name: "Julie Lefebvre", comment: "Mon manager me soutient.", date: "23 Oct 2026" },
+    { id: 6, score: 9, name: "Alain Robert", comment: "", date: "23 Oct 2026" },
+    { id: 7, score: 3, name: "Emma Petit", comment: "Le projet actuel est très stressant et désorganisé.", date: "24 Oct 2026" },
+    { id: 8, score: 10, name: "Lucas Richard", comment: "Fier de travailler ici.", date: "24 Oct 2026" },
+    { id: 9, score: 9, name: "Léa Bernard", comment: "", date: "24 Oct 2026" },
+    { id: 10, score: 6, name: "Hugo Moreau", comment: "Le salaire est en dessous de la moyenne du marché.", date: "25 Oct 2026" },
+    { id: 11, score: 8, name: "Chloé Simon", comment: "Globalement satisfait.", date: "25 Oct 2026" },
+    { id: 12, score: 10, name: "Tom Michel", comment: "La meilleure entreprise pour laquelle j'ai travaillé !", date: "26 Oct 2026" },
 ];
 
 const trendData = [
@@ -111,7 +111,7 @@ export function Engagement() {
                             <HeartPulse className="h-8 w-8 text-indigo-600" />
                             Engagement des Employés
                         </h2>
-                        <p className="text-slate-500 mt-1">Mesurez la culture d'entreprise, l'eNPS et recueillez des retours anonymes.</p>
+                        <p className="text-slate-500 mt-1">Mesurez la culture d'entreprise, l'eNPS et recueillez les retours des employés.</p>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2" onClick={() => showNotification("Création d'un nouveau sondage eNPS...")}>
@@ -236,11 +236,11 @@ export function Engagement() {
                         </CardContent>
                     </Card>
 
-                    {/* Anonymous Verbatims */}
+                    {/* Employee Verbatims */}
                     <Card className="col-span-1 md:col-span-2 lg:col-span-3 shadow-sm border-slate-200">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                                <MessageSquare className="h-5 w-5 text-slate-500" /> Retours Anonymes
+                                <MessageSquare className="h-5 w-5 text-slate-500" /> Retours des Employés
                             </CardTitle>
                             <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-normal">
                                 {responses.filter(r => r.comment !== "").length} commentaires
@@ -255,7 +255,7 @@ export function Engagement() {
                                                 {resp.score}/10
                                             </span>
                                         </div>
-                                        <h4 className="text-slate-400 text-xs font-semibold mb-3 tracking-wider uppercase">Anonyme</h4>
+                                        <h4 className="text-slate-400 text-xs font-semibold mb-3 tracking-wider uppercase">{resp.name || 'Employé'}</h4>
                                         <p className="text-slate-700 italic leading-relaxed">"{resp.comment}"</p>
                                         <div className="text-slate-400 text-xs mt-4 font-medium">{resp.date}</div>
                                     </div>

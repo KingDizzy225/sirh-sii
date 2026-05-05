@@ -70,18 +70,59 @@ export function WorkflowBuilder() {
 
     const handleSaveNewTask = () => {
         if (!taskTitle) return;
-        const newTask = {
-            id: `TSK-NEW-${Math.floor(Math.random() * 10000)}`,
-            title: taskTitle,
-            department: taskDept,
-            relativeDays: parseInt(taskDays, 10) || 0,
-            description: ''
-        };
-        const updatedTasks = [...activeTemplate.tasks, newTask].sort((a, b) => a.relativeDays - b.relativeDays);
-        updateActiveTemplateTasks(updatedTasks);
+        
+        if (isEditingTask) {
+            const updatedTasks = activeTemplate.tasks.map(t => 
+                t.id === isEditingTask 
+                ? { ...t, title: taskTitle, department: taskDept, relativeDays: parseInt(taskDays, 10) || 0 } 
+                : t
+            ).sort((a, b) => a.relativeDays - b.relativeDays);
+            
+            updateActiveTemplateTasks(updatedTasks);
+            setIsEditingTask(null);
+        } else {
+            const newTask = {
+                id: `TSK-NEW-${Math.floor(Math.random() * 10000)}`,
+                title: taskTitle,
+                department: taskDept,
+                relativeDays: parseInt(taskDays, 10) || 0,
+                description: ''
+            };
+            const updatedTasks = [...activeTemplate.tasks, newTask].sort((a, b) => a.relativeDays - b.relativeDays);
+            updateActiveTemplateTasks(updatedTasks);
+        }
+        
         setNewTaskForm(false);
         setTaskTitle('');
         setTaskDays(0);
+    };
+
+    const handleNewTemplate = () => {
+        const name = window.prompt("Nom du nouveau modèle ?");
+        if (!name) return;
+        const typeResponse = window.prompt("Type (ONBOARDING ou OFFBOARDING) ?");
+        const type = typeResponse?.toUpperCase() === 'OFFBOARDING' ? 'OFFBOARDING' : 'ONBOARDING';
+        
+        const newTemplate = {
+            id: `TPL-NEW-${Math.floor(Math.random() * 1000)}`,
+            name,
+            type,
+            description: 'Nouveau modèle personnalisé',
+            tasks: []
+        };
+        setTemplates([...templates, newTemplate]);
+        setActiveTemplate(newTemplate);
+        showNotification("Modèle créé !");
+    };
+
+    const handleEditDetails = () => {
+        const newName = window.prompt("Nouveau nom du modèle ?", activeTemplate.name);
+        if (!newName) return;
+        const newDesc = window.prompt("Nouvelle description ?", activeTemplate.description);
+        
+        const updated = { ...activeTemplate, name: newName, description: newDesc || activeTemplate.description };
+        setActiveTemplate(updated);
+        setTemplates(templates.map(t => t.id === updated.id ? updated : t));
     };
 
     const getDayLabel = (relativeDays, type) => {
@@ -152,7 +193,7 @@ export function WorkflowBuilder() {
                                 </div>
                             ))}
                             <div className="p-4 bg-slate-50 text-center">
-                                <Button variant="outline" size="sm" className="w-full border-dashed" onClick={() => showNotification("Création d'un nouveau template...")}>
+                                <Button variant="outline" size="sm" className="w-full border-dashed" onClick={handleNewTemplate}>
                                     <Plus size={14} className="mr-1" /> Nouveau Modèle
                                 </Button>
                             </div>
@@ -174,7 +215,7 @@ export function WorkflowBuilder() {
                                     </div>
                                     <CardDescription>{activeTemplate.description}</CardDescription>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => showNotification("Ouverture de l'éditeur de détails...")}>
+                                <Button variant="outline" size="sm" onClick={handleEditDetails}>
                                     <Edit2 size={14} className="mr-2" /> Modifier les Détails
                                 </Button>
                             </CardHeader>
@@ -204,7 +245,18 @@ export function WorkflowBuilder() {
                                                     <div className="flex justify-between items-start">
                                                         <Badge variant="secondary" className={getDeptColor(task.department)}>{task.department}</Badge>
                                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button className="text-slate-400 hover:text-blue-600 p-1"><Edit2 size={14} /></button>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setTaskTitle(task.title);
+                                                                    setTaskDept(task.department);
+                                                                    setTaskDays(task.relativeDays);
+                                                                    setIsEditingTask(task.id);
+                                                                    setNewTaskForm(true);
+                                                                }} 
+                                                                className="text-slate-400 hover:text-blue-600 p-1"
+                                                            >
+                                                                <Edit2 size={14} />
+                                                            </button>
                                                             <button onClick={() => handleDeleteTask(task.id)} className="text-slate-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
                                                         </div>
                                                     </div>

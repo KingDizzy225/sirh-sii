@@ -60,8 +60,7 @@ export function Support() {
                     title: 'Demande Assistante Sociale',
                     description: newMessage,
                     category: 'Général',
-                    priority: 'Medium',
-                    isAnonymous: true
+                    priority: 'Medium'
                 })
             });
 
@@ -80,7 +79,7 @@ export function Support() {
                 await loadSavedTickets();
                 setNewMessage('');
                 setActiveTicket(null);
-                showNotification(`Demande créée de manière sécurisée et anonyme.`);
+                showNotification(`Demande créée de manière sécurisée.`);
             } else {
                 showNotification(`Erreur lors de la création.`);
             }
@@ -153,7 +152,7 @@ export function Support() {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-slate-900">Support Social</h2>
                     <p className="text-slate-500 mt-1 flex items-center gap-2">
-                        <Lock size={14} className="text-amber-500" /> Canal sécurisé et 100% anonyme pour contacter l'Assistante Sociale.
+                        <Lock size={14} className="text-amber-500" /> Canal sécurisé pour contacter l'Assistante Sociale.
                     </p>
                 </div>
                 {!activeTicket && (
@@ -217,7 +216,7 @@ export function Support() {
                             <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
                                 <Lock size={28} />
                             </div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-2">Support 100% Anonyme</h3>
+                            <h3 className="text-xl font-bold text-slate-800 mb-2">Support Social</h3>
                             <p className="text-slate-500 max-w-md text-sm mb-6">
                                 Démarrez une conversation avec l'assistante sociale. Votre identité n'est jamais liée à la demande. Nous générons un jeton d'accès unique stocké uniquement sur votre appareil.
                             </p>
@@ -257,7 +256,7 @@ export function Support() {
                                                 <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" />
                                                 <div>
                                                     <p className="font-semibold mb-1">Avis de Confidentialité</p>
-                                                    <p>Décrivez votre situation ci-dessous sans informations permettant de vous identifier pour rester anonyme. L'assistante sociale vous répondra sur cette interface sécurisée.</p>
+                                                    <p>Décrivez votre situation ci-dessous en toute sécurité. L'assistante sociale vous répondra via cette interface dédiée.</p>
                                                 </div>
                                             </div>
                                         )}

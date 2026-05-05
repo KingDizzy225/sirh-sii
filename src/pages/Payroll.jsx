@@ -142,6 +142,40 @@ export function Payroll() {
         }
     };
 
+    const handleExportCSV = () => {
+        if (allPayrolls.length === 0) {
+            showNotification('Aucune donnée à exporter.');
+            return;
+        }
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "ID Employé;Nom;Prénom;Période;Base(FCFA);Heures Sup;Primes;Retenues;Net Versé(FCFA)\n";
+        
+        allPayrolls.forEach((pay) => {
+            const row = [
+                pay.employeeId || '',
+                pay.employee?.lastName || '',
+                pay.employee?.firstName || '',
+                pay.period,
+                pay.baseSalary || 0,
+                pay.overtimeHours || 0,
+                pay.bonus || 0,
+                pay.deductions || 0,
+                pay.netSalary || 0
+            ].join(";");
+            csvContent += row + "\n";
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Export_EVP_Paie.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification("Export Comptable CSV Réussi !");
+    };
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('fr-CI').format(Math.round(amount)) + ' FCFA';
     };
@@ -353,8 +387,14 @@ export function Payroll() {
             {isHR && activeTab === 'history' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Registre Général de Paie</CardTitle>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <div>
+                                <CardTitle className="text-lg">Registre Général de Paie</CardTitle>
+                                <CardDescription>Historique global des rémunérations de l'entreprise.</CardDescription>
+                            </div>
+                            <Button variant="outline" onClick={handleExportCSV} className="border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-medium">
+                                <Download size={16} className="mr-2" /> Export Comptable (.CSV)
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             <Table>

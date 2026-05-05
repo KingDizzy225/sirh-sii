@@ -160,7 +160,7 @@ export function EmployeePortal() {
                         Confidentialité Garantie
                     </h3>
                     <p className="text-slate-300 text-sm md:text-base">
-                        Vos demandes d'assistance sociale sont anonymisées. Le département RH ne peut pas lier votre identité à vos requêtes de soutien psychologique ou financier.
+                        Vos demandes d'assistance sociale sont gérées de manière sécurisée et confidentielle par le service dédié.
                     </p>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -19,16 +19,20 @@ const getAllNavItems = () => [
     { name: 'Mes Fiches de Paie', path: '/payroll', icon: FileText, domain: 'Myself', permission: 'myself:view' },
     { name: 'Récompenses', path: '/rewards', icon: Trophy, domain: 'Myself', permission: 'myself:view' },
     { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Myself', permission: 'myself:view' },
+    { name: 'Mes Avantages', path: '/benefits', icon: HeartPulse, domain: 'Myself', permission: 'myself:view' },
     
     // MY TEAM
     { name: 'Évaluation Équipe', path: '/performance', icon: Users, domain: 'My Team', permission: 'manager:view' }, 
     { name: 'Matériel Équipe', path: '/assets', icon: Laptop, domain: 'My Team', permission: 'manager:view' },
+    { name: 'Plannings Équipe', path: '/shifts', icon: Calendar, domain: 'My Team', permission: 'manager:view' },
 
     // PEOPLE
     { name: 'Répertoire Employés', path: '/employees', icon: Users, domain: 'People', permission: 'employees:view' },
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'People', permission: 'employees:view' },
     { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'People', permission: 'recruitment:view' },
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'People', permission: 'onboarding:view' },
+    { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'People', permission: 'employees:edit' },
+    { name: 'Flex-Workforce', path: '/subcontractors', icon: Building, domain: 'People', permission: 'employees:edit' },
     { name: 'Qualité de vie (QVT)', path: '/engagement', icon: HeartPulse, domain: 'People', permission: 'employees:edit' },
     { name: 'Santé & Sécurité', path: '/hse', icon: Shield, domain: 'People', permission: 'employees:edit' },
     { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'People', permission: 'employees:edit' },
@@ -46,6 +50,8 @@ const getAllNavItems = () => [
     
     // REPORTS
     { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Reports', permission: 'dashboard:view' },
+    { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Reports', permission: 'dashboard:view' },
+    { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Reports', permission: 'dashboard:view' },
     { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: FileText, domain: 'Reports', permission: 'support_tickets:manage' },
 ];
 

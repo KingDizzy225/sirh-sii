@@ -13,4 +13,11 @@ router.post('/', verifyToken, requireRole(['HR', 'ADMIN']), trainingController.c
 // S'inscrire à une formation existante (LMS)
 router.post('/enroll', verifyToken, trainingController.enrollInTraining);
 
+// Modules du cours
+router.post('/:sessionId/modules', verifyToken, requireRole(['HR', 'ADMIN']), trainingController.createModule);
+router.delete('/modules/:moduleId', verifyToken, requireRole(['HR', 'ADMIN']), trainingController.deleteModule);
+
+// Validation d'un module par un employé
+router.post('/progress', verifyToken, trainingController.markProgressCompleted);
+
 module.exports = router;
