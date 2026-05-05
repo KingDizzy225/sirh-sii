@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: sirh-backend
+    env: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sirh-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false # L'utilisateur pourra le définir dans le dashboard Render (URL de Vercel)
+
+databases:
+  - name: sirh-db
+    plan: free
+    databaseName: sirh_db
+    user: sirh_user
