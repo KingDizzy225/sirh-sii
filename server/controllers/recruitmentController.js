@@ -1,5 +1,8 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
+const { GoogleGenAI } = require('@google/genai');
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // =============== JOB OFFERS ===============
 
@@ -164,5 +167,57 @@ exports.updateApplicantStatus = async (req, res) => {
     } catch (error) {
         console.error('Error updating applicant status:', error);
         res.status(500).json({ error: 'Failed to update applicant status' });
+    }
+};
+
+exports.analyzeCandidateWithAI = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const applicant = await prisma.applicant.findUnique({
+            where: { id },
+            include: { jobOffer: true }
+        });
+
+        if (!applicant) {
+            return res.status(404).json({ error: 'Candidate not found' });
+        }
+
+        const prompt = `
+Tu es un expert RH. Évalue le profil suivant pour le poste de ${applicant.jobOffer.title}.
+Description du poste : ${applicant.jobOffer.description}
+Profil recherché : ${applicant.jobOffer.requirements}
+
+Candidat : ${applicant.firstName} ${applicant.lastName}
+Expérience/Compétences du candidat (simulé d'après son CV) : Le candidat possède une expérience préalable dans le domaine, a les bases académiques nécessaires et montre une bonne motivation.
+
+Génère une réponse stricte au format JSON (sans Markdown) :
+{
+  "score": <nombre entre 1 et 100>,
+  "summary": "<un résumé de 2 phrases justifiant le score par rapport au poste>"
+}
+`;
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: { temperature: 0.2 }
+        });
+
+        let aiText = response.text().trim();
+        // Nettoyage au cas où Gemini renvoie du Markdown
+        if (aiText.startsWith('\`\`\`json')) {
+            aiText = aiText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+        }
+
+        const result = JSON.parse(aiText);
+
+        res.status(200).json({
+            score: result.score,
+            summary: result.summary
+        });
+
+    } catch (error) {
+        console.error("Erreur IA Recrutement :", error);
+        res.status(500).json({ error: "L'IA n'a pas pu analyser ce profil." });
     }
 };

@@ -51,6 +51,7 @@ model Employee {
   offboardingTasks OffboardingTask[]
   shifts          ShiftSchedule[]
   benefits        EmployeeBenefit[]
+  timeLogs        TimeLog[]
 }
 
 // ----------------------------------------------------
@@ -573,3 +574,17 @@ model WhistleblowingReport {
 }
 
 
+
+
+// ----------------------------------------------------
+// 21. POINTAGE (TIME & ATTENDANCE)
+// ----------------------------------------------------
+
+model TimeLog {
+  id          String   @id @default(uuid())
+  employeeId  String   @map("employee_id")
+  type        String   // 'CLOCK_IN' or 'CLOCK_OUT'
+  timestamp   DateTime @default(now())
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}

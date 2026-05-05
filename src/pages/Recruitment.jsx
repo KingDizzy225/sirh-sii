@@ -184,6 +184,30 @@ export function Recruitment() {
         showNotification(`Grille d'évaluation soumise pour ${selectedCandidate.firstName}. Note Moyenne: ${averageScore}/5`);
     };
 
+    const handleAIMatch = async (candidateId) => {
+        try {
+            setNotification('Analyse IA en cours...');
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const token = localStorage.getItem('sirh_token');
+            const res = await fetch(`${API_URL}/api/recruitment/applicants/${candidateId}/ai-match`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCandidates(candidates.map(c => 
+                    c.id === candidateId ? { ...c, aiScore: data.score, aiSummary: data.summary } : c
+                ));
+                showNotification(`Analyse terminée ! Score IA: ${data.score}%`);
+            } else {
+                showNotification(`Erreur lors de l'analyse IA.`);
+            }
+        } catch (e) {
+            console.error(e);
+            showNotification(`Erreur de connexion à l'IA.`);
+        }
+    };
+
     const renderScoreStars = (field, value) => {
         return (
             <div className="flex gap-1">
@@ -564,16 +588,27 @@ export function Recruitment() {
                                                 </div>
 
                                                 {/* Score Display or Eval Button */}
-                                                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                                                    {stage.id === 'INTERVIEW' ? (
-                                                        <Button size="sm" variant="outline" onClick={() => openScorecard(candidate)} className="h-7 text-xs border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100">
-                                                            <Star size={12} className="mr-1" /> {candidate.score ? `Note: ${candidate.score}/5` : 'Évaluer'}
-                                                        </Button>
-                                                    ) : (
-                                                        <div className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                                                            {candidate.score ? <><Star size={12} className="text-amber-400 fill-amber-400" /> {candidate.score}/5</> : 'Pas de note'}
+                                                <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-2">
+                                                    {candidate.aiSummary && (
+                                                        <div className="bg-blue-50 text-blue-800 p-2 rounded-md text-xs">
+                                                            <strong>IA Match: {candidate.aiScore}%</strong> - {candidate.aiSummary}
                                                         </div>
                                                     )}
+                                                    
+                                                    <div className="flex items-center justify-between">
+                                                        {stage.id === 'SCREENING' ? (
+                                                            <Button size="sm" variant="outline" onClick={() => handleAIMatch(candidate.id)} className="h-7 text-xs border-purple-200 text-purple-700 bg-purple-50/50 hover:bg-purple-100">
+                                                                <Star size={12} className="mr-1" /> Analyser (IA)
+                                                            </Button>
+                                                        ) : stage.id === 'INTERVIEW' ? (
+                                                            <Button size="sm" variant="outline" onClick={() => openScorecard(candidate)} className="h-7 text-xs border-blue-200 text-blue-700 bg-blue-50/50 hover:bg-blue-100">
+                                                                <Star size={12} className="mr-1" /> {candidate.score ? `Note: ${candidate.score}/5` : 'Évaluer'}
+                                                            </Button>
+                                                        ) : (
+                                                            <div className="text-xs font-semibold text-slate-500 flex items-center gap-1">
+                                                                {candidate.score ? <><Star size={12} className="text-amber-400 fill-amber-400" /> {candidate.score}/5</> : 'Pas de note'}
+                                                            </div>
+                                                        )}
 
                                                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                                                         {STAGES.findIndex(s => s.id === stage.id) > 0 && (

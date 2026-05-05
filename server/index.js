@@ -46,6 +46,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const assetRoutes = require('./routes/assetRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const supportRoutes = require('./routes/supportRoutes');
+const timeLogRoutes = require('./routes/timeLogRoutes');
 
 const verifyToken = require('./middleware/authMiddleware');
 
@@ -56,6 +57,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', verifyToken, employeeRoutes);
+app.use('/api/time-logs', verifyToken, timeLogRoutes);
 app.use('/api/leaves', verifyToken, leaveRoutes);
 app.use('/api/recruitment', verifyToken, recruitmentRoutes);
 app.use('/api/trainings', verifyToken, trainingRoutes);

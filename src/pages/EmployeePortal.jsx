@@ -11,6 +11,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 export function EmployeePortal() {
     const { user, token } = useAuth();
     const [profile, setProfile] = useState(null);
+    const [logs, setLogs] = useState([]);
+    const [isClocking, setIsClocking] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -23,8 +25,50 @@ export function EmployeePortal() {
                 console.error("Failed to load profile", err);
             }
         };
-        if (token) fetchProfile();
+        };
+
+        const fetchLogs = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/time-logs/today`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) setLogs(await res.json());
+            } catch (err) {
+                console.error("Failed to load time logs", err);
+            }
+        };
+
+        if (token) {
+            fetchProfile();
+            fetchLogs();
+        }
     }, [token]);
+
+    const handleClock = async (type) => {
+        setIsClocking(true);
+        try {
+            const res = await fetch(`${API_URL}/api/time-logs`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ type })
+            });
+            if (res.ok) {
+                const newLog = await res.json();
+                setLogs([...logs, newLog]);
+            }
+        } catch (error) {
+            console.error("Error clocking", error);
+        } finally {
+            setIsClocking(false);
+        }
+    };
+
+    const hasClockedIn = logs.some(l => l.type === 'CLOCK_IN');
+    const hasClockedOut = logs.some(l => l.type === 'CLOCK_OUT');
+    const lastLog = logs.length > 0 ? logs[logs.length - 1] : null;
 
     return (
         <div className="flex-1 space-y-6 p-4 md:p-8 bg-slate-50/50 min-h-[calc(100vh-4rem)]">
@@ -81,22 +125,38 @@ export function EmployeePortal() {
                     </CardContent>
                 </Card>
 
-                {/* WIDGET: Mon Temps */}
+                {/* WIDGET: Badgeage / Pointage */}
                 <Card className="rounded-xl shadow-sm border-slate-200 hover:shadow-md transition-shadow">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <Clock className="text-amber-600" size={20} />
-                            Mon Temps
+                            Badgeage Virtuel
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-slate-500 mb-1">Heures enregistrées cette semaine</p>
-                        <div className="text-3xl font-extrabold text-slate-900 mb-4">
-                            32<span className="text-xl font-semibold text-slate-500">h</span> <span className="text-lg font-medium text-slate-400">/ 40h</span>
-                        </div>
+                        <p className="text-sm text-slate-500 mb-2">
+                            {lastLog ? `Dernier pointage : ${new Date(lastLog.timestamp).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}` : "Aucun pointage aujourd'hui"}
+                        </p>
+                        
+                        {!hasClockedIn || (hasClockedIn && hasClockedOut) ? (
+                            <Button 
+                                onClick={() => handleClock('CLOCK_IN')} 
+                                disabled={isClocking}
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-md mb-2">
+                                {isClocking ? 'En cours...' : 'Pointer mon ARRIVÉE'}
+                            </Button>
+                        ) : (
+                            <Button 
+                                onClick={() => handleClock('CLOCK_OUT')} 
+                                disabled={isClocking}
+                                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-medium shadow-md mb-2">
+                                {isClocking ? 'En cours...' : 'Pointer mon DÉPART'}
+                            </Button>
+                        )}
+                        
                         <Link to="/timesheet">
-                            <Button variant="outline" className="w-full text-slate-700 border-slate-300 hover:bg-slate-50">
-                                Saisir mes heures
+                            <Button variant="outline" className="w-full text-slate-700 border-slate-300 hover:bg-slate-50 text-xs">
+                                Historique complet
                             </Button>
                         </Link>
                     </CardContent>

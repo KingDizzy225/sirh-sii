@@ -13,6 +13,12 @@ export function Trainings() {
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    
+    // E-Learning
+    const [isElearningModalOpen, setIsElearningModalOpen] = useState(false);
+    const [activeTraining, setActiveTraining] = useState(null);
+    const [quizAnswers, setQuizAnswers] = useState({ q1: '', q2: '' });
+    const [quizSubmitted, setQuizSubmitted] = useState(false);
 
     // Formulaire état
     const [selectedParticipants, setSelectedParticipants] = useState([]);
@@ -157,9 +163,14 @@ export function Trainings() {
                                     </h3>
                                     {training.description && <p className="text-sm text-slate-600 mt-1">{training.description}</p>}
                                 </div>
-                                <span className="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-medium border border-green-200">
-                                    Effectuée
-                                </span>
+                                <div className="flex gap-2 items-center">
+                                    <Button size="sm" variant="outline" className="text-blue-700 bg-blue-50 border-blue-200" onClick={() => { setActiveTraining(training); setIsElearningModalOpen(true); setQuizSubmitted(false); setQuizAnswers({q1:'', q2:''}); }}>
+                                        Lancer E-Learning
+                                    </Button>
+                                    <span className="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-medium border border-green-200">
+                                        Effectuée
+                                    </span>
+                                </div>
                             </div>
                             <CardContent className="p-0">
                                 <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
@@ -305,6 +316,95 @@ export function Trainings() {
                             </Card>
                         </motion.div>
                     </>
+                )}
+            </AnimatePresence>
+
+            {/* Modal E-Learning */}
+            <AnimatePresence>
+                {isElearningModalOpen && activeTraining && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col"
+                        >
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900">Module E-Learning : {activeTraining.title}</h3>
+                                    <p className="text-sm text-slate-500">Regardez la vidéo puis répondez au QCM de validation.</p>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => setIsElearningModalOpen(false)}>
+                                    <X size={18} />
+                                </Button>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                                {/* Vidéo (Simulée avec un placeholder YouTube) */}
+                                <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 shadow-inner">
+                                    <iframe 
+                                        width="100%" 
+                                        height="100%" 
+                                        src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                                        title="Formation Vidéo" 
+                                        frameBorder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowFullScreen
+                                    ></iframe>
+                                </div>
+
+                                {/* QCM */}
+                                <div className="bg-slate-50 border rounded-xl p-6">
+                                    <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <BookOpen className="text-blue-600" size={20} />
+                                        QCM de Validation des Acquis
+                                    </h4>
+                                    
+                                    <div className="space-y-6">
+                                        <div className="space-y-3">
+                                            <p className="font-medium text-sm">1. Quel est le point principal abordé dans ce module ?</p>
+                                            <div className="space-y-2 pl-4">
+                                                {['La sécurité au travail', 'La gestion du temps', 'L\'utilisation du logiciel SIRH'].map(opt => (
+                                                    <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
+                                                        <input type="radio" name="q1" value={opt} checked={quizAnswers.q1 === opt} onChange={e => setQuizAnswers({...quizAnswers, q1: e.target.value})} disabled={quizSubmitted} /> {opt}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <p className="font-medium text-sm">2. Quelle action devez-vous effectuer après la formation ?</p>
+                                            <div className="space-y-2 pl-4">
+                                                {['Rien faire', 'Signer la feuille de présence', 'Appliquer les concepts'].map(opt => (
+                                                    <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
+                                                        <input type="radio" name="q2" value={opt} checked={quizAnswers.q2 === opt} onChange={e => setQuizAnswers({...quizAnswers, q2: e.target.value})} disabled={quizSubmitted} /> {opt}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {quizSubmitted && (
+                                        <div className="mt-6 p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-sm font-medium">
+                                            ✅ Félicitations ! Vous avez validé ce module avec succès (Score: 100%).
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
+                                {!quizSubmitted ? (
+                                    <Button onClick={() => { if(quizAnswers.q1 && quizAnswers.q2) setQuizSubmitted(true); else alert('Veuillez répondre à toutes les questions.'); }} className="bg-blue-600 text-white hover:bg-blue-700">
+                                        Valider mes réponses
+                                    </Button>
+                                ) : (
+                                    <Button onClick={() => setIsElearningModalOpen(false)} className="bg-slate-800 text-white">
+                                        Terminer la session
+                                    </Button>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
         </div>

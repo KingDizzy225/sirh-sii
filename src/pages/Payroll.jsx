@@ -176,6 +176,44 @@ export function Payroll() {
         showNotification("Export Comptable CSV Réussi !");
     };
 
+    const handleExportDISA = () => {
+        if (allPayrolls.length === 0) {
+            showNotification("Aucune donnée de paie à exporter pour la DISA.");
+            return;
+        }
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Num. CNPS (ou ID);Nom;Prénom;Date Embauche;Base Mensuelle(FCFA);Jours Travaillés;Retenue CNPS(FCFA);Part Patronale(FCFA)\n";
+        
+        allPayrolls.forEach((pay) => {
+            // Simulation des calculs CNPS (Retenue 5.1%, Part Patronale 10.9% sur base)
+            const cnpsEmploye = Math.round((pay.baseSalary || 0) * 0.051);
+            const cnpsPatron = Math.round((pay.baseSalary || 0) * 0.109);
+            const hireDate = pay.employee?.hireDate ? new Date(pay.employee.hireDate).toLocaleDateString('fr-FR') : 'N/A';
+
+            const row = [
+                pay.employeeId || '',
+                pay.employee?.lastName || '',
+                pay.employee?.firstName || '',
+                hireDate,
+                pay.baseSalary || 0,
+                30, // Par défaut
+                cnpsEmploye,
+                cnpsPatron
+            ].join(";");
+            csvContent += row + "\n";
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Export_DISA_CNPS.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification("Export Légal DISA (CNPS) Réussi !");
+    };
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('fr-CI').format(Math.round(amount)) + ' FCFA';
     };
@@ -415,9 +453,14 @@ export function Payroll() {
                                 <CardTitle className="text-lg">Registre Général de Paie</CardTitle>
                                 <CardDescription>Historique global des rémunérations de l'entreprise.</CardDescription>
                             </div>
-                            <Button variant="outline" onClick={handleExportCSV} className="border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-medium">
-                                <Download size={16} className="mr-2" /> Export Comptable (.CSV)
-                            </Button>
+                            <div className="flex items-center gap-3">
+                                <Button variant="outline" onClick={handleExportDISA} className="border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 font-medium">
+                                    <Download size={16} className="mr-2" /> Export DISA (CNPS)
+                                </Button>
+                                <Button variant="outline" onClick={handleExportCSV} className="border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-medium">
+                                    <Download size={16} className="mr-2" /> Export Comptable (.CSV)
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <Table>
