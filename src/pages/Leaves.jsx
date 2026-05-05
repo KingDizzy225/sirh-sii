@@ -143,6 +143,32 @@ export function Leaves() {
     const handleApprove = (id) => updateLeaveStatus(id, 'Approuvé');
     const handleReject = (id) => updateLeaveStatus(id, 'Rejeté');
 
+    const handleExportICS = (leave) => {
+        const formatDate = (dateStr) => {
+            const d = new Date(dateStr);
+            return d.toISOString().replace(/-|:|\.\d+/g, '').substring(0, 15) + 'Z';
+        };
+
+        const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+DTSTART:${formatDate(leave.rawStart)}
+DTEND:${formatDate(leave.rawEnd)}
+SUMMARY:${leave.type} - SIRH
+DESCRIPTION:Congé validé via SIRH-SII
+END:VEVENT
+END:VCALENDAR`;
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `conge_${leave.type.replace(/\s+/g, '_')}.ics`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    };
+
     const handleLeaveSubmit = async (e) => {
         e.preventDefault();
         if (!leaveForm.startDate || !leaveForm.endDate) {
@@ -360,6 +386,7 @@ export function Leaves() {
                                         <TableHead>Durée</TableHead>
                                         <TableHead>Date de demande</TableHead>
                                         <TableHead>Statut</TableHead>
+                                        <TableHead className="text-right">Agenda</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -372,6 +399,13 @@ export function Leaves() {
                                                 <Badge variant={req.status === 'Approuvé' ? 'success' : req.status === 'En attente' ? 'warning' : 'destructive'}>
                                                     {req.status}
                                                 </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {req.status === 'Approuvé' && (
+                                                    <Button size="sm" variant="outline" className="h-7 text-xs border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100" onClick={() => handleExportICS(req)}>
+                                                        <CalendarIcon size={12} className="mr-1" /> .ics
+                                                    </Button>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}

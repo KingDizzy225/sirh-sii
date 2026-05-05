@@ -25,7 +25,6 @@ export function EmployeePortal() {
                 console.error("Failed to load profile", err);
             }
         };
-        };
 
         const fetchLogs = async () => {
             try {
@@ -59,10 +58,34 @@ export function EmployeePortal() {
                 const newLog = await res.json();
                 setLogs([...logs, newLog]);
             }
-        } catch (error) {
-            console.error("Error clocking", error);
+        } catch (err) {
+            console.error("Failed to clock", err);
         } finally {
             setIsClocking(false);
+        }
+    };
+
+    const handleDownloadAttestation = async () => {
+        if (!profile || !profile.id) return alert("Profil non chargé.");
+        try {
+            const res = await fetch(`${API_URL}/api/documents/generate-attestation/${profile.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Attestation_${profile.lastName}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else {
+                alert("Erreur lors de la génération du document.");
+            }
+        } catch (error) {
+            console.error("Download error", error);
+            alert("Impossible de générer l'attestation.");
         }
     };
 
@@ -197,6 +220,16 @@ export function EmployeePortal() {
                         <p className="text-xs text-slate-500 mt-0.5">Attestations & Contrats</p>
                     </div>
                 </Link>
+
+                <div onClick={handleDownloadAttestation} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-blue-500 hover:shadow-md transition-all group cursor-pointer">
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <FileText size={24} />
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-slate-800">Attestation PDF</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">Générer immédiatement</p>
+                    </div>
+                </div>
 
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-primary/50 hover:shadow-md transition-all group cursor-pointer">
                     <div className="p-3 bg-slate-100 text-slate-600 rounded-lg group-hover:scale-110 transition-transform">

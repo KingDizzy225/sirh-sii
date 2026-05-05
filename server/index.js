@@ -101,7 +101,7 @@ app.use('/api/subcontractors', verifyToken, subcontractorRoutes);
 
 // V6 Enterprise Upgrade - Chatbot IA
 const chatRoutes = require('./routes/chatRoutes');
-app.use('/api/chat', chatRoutes);
+app.use('/api/chat', verifyToken, chatRoutes);
 
 
 // Global Error Logger for Express internals

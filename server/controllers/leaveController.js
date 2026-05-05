@@ -100,6 +100,13 @@ exports.updateLeaveStatus = async (req, res) => {
             }).catch(console.error);
         }
 
+        // SIMULATION : Webhook Slack / Microsoft Teams
+        if (status === 'APPROVED') {
+            console.log(`[WEBHOOK SLACK] Envoi du message au canal #rh-absences : 
+"✅ Congé validé pour ${result.employee?.firstName} ${result.employee?.lastName}. 
+Dates : du ${new Date(existingLeave.startDate).toLocaleDateString()} au ${new Date(existingLeave.endDate).toLocaleDateString()}."`);
+        }
+
         res.status(200).json(result);
     } catch (error) {
         console.error('Error updating leave status:', error);

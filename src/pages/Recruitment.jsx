@@ -609,6 +609,7 @@ export function Recruitment() {
                                                                 {candidate.score ? <><Star size={12} className="text-amber-400 fill-amber-400" /> {candidate.score}/5</> : 'Pas de note'}
                                                             </div>
                                                         )}
+                                                    </div>
 
                                                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                                                         {STAGES.findIndex(s => s.id === stage.id) > 0 && (

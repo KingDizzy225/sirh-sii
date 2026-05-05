@@ -1,4 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
+const prisma = require('../prismaClient');
 
 let ai;
 try {
@@ -10,15 +11,33 @@ exports.askChatbot = async (req, res) => {
         const { message } = req.body;
         if (!ai) return res.status(500).json({ reply: 'La clé API IA n\'est pas configurée dans le backend.' });
         
+        let employeeContext = "Employé non identifié.";
+        if (req.user && req.user.email) {
+            const employee = await prisma.employee.findUnique({
+                where: { email: req.user.email },
+                include: { leaves: true }
+            });
+            if (employee) {
+                const totalLeavesTaken = employee.leaves.filter(l => l.status === 'APPROVED').reduce((acc, l) => {
+                    const diffTime = Math.abs(new Date(l.endDate) - new Date(l.startDate));
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    return acc + diffDays;
+                }, 0);
+                const remainingLeaves = 30 - totalLeavesTaken; // Simplification (30 jours annuels)
+                
+                employeeContext = `Tu parles à ${employee.firstName} ${employee.lastName}, qui occupe le poste de ${employee.positionTitle} dans le département ${employee.department}. Il/Elle a actuellement ${remainingLeaves} jours de congés disponibles (sur une base de 30).`;
+            }
+        }
+
         const systemPrompt = `Tu es l'assistant RH officiel pour l'entreprise ivoirienne SII.
-Ton rôle est d'informer les collaborateurs avec un ton poli, professionnel, et concis (ne fais pas de longue intro).
-Contexte d'entreprise (RAG simulé) :
+Ton rôle est d'informer les collaborateurs avec un ton poli, professionnel, et concis.
+Contexte d'entreprise :
 - Heures de travail : 8h-17h du Lundi au Vendredi.
-- Période d'essai CDI : 3 mois renouvelables une fois.
-- Congés payés : 2 jours ouvrables par mois travaillé.
-- Mutuelle Santé : L'entreprise prend en charge 80%, vous 20%. Demande via l'onglet Avantages.
-- Télétravail : 2 jours par semaine max, en accord avec le manager.
-- Notes de frais : Payées en fin de mois avec le salaire net, si soumises avant le 20.
+- Congés payés : 30 jours par an.
+- Mutuelle Santé : L'entreprise prend en charge 80%, vous 20%.
+
+Contexte du collaborateur actuel :
+${employeeContext}
 
 Réponds de manière stricte et concise à cette question de l'employé : "${message}"`;
 

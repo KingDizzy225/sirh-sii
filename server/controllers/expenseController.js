@@ -105,3 +105,67 @@ exports.updateExpenseStatus = async (req, res) => {
         res.status(500).json({ error: "Erreur serveur" });
     }
 };
+
+const { GoogleGenAI } = require('@google/genai');
+let ai;
+try {
+    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+} catch(e) { ai = null; }
+
+exports.scanReceipt = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Aucun fichier fourni' });
+        }
+        if (!ai) {
+            return res.status(500).json({ error: 'Service IA non disponible' });
+        }
+
+        const mimeType = req.file.mimetype;
+        const fileContent = fs.readFileSync(req.file.path).toString("base64");
+
+        const prompt = `Tu es un expert en comptabilité. Analyse ce ticket de caisse et extrais les données suivantes sous forme de JSON strict:
+{
+  "amount": "Le montant total TTC (uniquement des chiffres ou décimales, pas de devise)",
+  "merchant": "Le nom du commerçant ou restaurant",
+  "date": "La date du reçu au format YYYY-MM-DD",
+  "category": "Choisis l'une de ces catégories : 'Repas', 'Transport', 'Hébergement', 'Fournitures', 'Autre'"
+}
+Ne renvoie QUE le JSON, pas de texte autour ni de blocs \`\`\`json.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [
+                prompt,
+                {
+                    inlineData: {
+                        data: fileContent,
+                        mimeType: mimeType
+                    }
+                }
+            ]
+        });
+
+        const textRes = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        let parsed;
+        try {
+            parsed = JSON.parse(textRes);
+        } catch(e) {
+            console.error("Failed to parse Gemini response as JSON", textRes);
+            return res.status(500).json({ error: "L'IA n'a pas pu extraire les informations proprement." });
+        }
+
+        // Return parsed data to frontend (don't save to DB yet, let user confirm)
+        res.json({
+            amount: parsed.amount || '',
+            merchant: parsed.merchant || '',
+            date: parsed.date || '',
+            category: parsed.category || 'Autre',
+            receiptPath: `/uploads/receipts/${req.file.filename}`
+        });
+
+    } catch (error) {
+        console.error("Error scanning receipt with AI:", error);
+        res.status(500).json({ error: "Erreur lors de l'analyse OCR" });
+    }
+};

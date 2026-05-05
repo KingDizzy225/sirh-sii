@@ -16,6 +16,7 @@ export function Expenses() {
     const [expenses, setExpenses] = useState([]);
     const [notification, setNotification] = useState(null);
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
 
     const currentUser = user?.name || '';
 
@@ -85,6 +86,38 @@ export function Expenses() {
         } catch (error) {
             console.error(error);
             showNotification("Erreur de connexion serveur.");
+        }
+    };
+
+    const handleOCR = async () => {
+        if (!receiptFile) return;
+        setIsScanning(true);
+        try {
+            const formData = new FormData();
+            formData.append('receipt', receiptFile);
+            const res = await fetch(`${API_URL}/api/expenses/ocr`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setExpenseForm(prev => ({
+                    ...prev,
+                    amount: data.amount || prev.amount,
+                    merchant: data.merchant || prev.merchant,
+                    date: data.date || prev.date,
+                    category: data.category || prev.category
+                }));
+                showNotification('Reçu analysé par IA avec succès !');
+            } else {
+                showNotification("Erreur lors de l'analyse du reçu.");
+            }
+        } catch (error) {
+            console.error("OCR error", error);
+            showNotification("Erreur serveur lors de l'OCR.");
+        } finally {
+            setIsScanning(false);
         }
     };
 
@@ -232,7 +265,18 @@ export function Expenses() {
                                                 <Upload size={20} />
                                             </div>
                                             {receiptFile ? (
-                                                <p className="text-sm font-medium text-emerald-600">✅ {receiptFile.name}</p>
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <p className="text-sm font-medium text-emerald-600">✅ {receiptFile.name}</p>
+                                                    <Button 
+                                                        type="button" 
+                                                        size="sm" 
+                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOCR(); }}
+                                                        disabled={isScanning}
+                                                        className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+                                                    >
+                                                        {isScanning ? 'Analyse IA en cours...' : '🪄 Extraire les infos avec l\'IA'}
+                                                    </Button>
+                                                </div>
                                             ) : (
                                                 <>
                                                     <p className="text-sm font-medium text-slate-900">Cliquez pour joindre votre reçu</p>

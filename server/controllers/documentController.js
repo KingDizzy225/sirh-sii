@@ -193,3 +193,58 @@ exports.generateAndSignDocument = async (req, res) => {
         res.status(500).json({ error: `Erreur interne: ${error.message}` });
     }
 };
+
+exports.generateAttestation = async (req, res) => {
+    try {
+        const { employeeId } = req.params;
+        const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
+
+        if (!employee) {
+            return res.status(404).json({ error: 'Employé introuvable' });
+        }
+
+        const pdfDoc = new PDFDocument({ margin: 50 });
+        const fileName = `Attestation_${employee.lastName}_${Date.now()}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+
+        pdfDoc.pipe(res);
+
+        // Header
+        pdfDoc.fontSize(24).fillColor('#2563eb').text('SIRH-SII', { align: 'center' });
+        pdfDoc.moveDown();
+        pdfDoc.fontSize(16).fillColor('#0f172a').text('ATTESTATION DE TRAVAIL', { align: 'center', underline: true });
+        pdfDoc.moveDown(2);
+
+        // Body
+        pdfDoc.fontSize(12).fillColor('#333333').text(`Nous soussignés, la direction de SIRH-SII,`);
+        pdfDoc.moveDown();
+        pdfDoc.text(`Certifions par la présente que M./Mme ${employee.firstName} ${employee.lastName},`);
+        pdfDoc.text(`Exerce la fonction de ${employee.positionTitle || employee.role} au sein du département ${employee.department}.`);
+        pdfDoc.text(`Date d'embauche : ${new Date(employee.hireDate).toLocaleDateString('fr-FR')}.`);
+        pdfDoc.moveDown();
+        pdfDoc.text(`Cette attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.`);
+        
+        pdfDoc.moveDown(4);
+        pdfDoc.text(`Fait numériquement, le ${new Date().toLocaleDateString('fr-FR')}`);
+        pdfDoc.moveDown(3);
+
+        // Fake QR Code box for "Authenticity"
+        const qrSize = 80;
+        const qrX = 50;
+        const qrY = pdfDoc.y;
+        pdfDoc.rect(qrX, qrY, qrSize, qrSize).stroke('#2563eb');
+        pdfDoc.fontSize(8).fillColor('#2563eb').text('SCAN VERIF', qrX + 15, qrY + 35);
+        
+        pdfDoc.fontSize(12).fillColor('#333333').text('Direction RH SIRH-SII', 350, qrY + 20);
+
+        pdfDoc.end();
+
+    } catch (error) {
+        console.error("Error generating attestation PDF:", error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Erreur lors de la génération de l'attestation" });
+        }
+    }
+};
