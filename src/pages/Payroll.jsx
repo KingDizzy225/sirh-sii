@@ -185,6 +185,30 @@ export function Payroll() {
         return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     };
 
+    const handleDownloadPDF = async (payId) => {
+        try {
+            const res = await fetch(`${API_URL}/api/payrolls/${payId}/download`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Erreur de téléchargement du PDF (Vérifiez si le fichier existe sur le serveur)');
+            
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `Fiche_de_paie_${payId.substring(0, 8)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showNotification('Téléchargement démarré.');
+        } catch (error) {
+            console.error(error);
+            showNotification(error.message);
+        }
+    };
+
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-[calc(100vh-4rem)] relative">
             <AnimatePresence>
@@ -263,13 +287,12 @@ export function Payroll() {
                                                 <Badge variant="success">Disponible</Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <a
-                                                    href={`${API_URL}/api/payrolls/${pay.id}/download`}
-                                                    target="_blank" rel="noreferrer"
-                                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+                                                <button
+                                                    onClick={() => handleDownloadPDF(pay.id)}
+                                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors cursor-pointer border-none"
                                                 >
                                                     <Download size={14} /> Télécharger
-                                                </a>
+                                                </button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -415,13 +438,12 @@ export function Payroll() {
                                             <TableCell className="text-slate-600">{formatCurrency(pay.baseSalary + pay.bonus)}</TableCell>
                                             <TableCell className="font-bold text-slate-900">{formatCurrency(pay.netSalary)}</TableCell>
                                             <TableCell className="text-right">
-                                                <a
-                                                    href={`${API_URL}/api/payrolls/${pay.id}/download`}
-                                                    target="_blank" rel="noreferrer"
-                                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-300 transition-colors"
+                                                <button
+                                                    onClick={() => handleDownloadPDF(pay.id)}
+                                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-300 transition-colors cursor-pointer border-none"
                                                     >
                                                     <FileText size={14} /> PDF
-                                                </a>
+                                                </button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
