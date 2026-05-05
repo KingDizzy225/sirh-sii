@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -17,6 +18,7 @@ const roleLabels = {
 };
 
 export function Employees() {
+    const navigate = useNavigate();
     const [employees, setEmployees] = useState([]);
     const [notification, setNotification] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -461,6 +463,10 @@ export function Employees() {
                         style={{ top: contextMenu.y, left: contextMenu.x }}
                         onClick={e => e.stopPropagation()}
                     >
+                        <button onClick={() => navigate(`/employees/${contextMenu.emp.id}`)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium">
+                            <Eye size={14} className="text-emerald-500" /> Voir le profil complet
+                        </button>
                         <button onClick={() => openEdit(contextMenu.emp)}
                             className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 font-medium">
                             <Pencil size={14} className="text-blue-500" /> Modifier l'employé

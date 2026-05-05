@@ -199,3 +199,34 @@ exports.importBulkEmployees = async (req, res) => {
         res.status(500).json({ error: 'Failed to import employees' });
     }
 };
+
+// Get Employee By ID with full relations
+exports.getEmployeeById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const employee = await prisma.employee.findUnique({
+            where: { id },
+            include: {
+                manager: { select: { firstName: true, lastName: true, positionTitle: true } },
+                skills: true,
+                talentProfile: true,
+                assets: {
+                    include: { asset: true }
+                },
+                leaves: {
+                    orderBy: { startDate: 'desc' },
+                    take: 5
+                }
+            }
+        });
+
+        if (!employee) {
+            return res.status(404).json({ error: 'Employé introuvable' });
+        }
+
+        res.status(200).json(employee);
+    } catch (error) {
+        console.error('Error fetching employee profile by ID:', error);
+        res.status(500).json({ error: 'Failed to fetch employee profile' });
+    }
+};

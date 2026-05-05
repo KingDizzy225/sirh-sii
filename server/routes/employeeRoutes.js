@@ -18,6 +18,7 @@ router.post('/bulk', employeeController.importBulkEmployees);
 router.get('/profile', employeeController.getProfile);
 router.post('/', employeeController.createEmployee);
 router.delete('/bulk', employeeController.deleteMultipleEmployees);
+router.get('/:id', employeeController.getEmployeeById);
 router.put('/:id', employeeController.updateEmployee);
 router.delete('/:id', employeeController.deleteEmployee);
 

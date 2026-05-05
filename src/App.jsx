@@ -8,6 +8,7 @@ import { Header } from './components/layout/Header';
 import { Dashboard } from './pages/Dashboard';
 import { EmployeePortal } from './pages/EmployeePortal';
 import { Employees } from './pages/Employees';
+import { EmployeeProfile } from './pages/EmployeeProfile';
 import { OrgChart } from './pages/OrgChart';
 import { Leaves } from './pages/Leaves';
 import { Payroll } from './pages/Payroll';
@@ -125,6 +126,11 @@ const AppContent = () => {
             <Route path="/employees" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Employees />
+              </ProtectedRoute>
+            } />
+            <Route path="/employees/:id" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <EmployeeProfile />
               </ProtectedRoute>
             } />
             <Route path="/org-chart" element={
