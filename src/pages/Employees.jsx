@@ -118,7 +118,20 @@ export function Employees() {
             const dbEmp = await res.json();
             if (!res.ok) throw new Error(dbEmp.error || "Erreur création API");
 
-            const updatedEmployees = [newEmp, ...employees];
+            const newEmployeeFormatted = {
+                id: dbEmp.id || Date.now().toString(),
+                name: `${formData.firstName} ${formData.lastName}`,
+                role: formData.position || 'Poste Non Assigné',
+                systemRole: 'Employee',
+                department: 'Ressources Humaines',
+                status: 'Actif',
+                email: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}@entreprise.com`,
+                phone: formData.phone,
+                sex: formData.sex,
+                onboardingProgress: 100
+            };
+
+            const updatedEmployees = [newEmployeeFormatted, ...employees];
             setEmployees(updatedEmployees);
             setIsAddModalOpen(false);
             setFormData({ firstName: '', lastName: '', phone: '', position: '', sex: 'Homme' }); // Reset form
