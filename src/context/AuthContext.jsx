@@ -11,13 +11,22 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // Au chargement, vérifier si un token existe
-        const savedToken = localStorage.getItem('sirh_token');
-        const savedUser = localStorage.getItem('sirh_user');
-        if (savedToken && savedUser) {
-            setUser(JSON.parse(savedUser));
-            setToken(savedToken);
+        try {
+            const savedToken = localStorage.getItem('sirh_token');
+            const savedUser = localStorage.getItem('sirh_user');
+            
+            if (savedToken && savedUser && savedUser !== 'undefined') {
+                setUser(JSON.parse(savedUser));
+                setToken(savedToken);
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement de la session:', error);
+            // Si les données sont corrompues, on nettoie
+            localStorage.removeItem('sirh_token');
+            localStorage.removeItem('sirh_user');
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }, []);
 
     const login = async (email, password) => {
