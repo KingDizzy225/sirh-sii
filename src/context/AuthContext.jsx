@@ -49,25 +49,9 @@ export const AuthProvider = ({ children }) => {
             setToken(data.token);
             return { success: true };
         } catch (error) {
-            console.warn('Backend injoignable. Activation du Mode Démo Local.', error);
-            
-            // MODE DÉMO (Fallback si le backend n'est pas déployé)
-            if (email.includes('admin') || email.includes('drh') || email.includes('rh')) {
-                const mockUser = {
-                    id: 'mock-123',
-                    email: email,
-                    name: 'Utilisateur Démo',
-                    role: 'Administrator',
-                    department: 'Direction',
-                };
-                localStorage.setItem('sirh_token', 'mock-token-demo');
-                localStorage.setItem('sirh_user', JSON.stringify(mockUser));
-                setUser(mockUser);
-                setToken('mock-token-demo');
-                return { success: true };
-            }
-            
-            return { success: false, error: 'Serveur indisponible. Utilisez admin@sirh.com pour la démo.' };
+            console.error('Login error:', error);
+            // Provide a generic error if the API fails
+            return { success: false, error: error.message || 'Serveur indisponible ou identifiants incorrects.' };
         }
     };
 
