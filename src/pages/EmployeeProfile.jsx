@@ -30,6 +30,11 @@ export function EmployeeProfile() {
     const [employee, setEmployee] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('competences');
+    const [personnelDocs, setPersonnelDocs] = useState([]);
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [uploadForm, setUploadForm] = useState({ title: '', type: 'Contrat' });
+    const [uploadFile, setUploadFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [careerHistory, setCareerHistory] = useState([]);
     const [disciplinaryRecords, setDisciplinaryRecords] = useState([]);
