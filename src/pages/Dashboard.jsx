@@ -234,6 +234,8 @@ export function Dashboard() {
                         </div>
                     </motion.div>
                 )}
+            </AnimatePresence>
+
             <AnimatePresence>
                 {predictiveInsights && predictiveInsights.length > 0 && (
                     <motion.div
