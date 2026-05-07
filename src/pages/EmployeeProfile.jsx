@@ -48,6 +48,10 @@ export function EmployeeProfile() {
     const [isUploading, setIsUploading] = useState(false);
     const [careerHistory, setCareerHistory] = useState([]);
     const [disciplinaryRecords, setDisciplinaryRecords] = useState([]);
+    const [showDisciplinaryModal, setShowDisciplinaryModal] = useState(false);
+    const [disciplinaryForm, setDisciplinaryForm] = useState({ date: new Date().toISOString().split('T')[0], type: 'Warning', reason: '', sanction: '' });
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [historyForm, setHistoryForm] = useState({ eventDate: new Date().toISOString().split('T')[0], type: 'PROMOTION', previousValue: '', newValue: '', comment: '' });
     
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const token = localStorage.getItem('sirh_token');
@@ -174,6 +178,50 @@ export function EmployeeProfile() {
     const docTypeIcon = (type) => {
         const icons = { Contrat: '📜', Identité: '🪹', Diplôme: '🎓', Paie: '💰', Avenant: '✍️', Médical: '🏥', Autre: '📁' };
         return icons[type] || '📁';
+    };
+
+    const handleAddDisciplinary = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_URL}/api/disciplinary/${id}`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(disciplinaryForm)
+            });
+            if (res.ok) {
+                const newRecord = await res.json();
+                setDisciplinaryRecords(prev => [newRecord, ...prev]);
+                setShowDisciplinaryModal(false);
+                setDisciplinaryForm({ date: new Date().toISOString().split('T')[0], type: 'Warning', reason: '', sanction: '' });
+            }
+        } catch (err) {
+            console.error('Error adding disciplinary record', err);
+        }
+    };
+
+    const handleAddHistory = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_URL}/api/career/${id}`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(historyForm)
+            });
+            if (res.ok) {
+                const newEvent = await res.json();
+                setCareerHistory(prev => [newEvent, ...prev]);
+                setShowHistoryModal(false);
+                setHistoryForm({ eventDate: new Date().toISOString().split('T')[0], type: 'PROMOTION', previousValue: '', newValue: '', comment: '' });
+            }
+        } catch (err) {
+            console.error('Error adding history event', err);
+        }
     };
 
     // Prepare Radar Data (Mocking expected vs actual based on skills)
@@ -441,8 +489,82 @@ export function EmployeeProfile() {
                                     Historique & Évolution
                                 </CardTitle>
                                 <CardDescription>Suivi des changements de poste, de département et promotions.</CardDescription>
+                                {(user?.role === 'HR' || user?.role === 'ADMIN') && (
+                                    <Button size="sm" className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white gap-2" onClick={() => setShowHistoryModal(true)}>
+                                        <Plus size={14} /> Ajouter
+                                    </Button>
+                                )}
                             </CardHeader>
                             <CardContent className="p-6">
+                                {/* Modal History */}
+                                {showHistoryModal && (
+                                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                                            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                                                <h3 className="text-lg font-bold text-slate-900">Ajouter un événement</h3>
+                                                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setShowHistoryModal(false)}><X size={18} /></Button>
+                                            </div>
+                                            <form onSubmit={handleAddHistory} className="px-6 py-5 space-y-4">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-sm font-medium text-slate-700">Date</label>
+                                                        <input
+                                                            type="date"
+                                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                                                            value={historyForm.eventDate}
+                                                            onChange={e => setHistoryForm(f => ({ ...f, eventDate: e.target.value }))}
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-sm font-medium text-slate-700">Type</label>
+                                                        <select
+                                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                                                            value={historyForm.type}
+                                                            onChange={e => setHistoryForm(f => ({ ...f, type: e.target.value }))}
+                                                        >
+                                                            {['PROMOTION', 'DEPARTMENT_CHANGE', 'SALARY_CHANGE', 'HIRE', 'EXIT'].map(t => (
+                                                                <option key={t} value={t}>{t}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-slate-700">Ancienne valeur (Optionnel)</label>
+                                                    <input
+                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                                                        placeholder="ex: Analyste Junior"
+                                                        value={historyForm.previousValue}
+                                                        onChange={e => setHistoryForm(f => ({ ...f, previousValue: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-slate-700">Nouvelle valeur</label>
+                                                    <input
+                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                                                        placeholder="ex: Analyste Senior"
+                                                        value={historyForm.newValue}
+                                                        onChange={e => setHistoryForm(f => ({ ...f, newValue: e.target.value }))}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-slate-700">Commentaire</label>
+                                                    <textarea
+                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20"
+                                                        placeholder="Détails de l'évolution..."
+                                                        value={historyForm.comment}
+                                                        onChange={e => setHistoryForm(f => ({ ...f, comment: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="flex justify-end gap-3 pt-2">
+                                                    <Button type="button" variant="outline" onClick={() => setShowHistoryModal(false)}>Annuler</Button>
+                                                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Enregistrer</Button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                )}
                                 {careerHistory.length === 0 ? (
                                     <div className="text-center py-8 text-slate-500">
                                         <p>Aucun événement historique enregistré.</p>
@@ -482,8 +604,73 @@ export function EmployeeProfile() {
                                     Dossier Disciplinaire
                                 </CardTitle>
                                 <CardDescription>Sanctions, avertissements et mesures disciplinaires.</CardDescription>
+                                {(user?.role === 'HR' || user?.role === 'ADMIN') && (
+                                    <Button size="sm" className="absolute top-4 right-4 bg-rose-600 hover:bg-rose-700 text-white gap-2" onClick={() => setShowDisciplinaryModal(true)}>
+                                        <Plus size={14} /> Ajouter
+                                    </Button>
+                                )}
                             </CardHeader>
                             <CardContent className="p-6">
+                                {/* Modal Disciplinary */}
+                                {showDisciplinaryModal && (
+                                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                                            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                                                <h3 className="text-lg font-bold text-slate-900">Ajouter une mesure</h3>
+                                                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setShowDisciplinaryModal(false)}><X size={18} /></Button>
+                                            </div>
+                                            <form onSubmit={handleAddDisciplinary} className="px-6 py-5 space-y-4">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-sm font-medium text-slate-700">Date</label>
+                                                        <input
+                                                            type="date"
+                                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                                                            value={disciplinaryForm.date}
+                                                            onChange={e => setDisciplinaryForm(f => ({ ...f, date: e.target.value }))}
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-sm font-medium text-slate-700">Type</label>
+                                                        <select
+                                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                                                            value={disciplinaryForm.type}
+                                                            onChange={e => setDisciplinaryForm(f => ({ ...f, type: e.target.value }))}
+                                                        >
+                                                            {['Warning', 'Sanction', 'Blame', 'Suspension'].map(t => (
+                                                                <option key={t} value={t}>{t}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-slate-700">Motif</label>
+                                                    <textarea
+                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20"
+                                                        placeholder="Description des faits..."
+                                                        value={disciplinaryForm.reason}
+                                                        onChange={e => setDisciplinaryForm(f => ({ ...f, reason: e.target.value }))}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-slate-700">Sanction appliquée</label>
+                                                    <input
+                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                                                        placeholder="ex: Mise à pied de 3 jours"
+                                                        value={disciplinaryForm.sanction}
+                                                        onChange={e => setDisciplinaryForm(f => ({ ...f, sanction: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="flex justify-end gap-3 pt-2">
+                                                    <Button type="button" variant="outline" onClick={() => setShowDisciplinaryModal(false)}>Annuler</Button>
+                                                    <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white">Enregistrer</Button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                )}
                                 {disciplinaryRecords.length === 0 ? (
                                     <div className="text-center py-12 bg-emerald-50 rounded-xl border border-dashed border-emerald-200">
                                         <CheckCircle2 size={40} className="mx-auto text-emerald-500 mb-3" />
