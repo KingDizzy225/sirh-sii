@@ -12,13 +12,23 @@ import {
     Briefcase, 
     Calendar, 
     Award, 
+    Monitor, 
+    TrendingUp, 
+    Shield, 
+    MapPin,
+    Phone,
+    Star,
+    FolderOpen,
+    Upload,
+    Download,
     FileText,
     Trash2,
     X,
     History,
     Gavel,
     TrendingDown,
-    Plus
+    Plus,
+    CheckCircle2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
