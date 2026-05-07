@@ -248,3 +248,45 @@ exports.generateAttestation = async (req, res) => {
         }
     }
 };
+
+// GET /api/documents/employee/:employeeId — Documents du dossier personnel
+exports.getEmployeeDocuments = async (req, res) => {
+    try {
+        const { employeeId } = req.params;
+        const docs = await prisma.employeeDocument.findMany({
+            where: { employeeId },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(docs);
+    } catch (error) {
+        console.error('Error fetching employee documents:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+};
+
+// POST /api/documents/employee/:employeeId/upload — Upload dans le dossier personnel
+exports.uploadEmployeeDocument = async (req, res) => {
+    try {
+        const { employeeId } = req.params;
+        const { title, type } = req.body;
+
+        if (!req.file) return res.status(400).json({ error: 'Aucun fichier fourni' });
+        if (!title || !type) return res.status(400).json({ error: 'Titre et type requis' });
+
+        const doc = await prisma.employeeDocument.create({
+            data: {
+                employeeId,
+                title,
+                type,
+                filePath: `/uploads/documents/${req.file.filename}`,
+                fileSize: req.file.size,
+                uploadedBy: req.user?.name || req.user?.email || 'RH'
+            }
+        });
+
+        res.status(201).json(doc);
+    } catch (error) {
+        console.error('Error uploading employee document:', error);
+        res.status(500).json({ error: 'Erreur lors de l\'upload' });
+    }
+};

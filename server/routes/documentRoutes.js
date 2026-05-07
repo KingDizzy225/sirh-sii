@@ -34,6 +34,10 @@ router.post('/:id/sign', verifyToken, aiDocumentController.signDocument);
 router.get('/generate-attestation/:employeeId', verifyToken, documentController.generateAttestation);
 router.delete('/:id', verifyToken, requireRole(['HR', 'ADMIN']), documentController.deleteDocument);
 
+// Dossier Personnel
+router.get('/employee/:employeeId', verifyToken, documentController.getEmployeeDocuments);
+router.post('/employee/:employeeId/upload', verifyToken, requireRole('HR', 'ADMIN'), upload.single('file'), documentController.uploadEmployeeDocument);
+
 // Public Signature Routes
 router.get('/public/:id', aiDocumentController.getPublicDocument);
 router.post('/public/:id/sign', aiDocumentController.signPublicDocument);

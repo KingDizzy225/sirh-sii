@@ -41,6 +41,7 @@ import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
 import { PublicCareers } from './pages/PublicCareers';
 import { PublicSignature } from './pages/PublicSignature';
+import { Absences } from './pages/Absences';
 
 // V5 New Components
 import { Offboarding } from './pages/Offboarding';
@@ -125,6 +126,7 @@ const AppContent = () => {
             {/* Employee Accessible Routes (Self-Service) */}
             <Route path="/leaves" element={<Leaves />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/absences" element={<Absences />} />
             
             {/* Restricted Directory Routes */}
             <Route path="/employees" element={

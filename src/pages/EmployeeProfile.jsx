@@ -17,7 +17,13 @@ import {
     Shield, 
     MapPin,
     Phone,
-    Star
+    Star,
+    FolderOpen,
+    Upload,
+    Download,
+    FileText,
+    Trash2,
+    X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -29,6 +35,12 @@ export function EmployeeProfile() {
     const [employee, setEmployee] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('competences');
+    const [personnelDocs, setPersonnelDocs] = useState([]);
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [uploadForm, setUploadForm] = useState({ title: '', type: 'Contrat' });
+    const [uploadFile, setUploadFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
     
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const token = localStorage.getItem('sirh_token');
@@ -46,6 +58,12 @@ export function EmployeeProfile() {
                 
                 const data = await res.json();
                 setEmployee(data);
+
+                // Fetch dossier personnel docs
+                const docsRes = await fetch(`${API_URL}/api/documents/employee/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (docsRes.ok) setPersonnelDocs(await docsRes.json());
             } catch (err) {
                 console.error(err);
                 setError(err.message);
@@ -106,6 +124,39 @@ export function EmployeeProfile() {
         }
     };
 
+    const handleUploadDoc = async (e) => {
+        e.preventDefault();
+        if (!uploadFile) return;
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', uploadFile);
+            formData.append('title', uploadForm.title);
+            formData.append('type', uploadForm.type);
+            const res = await fetch(`${API_URL}/api/documents/employee/${id}/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            if (res.ok) {
+                const newDoc = await res.json();
+                setPersonnelDocs(prev => [newDoc, ...prev]);
+                setShowUploadModal(false);
+                setUploadForm({ title: '', type: 'Contrat' });
+                setUploadFile(null);
+            }
+        } catch (err) {
+            console.error('Upload error', err);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const docTypeIcon = (type) => {
+        const icons = { Contrat: '📜', Identité: '🪹', Diplôme: '🎓', Paie: '💰', Avenant: '✍️', Médical: '🏥', Autre: '📁' };
+        return icons[type] || '📁';
+    };
+
     // Prepare Radar Data (Mocking expected vs actual based on skills)
     const radarData = employee?.skills?.length > 0 
         ? employee.skills.map(s => ({
@@ -134,7 +185,7 @@ export function EmployeeProfile() {
                 </Button>
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900">Profil Collaborateur</h2>
-                    <p className="text-slate-500 text-sm">Vue détaillée des informations et compétences.</p>
+                    <p className="text-slate-500 text-sm">Vue détaillée des informations, compétences et dossier personnel.</p>
                 </div>
             </div>
 
@@ -185,6 +236,23 @@ export function EmployeeProfile() {
                 </div>
             </div>
 
+            {/* Tabs */}
+            <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit mb-6">
+                {[{ id: 'competences', label: 'Compétences & Matériel' }, { id: 'dossier', label: '📂 Dossier Personnel' }].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                            activeTab === tab.id 
+                                ? 'bg-white text-slate-900 shadow-sm' 
+                                : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
             {/* Grid 2 colonnes */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
@@ -192,6 +260,7 @@ export function EmployeeProfile() {
                 <div className="lg:col-span-2 space-y-6">
                     
                     {/* Carte Compétences */}
+                    {activeTab === 'competences' && (
                     <Card className="border-slate-100 shadow-sm">
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100">
                             <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
@@ -235,9 +304,113 @@ export function EmployeeProfile() {
                             </div>
                         </CardContent>
                     </Card>
+                    )}
 
-                    {/* Carte Équipement */}
-                    <Card className="border-slate-100 shadow-sm">
+                    {/* Onglet Dossier Personnel */}
+                    {activeTab === 'dossier' && (
+                        <div className="space-y-4">
+                            {/* Modal Upload */}
+                            {showUploadModal && (
+                                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                                            <h3 className="text-lg font-bold text-slate-900">Ajouter un document</h3>
+                                            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setShowUploadModal(false)}><X size={18} /></Button>
+                                        </div>
+                                        <form onSubmit={handleUploadDoc} className="px-6 py-5 space-y-4">
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-slate-700">Intitulé du document</label>
+                                                <input
+                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                    placeholder="ex: Contrat CDI 2024"
+                                                    value={uploadForm.title}
+                                                    onChange={e => setUploadForm(f => ({ ...f, title: e.target.value }))}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-slate-700">Catégorie</label>
+                                                <select
+                                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                    value={uploadForm.type}
+                                                    onChange={e => setUploadForm(f => ({ ...f, type: e.target.value }))}
+                                                >
+                                                    {['Contrat', 'Identité', 'Diplôme', 'Paie', 'Avenant', 'Médical', 'Autre'].map(t => (
+                                                        <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-slate-700">Fichier (PDF, image)</label>
+                                                <label className="block border-2 border-dashed border-slate-300 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-400 transition-colors">
+                                                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setUploadFile(e.target.files[0])} />
+                                                    {uploadFile ? (
+                                                        <p className="text-sm font-medium text-emerald-600">✅ {uploadFile.name}</p>
+                                                    ) : (
+                                                        <p className="text-sm text-slate-500">Cliquez pour sélectionner</p>
+                                                    )}
+                                                </label>
+                                            </div>
+                                            <div className="flex justify-end gap-3 pt-2">
+                                                <Button type="button" variant="outline" onClick={() => setShowUploadModal(false)}>Annuler</Button>
+                                                <Button type="submit" disabled={isUploading || !uploadFile} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                    {isUploading ? 'Envoi...' : 'Enregistrer'}
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
+
+                            <Card className="border-slate-100 shadow-sm">
+                                <CardHeader className="flex flex-row items-center justify-between bg-slate-50/50 border-b border-slate-100">
+                                    <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+                                        <FolderOpen size={20} className="text-amber-600" /> Dossier Personnel
+                                    </CardTitle>
+                                    {(user?.role === 'HR' || user?.role === 'ADMIN') && (
+                                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2" onClick={() => setShowUploadModal(true)}>
+                                            <Upload size={14} /> Ajouter
+                                        </Button>
+                                    )}
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    {personnelDocs.length === 0 ? (
+                                        <div className="text-center py-12 text-slate-500">
+                                            <FolderOpen size={40} className="mx-auto text-slate-300 mb-3" />
+                                            <p className="font-medium">Aucun document dans le dossier</p>
+                                            {(user?.role === 'HR' || user?.role === 'ADMIN') && (
+                                                <p className="text-sm mt-1">Cliquez sur "Ajouter" pour enrichir ce dossier.</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-slate-100">
+                                            {personnelDocs.map(doc => (
+                                                <div key={doc.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors">
+                                                    <div className="text-2xl w-10 text-center flex-shrink-0">{docTypeIcon(doc.type)}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-semibold text-slate-800 truncate">{doc.title}</p>
+                                                        <p className="text-xs text-slate-500">{doc.type} • Ajouté par {doc.uploadedBy} • {new Date(doc.createdAt).toLocaleDateString('fr-FR')}</p>
+                                                    </div>
+                                                    <a
+                                                        href={`${API_URL}${doc.filePath}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="flex-shrink-0 flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
+                                                    >
+                                                        <Download size={14} /> Télécharger
+                                                    </a>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {/* Carte Équipement - visible dans l'onglet compétences */}
+                    {activeTab === 'competences' && (
+                        <Card className="border-slate-100 shadow-sm">
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100">
                             <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
                                 <Monitor size={20} className="text-sky-600" />
@@ -270,7 +443,8 @@ export function EmployeeProfile() {
                                 </div>
                             )}
                         </CardContent>
-                    </Card>
+                        </Card>
+                    )}
 
                 </div>
 

@@ -103,6 +103,10 @@ app.use('/api/subcontractors', verifyToken, subcontractorRoutes);
 const chatRoutes = require('./routes/chatRoutes');
 app.use('/api/chat', verifyToken, chatRoutes);
 
+// V7 Dossier Personnel & Absences
+const absenceRoutes = require('./routes/absenceRoutes');
+app.use('/api/absences', absenceRoutes);
+
 
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {

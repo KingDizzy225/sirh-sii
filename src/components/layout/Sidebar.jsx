@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -13,7 +13,8 @@ const getAllNavItems = () => [
 
     // MYSELF
     { name: 'Mon Profil', path: '/my-space', icon: User, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Mes Absences', path: '/leaves', icon: Calendar, domain: 'Myself', permission: 'myself:view' },
+    { name: 'Mes Absences (Congés)', path: '/leaves', icon: Calendar, domain: 'Myself', permission: 'myself:view' },
+    { name: 'Absences & Retards', path: '/absences', icon: AlertTriangle, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Dépenses', path: '/expenses', icon: Receipt, domain: 'Myself', permission: 'myself:view' },
     { name: 'Avance sur Salaire', path: '/advances', icon: Banknote, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Fiches de Paie', path: '/payroll', icon: FileText, domain: 'Myself', permission: 'myself:view' },
@@ -39,6 +40,7 @@ const getAllNavItems = () => [
 
     // PROCESS
     { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Process', permission: 'dashboard:view' },
+    { name: 'Absences & Retards', path: '/absences', icon: AlertTriangle, domain: 'Process', permission: 'dashboard:view' },
     { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Process', permission: 'payroll:view' },
     { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Process', permission: 'payroll:view' },
     { name: 'Suivi Formations', path: '/learning', icon: BookOpen, domain: 'Process', permission: 'learning:view' },
