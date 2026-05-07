@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import SignaturePad from 'react-signature-canvas';
+import { SignaturePad } from '../components/ui/SignaturePad';
 import { ShieldCheck, FileText, CheckCircle2, Building, PenTool } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,7 +15,8 @@ export function PublicSignature() {
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
-    const sigCanvas = useRef({});
+    const [signatureDataUrl, setSignatureDataUrl] = useState(null);
+    const sigPadRef = useRef(null);
 
     useEffect(() => {
         const fetchDocument = async () => {
@@ -38,19 +39,16 @@ export function PublicSignature() {
     }, [id]);
 
     const clearSignature = () => {
-        if (sigCanvas.current) {
-            sigCanvas.current.clear();
-        }
+        setSignatureDataUrl(null);
     };
 
     const handleSign = async () => {
-        if (sigCanvas.current.isEmpty()) {
+        if (!signatureDataUrl) {
             alert('Veuillez dessiner votre signature avant de valider.');
             return;
         }
 
         setIsSubmitting(true);
-        const signatureDataUrl = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png');
 
         try {
             const res = await fetch(`${API_URL}/api/documents/public/${id}/sign`, {
@@ -190,13 +188,8 @@ export function PublicSignature() {
                                     </button>
                                 </div>
                                 
-                                <div className="border-2 border-dashed border-indigo-200 rounded-xl bg-white overflow-hidden shadow-inner">
-                                    <SignaturePad 
-                                        ref={sigCanvas} 
-                                        canvasProps={{
-                                            className: 'w-full h-48 cursor-crosshair'
-                                        }} 
-                                    />
+                                <div className="border-2 border-dashed border-indigo-200 rounded-xl bg-white overflow-hidden shadow-inner p-2">
+                                    <SignaturePad onSign={setSignatureDataUrl} />
                                 </div>
                                 <p className="text-xs text-slate-400">
                                     En signant, vous acceptez les termes du document. Cette signature a une valeur légale.
