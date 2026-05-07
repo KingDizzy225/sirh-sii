@@ -179,7 +179,7 @@ export function EmployeeProfile() {
     // Prepare Radar Data (Mocking expected vs actual based on skills)
     const radarData = employee?.skills?.length > 0 
         ? employee.skills.map(s => ({
-            subject: s.skillName,
+            subject: s.skillName || 'Inconnu',
             A: s.proficiencyLevel === 'Expert' ? 90 : s.proficiencyLevel === 'Intermédiaire' ? 60 : 30,
             fullMark: 100,
         }))
@@ -215,7 +215,7 @@ export function EmployeeProfile() {
                 
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8">
                     <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-4xl font-bold shadow-xl border-4 border-white">
-                        {employee.firstName[0]}{employee.lastName[0]}
+                        {employee?.firstName?.[0] || ''}{employee?.lastName?.[0] || ''}
                     </div>
                     
                     <div className="flex-1 text-center md:text-left space-y-3">
@@ -536,9 +536,9 @@ export function EmployeeProfile() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6">
-                            {employee.assets && employee.assets.length > 0 ? (
+                            {employee?.assets && employee.assets.length > 0 ? (
                                 <div className="space-y-3">
-                                    {employee.assets.filter(a => !a.returnedDate).map((assignment) => (
+                                    {employee.assets.filter(a => a && a.asset && !a.returnedDate).map((assignment) => (
                                         <div key={assignment.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/50">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-sky-600">
@@ -620,11 +620,11 @@ export function EmployeeProfile() {
                         </CardHeader>
                         <CardContent className="p-6 text-center">
                             <div className="text-5xl font-black text-slate-800 mb-2">
-                                {employee.annualLeaveBalance}
+                                {employee?.annualLeaveBalance || 0}
                             </div>
                             <p className="text-slate-500 font-medium">Jours de congés disponibles</p>
                             
-                            {employee.leaves && employee.leaves.length > 0 && (
+                            {employee?.leaves && employee.leaves.length > 0 && (
                                 <div className="mt-6 text-left border-t border-slate-100 pt-4">
                                     <h4 className="text-sm font-semibold text-slate-700 mb-3">Derniers congés</h4>
                                     <div className="space-y-2">
