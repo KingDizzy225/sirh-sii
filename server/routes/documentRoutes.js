@@ -34,4 +34,8 @@ router.post('/:id/sign', verifyToken, aiDocumentController.signDocument);
 router.get('/generate-attestation/:employeeId', verifyToken, documentController.generateAttestation);
 router.delete('/:id', verifyToken, requireRole(['HR', 'ADMIN']), documentController.deleteDocument);
 
+// Public Signature Routes
+router.get('/public/:id', aiDocumentController.getPublicDocument);
+router.post('/public/:id/sign', aiDocumentController.signPublicDocument);
+
 module.exports = router;

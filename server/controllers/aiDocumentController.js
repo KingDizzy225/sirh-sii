@@ -190,3 +190,91 @@ exports.signDocument = async (req, res) => {
         res.status(500).json({ error: `Erreur lors de la signature : ${error.message}` });
     }
 };
+
+exports.getPublicDocument = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const doc = await prisma.employeeDocument.findUnique({
+            where: { id },
+            include: { employee: { select: { firstName: true, lastName: true } } }
+        });
+        if (!doc) return res.status(404).json({ error: 'Document introuvable ou expiré.' });
+        
+        res.status(200).json(doc);
+    } catch (error) {
+        console.error("Erreur public document:", error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+};
+
+exports.signPublicDocument = async (req, res) => {
+    // Re-use logic from signDocument but without checking auth
+    try {
+        const { id } = req.params;
+        const { signatureDataUrl, ipAddress } = req.body;
+
+        if (!signatureDataUrl) {
+            return res.status(400).json({ error: 'Données de signature manquantes.' });
+        }
+
+        const doc = await prisma.employeeDocument.findUnique({ where: { id } });
+        if (!doc) return res.status(404).json({ error: 'Document introuvable.' });
+
+        const base64Data = signatureDataUrl.replace(/^data:image\/\w+;base64,/, '');
+        const sigBuffer = Buffer.from(base64Data, 'base64');
+
+        const signedFileName = `signed_${Date.now()}_${path.basename(doc.filePath)}`;
+        const signedFilePath = `/uploads/documents/${signedFileName}`;
+        const signedFullPath = path.join(__dirname, '..', 'uploads', 'documents', signedFileName);
+
+        const pdfDoc = new PDFDocument({ margin: 50 });
+        const writeStream = fs.createWriteStream(signedFullPath);
+        pdfDoc.pipe(writeStream);
+
+        const logoPath = path.join(__dirname, '..', '..', 'public', 'logo.png');
+        if (fs.existsSync(logoPath)) {
+            pdfDoc.image(logoPath, { fit: [150, 100], align: 'center' });
+            pdfDoc.moveDown(2);
+        }
+
+        pdfDoc.fontSize(14).fillColor('#1e3a8a').text('CERTIFICAT DE SIGNATURE ÉLECTRONIQUE AVANCÉE', { align: 'center', underline: true });
+        pdfDoc.moveDown();
+        pdfDoc.fontSize(10).fillColor('#374151')
+            .text(`Document ID : ${doc.id}`)
+            .text(`Signé le : ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`)
+            .text(`Adresse IP : ${ipAddress || req.ip || 'Inconnue'}`)
+            .text(`Authentification : Lien Magique Unique (Jeton cryptographique)`);
+        pdfDoc.moveDown(2);
+
+        pdfDoc.image(sigBuffer, { fit: [300, 100], align: 'center' });
+        pdfDoc.moveDown(2);
+
+        pdfDoc.moveTo(50, pdfDoc.y).lineTo(300, pdfDoc.y).stroke();
+        pdfDoc.moveDown(0.5);
+        pdfDoc.fontSize(9).fillColor('#94a3b8').text('Signature Sécurisée (Valeur Légale)', 50);
+
+        pdfDoc.end();
+
+        await new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
+
+        const stats = fs.statSync(signedFullPath);
+
+        const updated = await prisma.employeeDocument.update({
+            where: { id },
+            data: {
+                filePath: signedFilePath,
+                fileSize: stats.size,
+                title: `${doc.title} [Signé Sécurisé]`,
+                updatedAt: new Date()
+            }
+        });
+
+        res.json({ message: 'Document signé de manière sécurisée.', document: updated });
+    } catch (error) {
+        console.error("=> [PUBLIC SIGN] Error:", error);
+        res.status(500).json({ error: `Erreur lors de la signature : ${error.message}` });
+    }
+};

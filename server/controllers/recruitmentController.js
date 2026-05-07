@@ -1,6 +1,23 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
 const { GoogleGenAI } = require('@google/genai');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = path.join(__dirname, '../../uploads/cvs');
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `cv_${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`);
+    }
+});
+exports.uploadCV = multer({ storage });
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -95,7 +112,131 @@ exports.createApplicant = async (req, res) => {
         res.status(201).json(newApplicant);
     } catch (error) {
         console.error('Error creating applicant:', error);
-        res.status(500).json({ error: 'Failed to create applicant' });
+        res.status(500).json({ error: 'Failed to analyze candidate' });
+    }
+};
+
+exports.publicApply = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Aucun CV fourni' });
+        }
+
+        // Get the default job offer (or the first one) to attach the applicant
+        const jobOffers = await prisma.jobOffer.findMany({ take: 1 });
+        let jobOfferId = req.body.jobOfferId;
+        if (!jobOfferId && jobOffers.length > 0) {
+            jobOfferId = jobOffers[0].id;
+        }
+
+        // Analyse the CV with AI
+        let aiExtractedData = { firstName: 'Candidat', lastName: 'Inconnu', email: 'email@example.com', phone: '' };
+        
+        try {
+            const mimeType = req.file.mimetype;
+            const fileContent = fs.readFileSync(req.file.path).toString("base64");
+
+            const prompt = `Tu es un recruteur expert. Analyse ce CV et extrais les informations sous forme de JSON strict :
+            {
+              "firstName": "Prénom du candidat",
+              "lastName": "Nom de famille du candidat",
+              "email": "Adresse email",
+              "phone": "Numéro de téléphone"
+            }
+            Ne renvoie QUE le JSON, pas de texte autour.`;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [
+                    prompt,
+                    { inlineData: { data: fileContent, mimeType: mimeType } }
+                ]
+            });
+            const textRes = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+            aiExtractedData = JSON.parse(textRes);
+        } catch (e) {
+            console.error("AI Extraction failed, using defaults", e);
+        }
+
+        const applicant = await prisma.applicant.create({
+            data: {
+                firstName: aiExtractedData.firstName || 'Candidat',
+                lastName: aiExtractedData.lastName || 'Inconnu',
+                email: aiExtractedData.email || 'candidat@example.com',
+                phone: aiExtractedData.phone || '',
+                resumeUrl: `/uploads/cvs/${req.file.filename}`,
+                source: 'Site Carrière',
+                status: 'NOUVEAU',
+                jobOfferId: jobOfferId || null
+            }
+        });
+
+        res.status(201).json({ message: "Candidature reçue avec succès", applicant });
+    } catch (error) {
+        console.error('Public apply error:', error);
+        res.status(500).json({ error: 'Erreur lors de la candidature' });
+    }
+};
+
+exports.publicApply = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Aucun CV fourni' });
+        }
+
+        // Get the default job offer (or the first one) to attach the applicant
+        const jobOffers = await prisma.jobOffer.findMany({ take: 1 });
+        let jobOfferId = req.body.jobOfferId;
+        if (!jobOfferId && jobOffers.length > 0) {
+            jobOfferId = jobOffers[0].id;
+        }
+
+        // Analyse the CV with AI
+        let aiExtractedData = { firstName: 'Candidat', lastName: 'Inconnu', email: 'email@example.com', phone: '' };
+        
+        try {
+            const mimeType = req.file.mimetype;
+            const fileContent = fs.readFileSync(req.file.path).toString("base64");
+
+            const prompt = `Tu es un recruteur expert. Analyse ce CV et extrais les informations sous forme de JSON strict :
+            {
+              "firstName": "Prénom du candidat",
+              "lastName": "Nom de famille du candidat",
+              "email": "Adresse email",
+              "phone": "Numéro de téléphone"
+            }
+            Ne renvoie QUE le JSON, pas de texte autour.`;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: [
+                    prompt,
+                    { inlineData: { data: fileContent, mimeType: mimeType } }
+                ]
+            });
+            const textRes = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+            aiExtractedData = JSON.parse(textRes);
+        } catch (e) {
+            console.error("AI Extraction failed, using defaults", e);
+        }
+
+        const applicant = await prisma.applicant.create({
+            data: {
+                firstName: aiExtractedData.firstName || 'Candidat',
+                lastName: aiExtractedData.lastName || 'Inconnu',
+                email: aiExtractedData.email || 'candidat@example.com',
+                phone: aiExtractedData.phone || '',
+                resumeUrl: `/uploads/cvs/${req.file.filename}`,
+                source: 'Site Carrière',
+                status: 'NOUVEAU',
+                jobOfferId: jobOfferId || null
+            }
+        });
+
+        res.status(201).json({ message: "Candidature reçue avec succès", applicant });
+    } catch (error) {
+        console.error('Public apply error:', error);
+        res.status(500).json({ error: 'Erreur lors de la candidature' });
     }
 };
 

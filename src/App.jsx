@@ -39,6 +39,8 @@ import { GPEC } from './pages/GPEC';
 import { TalentManagement } from './pages/TalentManagement';
 import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
+import { PublicCareers } from './pages/PublicCareers';
+import { PublicSignature } from './pages/PublicSignature';
 
 // V5 New Components
 import { Offboarding } from './pages/Offboarding';
@@ -77,6 +79,8 @@ const AppContent = () => {
       <Routes>
         <Route path="/ethics" element={<Ethics />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/careers" element={<PublicCareers />} />
+        <Route path="/sign/:id" element={<PublicSignature />} />
         <Route path="*" element={<Login />} />
       </Routes>
     );

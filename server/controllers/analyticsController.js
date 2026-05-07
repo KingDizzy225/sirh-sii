@@ -1,4 +1,10 @@
 const prisma = require('../prismaClient');
+const { GoogleGenAI } = require('@google/genai');
+
+let ai;
+try {
+    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+} catch(e) { ai = null; }
 
 exports.getDashboardAnalytics = async (req, res) => {
     try {
@@ -124,5 +130,69 @@ exports.getDashboardAnalytics = async (req, res) => {
     } catch (error) {
         console.error("Erreur Analytics:", error);
         res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+    }
+};
+
+exports.getPredictiveAnalytics = async (req, res) => {
+    try {
+        if (!ai) return res.status(500).json({ error: 'IA non configurée' });
+
+        const employees = await prisma.employee.findMany({
+            where: { status: 'ACTIVE' },
+            include: {
+                leaves: { select: { type: true, status: true, durationDays: true } },
+                payrolls: { select: { netSalary: true, status: true } },
+                PerformanceReview: { select: { overallScore: true } }
+            }
+        });
+
+        if (employees.length === 0) return res.json([]);
+
+        // Anonymize/Simplify data for the prompt
+        const promptData = employees.map(emp => {
+            const totalLeaves = emp.leaves.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + (l.durationDays || 0), 0);
+            const sickLeaves = emp.leaves.filter(l => l.status === 'APPROVED' && l.type === 'Congé Maladie').reduce((sum, l) => sum + (l.durationDays || 0), 0);
+            const avgSalary = emp.payrolls.length > 0 ? emp.payrolls[0].netSalary : 0;
+            const avgScore = emp.PerformanceReview.length > 0 ? emp.PerformanceReview[0].overallScore : 3;
+            const yearsOfService = (new Date() - new Date(emp.hireDate)) / (1000 * 60 * 60 * 24 * 365);
+
+            return {
+                id: emp.id,
+                name: `${emp.firstName} ${emp.lastName}`,
+                department: emp.department,
+                yearsOfService: yearsOfService.toFixed(1),
+                totalLeaves,
+                sickLeaves,
+                avgSalary,
+                avgScore
+            };
+        });
+
+        const systemPrompt = `Tu es un expert RH en analytique prédictive. Voici les données simplifiées d'employés d'une entreprise. 
+Analyse ces données pour déterminer un "Risque de Départ" (Élevé, Moyen, Faible). 
+Critères possibles d'alerte (Risque Élevé) : score de performance très bas (< 2.5), ancienneté élevée sans augmentation (simulé ici), ou un nombre anormal de congés maladie courts récents.
+Critères possibles (Risque Moyen) : Beaucoup de congés récemment ou baisse de performance.
+
+Renvoie UNIQUEMENT un tableau JSON valide de ce type :
+[
+  { "id": "123", "name": "Jean Dupont", "riskLevel": "Élevé", "reason": "Baisse de perf et forte ancienneté" }
+]
+
+Données :
+${JSON.stringify(promptData)}
+`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: systemPrompt
+        });
+
+        const textRes = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const insights = JSON.parse(textRes);
+
+        res.status(200).json(insights);
+    } catch (error) {
+        console.error("Erreur Predictive Analytics:", error);
+        res.status(500).json({ error: 'Erreur lors de la prédiction' });
     }
 };

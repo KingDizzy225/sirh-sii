@@ -15,6 +15,8 @@ export function Dashboard() {
     const [surveyComment, setSurveyComment] = useState('');
     const [loading, setLoading] = useState(true);
     const [analyticsData, setAnalyticsData] = useState(null);
+    const [predictiveInsights, setPredictiveInsights] = useState(null);
+    const [loadingPredictive, setLoadingPredictive] = useState(false);
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -40,12 +42,31 @@ export function Dashboard() {
                 setLoading(false);
             }
         };
+
+        const fetchPredictive = async () => {
+            setLoadingPredictive(true);
+            try {
+                const res = await fetch(`${API_URL}/api/analytics/predictive`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    setPredictiveInsights(await res.json());
+                }
+            } catch (err) {
+                console.error("Failed to load predictive insights", err);
+            } finally {
+                setLoadingPredictive(false);
+            }
+        };
+
         if (token) {
             fetchAnalytics();
+            // Seulement pour HR/ADMIN (on le tente, le middleware bloquera si pas autorisé)
+            if (user?.role === 'HR' || user?.role === 'ADMIN') {
+                fetchPredictive();
+            }
         } else {
             setLoading(false);
         }
-    }, [token]);
+    }, [token, user]);
 
     const showNotification = (message) => {
         setNotification(message);
@@ -210,6 +231,36 @@ export function Dashboard() {
                                     )}
                                 </AnimatePresence>
                             </div>
+                        </div>
+                    </motion.div>
+                )}
+            <AnimatePresence>
+                {predictiveInsights && predictiveInsights.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-indigo-900 text-white rounded-2xl shadow-lg border-0 overflow-hidden mb-8 p-6 relative"
+                    >
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Activity size={100} />
+                        </div>
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <span className="text-2xl">🔮</span> IA Prédictive : Alertes de Rétention
+                        </h3>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 relative z-10">
+                            {predictiveInsights.map((insight, idx) => (
+                                <div key={idx} className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h4 className="font-bold">{insight.name}</h4>
+                                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${insight.riskLevel === 'Élevé' ? 'bg-rose-500/80 text-white' : insight.riskLevel === 'Moyen' ? 'bg-amber-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
+                                            Risque {insight.riskLevel}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-indigo-200 mt-2 line-clamp-2" title={insight.reason}>
+                                        {insight.reason}
+                                    </p>
+                                </div>
+                            ))}
                         </div>
                     </motion.div>
                 )}

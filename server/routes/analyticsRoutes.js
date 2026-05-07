@@ -6,5 +6,6 @@ const requireRole = require('../middleware/roleMiddleware');
 
 // Accessible par HR, Admin et Manager (pour la vue synthétique)
 router.get('/dashboard', verifyToken, requireRole('HR', 'ADMIN', 'MANAGER'), analyticsController.getDashboardAnalytics);
+router.get('/predictive', verifyToken, requireRole('HR', 'ADMIN'), analyticsController.getPredictiveAnalytics);
 
 module.exports = router;

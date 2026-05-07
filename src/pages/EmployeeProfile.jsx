@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { 
@@ -105,6 +106,21 @@ export function EmployeeProfile() {
         }
     };
 
+    // Prepare Radar Data (Mocking expected vs actual based on skills)
+    const radarData = employee?.skills?.length > 0 
+        ? employee.skills.map(s => ({
+            subject: s.skillName,
+            A: s.proficiencyLevel === 'Expert' ? 90 : s.proficiencyLevel === 'Intermédiaire' ? 60 : 30,
+            fullMark: 100,
+        }))
+        : [
+            { subject: 'Leadership', A: 80, fullMark: 100 },
+            { subject: 'Communication', A: 90, fullMark: 100 },
+            { subject: 'Technique', A: 60, fullMark: 100 },
+            { subject: 'Gestion', A: 70, fullMark: 100 },
+            { subject: 'Innovation', A: 85, fullMark: 100 },
+        ];
+
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-[calc(100vh-4rem)] overflow-y-auto">
             {/* Header / Navigation */}
@@ -199,10 +215,24 @@ export function EmployeeProfile() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                                    <p>Aucune compétence recensée pour cet employé.</p>
+                                <div className="text-center py-4 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-200 mb-4">
+                                    <p>Aucune compétence recensée pour cet employé. Radar par défaut affiché.</p>
                                 </div>
                             )}
+
+                            <div className="mt-6 border-t border-slate-100 pt-6">
+                                <h4 className="text-sm font-semibold text-slate-700 mb-4 text-center">GPEC : Cartographie des Compétences</h4>
+                                <div className="h-[300px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                                            <PolarGrid stroke="#e2e8f0" />
+                                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12 }} />
+                                            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                            <Radar name="Employé" dataKey="A" stroke="#6366f1" fill="#818cf8" fillOpacity={0.5} />
+                                        </RadarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
 

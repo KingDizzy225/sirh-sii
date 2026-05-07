@@ -15,4 +15,7 @@ router.put('/applicants/:id/status', recruitmentController.updateApplicantStatus
 // AI
 router.post('/applicants/:id/ai-match', recruitmentController.analyzeCandidateWithAI);
 
+// Public API
+router.post('/public-apply', recruitmentController.uploadCV.single('resume'), recruitmentController.publicApply);
+
 module.exports = router;

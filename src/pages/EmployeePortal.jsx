@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User } from 'lucide-react';
+import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User, CheckCircle2, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -103,6 +103,44 @@ export function EmployeePortal() {
                     <p className="text-slate-500 mt-1">Voici un aperçu de vos informations et tâches de la journée.</p>
                 </div>
             </div>
+
+            {/* Onboarding Gamifié */}
+            {profile && (new Date() - new Date(profile.hireDate)) / (1000 * 60 * 60 * 24) < 90 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white mb-6"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                <Award className="text-yellow-300" /> Quêtes d'Intégration
+                            </h3>
+                            <p className="text-indigo-100 text-sm">Complétez votre profil pour débloquer le badge "Nouvelle Recrue" !</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-3xl font-bold">66%</span>
+                        </div>
+                    </div>
+                    <div className="w-full bg-indigo-900/50 rounded-full h-3 mb-4">
+                        <div className="bg-yellow-400 h-3 rounded-full" style={{ width: '66%' }}></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div className="bg-white/10 rounded-lg p-3 flex items-center gap-3">
+                            <CheckCircle2 className="text-emerald-400" />
+                            <span className="text-sm font-medium line-through opacity-70">Connexion réussie</span>
+                        </div>
+                        <div className="bg-white/10 rounded-lg p-3 flex items-center gap-3">
+                            <CheckCircle2 className="text-emerald-400" />
+                            <span className="text-sm font-medium line-through opacity-70">Lire la charte</span>
+                        </div>
+                        <div className="bg-white/10 rounded-lg p-3 flex items-center gap-3 border border-yellow-400/50">
+                            <div className="w-6 h-6 rounded-full border-2 border-dashed border-white/50 flex items-center justify-center"></div>
+                            <span className="text-sm font-bold text-yellow-100">Uploader le RIB</span>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Les Widgets (Style ADP) */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
