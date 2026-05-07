@@ -53,6 +53,8 @@ model Employee {
   benefits        EmployeeBenefit[]
   timeLogs        TimeLog[]
   absences        Absence[] @relation("EmployeeAbsences")
+  careerHistory   CareerHistory[]
+  disciplinaryRecords DisciplinaryRecord[]
 }
 
 // ----------------------------------------------------
@@ -608,4 +610,36 @@ model Absence {
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   employee         Employee @relation("EmployeeAbsences", fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 26. CAREER & DISCIPLINARY
+// ----------------------------------------------------
+
+model CareerHistory {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  eventDate       DateTime @map("event_date")
+  type            String   // 'PROMOTION', 'DEPARTMENT_CHANGE', 'SALARY_CHANGE', 'HIRE', 'EXIT'
+  previousValue   String?  @map("previous_value")
+  newValue        String   @map("new_value")
+  comment         String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model DisciplinaryRecord {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  date            DateTime
+  type            String   // 'Warning', 'Sanction', 'Blame', 'Suspension'
+  reason          String
+  sanction        String?
+  documentPath    String?  @map("document_path") // PDF de la sanction
+  status          String   @default("Active") // 'Active', 'Resolved', 'Contested'
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }

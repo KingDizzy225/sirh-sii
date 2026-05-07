@@ -12,18 +12,13 @@ import {
     Briefcase, 
     Calendar, 
     Award, 
-    Monitor, 
-    TrendingUp, 
-    Shield, 
-    MapPin,
-    Phone,
-    Star,
-    FolderOpen,
-    Upload,
-    Download,
     FileText,
     Trash2,
-    X
+    X,
+    History,
+    Gavel,
+    TrendingDown,
+    Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -35,12 +30,9 @@ export function EmployeeProfile() {
     const [employee, setEmployee] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('competences');
-    const [personnelDocs, setPersonnelDocs] = useState([]);
-    const [showUploadModal, setShowUploadModal] = useState(false);
-    const [uploadForm, setUploadForm] = useState({ title: '', type: 'Contrat' });
-    const [uploadFile, setUploadFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [careerHistory, setCareerHistory] = useState([]);
+    const [disciplinaryRecords, setDisciplinaryRecords] = useState([]);
     
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const token = localStorage.getItem('sirh_token');
@@ -64,6 +56,18 @@ export function EmployeeProfile() {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (docsRes.ok) setPersonnelDocs(await docsRes.json());
+
+                // Fetch history
+                const historyRes = await fetch(`${API_URL}/api/career/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (historyRes.ok) setCareerHistory(await historyRes.json());
+
+                // Fetch disciplinary
+                const discRes = await fetch(`${API_URL}/api/disciplinary/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (discRes.ok) setDisciplinaryRecords(await discRes.json());
             } catch (err) {
                 console.error(err);
                 setError(err.message);
@@ -237,8 +241,13 @@ export function EmployeeProfile() {
             </div>
 
             {/* Tabs */}
-            <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit mb-6">
-                {[{ id: 'competences', label: 'Compétences & Matériel' }, { id: 'dossier', label: '📂 Dossier Personnel' }].map(tab => (
+            <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit mb-6 overflow-x-auto">
+                {[
+                    { id: 'competences', label: 'Compétences & Matériel' }, 
+                    { id: 'dossier', label: '📂 Dossier' },
+                    { id: 'history', label: '🕰️ Historique' },
+                    { id: 'disciplinary', label: '⚖️ Disciplinaire' }
+                ].map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
@@ -406,6 +415,100 @@ export function EmployeeProfile() {
                                 </CardContent>
                             </Card>
                         </div>
+                    )}
+
+                    {/* Onglet Historique de Carrière */}
+                    {activeTab === 'history' && (
+                        <Card className="border-slate-100 shadow-sm">
+                            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+                                <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+                                    <History size={20} className="text-blue-600" />
+                                    Historique & Évolution
+                                </CardTitle>
+                                <CardDescription>Suivi des changements de poste, de département et promotions.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                {careerHistory.length === 0 ? (
+                                    <div className="text-center py-8 text-slate-500">
+                                        <p>Aucun événement historique enregistré.</p>
+                                    </div>
+                                ) : (
+                                    <div className="relative border-l-2 border-slate-100 ml-4 pl-8 space-y-8 py-2">
+                                        {careerHistory.map((event, idx) => (
+                                            <div key={event.id} className="relative">
+                                                <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-white border-2 border-blue-500 z-10" />
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{formatDate(event.eventDate)}</span>
+                                                    <h4 className="font-bold text-slate-900">{event.type}</h4>
+                                                    <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 mt-2">
+                                                        {event.previousValue && (
+                                                            <p className="mb-1"><span className="font-medium text-slate-400">Ancien :</span> {event.previousValue}</p>
+                                                        )}
+                                                        <p><span className="font-medium text-blue-600">Nouveau :</span> {event.newValue}</p>
+                                                        {event.comment && (
+                                                            <p className="mt-2 pt-2 border-t border-slate-200 italic text-slate-500">"{event.comment}"</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Onglet Dossier Disciplinaire */}
+                    {activeTab === 'disciplinary' && (
+                        <Card className="border-slate-100 shadow-sm">
+                            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+                                <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+                                    <Gavel size={20} className="text-rose-600" />
+                                    Dossier Disciplinaire
+                                </CardTitle>
+                                <CardDescription>Sanctions, avertissements et mesures disciplinaires.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                {disciplinaryRecords.length === 0 ? (
+                                    <div className="text-center py-12 bg-emerald-50 rounded-xl border border-dashed border-emerald-200">
+                                        <CheckCircle2 size={40} className="mx-auto text-emerald-500 mb-3" />
+                                        <p className="font-bold text-emerald-800 text-lg">Dossier exemplaire</p>
+                                        <p className="text-emerald-600">Aucune sanction ou avertissement enregistré.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {disciplinaryRecords.map(record => (
+                                            <div key={record.id} className="p-5 rounded-2xl border border-slate-100 bg-white hover:shadow-md transition-shadow">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${record.type === 'Warning' ? 'bg-amber-100 text-amber-600' : 'bg-rose-100 text-rose-600'}`}>
+                                                            <Gavel size={18} />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-slate-900">{record.type}</h4>
+                                                            <p className="text-xs text-slate-500">{formatDate(record.date)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Badge variant={record.status === 'Active' ? 'destructive' : 'secondary'}>
+                                                        {record.status}
+                                                    </Badge>
+                                                </div>
+                                                <div className="space-y-2 mt-4">
+                                                    <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Motif</p>
+                                                    <p className="text-slate-700 text-sm">{record.reason}</p>
+                                                </div>
+                                                {record.sanction && (
+                                                    <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                                        <p className="text-xs font-bold text-slate-400 uppercase mb-1">Sanction appliquée</p>
+                                                        <p className="text-sm font-medium text-slate-800">{record.sanction}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     )}
 
                     {/* Carte Équipement - visible dans l'onglet compétences */}
