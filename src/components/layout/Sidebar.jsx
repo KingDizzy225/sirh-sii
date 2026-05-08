@@ -92,6 +92,7 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
                     <h2 className="text-sm font-bold uppercase tracking-wider">
                         {currentDomain}
                     </h2>
+                    <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded ml-auto">V2.2</span>
                 </div>
             </div>
 
