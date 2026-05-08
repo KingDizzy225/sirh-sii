@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Bell, Menu, ChevronDown, LogOut, Check, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { NotificationCenter } from '../NotificationCenter';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -106,49 +107,59 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
                     />
                 </div>
 
-                <div className="relative">
-                    <button
-                        onClick={() => setIsNotifOpen(!isNotifOpen)}
-                        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors border border-slate-700"
-                    >
-                        <Bell className="h-4 w-4" />
-                        {unreadCount > 0 && (
-                            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-slate-900">
-                                {unreadCount}
-                            </span>
-                        )}
-                    </button>
+                <div className="flex items-center gap-2">
+                    {/* Cloche Standard */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsNotifOpen(!isNotifOpen)}
+                            className="relative flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors border border-slate-700"
+                        >
+                            <Bell className="h-4 w-4" />
+                            {unreadCount > 0 && (
+                                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-slate-900">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </button>
 
-                    {isNotifOpen && (
-                        <div className="absolute right-0 top-full mt-3 w-80 rounded-xl border border-slate-200 bg-white shadow-xl py-2 z-50 text-slate-800">
-                            <div className="px-4 py-3 border-b border-slate-100 mb-2 flex justify-between items-center">
-                                <p className="text-sm font-semibold text-slate-900">Notifications</p>
-                                {unreadCount > 0 && (
-                                    <button onClick={markAllAsRead} className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium">
-                                        <Check size={14} /> Tout lire
-                                    </button>
-                                )}
-                            </div>
-                            <div className="max-h-80 overflow-y-auto">
-                                {notifications.length > 0 ? (
-                                    notifications.map(notif => (
-                                        <div
-                                            key={notif.id}
-                                            onClick={() => !notif.isRead && markAsRead(notif.id)}
-                                            className={`px-4 py-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors ${!notif.isRead ? 'bg-blue-50/50' : ''}`}
-                                        >
-                                            <p className={`text-sm line-clamp-2 ${!notif.isRead ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
-                                                {notif.message}
-                                            </p>
-                                            <p className="text-xs text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleDateString()} à {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        {isNotifOpen && (
+                            <div className="absolute right-0 top-full mt-3 w-80 rounded-xl border border-slate-200 bg-white shadow-xl py-2 z-50 text-slate-800">
+                                <div className="px-4 py-3 border-b border-slate-100 mb-2 flex justify-between items-center">
+                                    <p className="text-sm font-semibold text-slate-900">Notifications</p>
+                                    {unreadCount > 0 && (
+                                        <button onClick={markAllAsRead} className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium">
+                                            <Check size={14} /> Tout lire
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="max-h-80 overflow-y-auto">
+                                    {notifications.length > 0 ? (
+                                        notifications.map(notif => (
+                                            <div
+                                                key={notif.id}
+                                                onClick={() => !notif.isRead && markAsRead(notif.id)}
+                                                className={`px-4 py-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors ${!notif.isRead ? 'bg-blue-50/50' : ''}`}
+                                            >
+                                                <p className={`text-sm line-clamp-2 ${!notif.isRead ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
+                                                    {notif.message}
+                                                </p>
+                                                <p className="text-xs text-slate-400 mt-1">{new Date(notif.createdAt).toLocaleDateString()} à {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="px-4 py-6 text-center text-slate-500 text-sm">
+                                            Aucune notification
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="px-4 py-6 text-center text-slate-500 text-sm">
-                                        Aucune notification
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
+                        )}
+                    </div>
+
+                    {/* Centre de Notifications RH (Alertes Critiques) */}
+                    {(user.role === 'HR' || user.role === 'ADMIN') && (
+                        <div className="border-l border-slate-700 pl-2 ml-1">
+                            <NotificationCenter />
                         </div>
                     )}
                 </div>

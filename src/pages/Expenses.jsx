@@ -1,472 +1,478 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Receipt, Plus, Upload, Check, X, DollarSign, Calendar as CalendarIcon, FileImage } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Badge } from '../components/ui/badge';
+import { 
+    Plus, 
+    Receipt, 
+    Search, 
+    Upload, 
+    Scan, 
+    CheckCircle2, 
+    XCircle, 
+    Download, 
+    Eye,
+    Filter,
+    ArrowUpDown,
+    MoreVertical,
+    Trash2,
+    Check,
+    X,
+    Clock,
+    DollarSign,
+    Tag,
+    Calendar,
+    Building2
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function Expenses() {
-    const { token, user } = useAuth();
-    const [activeTab, setActiveTab] = useState('my-expenses');
+    const { user } = useAuth();
     const [expenses, setExpenses] = useState([]);
-    const [notification, setNotification] = useState(null);
-    const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [isScanning, setIsScanning] = useState(false);
-
-    const currentUser = user?.name || '';
-
-    const [expenseForm, setExpenseForm] = useState({
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [scanResult, setScanResult] = useState(null);
+    const [form, setForm] = useState({
         amount: '',
+        currency: 'FCFA',
         category: 'Repas',
-        date: '',
         merchant: '',
-        description: ''
+        date: new Date().toISOString().split('T')[0]
     });
-    const [receiptFile, setReceiptFile] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
 
-    useEffect(() => {
-        if (token) fetchExpenses();
-    }, [token]);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const token = localStorage.getItem('sirh_token');
 
     const fetchExpenses = async () => {
+        setLoading(true);
         try {
             const res = await fetch(`${API_URL}/api/expenses`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (res.ok) {
-                setExpenses(await res.json());
-            }
+            const data = await res.json();
+            setExpenses(data);
         } catch (error) {
-            console.error("Failed to fetch expenses", error);
+            console.error("Error fetching expenses", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const showNotification = (message) => {
-        setNotification(message);
-        setTimeout(() => setNotification(null), 3000);
-    };
+    useEffect(() => {
+        fetchExpenses();
+    }, []);
 
-    const handleExpenseSubmit = async (e) => {
-        e.preventDefault();
-        if (!expenseForm.amount || !expenseForm.date || !expenseForm.merchant) {
-            showNotification('Veuillez remplir les champs obligatoires.');
-            return;
-        }
-
-        try {
-            const formData = new FormData();
-            formData.append('amount', expenseForm.amount);
-            formData.append('category', expenseForm.category);
-            formData.append('date', expenseForm.date);
-            formData.append('merchant', expenseForm.merchant);
-            formData.append('description', expenseForm.description);
-            formData.append('currency', 'FCFA');
-            if (receiptFile) formData.append('receipt', receiptFile);
-
-            const res = await fetch(`${API_URL}/api/expenses`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }, // NOTE: No Content-Type header -- let browser set multipart boundary
-                body: formData
-            });
-
-            if (res.ok) {
-                setIsExpenseModalOpen(false);
-                setExpenseForm({ amount: '', category: 'Repas', date: '', merchant: '', description: '' });
-                setReceiptFile(null);
-                showNotification('Note de frais soumise avec succès.');
-                fetchExpenses();
-            } else {
-                showNotification('Erreur lors de la soumission.');
-            }
-        } catch (error) {
-            console.error(error);
-            showNotification("Erreur de connexion serveur.");
-        }
-    };
-
-    const handleOCR = async () => {
-        if (!receiptFile) return;
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setSelectedFile(file);
+        
+        // Auto-scan if AI is desired
         setIsScanning(true);
+        const formData = new FormData();
+        formData.append('receipt', file);
+
         try {
-            const formData = new FormData();
-            formData.append('receipt', receiptFile);
-            const res = await fetch(`${API_URL}/api/expenses/ocr`, {
+            const res = await fetch(`${API_URL}/api/expenses/scan`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
             if (res.ok) {
-                const data = await res.json();
-                setExpenseForm(prev => ({
-                    ...prev,
-                    amount: data.amount || prev.amount,
-                    merchant: data.merchant || prev.merchant,
-                    date: data.date || prev.date,
-                    category: data.category || prev.category
-                }));
-                showNotification('Reçu analysé par IA avec succès !');
-            } else {
-                showNotification("Erreur lors de l'analyse du reçu.");
+                const result = await res.json();
+                setScanResult(result);
+                setForm({
+                    amount: result.amount,
+                    currency: 'FCFA',
+                    category: result.category,
+                    merchant: result.merchant,
+                    date: result.date || new Date().toISOString().split('T')[0]
+                });
             }
         } catch (error) {
-            console.error("OCR error", error);
-            showNotification("Erreur serveur lors de l'OCR.");
+            console.error("Scanning error", error);
         } finally {
             setIsScanning(false);
         }
     };
 
-    const handleApprove = async (id) => {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('amount', form.amount);
+        formData.append('currency', form.currency);
+        formData.append('category', form.category);
+        formData.append('merchant', form.merchant);
+        formData.append('date', form.date);
+        if (selectedFile) formData.append('receipt', selectedFile);
+
         try {
-            const res = await fetch(`${API_URL}/api/expenses/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ status: 'Approuvé' })
+            const res = await fetch(`${API_URL}/api/expenses`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
             });
             if (res.ok) {
-                showNotification(`Note de frais approuvée`);
+                setShowAddModal(false);
+                setForm({ amount: '', currency: 'FCFA', category: 'Repas', merchant: '', date: new Date().toISOString().split('T')[0] });
+                setSelectedFile(null);
+                setScanResult(null);
                 fetchExpenses();
             }
-        } catch (error) { console.error(error); }
+        } catch (error) {
+            console.error("Error saving expense", error);
+        }
     };
 
-    const handleReject = async (id) => {
+    const handleStatusUpdate = async (id, status, reason = '') => {
         try {
             const res = await fetch(`${API_URL}/api/expenses/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ status: 'Rejeté', rejectionReason: 'Hors politique' })
+                method: 'PATCH',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status, rejectionReason: reason })
             });
-            if (res.ok) {
-                showNotification(`Note de frais rejetée`);
-                fetchExpenses();
-            }
-        } catch (error) { console.error(error); }
+            if (res.ok) fetchExpenses();
+        } catch (error) {
+            console.error("Error updating status", error);
+        }
     };
 
-    const myExpenses = expenses.filter(e => e.employee === currentUser);
-    const pendingApprovals = expenses.filter(e => e.status === 'En attente' && e.employee !== currentUser);
-
-    const totalPending = pendingApprovals.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-[calc(100vh-4rem)] relative">
-            <AnimatePresence>
-                {notification && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600 text-white px-6 py-3 rounded-md shadow-lg flex items-center gap-3 font-medium"
-                    >
-                        <Check size={20} />
-                        {notification}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+        <div className="flex-1 space-y-8 p-8 pt-6 bg-slate-50/50 min-h-screen overflow-y-auto">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
+                        <Receipt className="text-indigo-600" size={32} />
+                        Notes de Frais
+                    </h2>
+                    <p className="text-slate-500 font-medium">Gestion et remboursement des dépenses professionnelles.</p>
+                </div>
+                <Button 
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 h-11 px-6 rounded-xl flex items-center gap-2"
+                    onClick={() => setShowAddModal(true)}
+                >
+                    <Plus size={18} />
+                    Nouvelle dépense
+                </Button>
+            </div>
 
-            {/* Submit Expense Modal */}
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="bg-white border-none shadow-sm">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+                            <Clock size={24} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-slate-400">EN ATTENTE</p>
+                            <p className="text-2xl font-black text-slate-900">{expenses.filter(e => e.status === 'En attente').length}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-white border-none shadow-sm">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
+                            <CheckCircle2 size={24} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-slate-400">APPROUVÉES</p>
+                            <p className="text-2xl font-black text-slate-900">{expenses.filter(e => e.status === 'Approuvé').length}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-white border-none shadow-sm">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                            <DollarSign size={24} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-slate-400">TOTAL REMBOURSÉ</p>
+                            <p className="text-2xl font-black text-slate-900">
+                                {expenses.filter(e => e.status === 'Approuvé').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} <span className="text-sm font-medium">FCFA</span>
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Expenses List */}
+            <Card className="border-none shadow-sm overflow-hidden">
+                <CardHeader className="bg-white border-b border-slate-100">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg font-bold">Liste des demandes</CardTitle>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="h-8 gap-2"><Filter size={14}/> Filtrer</Button>
+                            <Button variant="outline" size="sm" className="h-8 gap-2"><Download size={14}/> Export</Button>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                    <th className="px-6 py-4">Collaborateur</th>
+                                    <th className="px-6 py-4">Détails</th>
+                                    <th className="px-6 py-4">Montant</th>
+                                    <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Statut</th>
+                                    <th className="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {loading ? (
+                                    <tr><td colSpan="6" className="p-12 text-center text-slate-400">Chargement...</td></tr>
+                                ) : expenses.length === 0 ? (
+                                    <tr><td colSpan="6" className="p-12 text-center text-slate-400 text-sm italic">Aucune note de frais enregistrée.</td></tr>
+                                ) : (
+                                    expenses.map((exp) => (
+                                        <tr key={exp.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
+                                                        {exp.employee[0]}
+                                                    </div>
+                                                    <span className="font-bold text-slate-700">{exp.employee}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-slate-800">{exp.merchant}</span>
+                                                    <span className="text-xs text-slate-400 flex items-center gap-1"><Tag size={10}/> {exp.category}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-black text-slate-900">{exp.amount.toLocaleString()}</span>
+                                                <span className="ml-1 text-[10px] font-bold text-slate-400">{exp.currency}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-500">{exp.date}</td>
+                                            <td className="px-6 py-4">
+                                                <Badge variant={exp.status === 'Approuvé' ? 'success' : exp.status === 'Rejeté' ? 'destructive' : 'secondary'}>
+                                                    {exp.status}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    {isAdmin && exp.status === 'En attente' ? (
+                                                        <>
+                                                            <Button 
+                                                                size="icon" 
+                                                                variant="ghost" 
+                                                                className="h-8 w-8 text-emerald-600 hover:bg-emerald-50"
+                                                                onClick={() => handleStatusUpdate(exp.id, 'Approuvé')}
+                                                            >
+                                                                <Check size={18} />
+                                                            </Button>
+                                                            <Button 
+                                                                size="icon" 
+                                                                variant="ghost" 
+                                                                className="h-8 w-8 text-rose-600 hover:bg-rose-50"
+                                                                onClick={() => handleStatusUpdate(exp.id, 'Rejeté')}
+                                                            >
+                                                                <X size={18} />
+                                                            </Button>
+                                                        </>
+                                                    ) : (
+                                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400">
+                                                            <Eye size={18} />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Add Modal */}
             <AnimatePresence>
-                {isExpenseModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                        <motion.div
+                {showAddModal && (
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <motion.div 
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+                            className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden"
                         >
-                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-                                <h3 className="text-lg font-bold text-slate-900">Nouvelle Note de Frais</h3>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100" onClick={() => setIsExpenseModalOpen(false)}>
-                                    <X size={18} />
-                                </Button>
+                            <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100">
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900">Nouvelle Note de Frais</h3>
+                                    <p className="text-xs text-slate-500 font-medium">Uploadez votre reçu pour une saisie assistée par l'IA.</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowAddModal(false)}><X size={20} /></Button>
                             </div>
 
-                            <div className="px-6 py-6 overflow-y-auto">
-                                <form id="add-expense-form" onSubmit={handleExpenseSubmit} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-slate-700">Montant (FCFA)</label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <DollarSign size={16} className="text-slate-400" />
-                                                </div>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    className="pl-9"
-                                                    value={expenseForm.amount}
-                                                    onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
-                                                    placeholder="0.00"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-slate-700">Catégorie</label>
-                                            <select
-                                                value={expenseForm.category}
-                                                onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
-                                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                            >
-                                                <option value="Repas">Repas</option>
-                                                <option value="Transport">Transport</option>
-                                                <option value="Hébergement">Hébergement</option>
-                                                <option value="Équipement">Équipement</option>
-                                                <option value="Divertissement Client">Divertissement Client</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-slate-700">Date de la Dépense</label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <CalendarIcon size={16} className="text-slate-400" />
-                                                </div>
-                                                <Input
-                                                    type="date"
-                                                    className="pl-9"
-                                                    value={expenseForm.date}
-                                                    onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-slate-700">Commerçant</label>
-                                            <Input
-                                                value={expenseForm.merchant}
-                                                onChange={(e) => setExpenseForm({ ...expenseForm, merchant: e.target.value })}
-                                                placeholder="ex. Starbucks, Uber"
-                                                required
+                            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Upload Section */}
+                                    <div className="space-y-4">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Reçu / Facture</label>
+                                        <div className="relative group">
+                                            <input 
+                                                type="file" 
+                                                id="receipt-upload" 
+                                                className="hidden" 
+                                                accept="image/*,application/pdf"
+                                                onChange={handleFileChange}
                                             />
+                                            <label 
+                                                htmlFor="receipt-upload"
+                                                className="block border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center cursor-pointer group-hover:border-indigo-400 group-hover:bg-indigo-50/30 transition-all relative overflow-hidden"
+                                            >
+                                                {isScanning ? (
+                                                    <div className="space-y-3">
+                                                        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                                        <p className="text-sm font-bold text-indigo-600">L'IA analyse votre reçu...</p>
+                                                    </div>
+                                                ) : selectedFile ? (
+                                                    <div className="space-y-2">
+                                                        <CheckCircle2 size={40} className="mx-auto text-emerald-500" />
+                                                        <p className="text-sm font-bold text-slate-700">{selectedFile.name}</p>
+                                                        <p className="text-xs text-slate-400">Cliquez pour changer</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        <Upload size={40} className="mx-auto text-slate-300 group-hover:text-indigo-400 group-hover:scale-110 transition-transform" />
+                                                        <p className="text-sm font-bold text-slate-500">Cliquez ou glissez votre reçu</p>
+                                                        <p className="text-xs text-slate-400">JPG, PNG ou PDF (max 5Mo)</p>
+                                                    </div>
+                                                )}
+
+                                                {scanResult && !isScanning && (
+                                                    <div className="absolute top-2 right-2 bg-emerald-500 text-white p-1 rounded-full shadow-lg">
+                                                        <Scan size={14} />
+                                                    </div>
+                                                )}
+                                            </label>
+                                        </div>
+                                        {scanResult && (
+                                            <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 flex items-center gap-3">
+                                                <div className="p-2 bg-emerald-500 text-white rounded-xl">
+                                                    <Check size={16} />
+                                                </div>
+                                                <p className="text-xs font-bold text-emerald-700 leading-tight">Données extraites avec succès par l'IA Gemini !</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Fields Section */}
+                                    <div className="space-y-5">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Montant & Devise</label>
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                        <DollarSign size={16} />
+                                                    </div>
+                                                    <input 
+                                                        type="number" 
+                                                        className="w-full bg-slate-50 border-none rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                                        placeholder="0.00"
+                                                        value={form.amount}
+                                                        onChange={e => setForm({...form, amount: e.target.value})}
+                                                        required
+                                                    />
+                                                </div>
+                                                <select 
+                                                    className="bg-slate-50 border-none rounded-xl px-3 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                                                    value={form.currency}
+                                                    onChange={e => setForm({...form, currency: e.target.value})}
+                                                >
+                                                    <option>FCFA</option>
+                                                    <option>EUR</option>
+                                                    <option>USD</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Catégorie</label>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                    <Tag size={16} />
+                                                </div>
+                                                <select 
+                                                    className="w-full bg-slate-50 border-none rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
+                                                    value={form.category}
+                                                    onChange={e => setForm({...form, category: e.target.value})}
+                                                >
+                                                    <option>Repas</option>
+                                                    <option>Transport</option>
+                                                    <option>Hébergement</option>
+                                                    <option>Fournitures</option>
+                                                    <option>Autre</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Marchand / Lieu</label>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                    <Building2 size={16} />
+                                                </div>
+                                                <input 
+                                                    type="text" 
+                                                    className="w-full bg-slate-50 border-none rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    placeholder="ex: Uber, Carrefour..."
+                                                    value={form.merchant}
+                                                    onChange={e => setForm({...form, merchant: e.target.value})}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Date de la dépense</label>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                    <Calendar size={16} />
+                                                </div>
+                                                <input 
+                                                    type="date" 
+                                                    className="w-full bg-slate-50 border-none rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    value={form.date}
+                                                    onChange={e => setForm({...form, date: e.target.value})}
+                                                    required
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700">Description (Optionnelle)</label>
-                                        <textarea
-                                            value={expenseForm.description}
-                                            onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-                                            className="flex min-h-[60px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                            placeholder="Objectif professionnel de cette dépense..."
-                                        />
-                                    </div>
-                                    <div className="space-y-2 pt-2 border-t border-slate-100">
-                                        <label className="text-sm font-medium text-slate-700">Reçu / Facture (Optionnel)</label>
-                                        <label className="block border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer group">
-                                            <input type="file" className="hidden" accept="image/*,.pdf" onChange={(e) => setReceiptFile(e.target.files[0])} />
-                                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                                <Upload size={20} />
-                                            </div>
-                                            {receiptFile ? (
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <p className="text-sm font-medium text-emerald-600">✅ {receiptFile.name}</p>
-                                                    <Button 
-                                                        type="button" 
-                                                        size="sm" 
-                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOCR(); }}
-                                                        disabled={isScanning}
-                                                        className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white"
-                                                    >
-                                                        {isScanning ? 'Analyse IA en cours...' : '🪄 Extraire les infos avec l\'IA'}
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <p className="text-sm font-medium text-slate-900">Cliquez pour joindre votre reçu</p>
-                                                    <p className="text-xs text-slate-500 mt-1">PDF, JPG ou PNG (Max. 5Mo)</p>
-                                                </>
-                                            )}
-                                        </label>
-                                    </div>
-                                </form>
-                            </div>
+                                </div>
 
-                            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
-                                <Button type="button" variant="outline" onClick={() => setIsExpenseModalOpen(false)}>Annuler</Button>
-                                <Button type="submit" form="add-expense-form" className="bg-blue-600 hover:bg-blue-700 text-white">Soumettre</Button>
-                            </div>
+                                <div className="flex gap-4 pt-4">
+                                    <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        className="flex-1 h-12 rounded-2xl text-slate-400 font-bold hover:bg-slate-50"
+                                        onClick={() => setShowAddModal(false)}
+                                    >
+                                        Annuler
+                                    </Button>
+                                    <Button 
+                                        type="submit" 
+                                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-12 rounded-2xl font-bold shadow-lg shadow-indigo-200"
+                                    >
+                                        Soumettre la demande
+                                    </Button>
+                                </div>
+                            </form>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
-
-            {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">Notes de Frais</h2>
-                    <p className="text-slate-500 mt-1">Soumettez, suivez et approuvez les dépenses d'entreprise.</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Button onClick={() => setIsExpenseModalOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                        <Plus size={18} /> Nouvelle Dépense
-                    </Button>
-                </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex space-x-1 bg-slate-200/50 p-1 rounded-lg w-max mb-6">
-                <button
-                    onClick={() => setActiveTab('my-expenses')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'my-expenses' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
-                >
-                    <Receipt size={16} /> Mes Dépenses
-                </button>
-                <button
-                    onClick={() => setActiveTab('approvals')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'approvals' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
-                >
-                    <Check size={16} /> Approbations en Attente
-                    {pendingApprovals.length > 0 && (
-                        <span className="ml-1.5 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingApprovals.length}</span>
-                    )}
-                </button>
-            </div>
-
-            {/* Tab Content */}
-            {activeTab === 'my-expenses' && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <Card>
-                            <CardHeader className="pb-2 text-sm font-medium text-slate-500">Non soumises / Brouillons</CardHeader>
-                            <CardContent className="text-3xl font-bold text-slate-900">0 FCFA</CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="pb-2 text-sm font-medium text-slate-500">En Examen</CardHeader>
-                            <CardContent className="text-3xl font-bold text-amber-600">
-                                {myExpenses.filter(e => e.status === 'En attente').reduce((a, b) => a + (b.amount || 0), 0).toFixed(0)} FCFA
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader className="pb-2 text-sm font-medium text-slate-500">Remboursées (Totales)</CardHeader>
-                            <CardContent className="text-3xl font-bold text-emerald-600">
-                                {myExpenses.filter(e => e.status === 'Approuvé' || e.status === 'Remboursé').reduce((a, b) => a + (b.amount || 0), 0).toFixed(0)} FCFA
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Historique des Dépenses</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Commerçant</TableHead>
-                                        <TableHead>Catégorie</TableHead>
-                                        <TableHead>Montant</TableHead>
-                                        <TableHead>Reçu</TableHead>
-                                        <TableHead>Statut</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {myExpenses.map((exp) => (
-                                        <TableRow key={exp.id}>
-                                            <TableCell className="text-slate-600 font-medium">{exp.date}</TableCell>
-                                            <TableCell className="text-slate-900">{exp.merchant}</TableCell>
-                                            <TableCell className="text-slate-500">{exp.category}</TableCell>
-                                            <TableCell className="font-semibold text-slate-900">{(exp.amount||0).toFixed(0)} {exp.currency}</TableCell>
-                                            <TableCell>
-                                                <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:bg-blue-50 px-2" onClick={() => showNotification(`Ouverture du justificatif pour ${exp.merchant}`)}><FileImage size={14} className="mr-1.5" /> Voir</Button>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={exp.status === 'Approuvé' ? 'success' : exp.status === 'Remboursé' ? 'blue' : exp.status === 'En attente' ? 'warning' : 'destructive'}>
-                                                    {exp.status}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {myExpenses.length === 0 && (
-                                        <TableRow><TableCell colSpan={6} className="text-center text-slate-500 text-sm h-16">Aucune dépense trouvée.</TableCell></TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {activeTab === 'approvals' && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <Card className="bg-gradient-to-br from-amber-500 to-amber-700 text-white border-0 shadow-md mb-6">
-                        <CardHeader className="pb-2 text-sm font-medium text-amber-100">Total Approbations en Attente</CardHeader>
-                        <CardContent>
-                            <div className="text-4xl font-bold">{totalPending.toFixed(0)} FCFA</div>
-                            <p className="text-amber-200 text-xs mt-1">{pendingApprovals.length} demandes en attente de votre examen</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Dépenses de l'Équipe</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Employé</TableHead>
-                                        <TableHead>Date & Commerçant</TableHead>
-                                        <TableHead>Catégorie</TableHead>
-                                        <TableHead>Montant</TableHead>
-                                        <TableHead>Reçu</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {pendingApprovals.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8 text-slate-500">À jour ! Aucune dépense en attente d'approbation.</TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        pendingApprovals.map((exp) => (
-                                            <TableRow key={exp.id}>
-                                                <TableCell className="font-medium text-slate-900">{exp.employee}</TableCell>
-                                                <TableCell>
-                                                    <div className="text-slate-900 font-medium">{exp.merchant}</div>
-                                                    <div className="text-slate-500 text-xs">{exp.date}</div>
-                                                </TableCell>
-                                                <TableCell className="text-slate-500">{exp.category}</TableCell>
-                                                <TableCell className="font-bold text-slate-900">{(exp.amount||0).toFixed(0)} {exp.currency}</TableCell>
-                                                <TableCell>
-                                                    <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:bg-blue-50 px-2" onClick={() => showNotification(`Ouverture du justificatif de ${exp.employee}`)}><FileImage size={14} /></Button>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleApprove(exp.id)}
-                                                            className="h-8 border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
-                                                        >
-                                                            <Check size={14} className="mr-1" /> Approuver
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleReject(exp.id)}
-                                                            className="h-8 border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                                                        >
-                                                            <X size={14} className="mr-1" /> Rejeter
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
         </div>
     );
 }

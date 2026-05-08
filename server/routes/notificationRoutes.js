@@ -4,6 +4,7 @@ const notificationController = require('../controllers/notificationController');
 const verifyToken = require('../middleware/authMiddleware');
 
 router.get('/', verifyToken, notificationController.getNotifications);
+router.get('/alerts', verifyToken, notificationController.getCriticalAlerts);
 router.patch('/:notifId/read', verifyToken, notificationController.markAsRead);
 router.post('/read-all', verifyToken, notificationController.markAllAsRead);
 
