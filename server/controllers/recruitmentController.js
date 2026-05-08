@@ -1,6 +1,8 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -116,67 +118,7 @@ exports.createApplicant = async (req, res) => {
     }
 };
 
-exports.publicApply = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'Aucun CV fourni' });
-        }
 
-        // Get the default job offer (or the first one) to attach the applicant
-        const jobOffers = await prisma.jobOffer.findMany({ take: 1 });
-        let jobOfferId = req.body.jobOfferId;
-        if (!jobOfferId && jobOffers.length > 0) {
-            jobOfferId = jobOffers[0].id;
-        }
-
-        // Analyse the CV with AI
-        let aiExtractedData = { firstName: 'Candidat', lastName: 'Inconnu', email: 'email@example.com', phone: '' };
-        
-        try {
-            const mimeType = req.file.mimetype;
-            const fileContent = fs.readFileSync(req.file.path).toString("base64");
-
-            const prompt = `Tu es un recruteur expert. Analyse ce CV et extrais les informations sous forme de JSON strict :
-            {
-              "firstName": "Prénom du candidat",
-              "lastName": "Nom de famille du candidat",
-              "email": "Adresse email",
-              "phone": "Numéro de téléphone"
-            }
-            Ne renvoie QUE le JSON, pas de texte autour.`;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [
-                    prompt,
-                    { inlineData: { data: fileContent, mimeType: mimeType } }
-                ]
-            });
-            const textRes = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
-            aiExtractedData = JSON.parse(textRes);
-        } catch (e) {
-            console.error("AI Extraction failed, using defaults", e);
-        }
-
-        const applicant = await prisma.applicant.create({
-            data: {
-                firstName: aiExtractedData.firstName || 'Candidat',
-                lastName: aiExtractedData.lastName || 'Inconnu',
-                email: aiExtractedData.email || 'candidat@example.com',
-                phone: aiExtractedData.phone || '',
-                resumeUrl: `/uploads/cvs/${req.file.filename}`,
-                source: 'Site Carrière',
-                status: 'NOUVEAU',
-                jobOfferId: jobOfferId || null
-            }
-        });
-
-        res.status(201).json({ message: "Candidature reçue avec succès", applicant });
-    } catch (error) {
-        console.error('Public apply error:', error);
-        res.status(500).json({ error: 'Erreur lors de la candidature' });
-    }
-};
 
 exports.publicApply = async (req, res) => {
     try {
@@ -207,14 +149,12 @@ exports.publicApply = async (req, res) => {
             }
             Ne renvoie QUE le JSON, pas de texte autour.`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: [
-                    prompt,
-                    { inlineData: { data: fileContent, mimeType: mimeType } }
-                ]
-            });
-            const textRes = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const result = await aiModel.generateContent([
+                prompt,
+                { inlineData: { data: fileContent, mimeType: mimeType } }
+            ]);
+            const response = await result.response;
+            const textRes = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
             aiExtractedData = JSON.parse(textRes);
         } catch (e) {
             console.error("AI Extraction failed, using defaults", e);
@@ -338,23 +278,17 @@ Génère une réponse stricte au format JSON (sans Markdown) :
 }
 `;
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: { temperature: 0.2 }
-        });
-
+        const result = await aiModel.generateContent(prompt);
+        const response = await result.response;
+        
         let aiText = response.text().trim();
         // Nettoyage au cas où Gemini renvoie du Markdown
-        if (aiText.startsWith('\`\`\`json')) {
-            aiText = aiText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
-        }
 
-        const result = JSON.parse(aiText);
+        const parsed = JSON.parse(aiText.replace(/```json/g, '').replace(/```/g, '').trim());
 
         res.status(200).json({
-            score: result.score,
-            summary: result.summary
+            score: parsed.score,
+            summary: parsed.summary
         });
 
     } catch (error) {

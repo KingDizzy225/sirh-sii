@@ -106,11 +106,9 @@ exports.updateExpenseStatus = async (req, res) => {
     }
 };
 
-const { GoogleGenAI } = require('@google/genai');
-let ai;
-try {
-    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-} catch(e) { ai = null; }
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 exports.scanReceipt = async (req, res) => {
     try {
@@ -133,20 +131,17 @@ exports.scanReceipt = async (req, res) => {
 }
 Ne renvoie QUE le JSON, pas de texte autour ni de blocs \`\`\`json.`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-                prompt,
-                {
-                    inlineData: {
-                        data: fileContent,
-                        mimeType: mimeType
-                    }
+        const result = await aiModel.generateContent([
+            prompt,
+            {
+                inlineData: {
+                    data: fileContent,
+                    mimeType: mimeType
                 }
-            ]
-        });
-
-        const textRes = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+            }
+        ]);
+        const response = await result.response;
+        const textRes = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
         let parsed;
         try {
             parsed = JSON.parse(textRes);

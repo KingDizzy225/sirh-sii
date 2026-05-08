@@ -2,12 +2,9 @@ const prisma = require('../prismaClient');
 const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
-try {
-    const { GoogleGenAI } = require('@google/genai');
-    var ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-} catch(e) {
-    var ai = null;
-}
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 exports.generateAIDocument = async (req, res) => {
     if (!process.env.GEMINI_API_KEY || !ai) {
@@ -34,11 +31,9 @@ exports.generateAIDocument = async (req, res) => {
         prompt += `\nAssure-toi que le ton soit très formel, juridique et sans fioritures (pas de bla-bla d\'introduction). Le corps du texte uniquement sans objet ni destinataire ni signatures (qui seront générés dynamiquement en bas de document).`;
 
         // 2. Call Gemini
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        const generatedText = response.text;
+        const result = await aiModel.generateContent(prompt);
+        const response = await result.response;
+        const generatedText = response.text();
 
         // 3. Generate PDF
         const docTitle = `${type} - ${employee.firstName} ${employee.lastName}`;

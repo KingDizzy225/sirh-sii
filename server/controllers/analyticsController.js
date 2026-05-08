@@ -1,10 +1,8 @@
 const prisma = require('../prismaClient');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-let ai;
-try {
-    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-} catch(e) { ai = null; }
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 exports.getDashboardAnalytics = async (req, res) => {
     try {
@@ -182,12 +180,10 @@ Données :
 ${JSON.stringify(promptData)}
 `;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: systemPrompt
-        });
-
-        const textRes = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const result = await aiModel.generateContent(systemPrompt);
+        const response = await result.response;
+        const textResponse = response.text();
+        const textRes = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
         const insights = JSON.parse(textRes);
 
         res.status(200).json(insights);

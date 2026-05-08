@@ -1,9 +1,12 @@
 const prisma = require('../prismaClient');
-const { GoogleGenAI, Type, Schema } = require('@google/genai');
-
-// Initialize Gemini Client
-// Requires GEMINI_API_KEY in .env
-const ai = new GoogleGenAI({});
+const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    generationConfig: {
+        responseMimeType: "application/json",
+    }
+});
 
 exports.generateOrgChartWithAI = async (req, res) => {
     try {
@@ -34,18 +37,18 @@ exports.generateOrgChartWithAI = async (req, res) => {
 
         // We want Gemini to output an array of { employeeId, managerId }
         const schema = {
-            type: Type.ARRAY,
+            type: SchemaType.ARRAY,
             description: "List of organizational reporting relationships",
             items: {
-                type: Type.OBJECT,
+                type: SchemaType.OBJECT,
                 properties: {
                     employeeId: {
-                        type: Type.STRING,
+                        type: SchemaType.STRING,
                         description: "The unique ID of the employee"
                     },
                     managerId: {
-                        type: Type.STRING,
-                        description: "The unique ID of the manager this employee reports to. Must be null for the single highest person (CEO/Director). Must exactly match an existing employee ID from the list provided.",
+                        type: SchemaType.STRING,
+                        description: "The unique ID of the manager this employee reports to.",
                         nullable: true
                     }
                 },
@@ -72,17 +75,9 @@ exports.generateOrgChartWithAI = async (req, res) => {
 
         console.log("Calling Gemini API to generate Org Chart based on roles...");
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: schema,
-                temperature: 0.1 // Low temp for deterministic logic
-            }
-        });
-
-        const generatedData = JSON.parse(response.text);
+        const result = await aiModel.generateContent(prompt);
+        const response = await result.response;
+        const generatedData = JSON.parse(response.text());
 
         if (!Array.isArray(generatedData)) {
             throw new Error("Invalid format received from Gemini.");
