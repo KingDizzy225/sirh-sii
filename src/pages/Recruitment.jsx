@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { MapPin, Clock, Plus, UserPlus, CheckCircle2, X, ArrowRight, Star, ThumbsUp, ThumbsDown, ArrowLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Clock, Plus, UserPlus, CheckCircle2, X, ArrowRight, Star, ThumbsUp, ThumbsDown, ArrowLeft, ChevronRight, Target, Building } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const STAGES = [

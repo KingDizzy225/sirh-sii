@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { HeartPulse, MessageSquare, Plus, Activity, ThumbsUp, ThumbsDown, Minus, CheckCircle2 } from 'lucide-react';
+import { HeartPulse, MessageSquare, Plus, Activity, ThumbsUp, ThumbsDown, Minus, CheckCircle2, Sparkles } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
