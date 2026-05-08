@@ -13,7 +13,8 @@ import {
     BrainCircuit,
     Plus,
     Trash2,
-    BarChart3
+    BarChart3,
+    Trophy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

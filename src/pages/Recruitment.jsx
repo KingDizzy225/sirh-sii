@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { MapPin, Clock, Plus, UserPlus, CheckCircle2, X, ArrowRight, Star, ThumbsUp, ThumbsDown, ArrowLeft, ChevronRight, Target, Building } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const STAGES = [
     { id: 'SCREENING', label: 'Sélection', color: 'text-slate-500', bg: 'bg-slate-100' },

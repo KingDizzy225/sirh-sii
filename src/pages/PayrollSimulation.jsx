@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Slider } from '../components/ui/slider';
 import { 
     Calculator, 
     TrendingUp, 
@@ -116,12 +115,13 @@ export function PayrollSimulation() {
                                 <label className="text-sm font-bold text-slate-700">Augmentation (%)</label>
                                 <span className="text-lg font-black text-emerald-600">+{increasePct}%</span>
                             </div>
-                            <Slider 
-                                value={[increasePct]} 
-                                onValueChange={(v) => setIncreasePct(v[0])} 
+                            <input 
+                                type="range"
+                                value={increasePct} 
+                                onChange={(e) => setIncreasePct(Number(e.target.value))} 
                                 max={20} 
                                 step={0.5} 
-                                className="py-4"
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500 py-4"
                             />
                         </div>
 
