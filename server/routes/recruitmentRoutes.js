@@ -13,7 +13,9 @@ router.post('/applicants', recruitmentController.createApplicant);
 router.put('/applicants/:id/status', recruitmentController.updateApplicantStatus);
 
 // AI
+const aiSourcingController = require('../controllers/aiSourcingController');
 router.post('/applicants/:id/ai-match', recruitmentController.analyzeCandidateWithAI);
+router.post('/ai-source', aiSourcingController.analyzeCandidates);
 
 // Public API
 router.post('/public-apply', recruitmentController.uploadCV.single('resume'), recruitmentController.publicApply);

@@ -160,7 +160,7 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
                     {(user.role?.toUpperCase() === 'HR' || user.role?.toUpperCase() === 'ADMIN') && (
                         <div className="border-l border-slate-700 pl-2 ml-1 flex items-center gap-2">
                             <NotificationCenter />
-                            <span className="hidden xl:block text-[8px] font-black text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded uppercase tracking-tighter">V2.1 Live</span>
+                            <span className="hidden xl:block text-[8px] font-black text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded uppercase tracking-tighter">V2.2 Live</span>
                         </div>
                     )}
                 </div>

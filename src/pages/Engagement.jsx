@@ -236,6 +236,54 @@ export function Engagement() {
                         </CardContent>
                     </Card>
 
+                    {/* AI Sentiment Analysis Section */}
+                    <Card className="col-span-1 md:col-span-2 lg:col-span-3 shadow-xl border-none bg-slate-900 text-white overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
+                            <Activity size={160} />
+                        </div>
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <Sparkles className="text-indigo-400" size={20} />
+                                Analyse de Sentiment par IA
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
+                                <div className="space-y-6">
+                                    <div className="p-5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-3">Météo Sociale</h4>
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-4xl">🌤️</div>
+                                            <div>
+                                                <p className="text-xl font-black">Majoritairement Ensoleillé</p>
+                                                <p className="text-xs text-slate-400 font-medium mt-1">Sentiment global : 78% Positif</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Thèmes Récurrents</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['Télétravail (+)', 'Cohésion (+)', 'Surcharge (-)', 'Salaire (-)', 'Management (+)'].map(tag => (
+                                                <span key={tag} className={`px-3 py-1 rounded-full text-[10px] font-bold ${tag.includes('+') ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Résumé Stratégique IA</p>
+                                    <p className="text-sm text-slate-300 leading-relaxed font-medium italic">
+                                        "L'engagement reste très fort grâce à la flexibilité du télétravail. Cependant, une fatigue passagère est détectée dans les commentaires liés aux 'réunions' et au 'stress projet'. Recommandation : Instaurer des 'No-Meeting Thursdays' pour libérer du temps de focus."
+                                    </p>
+                                    <Button className="bg-white text-slate-900 hover:bg-slate-200 font-black h-10 px-6 rounded-xl text-xs mt-4">
+                                        Générer le rapport complet
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Employee Verbatims */}
                     <Card className="col-span-1 md:col-span-2 lg:col-span-3 shadow-sm border-slate-200">
                         <CardHeader className="flex flex-row items-center justify-between">

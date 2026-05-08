@@ -55,6 +55,26 @@ model Employee {
   absences        Absence[] @relation("EmployeeAbsences")
   careerHistory   CareerHistory[]
   disciplinaryRecords DisciplinaryRecord[]
+  kudosSent       Kudo[] @relation("SentKudos")
+  kudosReceived   Kudo[] @relation("ReceivedKudos")
+}
+
+// ... (existing code)
+
+// ----------------------------------------------------
+// 27. KUDOS (PEER RECOGNITION)
+// ----------------------------------------------------
+
+model Kudo {
+  id              String   @id @default(uuid())
+  senderId        String   @map("sender_id")
+  receiverId      String   @map("receiver_id")
+  message         String
+  category        String   // 'Teamwork', 'Innovation', 'Leadership', 'Efficiency'
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  sender          Employee @relation("SentKudos", fields: [senderId], references: [id])
+  receiver        Employee @relation("ReceivedKudos", fields: [receiverId], references: [id])
 }
 
 // ----------------------------------------------------

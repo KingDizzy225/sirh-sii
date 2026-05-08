@@ -45,6 +45,9 @@ import { Absences } from './pages/Absences';
 
 // V5 New Components
 import { Offboarding } from './pages/Offboarding';
+import { KudosWall } from './pages/KudosWall';
+import { AiSourcing } from './pages/AiSourcing';
+import { PayrollSimulation } from './pages/PayrollSimulation';
 import { ShiftScheduler } from './pages/ShiftScheduler';
 import { Benefits } from './pages/Benefits';
 import { Ethics } from './pages/Ethics';
@@ -260,6 +263,9 @@ const AppContent = () => {
 
             {/* V4 Modules */}
             <Route path="/announcements" element={<Announcements />} />
+            <Route path="/kudos" element={<ProtectedRoute><KudosWall /></ProtectedRoute>} />
+            <Route path="/ai-sourcing" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><AiSourcing /></ProtectedRoute>} />
+            <Route path="/payroll-simulation" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><PayrollSimulation /></ProtectedRoute>} />
             <Route path="/advances" element={<SalaryAdvances />} />
             <Route path="/medical" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>

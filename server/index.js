@@ -108,6 +108,10 @@ const absenceRoutes = require('./routes/absenceRoutes');
 app.use('/api/absences', absenceRoutes);
 
 
+// V8 Gamification & Kudos
+const kudoRoutes = require('./routes/kudoRoutes');
+app.use('/api/kudos', kudoRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

@@ -18,7 +18,7 @@ const getAllNavItems = () => [
     { name: 'Mes Dépenses', path: '/expenses', icon: Receipt, domain: 'Myself', permission: 'myself:view' },
     { name: 'Avance sur Salaire', path: '/advances', icon: Banknote, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Fiches de Paie', path: '/payroll', icon: FileText, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Récompenses', path: '/rewards', icon: Trophy, domain: 'Myself', permission: 'myself:view' },
+    { name: 'Kudos & Gamification', path: '/kudos', icon: Heart, domain: 'Myself', permission: 'myself:view' },
     { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Avantages', path: '/benefits', icon: HeartPulse, domain: 'Myself', permission: 'myself:view' },
     
@@ -31,6 +31,7 @@ const getAllNavItems = () => [
     { name: 'Répertoire Employés', path: '/employees', icon: Users, domain: 'People', permission: 'employees:view' },
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'People', permission: 'employees:view' },
     { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'People', permission: 'recruitment:view' },
+    { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'People', permission: 'recruitment:view' },
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'People', permission: 'onboarding:view' },
     { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'People', permission: 'employees:edit' },
     { name: 'Flex-Workforce', path: '/subcontractors', icon: Building, domain: 'People', permission: 'employees:edit' },
@@ -52,6 +53,7 @@ const getAllNavItems = () => [
     
     // REPORTS
     { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Reports', permission: 'dashboard:view' },
+    { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Reports', permission: 'payroll:view' },
     { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Reports', permission: 'dashboard:view' },
     { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Reports', permission: 'dashboard:view' },
     { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: FileText, domain: 'Reports', permission: 'support_tickets:manage' },
