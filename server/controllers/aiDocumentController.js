@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 exports.generateAIDocument = async (req, res) => {
-    if (!process.env.GEMINI_API_KEY || !ai) {
+    if (!process.env.GEMINI_API_KEY || !aiModel) {
          return res.status(500).json({ error: 'La clé d\'API GEMINI_API_KEY n\'est pas configurée dans le backend (.env).' });
     }
 

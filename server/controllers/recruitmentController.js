@@ -21,7 +21,6 @@ const storage = multer.diskStorage({
 });
 exports.uploadCV = multer({ storage });
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // =============== JOB OFFERS ===============
 

@@ -133,7 +133,7 @@ exports.getDashboardAnalytics = async (req, res) => {
 
 exports.getPredictiveAnalytics = async (req, res) => {
     try {
-        if (!ai) return res.status(500).json({ error: 'IA non configurée' });
+        if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
 
         const employees = await prisma.employee.findMany({
             where: { status: 'ACTIVE' },

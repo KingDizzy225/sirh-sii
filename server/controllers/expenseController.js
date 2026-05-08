@@ -115,7 +115,7 @@ exports.scanReceipt = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ error: 'Aucun fichier fourni' });
         }
-        if (!ai) {
+        if (!aiModel) {
             return res.status(500).json({ error: 'Service IA non disponible' });
         }
 
