@@ -3,7 +3,17 @@ const prisma = require('../prismaClient');
 exports.sendKudo = async (req, res) => {
     try {
         const { receiverId, message, category } = req.body;
-        const senderId = req.user.id; // From verifyToken
+        
+        // Find corresponding Employee for the logged-in User
+        const employee = await prisma.employee.findUnique({
+            where: { email: req.user.email }
+        });
+
+        if (!employee) {
+            return res.status(404).json({ error: "Profil employé introuvable pour cet utilisateur." });
+        }
+
+        const senderId = employee.id;
 
         if (senderId === receiverId) {
             return res.status(400).json({ error: "Vous ne pouvez pas vous envoyer de Kudo à vous-même." });
