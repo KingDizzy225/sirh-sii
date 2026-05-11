@@ -54,8 +54,9 @@ import { Ethics } from './pages/Ethics';
 import { Subcontractors } from './pages/Subcontractors';
 import { DeiDashboard } from './pages/DeiDashboard';
 
-// V6 Enterprise
 import { FloatingChat } from './components/FloatingChat';
+import { CareerPath } from './pages/CareerPath';
+import { CommandCenter } from './components/CommandCenter';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -266,6 +267,7 @@ const AppContent = () => {
             <Route path="/kudos" element={<ProtectedRoute><KudosWall /></ProtectedRoute>} />
             <Route path="/ai-sourcing" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><AiSourcing /></ProtectedRoute>} />
             <Route path="/payroll-simulation" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><PayrollSimulation /></ProtectedRoute>} />
+            <Route path="/career-path" element={<ProtectedRoute><CareerPath /></ProtectedRoute>} />
             <Route path="/advances" element={<SalaryAdvances />} />
             <Route path="/medical" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
@@ -318,6 +320,7 @@ const AppContent = () => {
       
       {/* Chatbot Flottant - Accessible depuis toutes les pages */}
       <FloatingChat />
+      <CommandCenter />
     </div>
   );
 };

@@ -47,6 +47,7 @@ export function EmployeeProfile() {
     const [uploadFile, setUploadFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [careerHistory, setCareerHistory] = useState([]);
+    const [timelineEvents, setTimelineEvents] = useState([]);
     const [disciplinaryRecords, setDisciplinaryRecords] = useState([]);
     const [showDisciplinaryModal, setShowDisciplinaryModal] = useState(false);
     const [disciplinaryForm, setDisciplinaryForm] = useState({ date: new Date().toISOString().split('T')[0], type: 'Warning', reason: '', sanction: '' });
@@ -76,11 +77,11 @@ export function EmployeeProfile() {
                 });
                 if (docsRes.ok) setPersonnelDocs(await docsRes.json());
 
-                // Fetch history
-                const historyRes = await fetch(`${API_URL}/api/career/${id}`, {
+                // Fetch timeline
+                const timelineRes = await fetch(`${API_URL}/api/career/timeline/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (historyRes.ok) setCareerHistory(await historyRes.json());
+                if (timelineRes.ok) setTimelineEvents(await timelineRes.json());
 
                 // Fetch disciplinary
                 const discRes = await fetch(`${API_URL}/api/disciplinary/${id}`, {
@@ -308,7 +309,7 @@ export function EmployeeProfile() {
                 {[
                     { id: 'competences', label: 'Compétences & Matériel' }, 
                     { id: 'dossier', label: '📂 Dossier' },
-                    { id: 'history', label: '🕰️ Historique' },
+                    { id: 'timeline', label: '🕰️ Timeline' },
                     { id: 'disciplinary', label: '⚖️ Disciplinaire' }
                 ].map(tab => (
                     <button
@@ -480,117 +481,51 @@ export function EmployeeProfile() {
                         </div>
                     )}
 
-                    {/* Onglet Historique de Carrière */}
-                    {activeTab === 'history' && (
-                        <Card className="border-slate-100 shadow-sm">
-                            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-                                <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
-                                    <History size={20} className="text-blue-600" />
-                                    Historique & Évolution
+                    {/* Onglet Timeline (Nouveau) */}
+                    {activeTab === 'timeline' && (
+                        <Card className="border-slate-100 shadow-sm overflow-hidden">
+                            <CardHeader className="bg-slate-900 text-white border-b border-slate-800">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <History size={20} className="text-blue-400" />
+                                    Timeline de Vie SII
                                 </CardTitle>
-                                <CardDescription>Suivi des changements de poste, de département et promotions.</CardDescription>
-                                {(user?.role === 'HR' || user?.role === 'ADMIN') && (
-                                    <Button size="sm" className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white gap-2" onClick={() => setShowHistoryModal(true)}>
-                                        <Plus size={14} /> Ajouter
-                                    </Button>
-                                )}
+                                <CardDescription className="text-slate-400">
+                                    Retracez les moments forts de votre parcours au sein de l'entreprise.
+                                </CardDescription>
                             </CardHeader>
-                            <CardContent className="p-6">
-                                {/* Modal History */}
-                                {showHistoryModal && (
-                                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-                                            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                                                <h3 className="text-lg font-bold text-slate-900">Ajouter un événement</h3>
-                                                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setShowHistoryModal(false)}><X size={18} /></Button>
+                            <CardContent className="p-8 bg-slate-900 text-white">
+                                <div className="relative border-l-2 border-slate-800 ml-4 space-y-12">
+                                    {timelineEvents.map((event, idx) => (
+                                        <motion.div
+                                            key={event.id}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: idx * 0.1 }}
+                                            className="relative pl-10"
+                                        >
+                                            {/* Icon Dot */}
+                                            <div className="absolute -left-[11px] top-0 h-5 w-5 rounded-full bg-slate-900 border-2 border-blue-500 flex items-center justify-center z-10">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                             </div>
-                                            <form onSubmit={handleAddHistory} className="px-6 py-5 space-y-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-1">
-                                                        <label className="text-sm font-medium text-slate-700">Date</label>
-                                                        <input
-                                                            type="date"
-                                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                                                            value={historyForm.eventDate}
-                                                            onChange={e => setHistoryForm(f => ({ ...f, eventDate: e.target.value }))}
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-sm font-medium text-slate-700">Type</label>
-                                                        <select
-                                                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                                                            value={historyForm.type}
-                                                            onChange={e => setHistoryForm(f => ({ ...f, type: e.target.value }))}
-                                                        >
-                                                            {['PROMOTION', 'DEPARTMENT_CHANGE', 'SALARY_CHANGE', 'HIRE', 'EXIT'].map(t => (
-                                                                <option key={t} value={t}>{t}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
+
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                        {new Date(event.date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', day: 'numeric' })}
+                                                    </span>
+                                                    <Badge className="bg-blue-600/10 text-blue-400 border-none text-[8px] px-1.5 py-0">
+                                                        {event.type}
+                                                    </Badge>
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-sm font-medium text-slate-700">Ancienne valeur (Optionnel)</label>
-                                                    <input
-                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                                                        placeholder="ex: Analyste Junior"
-                                                        value={historyForm.previousValue}
-                                                        onChange={e => setHistoryForm(f => ({ ...f, previousValue: e.target.value }))}
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-sm font-medium text-slate-700">Nouvelle valeur</label>
-                                                    <input
-                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                                                        placeholder="ex: Analyste Senior"
-                                                        value={historyForm.newValue}
-                                                        onChange={e => setHistoryForm(f => ({ ...f, newValue: e.target.value }))}
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-sm font-medium text-slate-700">Commentaire</label>
-                                                    <textarea
-                                                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20"
-                                                        placeholder="Détails de l'évolution..."
-                                                        value={historyForm.comment}
-                                                        onChange={e => setHistoryForm(f => ({ ...f, comment: e.target.value }))}
-                                                    />
-                                                </div>
-                                                <div className="flex justify-end gap-3 pt-2">
-                                                    <Button type="button" variant="outline" onClick={() => setShowHistoryModal(false)}>Annuler</Button>
-                                                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Enregistrer</Button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                )}
-                                {careerHistory.length === 0 ? (
-                                    <div className="text-center py-8 text-slate-500">
-                                        <p>Aucun événement historique enregistré.</p>
-                                    </div>
-                                ) : (
-                                    <div className="relative border-l-2 border-slate-100 ml-4 pl-8 space-y-8 py-2">
-                                        {careerHistory.map((event, idx) => (
-                                            <div key={event.id} className="relative">
-                                                <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-white border-2 border-blue-500 z-10" />
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{formatDate(event.eventDate)}</span>
-                                                    <h4 className="font-bold text-slate-900">{event.type}</h4>
-                                                    <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 mt-2">
-                                                        {event.previousValue && (
-                                                            <p className="mb-1"><span className="font-medium text-slate-400">Ancien :</span> {event.previousValue}</p>
-                                                        )}
-                                                        <p><span className="font-medium text-blue-600">Nouveau :</span> {event.newValue}</p>
-                                                        {event.comment && (
-                                                            <p className="mt-2 pt-2 border-t border-slate-200 italic text-slate-500">"{event.comment}"</p>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                                <h4 className="text-lg font-black tracking-tighter uppercase">{event.title}</h4>
+                                                <p className="text-sm text-slate-400 font-medium italic">"{event.description}"</p>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
+                                        </motion.div>
+                                    ))}
+                                    {timelineEvents.length === 0 && (
+                                        <div className="text-center py-12 text-slate-500 italic">Aucun événement à afficher pour le moment.</div>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                     )}

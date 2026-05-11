@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const careerController = require('../controllers/careerController');
-const { protect } = require('../middleware/authMiddleware');
-const { requireRole } = require('../middleware/roleMiddleware');
+const { authenticateToken } = require('../middleware/auth');
 
-router.get('/:employeeId', protect, careerController.getEmployeeHistory);
-router.post('/:employeeId', protect, requireRole(['HR', 'ADMIN']), careerController.addHistoryEvent);
+router.get('/path/:employeeId', authenticateToken, careerController.getCareerPath);
+router.get('/timeline/:employeeId', authenticateToken, careerController.getTimeline);
 
 module.exports = router;

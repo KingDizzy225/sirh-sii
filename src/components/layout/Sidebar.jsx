@@ -19,6 +19,7 @@ const getAllNavItems = () => [
     { name: 'Avance sur Salaire', path: '/advances', icon: Banknote, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Fiches de Paie', path: '/payroll', icon: FileText, domain: 'Myself', permission: 'myself:view' },
     { name: 'Kudos & Gamification', path: '/kudos', icon: Heart, domain: 'Myself', permission: 'myself:view' },
+    { name: 'Explorateur Carrière', path: '/career-path', icon: Rocket, domain: 'Myself', permission: 'myself:view' },
     { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Myself', permission: 'myself:view' },
     { name: 'Mes Avantages', path: '/benefits', icon: HeartPulse, domain: 'Myself', permission: 'myself:view' },
     
