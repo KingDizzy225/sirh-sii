@@ -284,13 +284,14 @@ export function Dashboard() {
                             <CardContent>
                                 <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    <span className={stat.change.startsWith('+') ? 'text-emerald-600 font-medium' : 'text-rose-600 font-medium'}>
+                                    <span className={String(stat.change).startsWith('+') ? 'text-emerald-600 font-medium' : 'text-slate-500 font-medium'}>
                                         {stat.change}
                                     </span>{' '}
                                     depuis le mois dernier
                                 </p>
                             </CardContent>
                         </Card>
+                    </motion.div>
                 ))}
             </div>
 
