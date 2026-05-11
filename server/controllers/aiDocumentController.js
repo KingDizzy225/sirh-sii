@@ -3,13 +3,14 @@ const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 exports.generateAIDocument = async (req, res) => {
-    if (!process.env.GEMINI_API_KEY || !aiModel) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
          return res.status(500).json({ error: 'La clé d\'API GEMINI_API_KEY n\'est pas configurée dans le backend (.env).' });
     }
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     try {
         console.log("=> [AI GENERATE] Called by:", req.user?.email);

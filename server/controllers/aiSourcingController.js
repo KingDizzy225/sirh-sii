@@ -1,16 +1,20 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const prisma = require('../prismaClient');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 exports.analyzeCandidates = async (req, res) => {
     try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+             return res.status(500).json({ error: 'La clé d\'API GEMINI_API_KEY n\'est pas configurée dans le backend.' });
+        }
+        
         const { jobDescription, candidates } = req.body; // candidates is an array of { name, resumeText }
 
         if (!jobDescription || !candidates || candidates.length === 0) {
             return res.status(400).json({ error: "Description de poste et candidats requis." });
         }
 
+        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
