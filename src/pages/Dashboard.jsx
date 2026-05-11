@@ -142,29 +142,7 @@ export function Dashboard() {
                 )}
             </AnimatePresence>
 
-            {/* V2.2 Launch Banner */}
-            <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-600 p-4 rounded-2xl shadow-lg border border-indigo-500/20 mb-8 overflow-hidden relative"
-            >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-white/20 p-2 rounded-xl backdrop-blur-md">
-                            <Activity className="text-white" size={24} />
-                        </div>
-                        <div>
-                            <h3 className="text-white font-black text-lg">SIRH-SII Version 2.2 Live 🚀</h3>
-                            <p className="text-indigo-100 text-xs font-medium">L'IA est désormais intégrée au cœur de vos processus RH.</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        <span className="bg-white/10 text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/20">Chatbot Actif</span>
-                        <span className="bg-white/10 text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/20">Analytique IA</span>
-                    </div>
-                </div>
-            </motion.div>
+
 
             <div className="flex items-center justify-between space-y-2 mb-8">
                 <div>
