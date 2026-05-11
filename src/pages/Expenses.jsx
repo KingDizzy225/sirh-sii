@@ -101,6 +101,12 @@ export function Expenses() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (Number(form.amount) <= 0) {
+            alert('Le montant doit être supérieur à zéro.');
+            return;
+        }
+
         const formData = new FormData();
         formData.append('amount', form.amount);
         formData.append('currency', form.currency);
@@ -121,9 +127,12 @@ export function Expenses() {
                 setSelectedFile(null);
                 setScanResult(null);
                 fetchExpenses();
+            } else {
+                alert('Erreur lors de la soumission de la note de frais.');
             }
         } catch (error) {
             console.error("Error saving expense", error);
+            alert('Erreur réseau. Veuillez réessayer.');
         }
     };
 

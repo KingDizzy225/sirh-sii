@@ -176,6 +176,11 @@ END:VCALENDAR`;
             return;
         }
 
+        if (new Date(leaveForm.endDate) < new Date(leaveForm.startDate)) {
+            showNotification('La date de fin ne peut pas être antérieure à la date de début.');
+            return;
+        }
+
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
             const token = localStorage.getItem('sirh_token');
@@ -197,9 +202,12 @@ END:VCALENDAR`;
                 setLeaveForm({ employeeId: user?.id || '', type: 'Congé Annuel', startDate: '', endDate: '', reason: '' });
                 showNotification('Demande de congé soumise avec succès.');
                 setActiveTab('my-leaves');
+            } else {
+                showNotification('Erreur lors de la soumission de la demande.');
             }
         } catch (error) {
             console.error(error);
+            showNotification('Erreur réseau. Veuillez réessayer.');
         }
     };
 
@@ -507,6 +515,7 @@ END:VCALENDAR`;
                                         title: `${req.employee} (${req.type})`,
                                         start: req.rawStart || new Date(),
                                         end: req.rawEnd || new Date(),
+                                        status: req.status,
                                         allDay: true,
                                     };
                                 })}
@@ -524,7 +533,7 @@ END:VCALENDAR`;
                                 }}
                                 culture="fr"
                                 eventPropGetter={(event) => {
-                                    const backgroundColor = event.title.includes('Approuvé') ? '#10b981' : event.title.includes('Rejeté') ? '#ef4444' : '#f59e0b';
+                                    const backgroundColor = event.status === 'Approuvé' ? '#10b981' : event.status === 'Rejeté' ? '#ef4444' : '#f59e0b';
                                     return { style: { backgroundColor, borderRadius: '4px', border: 'transparent' } };
                                 }}
                             />
