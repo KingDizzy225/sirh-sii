@@ -338,7 +338,7 @@ export function Absences() {
                                                 Aucune absence enregistrée.
                                             </TableCell>
                                         </TableRow>
-                                    ) : absences.map(abs => (
+                                    ) : absences?.map(abs => (
                                         <TableRow key={abs.id}>
                                             <TableCell className="font-medium text-slate-900">
                                                 {abs.employee?.firstName} {abs.employee?.lastName}
@@ -420,7 +420,7 @@ export function Absences() {
                                                 Aucune absence enregistrée à votre nom. Bravo !
                                             </TableCell>
                                         </TableRow>
-                                    ) : myAbsences.map(abs => (
+                                    ) : myAbsences?.map(abs => (
                                         <TableRow key={abs.id}>
                                             <TableCell>
                                                 <span className="flex items-center gap-1.5 font-medium text-slate-900">

@@ -316,7 +316,7 @@ export function Payroll() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {myPayslips.map((pay) => (
+                                    {myPayslips?.map((pay) => (
                                         <TableRow key={pay.id}>
                                             <TableCell className="font-medium text-slate-900 capitalize">{getMonthName(pay.period)}</TableCell>
                                             <TableCell className="text-slate-600">{formatCurrency(pay.baseSalary)}</TableCell>
@@ -383,8 +383,8 @@ export function Payroll() {
                                             <TableHead>Salaire Brut (FCFA)</TableHead>
                                             <TableHead>Hr Sup.</TableHead>
                                             <TableHead>Jours Abs.</TableHead>
-                                            <TableHead>Prime (€)</TableHead>
-                                            <TableHead>Retenue (€)</TableHead>
+                                            <TableHead>Prime (FCFA)</TableHead>
+                                            <TableHead>Retenue (FCFA)</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -474,7 +474,7 @@ export function Payroll() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {allPayrolls.map((pay) => (
+                                    {allPayrolls?.map((pay) => (
                                         <TableRow key={pay.id}>
                                             <TableCell className="font-medium text-slate-900">{pay.employee?.firstName} {pay.employee?.lastName}</TableCell>
                                             <TableCell className="text-slate-600 capitalize">{getMonthName(pay.period)}</TableCell>

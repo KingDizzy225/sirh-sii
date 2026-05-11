@@ -184,7 +184,7 @@ export function Expenses() {
                         </div>
                         <div>
                             <p className="text-sm font-bold text-slate-400">APPROUVÉES</p>
-                            <p className="text-2xl font-black text-slate-900">{expenses.filter(e => e.status === 'Approuvé').length}</p>
+                            <p className="text-2xl font-black text-slate-900">{expenses.filter(e => e.status === 'Approuvé' || e.status === 'APPROVED').length}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -196,7 +196,7 @@ export function Expenses() {
                         <div>
                             <p className="text-sm font-bold text-slate-400">TOTAL REMBOURSÉ</p>
                             <p className="text-2xl font-black text-slate-900">
-                                {expenses.filter(e => e.status === 'Approuvé').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} <span className="text-sm font-medium">FCFA</span>
+                                {expenses.filter(e => e.status === 'Approuvé' || e.status === 'APPROVED').reduce((acc, curr) => acc + (curr.amount || 0), 0).toLocaleString()} <span className="text-sm font-medium">FCFA</span>
                             </p>
                         </div>
                     </CardContent>
@@ -238,9 +238,9 @@ export function Expenses() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
-                                                        {exp.employee[0]}
+                                                        {exp.employee?.[0] || '?'}
                                                     </div>
-                                                    <span className="font-bold text-slate-700">{exp.employee}</span>
+                                                    <span className="font-bold text-slate-700">{exp.employee || 'Anonyme'}</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -255,8 +255,8 @@ export function Expenses() {
                                             </td>
                                             <td className="px-6 py-4 text-sm text-slate-500">{exp.date}</td>
                                             <td className="px-6 py-4">
-                                                <Badge variant={exp.status === 'Approuvé' ? 'success' : exp.status === 'Rejeté' ? 'destructive' : 'secondary'}>
-                                                    {exp.status}
+                                                <Badge variant={(exp.status === 'Approuvé' || exp.status === 'APPROVED') ? 'success' : (exp.status === 'Rejeté' || exp.status === 'REJECTED') ? 'destructive' : 'secondary'}>
+                                                    {exp.status === 'APPROVED' ? 'Approuvé' : exp.status === 'REJECTED' ? 'Rejeté' : exp.status === 'PENDING' ? 'En attente' : exp.status}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 text-right">

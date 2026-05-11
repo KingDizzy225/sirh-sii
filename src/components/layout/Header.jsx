@@ -6,15 +6,14 @@ import { NotificationCenter } from '../NotificationCenter';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const getDomainsForRole = (role) => {
-    // Default matching a very standard ADP configuration
-    const domains = ['Home', 'Myself'];
+    // Matching standard HR domains in French
+    const domains = ['Accueil', 'Mon Espace'];
     
-    // In actual enterprise, the permissions verify these, but for visual:
     if (role === 'MANAGER' || role === 'HR' || role === 'ADMIN') {
-        domains.push('My Team');
+        domains.push('Mon Équipe');
     }
     if (role === 'HR' || role === 'ADMIN') {
-        domains.push('People', 'Process', 'Reports');
+        domains.push('Collaborateurs', 'Gestion RH', 'Analytique');
     }
     return domains;
 };

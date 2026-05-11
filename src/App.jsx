@@ -69,7 +69,7 @@ const Unauthorized = () => (
 const AppContent = () => {
   const { user, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentDomain, setCurrentDomain] = useState('Home'); // 'Home', 'Myself', 'My Team', 'People', 'Process', 'Reports'
+  const [currentDomain, setCurrentDomain] = useState('Accueil'); // 'Accueil', 'Mon Espace', 'Mon Équipe', 'Collaborateurs', 'Gestion RH', 'Analytique'
 
   if (isLoading) {
     return (

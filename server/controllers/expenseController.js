@@ -68,6 +68,20 @@ exports.createExpense = async (req, res) => {
         const employee = await prisma.employee.findUnique({ where: { email } });
         if (!employee) return res.status(404).json({ error: "Employé introuvable" });
 
+        // Anti-Duplicate Shield
+        const existing = await prisma.expense.findFirst({
+            where: {
+                employeeId: employee.id,
+                amount: parseFloat(amount),
+                merchant: merchant || null,
+                date: date ? new Date(date) : new Date(),
+            }
+        });
+
+        if (existing) {
+            return res.status(400).json({ error: "Cette dépense semble déjà avoir été enregistrée (doublon détecté)." });
+        }
+
         const newExpense = await prisma.expense.create({
             data: {
                 employeeId: employee.id,

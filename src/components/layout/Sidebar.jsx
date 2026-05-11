@@ -5,59 +5,59 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const getAllNavItems = () => [
-    // HOME
-    { name: 'Vue d\'ensemble', path: '/', icon: Home, domain: 'Home', permission: 'dashboard:view' },
-    { name: 'Générateur Workflows', path: '/workflows', icon: Settings, domain: 'Home', permission: 'workflows:view' },
-    { name: 'Tableau Tâches', path: '/task-board', icon: CheckSquare, domain: 'Home', permission: 'dashboard:view' },
-    { name: 'Annonces', path: '/announcements', icon: Megaphone, domain: 'Home', permission: 'myself:view' },
+    // ACCUEIL
+    { name: 'Vue d\'ensemble', path: '/', icon: Home, domain: 'Accueil', permission: 'dashboard:view' },
+    { name: 'Générateur Workflows', path: '/workflows', icon: Settings, domain: 'Accueil', permission: 'workflows:view' },
+    { name: 'Tableau Tâches', path: '/task-board', icon: CheckSquare, domain: 'Accueil', permission: 'dashboard:view' },
+    { name: 'Annonces', path: '/announcements', icon: Megaphone, domain: 'Accueil', permission: 'myself:view' },
 
-    // MYSELF
-    { name: 'Mon Profil', path: '/my-space', icon: User, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Mes Absences (Congés)', path: '/leaves', icon: Calendar, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Absences & Retards', path: '/absences', icon: AlertTriangle, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Mes Dépenses', path: '/expenses', icon: Receipt, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Avance sur Salaire', path: '/advances', icon: Banknote, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Mes Fiches de Paie', path: '/payroll', icon: FileText, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Kudos & Gamification', path: '/kudos', icon: Heart, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Explorateur Carrière', path: '/career-path', icon: Rocket, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Myself', permission: 'myself:view' },
-    { name: 'Mes Avantages', path: '/benefits', icon: HeartPulse, domain: 'Myself', permission: 'myself:view' },
+    // MON ESPACE
+    { name: 'Mon Profil', path: '/my-space', icon: User, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Mes Absences (Congés)', path: '/leaves', icon: Calendar, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Absences & Retards', path: '/absences', icon: AlertTriangle, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Mes Dépenses', path: '/expenses', icon: Receipt, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Avance sur Salaire', path: '/advances', icon: Banknote, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Mes Fiches de Paie', path: '/payroll', icon: FileText, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Kudos & Gamification', path: '/kudos', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Explorateur Carrière', path: '/career-path', icon: Rocket, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Mes Avantages', path: '/benefits', icon: HeartPulse, domain: 'Mon Espace', permission: 'myself:view' },
     
-    // MY TEAM
-    { name: 'Évaluation Équipe', path: '/performance', icon: Users, domain: 'My Team', permission: 'manager:view' }, 
-    { name: 'Matériel Équipe', path: '/assets', icon: Laptop, domain: 'My Team', permission: 'manager:view' },
-    { name: 'Plannings Équipe', path: '/shifts', icon: Calendar, domain: 'My Team', permission: 'manager:view' },
+    // MON ÉQUIPE
+    { name: 'Évaluation Équipe', path: '/performance', icon: Users, domain: 'Mon Équipe', permission: 'manager:view' }, 
+    { name: 'Matériel Équipe', path: '/assets', icon: Laptop, domain: 'Mon Équipe', permission: 'manager:view' },
+    { name: 'Plannings Équipe', path: '/shifts', icon: Calendar, domain: 'Mon Équipe', permission: 'manager:view' },
 
-    // PEOPLE
-    { name: 'Répertoire Employés', path: '/employees', icon: Users, domain: 'People', permission: 'employees:view' },
-    { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'People', permission: 'employees:view' },
-    { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'People', permission: 'recruitment:view' },
-    { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'People', permission: 'recruitment:view' },
-    { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'People', permission: 'onboarding:view' },
-    { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'People', permission: 'employees:edit' },
-    { name: 'Flex-Workforce', path: '/subcontractors', icon: Building, domain: 'People', permission: 'employees:edit' },
-    { name: 'Qualité de vie (QVT)', path: '/engagement', icon: HeartPulse, domain: 'People', permission: 'employees:edit' },
-    { name: 'Santé & Sécurité', path: '/hse', icon: Shield, domain: 'People', permission: 'employees:edit' },
-    { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'People', permission: 'employees:edit' },
+    // COLLABORATEURS
+    { name: 'Répertoire Employés', path: '/employees', icon: Users, domain: 'Collaborateurs', permission: 'employees:view' },
+    { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Collaborateurs', permission: 'employees:view' },
+    { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'Collaborateurs', permission: 'recruitment:view' },
+    { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Collaborateurs', permission: 'recruitment:view' },
+    { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Collaborateurs', permission: 'onboarding:view' },
+    { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Collaborateurs', permission: 'employees:edit' },
+    { name: 'Flex-Workforce', path: '/subcontractors', icon: Building, domain: 'Collaborateurs', permission: 'employees:edit' },
+    { name: 'Qualité de vie (QVT)', path: '/engagement', icon: HeartPulse, domain: 'Collaborateurs', permission: 'employees:edit' },
+    { name: 'Santé & Sécurité', path: '/hse', icon: Shield, domain: 'Collaborateurs', permission: 'employees:edit' },
+    { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'Collaborateurs', permission: 'employees:edit' },
 
-    // PROCESS
-    { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Process', permission: 'dashboard:view' },
-    { name: 'Absences & Retards', path: '/absences', icon: AlertTriangle, domain: 'Process', permission: 'dashboard:view' },
-    { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Process', permission: 'payroll:view' },
-    { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Process', permission: 'payroll:view' },
-    { name: 'Suivi Formations', path: '/learning', icon: BookOpen, domain: 'Process', permission: 'learning:view' },
-    { name: 'Catalogue Sessions', path: '/trainings', icon: GraduationCap, domain: 'Process', permission: 'learning:view' },
-    { name: 'Compétences', path: '/skills', icon: Award, domain: 'Process', permission: 'skills:view' },
-    { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Process', permission: 'skills:view' },
-    { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'People', permission: 'skills:view' },
-    { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Process', permission: 'documents:view_company' },
+    // GESTION RH
+    { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Gestion RH', permission: 'dashboard:view' },
+    { name: 'Gestion des Absences', path: '/absences', icon: AlertTriangle, domain: 'Gestion RH', permission: 'dashboard:view' },
+    { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Gestion RH', permission: 'payroll:view' },
+    { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Gestion RH', permission: 'payroll:view' },
+    { name: 'Suivi Formations', path: '/learning', icon: BookOpen, domain: 'Gestion RH', permission: 'learning:view' },
+    { name: 'Catalogue Sessions', path: '/trainings', icon: GraduationCap, domain: 'Gestion RH', permission: 'learning:view' },
+    { name: 'Compétences', path: '/skills', icon: Award, domain: 'Gestion RH', permission: 'skills:view' },
+    { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Gestion RH', permission: 'skills:view' },
+    { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'Gestion RH', permission: 'skills:view' },
+    { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Gestion RH', permission: 'documents:view_company' },
     
-    // REPORTS
-    { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Reports', permission: 'dashboard:view' },
-    { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Reports', permission: 'payroll:view' },
-    { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Reports', permission: 'dashboard:view' },
-    { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Reports', permission: 'dashboard:view' },
-    { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: FileText, domain: 'Reports', permission: 'support_tickets:manage' },
+    // ANALYTIQUE
+    { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Analytique', permission: 'dashboard:view' },
+    { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Analytique', permission: 'payroll:view' },
+    { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Analytique', permission: 'dashboard:view' },
+    { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Analytique', permission: 'dashboard:view' },
+    { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: FileText, domain: 'Analytique', permission: 'support_tickets:manage' },
 ];
 
 
@@ -73,7 +73,7 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
 
         // Simplified RBAC logic for UI representation
         if (userRole === 'EMPLOYEE') {
-            return item.domain === 'Myself' || item.domain === 'Home';
+            return item.domain === 'Mon Espace' || item.domain === 'Accueil';
         } else if (userRole === 'MANAGER') {
             if (item.permission === 'payroll:view' || item.permission === 'settings:view') return false;
             return true;
