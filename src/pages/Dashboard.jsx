@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, Timer, HeartPulse, Loader2 } from 'lucide-react';
+import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, Timer, HeartPulse, Loader2, TrendingUp, Star } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -89,40 +89,42 @@ export function Dashboard() {
     const agePyramidData = analyticsData?.charts?.agePyramidData || [];
     const mobilityVsHiringData = analyticsData?.charts?.mobilityVsHiringData || [];
 
-    const stats = [
-        {
-            title: 'Total Employés',
-            value: analyticsData?.totalEmployees || 0,
-            change: 'Actif',
-            icon: Users,
-            color: 'text-blue-600',
-            bg: 'bg-blue-100',
-        },
-        {
-            title: 'Congés Actifs',
-            value: analyticsData?.activeLeaves || 0,
-            change: 'Aujourd\'hui',
-            icon: Timer,
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-100',
-        },
-        {
-            title: 'Frais en Attente',
-            value: analyticsData?.pendingExpenses || 0,
-            change: 'À examiner',
-            icon: Activity,
-            color: 'text-rose-600',
-            bg: 'bg-rose-100',
-        },
-        {
-            title: 'Matériel Disponible',
-            value: analyticsData?.availableAssets || 0,
-            change: 'En stock',
-            icon: Scale,
-            color: 'text-amber-600',
-            bg: 'bg-amber-100',
+    const getStatsByRole = () => {
+        const role = user?.role;
+        const baseStats = [
+            { title: 'Employés', value: analyticsData?.totalEmployees || 0, change: 'Actif', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+            { title: 'Congés', value: analyticsData?.activeLeaves || 0, change: 'Aujourd\'hui', icon: Timer, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+        ];
+
+        if (role === 'HR' || role === 'ADMIN') {
+            return [
+                ...baseStats,
+                { title: 'Frais', value: analyticsData?.pendingExpenses || 0, change: 'À valider', icon: Activity, color: 'text-rose-600', bg: 'bg-rose-100' },
+                { title: 'Compliance', value: '88%', change: 'Score IA', icon: Scale, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+                { title: 'Turnover', value: '3.2%', change: 'Annuel', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-100' },
+                { title: 'Recrutements', value: '12', change: 'En cours', icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100' },
+            ];
         }
-    ];
+
+        if (role === 'MANAGER') {
+            return [
+                ...baseStats,
+                { title: 'Mon Équipe', value: '8', change: 'Membres', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+                { title: 'Approbations', value: '3', change: 'En attente', icon: CheckCircle2, color: 'text-amber-600', bg: 'bg-amber-100' },
+                { title: 'Performance', value: '4.2/5', change: 'Moyenne', icon: Star, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+            ];
+        }
+
+        // Default / Employee
+        return [
+            { title: 'Mes Congés', value: '14j', change: 'Restant', icon: Timer, color: 'text-blue-600', bg: 'bg-blue-100' },
+            { title: 'Mes Frais', value: '0', change: 'Payés', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+            { title: 'Formations', value: '2', change: 'À suivre', icon: GraduationCap, color: 'text-purple-600', bg: 'bg-purple-100' },
+            { title: 'Engagement', value: '9/10', change: 'Score Pulse', icon: HeartPulse, color: 'text-rose-600', bg: 'bg-rose-100' },
+        ];
+    };
+
+    const stats = getStatsByRole();
 
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50/50 min-h-[calc(100vh-4rem)] relative">
@@ -262,7 +264,7 @@ export function Dashboard() {
             </AnimatePresence>
 
 
-            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 {stats.map((stat, index) => (
                     <motion.div
                         key={stat.title}
