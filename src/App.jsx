@@ -26,6 +26,7 @@ import { SkillsMatrix } from './pages/SkillsMatrix';
 import { Timesheet } from './pages/Timesheet';
 import { Expenses } from './pages/Expenses';
 import { Engagement } from './pages/Engagement';
+import { Workflows } from './pages/Workflows';
 import { HSE } from './pages/HSE';
 import { Assets } from './pages/Assets';
 import { Analytics } from './pages/Analytics';
@@ -267,6 +268,7 @@ const AppContent = () => {
             <Route path="/kudos" element={<ProtectedRoute><KudosWall /></ProtectedRoute>} />
             <Route path="/ai-sourcing" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><AiSourcing /></ProtectedRoute>} />
             <Route path="/payroll-simulation" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><PayrollSimulation /></ProtectedRoute>} />
+            <Route path="/workflows" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><Workflows /></ProtectedRoute>} />
             <Route path="/career-path" element={<ProtectedRoute><CareerPath /></ProtectedRoute>} />
             <Route path="/advances" element={<SalaryAdvances />} />
             <Route path="/medical" element={
