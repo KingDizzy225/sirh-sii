@@ -4,6 +4,7 @@ import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { ComplianceMonitor } from '../components/dashboard/ComplianceMonitor';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -260,37 +261,6 @@ export function Dashboard() {
                 )}
             </AnimatePresence>
 
-            <AnimatePresence>
-                {predictiveInsights && predictiveInsights.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-indigo-900 text-white rounded-2xl shadow-lg border-0 overflow-hidden mb-8 p-6 relative"
-                    >
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <Activity size={100} />
-                        </div>
-                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <span className="text-2xl">🔮</span> IA Prédictive : Alertes de Rétention
-                        </h3>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 relative z-10">
-                            {predictiveInsights.map((insight, idx) => (
-                                <div key={idx} className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-bold">{insight.name}</h4>
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${insight.riskLevel === 'Élevé' ? 'bg-rose-500/80 text-white' : insight.riskLevel === 'Moyen' ? 'bg-amber-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
-                                            Risque {insight.riskLevel}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-indigo-200 mt-2 line-clamp-2" title={insight.reason}>
-                                        {insight.reason}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
                 {stats.map((stat, index) => (
@@ -319,8 +289,46 @@ export function Dashboard() {
                                 </p>
                             </CardContent>
                         </Card>
-                    </motion.div>
                 ))}
+            </div>
+
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">
+                <div className="lg:col-span-1">
+                    <ComplianceMonitor />
+                </div>
+                <div className="lg:col-span-3">
+                    <AnimatePresence>
+                        {predictiveInsights && predictiveInsights.length > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-indigo-900 text-white rounded-2xl shadow-lg border-0 overflow-hidden h-full p-6 relative"
+                            >
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <Activity size={100} />
+                                </div>
+                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                    <span className="text-2xl">🔮</span> IA Prédictive : Alertes de Rétention
+                                </h3>
+                                <div className="grid gap-4 md:grid-cols-2 relative z-10">
+                                    {predictiveInsights.slice(0, 2).map((insight, idx) => (
+                                        <div key={idx} className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4 className="font-bold">{insight.name}</h4>
+                                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${insight.riskLevel === 'Élevé' ? 'bg-rose-500/80 text-white' : insight.riskLevel === 'Moyen' ? 'bg-amber-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
+                                                    Risque {insight.riskLevel}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-indigo-200 mt-2 line-clamp-2">
+                                                {insight.reason}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
 
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">

@@ -244,40 +244,89 @@ export function Engagement() {
                         <CardHeader>
                             <CardTitle className="text-white flex items-center gap-2">
                                 <Sparkles className="text-indigo-400" size={20} />
-                                Analyse de Sentiment par IA
+                                Intelligence Artificielle & Sentiments
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative z-10">
+                                {/* Sentiment Meter */}
                                 <div className="space-y-6">
                                     <div className="p-5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-3">Météo Sociale</h4>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-4xl">🌤️</div>
-                                            <div>
-                                                <p className="text-xl font-black">Majoritairement Ensoleillé</p>
-                                                <p className="text-xs text-slate-400 font-medium mt-1">Sentiment global : 78% Positif</p>
-                                            </div>
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-4">Indice de Sentiment Global</h4>
+                                        <div className="flex items-end gap-2 mb-2">
+                                            <span className="text-5xl font-black text-white">78%</span>
+                                            <span className="text-emerald-400 text-sm font-bold pb-1">+12% vs M-1</span>
+                                        </div>
+                                        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-full bg-emerald-500" style={{ width: '78%' }}></div>
                                         </div>
                                     </div>
+                                    
                                     <div className="space-y-4">
-                                        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Thèmes Récurrents</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {['Télétravail (+)', 'Cohésion (+)', 'Surcharge (-)', 'Salaire (-)', 'Management (+)'].map(tag => (
-                                                <span key={tag} className={`px-3 py-1 rounded-full text-[10px] font-bold ${tag.includes('+') ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                                                    {tag}
-                                                </span>
+                                        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Répartition du Ton</p>
+                                        <div className="space-y-2">
+                                            {[
+                                                { label: 'Positif', value: 72, color: 'bg-emerald-500' },
+                                                { label: 'Neutre', value: 18, color: 'bg-slate-500' },
+                                                { label: 'Négatif', value: 10, color: 'bg-rose-500' },
+                                            ].map(item => (
+                                                <div key={item.label} className="space-y-1">
+                                                    <div className="flex justify-between text-[10px] font-bold">
+                                                        <span>{item.label}</span>
+                                                        <span>{item.value}%</span>
+                                                    </div>
+                                                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                                        <div className={`h-full ${item.color}`} style={{ width: `${item.value}%` }}></div>
+                                                    </div>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Themes & Keywords */}
+                                <div className="space-y-6">
+                                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Analyse Thématique</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { theme: 'Flexibilité', sentiment: 'positive', score: 92 },
+                                            { theme: 'Communication', sentiment: 'positive', score: 84 },
+                                            { theme: 'Outils IT', sentiment: 'neutral', score: 65 },
+                                            { theme: 'Salaire', sentiment: 'negative', score: 34 },
+                                        ].map(t => (
+                                            <div key={t.theme} className="p-3 rounded-xl bg-white/5 border border-white/5">
+                                                <p className="text-[10px] font-bold text-white/70">{t.theme}</p>
+                                                <div className="flex items-center justify-between mt-1">
+                                                    <div className={`w-2 h-2 rounded-full ${t.sentiment === 'positive' ? 'bg-emerald-500' : t.sentiment === 'neutral' ? 'bg-amber-500' : 'bg-rose-500'}`}></div>
+                                                    <span className="text-xs font-black">{t.score}%</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+                                        <p className="text-[10px] font-bold text-indigo-300 uppercase mb-2">Mot-Clé Émergent</p>
+                                        <p className="text-sm font-bold">"Équilibre Pro/Perso"</p>
+                                        <p className="text-[10px] text-slate-400 mt-1">Cité dans 45% des commentaires positifs ce mois-ci.</p>
+                                    </div>
+                                </div>
+
+                                {/* Action Plan */}
                                 <div className="space-y-4">
-                                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Résumé Stratégique IA</p>
-                                    <p className="text-sm text-slate-300 leading-relaxed font-medium italic">
-                                        "L'engagement reste très fort grâce à la flexibilité du télétravail. Cependant, une fatigue passagère est détectée dans les commentaires liés aux 'réunions' et au 'stress projet'. Recommandation : Instaurer des 'No-Meeting Thursdays' pour libérer du temps de focus."
-                                    </p>
-                                    <Button className="bg-white text-slate-900 hover:bg-slate-200 font-black h-10 px-6 rounded-xl text-xs mt-4">
-                                        Générer le rapport complet
+                                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Plan d'Action IA</p>
+                                    <div className="space-y-3">
+                                        {[
+                                            'Réduire les réunions du jeudi (Focus Day)',
+                                            'Clarifier la politique de bonus annuel',
+                                            'Célébrer la réussite du projet Sirius',
+                                        ].map((step, idx) => (
+                                            <div key={idx} className="flex gap-3 items-center p-3 rounded-xl bg-white/5 border border-white/5">
+                                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold">{idx + 1}</div>
+                                                <p className="text-[11px] font-medium text-slate-300">{step}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Button className="w-full bg-white text-slate-900 hover:bg-slate-200 font-black h-10 px-6 rounded-xl text-[10px] uppercase tracking-widest mt-2">
+                                        Valider ces actions
                                     </Button>
                                 </div>
                             </div>
