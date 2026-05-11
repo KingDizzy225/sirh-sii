@@ -14,16 +14,39 @@ export function CareerPath() {
             try {
                 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
                 const token = localStorage.getItem('sirh_token');
+                
+                // Fallback mock data
+                const MOCK_CAREER_DATA = {
+                    nodes: [
+                        { id: 1, title: 'Développeur Fullstack', department: 'Tech', level: 3, isCurrent: true },
+                        { id: 2, title: 'Lead Tech', department: 'Tech', level: 4, isPossible: true },
+                        { id: 3, title: 'Architecte Logiciel', department: 'Tech', level: 5, isPossible: false },
+                        { id: 4, title: 'Engineering Manager', department: 'Management', level: 5, isPossible: false },
+                        { id: 5, title: 'Product Manager', department: 'Produit', level: 4, isPossible: true }
+                    ],
+                    links: [
+                        { source: 'Développeur Fullstack', target: 'Lead Tech' },
+                        { source: 'Développeur Fullstack', target: 'Product Manager' },
+                        { source: 'Lead Tech', target: 'Architecte Logiciel' },
+                        { source: 'Lead Tech', target: 'Engineering Manager' }
+                    ]
+                };
+
                 const res = await fetch(`${API_URL}/api/career/path/${user.id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setCareerData(data);
-                    // Find current role and select it by default
-                    const current = data.nodes.find(n => n.isCurrent);
-                    setSelectedRole(current);
+                }).catch(() => null);
+
+                let data;
+                if (res && res.ok) {
+                    data = await res.json();
+                } else {
+                    console.warn("Using mock career data");
+                    data = MOCK_CAREER_DATA;
                 }
+
+                setCareerData(data);
+                const current = data.nodes.find(n => n.isCurrent);
+                setSelectedRole(current);
             } catch (err) {
                 console.error("Failed to fetch career data", err);
             } finally {

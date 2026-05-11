@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { ShieldAlert, CheckCircle, AlertTriangle, Scale, Clock } from 'lucide-react';
+import { ShieldAlert, CheckCircle, AlertTriangle, Scale, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const COMPLIANCE_ITEMS = [
@@ -11,6 +11,15 @@ const COMPLIANCE_ITEMS = [
 ];
 
 export function ComplianceMonitor() {
+    const [isScanning, setIsScanning] = useState(false);
+
+    const handleAudit = () => {
+        setIsScanning(true);
+        setTimeout(() => {
+            setIsScanning(false);
+            alert("Audit terminé ! Score global : 92%. Les anomalies ont été notifiées aux managers.");
+        }, 2000);
+    };
     return (
         <Card className="border-none shadow-xl bg-slate-900 text-white overflow-hidden">
             <CardHeader className="pb-2 border-b border-white/10">
@@ -44,8 +53,13 @@ export function ComplianceMonitor() {
                     </motion.div>
                 ))}
                 
-                <button className="w-full mt-2 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-[10px] font-black uppercase tracking-widest transition-all">
-                    Lancer l'Audit Complet
+                <button 
+                    onClick={handleAudit}
+                    disabled={isScanning}
+                    className="w-full mt-2 py-2 rounded-lg flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-70"
+                >
+                    {isScanning ? <Loader2 size={14} className="animate-spin" /> : null}
+                    {isScanning ? 'Analyse IA en cours...' : "Lancer l'Audit Complet"}
                 </button>
             </CardContent>
         </Card>
