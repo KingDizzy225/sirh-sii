@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Check, X, Search, Calendar as CalendarIcon, CheckCircle2, ChevronDown, MoreHorizontal, Plus, Trash2, Pencil, Eye, UserX, Sparkles } from 'lucide-react';
+import { Check, X, Search, Calendar as CalendarIcon, CheckCircle2, ChevronDown, MoreHorizontal, Plus, Trash2, Pencil, Eye, UserX } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
@@ -537,14 +537,9 @@ export function Employees() {
                         onChange={handleFileUpload}
                     />
                     {selectedEmployees.length > 0 && (
-                        <div className="flex items-center gap-2">
-                            <Button variant="destructive" className="gap-2 shadow-sm font-medium" onClick={handleDeleteSelected}>
-                                <Trash2 size={16} /> Supprimer ({selectedEmployees.length})
-                            </Button>
-                            <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-medium" onClick={() => showNotification(`Génération d'attestations IA pour ${selectedEmployees.length} employés...`)}>
-                                <Sparkles size={16} /> Action IA Groupée
-                            </Button>
-                        </div>
+                        <Button variant="destructive" className="gap-2 shadow-sm" onClick={handleDeleteSelected}>
+                            <Trash2 size={16} /> Supprimer ({selectedEmployees.length})
+                        </Button>
                     )}
                     <Button variant="outline" onClick={triggerImport}>Importer CSV</Button>
                     <Button variant="outline" onClick={handleExport}>Exporter CSV</Button>

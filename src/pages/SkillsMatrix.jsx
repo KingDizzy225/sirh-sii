@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { Search, Filter, SlidersHorizontal, UserCircle, Briefcase, Award, GraduationCap, X, Sparkles } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, UserCircle, Briefcase, Award, GraduationCap, X } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
 
@@ -307,47 +307,6 @@ export function SkillsMatrix() {
                                             })}
                                     </div>
                                 </div>
-
-                                {/* AI Training Recommendations */}
-                                {compareRole && (
-                                    <div className="mt-8 p-6 bg-slate-900 rounded-2xl text-white shadow-xl relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
-                                            <GraduationCap size={120} />
-                                        </div>
-                                        <h3 className="text-lg font-black uppercase tracking-widest text-indigo-400 mb-4 flex items-center gap-2">
-                                            <Sparkles size={20} /> Recommendations de Formation IA
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                                            <div className="space-y-4">
-                                                <p className="text-sm text-slate-300 italic">
-                                                    "Pour atteindre le niveau requis de <strong>{compareRole}</strong>, {selectedEmployee.name} devrait prioriser les chantiers suivants :"
-                                                </p>
-                                                <div className="space-y-2">
-                                                    {[
-                                                        'Certification "Node.js Advanced Patterns"',
-                                                        'Atelier "Leadership & Intelligence Émotionnelle"',
-                                                        'Mentorat avec un Lead Tech (6 semaines)',
-                                                    ].map((item, idx) => (
-                                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                                                            <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">✓</div>
-                                                            <span className="text-xs font-medium">{item}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <div className="bg-white/5 rounded-2xl p-5 border border-white/10 flex flex-col justify-between">
-                                                <div>
-                                                    <p className="text-[10px] font-black text-indigo-400 uppercase mb-2">Impact sur le Profil</p>
-                                                    <p className="text-3xl font-black text-white">+28%</p>
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Compatibilité au poste cible</p>
-                                                </div>
-                                                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest h-10 mt-4 rounded-xl">
-                                                    Inscrire à ces formations
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
                             </CardContent>
                         </>
                     ) : (

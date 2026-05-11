@@ -205,23 +205,6 @@ export function AIDocumentModal({ isOpen, onClose, onGenerate, isGenerating, tok
                     </div>
                 </div>
             );
-        } else if (type === 'Document Personnalisé (IA Libre)') {
-            return (
-                <div className="space-y-4">
-                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
-                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 flex items-center gap-2">
-                            <Sparkles size={12} /> Mode Assistant Créatif
-                        </p>
-                        <p className="text-xs text-indigo-900 leading-relaxed">
-                            Décrivez simplement le document que vous souhaitez créer. L'IA s'occupera de la mise en forme et du contenu juridique.
-                        </p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-slate-700 block mb-1">Titre du document</label>
-                        <Input placeholder="Ex: Lettre de félicitations, Note interne..." onChange={(e) => handleInputChange('titrePerso', e.target.value)} />
-                    </div>
-                </div>
-            );
         }
     };
 
@@ -272,7 +255,6 @@ export function AIDocumentModal({ isOpen, onClose, onGenerate, isGenerating, tok
                                 <option value="Avertissement disciplinaire">Avertissement disciplinaire</option>
                                 <option value="Lettre de licenciement">Lettre de licenciement</option>
                                 <option value="Ordre de mission">Ordre de mission</option>
-                                <option value="Document Personnalisé (IA Libre)">✨ Document Personnalisé (IA Libre)</option>
                             </select>
                         </div>
 
