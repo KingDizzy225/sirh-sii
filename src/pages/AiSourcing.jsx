@@ -18,7 +18,25 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function AiSourcing() {
+class SourcingErrorBoundary extends React.Component {
+    constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+    static getDerivedStateFromError(error) { return { hasError: true, error }; }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-8 text-center bg-rose-50 rounded-2xl border border-rose-200 m-8">
+                    <AlertCircle className="mx-auto text-rose-500 mb-4" size={48} />
+                    <h3 className="text-rose-700 font-bold text-lg">Erreur Critique Isolée</h3>
+                    <p className="text-rose-600 text-sm mt-2">Le module d'IA a rencontré un problème inattendu. Le reste de l'application reste fonctionnel.</p>
+                    <Button className="mt-4 bg-rose-600 text-white hover:bg-rose-700" onClick={() => this.setState({ hasError: false })}>Réessayer</Button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+function AiSourcingContent() {
     const [jobDescription, setJobDescription] = useState('');
     const [candidates, setCandidates] = useState([{ name: '', resumeText: '' }]);
     const [results, setResults] = useState(null);
@@ -42,7 +60,7 @@ export function AiSourcing() {
     };
 
     const handleAnalyze = async () => {
-        if (!jobDescription || candidates.some(c => !c.name || !c.resumeText)) {
+        if (!jobDescription || !candidates?.length || candidates.some(c => !c?.name || !c?.resumeText)) {
             alert("Veuillez remplir la description et tous les candidats.");
             return;
         }
@@ -56,25 +74,23 @@ export function AiSourcing() {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ jobDescription, candidates })
-            }).catch(() => null);
+            });
 
-            if (res && res.ok) {
-                const data = await res.json();
-                setResults(data.sort((a, b) => b.score - a.score));
-            } else {
-                console.warn("Using mock AI sourcing data");
-                const mockResults = candidates.map((c, i) => ({
-                    id: i,
-                    name: c.name,
-                    score: Math.floor(Math.random() * 30) + 70, // 70-99
-                    strengths: ["Bonne expérience technique", "Soft skills adaptés", "Proactif"],
-                    weaknesses: ["Manque d'expérience sur un framework spécifique"],
-                    recommendation: "À recevoir en entretien."
-                }));
-                setResults(mockResults.sort((a, b) => b.score - a.score));
+            if (!res.ok) {
+                throw new Error(`Erreur Serveur: ${res.status}`);
             }
+
+            const data = await res.json();
+            if (!Array.isArray(data)) {
+                throw new Error("Le serveur n'a pas renvoyé un tableau valide.");
+            }
+
+            setResults(data.sort((a, b) => (b?.score || 0) - (a?.score || 0)));
         } catch (error) {
-            console.error("AI Sourcing Error", error);
+            console.error("AI Sourcing Fallback Error", error);
+            // Optionally set apiError state here, but we will rely on ErrorBoundary or alert for now
+            alert(error.message || "Impossible de joindre le serveur d'IA.");
+            setResults(null);
         } finally {
             setLoading(false);
         }
@@ -214,11 +230,11 @@ export function AiSourcing() {
                                     <CardHeader className={`${idx === 0 ? 'bg-emerald-50' : 'bg-slate-50'} border-b border-white/50`}>
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <CardTitle className="text-xl font-black text-slate-900">{res.name}</CardTitle>
+                                                <CardTitle className="text-xl font-black text-slate-900">{res?.name || 'Inconnu'}</CardTitle>
                                                 <CardDescription className="font-bold text-slate-500">Score de matching</CardDescription>
                                             </div>
-                                            <div className={`h-16 w-16 rounded-2xl flex flex-col items-center justify-center font-black ${res.score >= 80 ? 'bg-emerald-500 text-white' : res.score >= 50 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white shadow-lg shadow-rose-200'}`}>
-                                                <span className="text-2xl leading-none">{res.score}</span>
+                                            <div className={`h-16 w-16 rounded-2xl flex flex-col items-center justify-center font-black ${(res?.score || 0) >= 80 ? 'bg-emerald-500 text-white' : (res?.score || 0) >= 50 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white shadow-lg shadow-rose-200'}`}>
+                                                <span className="text-2xl leading-none">{res?.score || 0}</span>
                                                 <span className="text-[10px]">%</span>
                                             </div>
                                         </div>
@@ -229,7 +245,7 @@ export function AiSourcing() {
                                                 <Sparkles size={12} className="text-indigo-500" /> Résumé IA
                                             </p>
                                             <p className="text-sm text-slate-700 leading-relaxed font-medium bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
-                                                "{res.summary}"
+                                                "{res?.summary || res?.recommendation || 'Pas de résumé'}"
                                             </p>
                                         </div>
 
@@ -239,7 +255,7 @@ export function AiSourcing() {
                                                     <CheckCircle2 size={12} /> Points Forts
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {res.strengths.map((s, i) => (
+                                                    {(res?.strengths || []).map((s, i) => (
                                                         <span key={i} className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-bold border border-emerald-100">{s}</span>
                                                     ))}
                                                 </div>
@@ -250,7 +266,7 @@ export function AiSourcing() {
                                                     <XCircle size={12} /> Écarts / Faiblesses
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {res.weaknesses.map((w, i) => (
+                                                    {(res?.weaknesses || []).map((w, i) => (
                                                         <span key={i} className="px-2 py-1 bg-rose-50 text-rose-700 rounded-lg text-[10px] font-bold border border-rose-100">{w}</span>
                                                     ))}
                                                 </div>
@@ -285,5 +301,13 @@ export function AiSourcing() {
                 </div>
             )}
         </div>
+    );
+}
+
+export function AiSourcing() {
+    return (
+        <SourcingErrorBoundary>
+            <AiSourcingContent />
+        </SourcingErrorBoundary>
     );
 }
