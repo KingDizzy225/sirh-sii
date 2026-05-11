@@ -70,11 +70,16 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
                     <Menu className="h-6 w-6" />
                 </button>
 
-                <div className="flex items-center gap-2 mr-2">
+                <div className="flex items-center gap-3 mr-2">
                     <img src="/logo.png" alt="Logo SII" className="h-10 w-auto object-contain bg-slate-100 px-2 py-1 rounded-md shadow-sm" />
-                    <h1 className="text-xl font-bold tracking-tight hidden lg:block text-slate-100">
-                        SIRH<span className="text-primary font-medium"> Pro</span>
-                    </h1>
+                    <div className="hidden lg:flex flex-col leading-none gap-1">
+                        <h1 className="text-xl font-bold tracking-tight text-slate-100">
+                            SIRH<span className="text-primary font-medium"> Pro</span>
+                        </h1>
+                        <span className="text-[9px] font-black tracking-widest uppercase text-indigo-400">
+                            V5.0 · Enterprise Edition
+                        </span>
+                    </div>
                 </div>
 
                 {/* Domains Desktop Navigation */}

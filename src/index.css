@@ -60,3 +60,15 @@
     @apply bg-background text-foreground;
   }
 }
+/* PWA & Mobile Optimization */
+@media (max-width: 640px) {
+  .touch-target { min-height: 48px; min-width: 48px; }
+  .mobile-only { display: block !important; }
+  .desktop-only { display: none !important; }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}

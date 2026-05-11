@@ -284,39 +284,46 @@ export function Analytics() {
                     <div className="lg:col-span-2 space-y-6">
                         <Card className="border-none shadow-sm border-l-4 border-l-indigo-600">
                             <CardHeader>
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 shadow-inner">
-                                        <BrainCircuit size={28} />
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 shadow-inner">
+                                            <BrainCircuit size={28} />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-xl font-bold">Predictive Risk Monitor</CardTitle>
+                                            <CardDescription>Analyse multicritère (absences, performance, engagement).</CardDescription>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <CardTitle className="text-xl font-bold">Analyse Prédictive de l'Engagement</CardTitle>
-                                        <CardDescription>L'IA analyse les patterns d'absences, de performance et d'ancienneté pour détecter les risques.</CardDescription>
-                                    </div>
+                                    <Badge variant="success">Système Actif</Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
                                 <div className="divide-y divide-slate-100">
                                     {predictiveData.length === 0 ? (
                                         <div className="p-12 text-center text-slate-500">
-                                            Aucune donnée prédictive disponible pour le moment.
+                                            Aucune donnée prédictive disponible.
                                         </div>
                                     ) : (
                                         predictiveData.map((item, idx) => (
-                                            <div key={idx} className="p-6 flex items-start gap-6 hover:bg-slate-50/50 transition-colors">
-                                                <div className={`mt-1 p-2 rounded-lg ${item.riskLevel === 'Élevé' ? 'bg-rose-100 text-rose-600' : item.riskLevel === 'Moyen' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                                                    <AlertTriangle size={20} />
+                                            <div key={idx} className="p-6 flex items-start gap-6 hover:bg-slate-50/50 transition-colors group">
+                                                <div className={`mt-1 p-2.5 rounded-xl ${item.riskLevel === 'Élevé' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                    <AlertTriangle size={24} />
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex items-center justify-between mb-2">
-                                                        <h4 className="font-bold text-slate-900 text-lg">{item.name}</h4>
-                                                        <Badge variant={item.riskLevel === 'Élevé' ? 'destructive' : 'secondary'}>
-                                                            Risque {item.riskLevel}
-                                                        </Badge>
+                                                        <div>
+                                                            <h4 className="font-black text-slate-900 text-lg">{item.name}</h4>
+                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.department || 'Tous Départements'}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm font-black text-slate-900">{item.riskScore || '85'}%</p>
+                                                            <p className="text-[10px] text-slate-400 font-bold uppercase">Probabilité</p>
+                                                        </div>
                                                     </div>
                                                     <p className="text-slate-600 text-sm leading-relaxed">{item.reason}</p>
-                                                    <div className="flex gap-4 mt-4">
-                                                        <button className="text-xs font-bold text-indigo-600 hover:underline">Planifier un entretien RH</button>
-                                                        <button className="text-xs font-bold text-slate-400 hover:underline">Ignorer l'alerte</button>
+                                                    <div className="flex gap-4 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button className="text-xs font-black text-indigo-600 hover:underline uppercase tracking-widest">Planifier Entretien</button>
+                                                        <button className="text-xs font-black text-slate-400 hover:underline uppercase tracking-widest">Voir Profil IA</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -328,22 +335,65 @@ export function Analytics() {
                     </div>
 
                     <div className="space-y-6">
-                        <Card className="bg-gradient-to-br from-slate-900 to-indigo-900 text-white border-none shadow-xl">
+                        {/* Budget Sandbox Widget */}
+                        <Card className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border-none shadow-xl overflow-hidden relative">
+                            <div className="absolute top-0 right-0 p-6 opacity-10">
+                                <DollarSign size={120} />
+                            </div>
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
-                                    <BrainCircuit size={20} />
-                                    Insights IA
+                                <CardTitle className="text-white flex items-center gap-2 text-sm uppercase tracking-widest font-black">
+                                    <Activity size={16} className="text-emerald-400" />
+                                    Simulation Budgétaire IA
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                                    <p className="text-sm font-bold text-indigo-300 mb-1">Observation Clé</p>
-                                    <p className="text-sm text-white/80 italic">"Une augmentation de 15% des congés maladie courts a été détectée dans le département Ventes, corrélée historiquement à 3 départs futurs."</p>
+                            <CardContent className="space-y-6 relative z-10">
+                                <div>
+                                    <div className="flex justify-between text-xs mb-2">
+                                        <span className="text-slate-400">Augmentation Salariale Globale</span>
+                                        <span className="font-black text-emerald-400">+5%</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-white/10 rounded-full">
+                                        <div className="h-full bg-emerald-500" style={{ width: '50%' }}></div>
+                                    </div>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                                    <p className="text-sm font-bold text-emerald-300 mb-1">Recommandation</p>
-                                    <p className="text-sm text-white/80">"Envisagez une revue des objectifs trimestriels pour l'équipe Ventes afin de réduire la pression détectée par l'IA."</p>
+                                
+                                <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-3">Impact Prédictif</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xl font-black text-white">-12%</p>
+                                            <p className="text-[10px] text-emerald-400 font-bold">Turnover</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xl font-black text-white">+8%</p>
+                                            <p className="text-[10px] text-blue-400 font-bold">Performance</p>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                <button className="w-full py-3 rounded-xl bg-white text-slate-900 font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">
+                                    Lancer Simulation
+                                </button>
+                            </CardContent>
+                        </Card>
+
+                        {/* IA Insights Feed */}
+                        <Card className="border-none shadow-sm bg-white">
+                            <CardHeader>
+                                <CardTitle className="text-slate-900 flex items-center gap-2 text-sm uppercase tracking-widest font-black">
+                                    <BrainCircuit size={16} className="text-indigo-600" />
+                                    Insights Stratégiques
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {[
+                                    { text: "Alerte : Coût de remplacement projeté à 45M FCFA si les 3 départs prévus se confirment.", color: "rose" },
+                                    { text: "Opportunité : 12 collaborateurs ont des compétences dormantes en Python utilisables pour l'automatisation.", color: "indigo" },
+                                ].map((insight, idx) => (
+                                    <div key={idx} className={`p-3 rounded-xl bg-${insight.color}-50 border border-${insight.color}-100`}>
+                                        <p className={`text-xs font-medium text-${insight.color}-700`}>{insight.text}</p>
+                                    </div>
+                                ))}
                             </CardContent>
                         </Card>
                     </div>

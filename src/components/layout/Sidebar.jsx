@@ -7,7 +7,6 @@ import { useAuth } from '../../context/AuthContext';
 const getAllNavItems = () => [
     // ACCUEIL
     { name: 'Vue d\'ensemble', path: '/', icon: Home, domain: 'Accueil', permission: 'dashboard:view' },
-    { name: 'Générateur Workflows', path: '/workflows', icon: Settings, domain: 'Accueil', permission: 'workflows:view' },
     { name: 'Tableau Tâches', path: '/task-board', icon: CheckSquare, domain: 'Accueil', permission: 'dashboard:view' },
     { name: 'Annonces', path: '/announcements', icon: Megaphone, domain: 'Accueil', permission: 'myself:view' },
 
@@ -50,6 +49,7 @@ const getAllNavItems = () => [
     { name: 'Compétences', path: '/skills', icon: Award, domain: 'Gestion RH', permission: 'skills:view' },
     { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Gestion RH', permission: 'skills:view' },
     { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'Gestion RH', permission: 'skills:view' },
+    { name: 'Générateur Workflows', path: '/workflows', icon: Zap, domain: 'Gestion RH', permission: 'dashboard:view' },
     { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Gestion RH', permission: 'documents:view_company' },
     
     // ANALYTIQUE
@@ -93,7 +93,7 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
                     <h2 className="text-sm font-bold uppercase tracking-wider">
                         {currentDomain}
                     </h2>
-                    <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded ml-auto">V2.2</span>
+                    <span className="text-[10px] font-black bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded ml-auto tracking-wider">V5.0</span>
                 </div>
             </div>
 
