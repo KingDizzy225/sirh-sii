@@ -60,7 +60,6 @@ import { CareerPath } from './pages/CareerPath';
 import { CommandCenter } from './components/CommandCenter';
 import { TeamHealth } from './pages/TeamHealth';
 import { FeedbackWidget } from './components/FeedbackWidget';
-import { HRRequests } from './pages/HRRequests';
 import { PublicPortal } from './pages/PublicPortal';
 
 const Unauthorized = () => (
@@ -229,12 +228,6 @@ const AppContent = () => {
             <Route path="/social-support" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Social Worker']}>
                 <Support />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/hr-requests" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
-                <HRRequests />
               </ProtectedRoute>
             } />
 

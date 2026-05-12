@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Lock, Mail, ShieldCheck, Loader2 } from 'lucide-react';
+import { Lock, Mail, ShieldCheck, Loader2, Users } from 'lucide-react';
 
 export function Login() {
     const [email, setEmail] = useState('');
@@ -172,14 +172,25 @@ export function Login() {
                             <p>Mot de passe : <span className="text-slate-400 font-mono">SIIRH</span></p>
                         </div>
 
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200 flex items-center justify-center gap-2 h-10 text-sm"
-                            onClick={() => navigate('/ethics')}
-                        >
-                            <ShieldCheck size={16} /> Portail de Signalement Éthique
-                        </Button>
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white flex items-center justify-center gap-2 h-10 text-sm"
+                                onClick={() => navigate('/portal')}
+                            >
+                                <Users size={16} /> Self Service Employé
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200 flex items-center justify-center gap-2 h-10 text-sm"
+                                onClick={() => navigate('/ethics')}
+                            >
+                                <ShieldCheck size={16} /> Portail de Signalement Éthique
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 

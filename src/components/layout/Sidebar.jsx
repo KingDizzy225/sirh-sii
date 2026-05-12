@@ -21,7 +21,6 @@ const getAllNavItems = () => [
     { name: 'Explorateur Carrière', path: '/career-path', icon: Rocket, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Mes Avantages', path: '/benefits', icon: HeartPulse, domain: 'Mon Espace', permission: 'myself:view' },
-    { name: 'Mes Demandes RH', path: '/hr-requests', icon: MessageSquare, domain: 'Mon Espace', permission: 'myself:view' },
     
     // MON ÉQUIPE
     { name: 'Évaluation Équipe', path: '/performance', icon: Users, domain: 'Mon Équipe', permission: 'manager:view' }, 
@@ -40,26 +39,26 @@ const getAllNavItems = () => [
     { name: 'Santé & Sécurité', path: '/hse', icon: Shield, domain: 'Collaborateurs', permission: 'employees:edit' },
     { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'Collaborateurs', permission: 'employees:edit' },
 
-    // GESTION RH
-    { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Gestion RH', permission: 'dashboard:view' },
-    { name: 'Gestion des Absences', path: '/absences', icon: AlertTriangle, domain: 'Gestion RH', permission: 'dashboard:view' },
-    { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Gestion RH', permission: 'payroll:view' },
-    { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Gestion RH', permission: 'payroll:view' },
-    { name: 'Suivi Formations', path: '/learning', icon: BookOpen, domain: 'Gestion RH', permission: 'learning:view' },
-    { name: 'Catalogue Sessions', path: '/trainings', icon: GraduationCap, domain: 'Gestion RH', permission: 'learning:view' },
-    { name: 'Compétences', path: '/skills', icon: Award, domain: 'Gestion RH', permission: 'skills:view' },
-    { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Gestion RH', permission: 'skills:view' },
-    { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'Gestion RH', permission: 'skills:view' },
-    { name: 'Générateur Workflows', path: '/workflows', icon: Zap, domain: 'Gestion RH', permission: 'dashboard:view' },
-    { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Gestion RH', permission: 'documents:view_company' },
+    // GESTION RH -> PILOTAGE RH
+    { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Gestion des Absences', path: '/absences', icon: AlertTriangle, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Suivi Formations', path: '/learning', icon: BookOpen, domain: 'Pilotage RH', permission: 'learning:view' },
+    { name: 'Catalogue Sessions', path: '/trainings', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
+    { name: 'Compétences', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
+    { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
+    { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
+    { name: 'Générateur Workflows', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
     
-    // ANALYTIQUE
-    { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Analytique', permission: 'dashboard:view' },
-    { name: 'Santé d\'Équipe', path: '/team-health', icon: HeartPulse, domain: 'Analytique', permission: 'dashboard:view' },
-    { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Analytique', permission: 'payroll:view' },
-    { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Analytique', permission: 'dashboard:view' },
-    { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Analytique', permission: 'dashboard:view' },
-    { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: FileText, domain: 'Analytique', permission: 'support_tickets:manage' },
+    // ANALYTIQUE -> INTELLIGENCE RH
+    { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Santé d\'Équipe', path: '/team-health', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Intelligence RH', permission: 'payroll:view' },
+    { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: FileText, domain: 'Intelligence RH', permission: 'support_tickets:manage' },
 ];
 
 

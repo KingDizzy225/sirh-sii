@@ -6,16 +6,8 @@ import { NotificationCenter } from '../NotificationCenter';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const getDomainsForRole = (role) => {
-    // Matching standard HR domains in French
-    const domains = ['Accueil', 'Mon Espace'];
-    
-    if (role === 'MANAGER' || role === 'HR' || role === 'ADMIN') {
-        domains.push('Mon Équipe');
-    }
-    if (role === 'HR' || role === 'ADMIN') {
-        domains.push('Collaborateurs', 'Gestion RH', 'Analytique');
-    }
-    return domains;
+    // Application is exclusively for HR Professionals
+    return ['Intelligence RH', 'Pilotage RH', 'Collaborateurs', 'Accueil', 'Mon Espace'];
 };
 
 export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
