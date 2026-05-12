@@ -171,7 +171,7 @@ export function JobDescriptionStudio() {
                                         <div className="text-xl text-fuchsia-700 font-bold">{activeJob.department}</div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-sm text-slate-500">Généré le {new Date(activeJob.createdAt).toLocaleDateString()}</div>
+                                        <div className="text-sm text-slate-500">Généré le {activeJob.createdAt ? new Date(activeJob.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}</div>
                                         <div className="font-bold text-slate-900 mt-1">S.I.I Entreprise</div>
                                     </div>
                                 </div>

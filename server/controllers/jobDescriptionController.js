@@ -62,12 +62,17 @@ Réponds UNIQUEMENT par le code HTML généré. Aucun autre texte.`;
         const response = await result.response;
         let htmlContent = response.text().trim();
         
-        // Remove markdown formatting if Gemini added it
-        if (htmlContent.startsWith('```html')) {
-            htmlContent = htmlContent.substring(7);
-        }
-        if (htmlContent.endsWith('```')) {
-            htmlContent = htmlContent.substring(0, htmlContent.length - 3);
+        // Better cleaning of AI response (remove markdown code blocks)
+        htmlContent = htmlContent.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+
+        if (!htmlContent || htmlContent.length < 50) {
+            htmlContent = `
+                <h2>Description du Poste : ${title}</h2>
+                <p>Nous recherchons un(e) ${title} pour rejoindre notre département ${department}.</p>
+                <h3>🎯 Vos Missions Principales</h3>
+                <ul><li>Définir et exécuter les missions du poste.</li></ul>
+                <p><i>[Note: La génération automatique a rencontré un problème mineur, veuillez compléter cette fiche.]</i></p>
+            `;
         }
 
         const job = await prisma.jobDescription.create({
