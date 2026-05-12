@@ -52,10 +52,20 @@ const auditTrailMiddleware = async (req, res, next) => {
     // Dans une vraie API, on interroge la base de données pour "targetId" sur "resource"
     let oldData = null;
     try {
-        // MOCK: Remplacer par `await db[resource].findById(targetId)`
-        oldData = { id: targetId, _info: "Donnée récupérée avant modification" };
+        if (targetId) {
+            // Mapping resource name to Prisma model name
+            const modelMap = {
+                'payroll': 'payroll',
+                'employees': 'employee',
+                'settings': 'user' // Assuming settings maps to User model
+            };
+            const modelName = modelMap[resource];
+            if (modelName) {
+                oldData = await prisma[modelName].findUnique({ where: { id: targetId } });
+            }
+        }
     } catch (error) {
-        console.error("Erreur lors de la récupération de l'ancienne donnée:", error);
+        console.error("Erreur lors de la récupération de l'ancienne donnée pour l'audit:", error);
     }
 
     // Intercepter la réponse pour s'assurer que l'opération a réussi avant de loguer

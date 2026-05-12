@@ -120,6 +120,7 @@ model Leave {
   status          String    // 'Pending', 'Approved', 'Rejected'
   durationDays    Float     @map("duration_days")
   reason          String?
+  attachmentPath  String?   @map("attachment_path")
   createdAt       DateTime  @default(now()) @map("created_at")
 
   employee        Employee  @relation(fields: [employeeId], references: [id])

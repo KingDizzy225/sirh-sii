@@ -63,13 +63,21 @@ exports.getMyAbsences = async (req, res) => {
     }
 };
 
-// POST /api/absences — Créer une absence/retard (RH/Manager)
+// POST /api/absences — Créer une absence/retard
 exports.createAbsence = async (req, res) => {
     try {
-        const { employeeId, type, date, durationMinutes, justification } = req.body;
+        let { employeeId, type, date, durationMinutes, justification } = req.body;
+        const justificatifPath = req.file ? `/uploads/justificatifs/${req.file.filename}` : null;
+
+        // Security: If not HR/Admin/Manager, force employeeId to be the current user
+        const isPrivileged = ['HR', 'ADMIN', 'MANAGER'].includes(req.user.role);
+        if (!isPrivileged) {
+            const employee = await prisma.employee.findFirst({ where: { email: req.user.email } });
+            employeeId = employee.id;
+        }
 
         if (!employeeId || !type || !date) {
-            return res.status(400).json({ error: 'Champs obligatoires manquants (employé, type, date).' });
+            return res.status(400).json({ error: 'Champs obligatoires manquants (type, date).' });
         }
 
         const absence = await prisma.absence.create({
@@ -79,7 +87,8 @@ exports.createAbsence = async (req, res) => {
                 date: new Date(date),
                 durationMinutes: durationMinutes ? parseInt(durationMinutes) : null,
                 justification: justification || null,
-                status: 'Non justifié',
+                justificatifPath,
+                status: justificatifPath ? 'En attente de validation' : 'Non justifié',
                 createdBy: req.user?.email || 'Système'
             },
             include: {
@@ -152,5 +161,39 @@ exports.deleteAbsence = async (req, res) => {
         res.json({ message: 'Absence supprimée.' });
     } catch (error) {
         res.status(500).json({ error: 'Erreur lors de la suppression' });
+    }
+};
+
+// POST /api/absences/public — Créer une absence sans connexion
+exports.createPublicAbsence = async (req, res) => {
+    try {
+        const { email, type, date, justification } = req.body;
+        const justificatifPath = req.file ? `/uploads/justificatifs/${req.file.filename}` : null;
+
+        if (!email || !type || !date) {
+            return res.status(400).json({ error: 'Champs obligatoires manquants (email, type, date).' });
+        }
+
+        const employee = await prisma.employee.findUnique({ where: { email } });
+        if (!employee) {
+            return res.status(404).json({ error: 'Aucun employé trouvé avec cet email.' });
+        }
+
+        const absence = await prisma.absence.create({
+            data: {
+                employeeId: employee.id,
+                type,
+                date: new Date(date),
+                justification: justification || null,
+                justificatifPath,
+                status: justificatifPath ? 'En attente de validation' : 'Non justifié',
+                createdBy: 'Libre-Service Public'
+            }
+        });
+
+        res.status(201).json({ message: 'Votre demande a été transmise au service RH.', id: absence.id });
+    } catch (error) {
+        console.error('Error creating public absence:', error);
+        res.status(500).json({ error: 'Erreur lors de la soumission.' });
     }
 };

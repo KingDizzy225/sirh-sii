@@ -14,6 +14,15 @@ export function Login() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [ssoLoading, setSsoLoading] = useState(null);
     const [ssoSuccess, setSsoSuccess] = useState(null);
+    const [isPortalOpen, setIsPortalOpen] = useState(false);
+    const [portalForm, setPortalForm] = useState({
+        email: '',
+        type: 'Absence injustifiée',
+        date: new Date().toISOString().split('T')[0],
+        justification: '',
+        file: null
+    });
+    const [portalStatus, setPortalStatus] = useState(null);
 
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -40,7 +49,36 @@ export function Login() {
             setTimeout(() => setSsoSuccess(null), 4000);
         }, 2000);
     };
+    const handlePortalSubmit = async (e) => {
+        e.preventDefault();
+        setPortalStatus('loading');
+        const formData = new FormData();
+        formData.append('email', portalForm.email);
+        formData.append('type', portalForm.type);
+        formData.append('date', portalForm.date);
+        formData.append('justification', portalForm.justification);
+        if (portalForm.file) {
+            formData.append('justificatif', portalForm.file);
+        }
 
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/absences/public`, {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                setPortalStatus('success');
+                setTimeout(() => { setIsPortalOpen(false); setPortalStatus(null); }, 3000);
+            } else {
+                const data = await res.json();
+                setError(data.error || "Erreur lors de l'envoi.");
+                setPortalStatus('error');
+            }
+        } catch (err) {
+            setPortalStatus('error');
+        }
+    };
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col justify-center items-center p-4 relative overflow-hidden">
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
@@ -177,9 +215,9 @@ export function Login() {
                                 type="button"
                                 variant="outline"
                                 className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white flex items-center justify-center gap-2 h-10 text-sm"
-                                onClick={() => navigate('/portal')}
+                                onClick={() => setIsPortalOpen(true)}
                             >
-                                <Users size={16} /> Self Service Employé
+                                <Users size={16} /> Self Service Employé (Demande RH)
                             </Button>
 
                             <Button
@@ -198,6 +236,105 @@ export function Login() {
                     © {new Date().getFullYear()} SII · Système d'Information RH Enterprise
                 </p>
             </motion.div>
+
+            {/* Modal Self-Service Public */}
+            <AnimatePresence>
+                {isPortalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
+                        >
+                            <div className="bg-blue-600 p-6 text-white flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-xl font-bold">Guichet Libre-Service</h3>
+                                    <p className="text-blue-100 text-xs">Réservé aux employés SII sans accès applicatif</p>
+                                </div>
+                                <button onClick={() => setIsPortalOpen(false)} className="text-white/80 hover:text-white">
+                                    <Loader2 className="rotate-45" size={24} />
+                                </button>
+                            </div>
+                            
+                            <form onSubmit={handlePortalSubmit} className="p-8 space-y-5">
+                                {portalStatus === 'success' ? (
+                                    <div className="text-center py-10 space-y-4">
+                                        <div className="h-20 w-20 bg-emerald-500/20 text-emerald-500 rounded-full mx-auto flex items-center justify-center">
+                                            <ShieldCheck size={40} />
+                                        </div>
+                                        <h4 className="text-xl font-bold text-white">Demande Transmise !</h4>
+                                        <p className="text-slate-400">Votre justificatif a été envoyé avec succès au service RH.</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-400">Votre Email Professionnel</label>
+                                            <Input 
+                                                type="email" 
+                                                className="bg-slate-800 border-slate-700 text-white"
+                                                placeholder="nom.prenom@sii-ci.com"
+                                                value={portalForm.email}
+                                                onChange={(e) => setPortalForm({...portalForm, email: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-slate-400">Type de demande</label>
+                                                <select 
+                                                    className="w-full bg-slate-800 border-slate-700 text-white p-2.5 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                                    value={portalForm.type}
+                                                    onChange={(e) => setPortalForm({...portalForm, type: e.target.value})}
+                                                >
+                                                    <option value="Absence injustifiée">Justificatif d'absence</option>
+                                                    <option value="Demande d'autorisation">Autorisation d'absence</option>
+                                                    <option value="Retard">Signalement de retard</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-slate-400">Date</label>
+                                                <Input 
+                                                    type="date" 
+                                                    className="bg-slate-800 border-slate-700 text-white"
+                                                    value={portalForm.date}
+                                                    onChange={(e) => setPortalForm({...portalForm, date: e.target.value})}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-400">Commentaire</label>
+                                            <textarea 
+                                                className="w-full bg-slate-800 border-slate-700 text-white p-3 rounded-xl text-sm h-20 outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Précisez le motif..."
+                                                value={portalForm.justification}
+                                                onChange={(e) => setPortalForm({...portalForm, justification: e.target.value})}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-400">Justificatif (JPEG, PNG, PDF)</label>
+                                            <input 
+                                                type="file" 
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                onChange={(e) => setPortalForm({...portalForm, file: e.target.files[0]})}
+                                                className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600/10 file:text-blue-400 hover:file:bg-blue-600/20"
+                                            />
+                                        </div>
+                                        <Button 
+                                            type="submit" 
+                                            disabled={portalStatus === 'loading'}
+                                            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-2xl text-lg font-bold shadow-lg shadow-blue-500/20 mt-4 transition-all"
+                                        >
+                                            {portalStatus === 'loading' ? <Loader2 className="animate-spin" /> : 'Transmettre au RH'}
+                                        </Button>
+                                    </>
+                                )}
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

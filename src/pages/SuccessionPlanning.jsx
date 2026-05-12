@@ -4,8 +4,11 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../context/AuthContext';
-import { Target, Plus, Trash2, ShieldAlert, CheckCircle2, Clock, Calendar } from 'lucide-react';
+import { Target, Plus, Trash2, ShieldAlert, CheckCircle2, Clock, Calendar, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Dnd Kit Imports
+import { DndContext, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -97,6 +100,37 @@ export function SuccessionPlanning() {
         }
     };
 
+    const handleDragEnd = async (event) => {
+        const { active, over } = event;
+        if (!over) return;
+
+        // active.id is successor.id
+        // over.id is newReadiness (Ready Now, etc.)
+        const successorId = active.id;
+        const newReadiness = over.id;
+
+        // Optimistic update
+        const updatedPlans = plans.map(plan => ({
+            ...plan,
+            successors: plan.successors.map(s => 
+                s.id === successorId ? { ...s, readiness: newReadiness } : s
+            )
+        }));
+        setPlans(updatedPlans);
+
+        try {
+            await fetch(`${API_URL}/api/succession/successors/${successorId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ readiness: newReadiness })
+            });
+            loadData();
+        } catch (err) {
+            console.error(err);
+            loadData(); // Revert on error
+        }
+    };
+
     const getCritColor = (crit) => {
         if (crit === 'Critical') return 'bg-red-100 text-red-800 border-red-200';
         if (crit === 'High') return 'bg-amber-100 text-amber-800 border-amber-200';
@@ -104,148 +138,162 @@ export function SuccessionPlanning() {
         return 'bg-slate-100 text-slate-800 border-slate-200';
     };
 
-    const getReadinessIcon = (readiness) => {
-        if (readiness === 'Ready Now') return <CheckCircle2 size={14} className="text-emerald-500" />;
-        if (readiness === '1-2 Years') return <Clock size={14} className="text-blue-500" />;
-        return <Calendar size={14} className="text-amber-500" />;
-    };
-
     if (loading) return <div className="p-8 text-slate-500">Chargement...</div>;
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-screen">
-            <div>
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                    <Target className="text-violet-600" /> Plan de Succession
-                </h2>
-                <p className="text-slate-500 mt-1">Anticipez les départs sur les postes critiques en créant des bancs de remplaçants.</p>
-            </div>
+        <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+            <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-screen">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                        <Target className="text-violet-600" /> Plan de Succession
+                    </h2>
+                    <p className="text-slate-500 mt-1">Anticipez les départs sur les postes critiques en créant des bancs de remplaçants.</p>
+                </div>
 
-            <div className="grid gap-6 md:grid-cols-4">
-                <Card className="md:col-span-1 shadow-sm">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Nouveau Poste Critique</CardTitle>
-                        <CardDescription>Ciblez un poste à risque.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleCreatePlan} className="space-y-4">
-                            <div>
-                                <label className="text-xs font-bold text-slate-700 uppercase">Titre du Poste</label>
-                                <Input required value={newPlanPos} onChange={e => setNewPlanPos(e.target.value)} placeholder="Ex: Directeur Financier" />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-700 uppercase">Département</label>
-                                <Input required value={newPlanDept} onChange={e => setNewPlanDept(e.target.value)} placeholder="Ex: Finance" />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-700 uppercase">Criticité</label>
-                                <select className="w-full text-sm border-slate-200 rounded-md p-2 mt-1" value={newPlanCrit} onChange={e => setNewPlanCrit(e.target.value)}>
-                                    <option value="Low">Faible</option>
-                                    <option value="Medium">Moyenne</option>
-                                    <option value="High">Haute</option>
-                                    <option value="Critical">Critique</option>
-                                </select>
-                            </div>
-                            <Button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white">Créer le Plan</Button>
-                        </form>
-                    </CardContent>
-                </Card>
-
-                <div className="md:col-span-3 space-y-6">
-                    {plans.map(plan => (
-                        <Card key={plan.id} className="shadow-sm overflow-hidden">
-                            <CardHeader className="bg-white border-b border-slate-100 flex flex-row items-center justify-between py-4">
+                <div className="grid gap-6 md:grid-cols-4">
+                    <Card className="md:col-span-1 shadow-sm h-fit sticky top-6">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Nouveau Poste Critique</CardTitle>
+                            <CardDescription>Ciblez un poste à risque.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleCreatePlan} className="space-y-4">
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <CardTitle className="text-xl text-slate-800">{plan.positionTitle}</CardTitle>
-                                        <Badge variant="outline" className={getCritColor(plan.criticality)}>{plan.criticality}</Badge>
-                                    </div>
-                                    <CardDescription className="mt-1">{plan.department}</CardDescription>
+                                    <label className="text-xs font-bold text-slate-700 uppercase">Titre du Poste</label>
+                                    <Input required value={newPlanPos} onChange={e => setNewPlanPos(e.target.value)} placeholder="Ex: Directeur Financier" />
                                 </div>
-                                <Button variant="ghost" size="sm" onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:bg-red-50">
-                                    <Trash2 size={16} />
-                                </Button>
-                            </CardHeader>
-                            <CardContent className="p-0 bg-slate-50/50">
-                                <div className="grid md:grid-cols-3 divide-x divide-y md:divide-y-0 divide-slate-100">
-                                    {/* Ready Now */}
-                                    <div className="p-4">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <CheckCircle2 size={16} className="text-emerald-500" />
-                                            <h4 className="font-bold text-slate-700 text-sm">Prêt Immédiatement</h4>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {plan.successors.filter(s => s.readiness === 'Ready Now').map(s => (
-                                                <div key={s.id} className="bg-white border border-slate-200 rounded-md p-3 flex justify-between items-center group shadow-sm">
-                                                    <div>
-                                                        <div className="font-bold text-slate-800 text-sm">{s.employee.firstName} {s.employee.lastName}</div>
-                                                        <div className="text-xs text-slate-500">{s.employee.positionTitle}</div>
-                                                    </div>
-                                                    <button onClick={() => handleRemoveSuccessor(s.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            <AddSuccessorButton planId={plan.id} readiness="Ready Now" employees={employees} currentSuccessors={plan.successors} onAdd={handleAddSuccessor} />
-                                        </div>
-                                    </div>
-
-                                    {/* 1-2 Years */}
-                                    <div className="p-4">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <Clock size={16} className="text-blue-500" />
-                                            <h4 className="font-bold text-slate-700 text-sm">Prêt dans 1-2 Ans</h4>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {plan.successors.filter(s => s.readiness === '1-2 Years').map(s => (
-                                                <div key={s.id} className="bg-white border border-slate-200 rounded-md p-3 flex justify-between items-center group shadow-sm">
-                                                    <div>
-                                                        <div className="font-bold text-slate-800 text-sm">{s.employee.firstName} {s.employee.lastName}</div>
-                                                        <div className="text-xs text-slate-500">{s.employee.positionTitle}</div>
-                                                    </div>
-                                                    <button onClick={() => handleRemoveSuccessor(s.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            <AddSuccessorButton planId={plan.id} readiness="1-2 Years" employees={employees} currentSuccessors={plan.successors} onAdd={handleAddSuccessor} />
-                                        </div>
-                                    </div>
-
-                                    {/* 3+ Years */}
-                                    <div className="p-4">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <Calendar size={16} className="text-amber-500" />
-                                            <h4 className="font-bold text-slate-700 text-sm">Prêt dans 3+ Ans</h4>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {plan.successors.filter(s => s.readiness === '3+ Years').map(s => (
-                                                <div key={s.id} className="bg-white border border-slate-200 rounded-md p-3 flex justify-between items-center group shadow-sm">
-                                                    <div>
-                                                        <div className="font-bold text-slate-800 text-sm">{s.employee.firstName} {s.employee.lastName}</div>
-                                                        <div className="text-xs text-slate-500">{s.employee.positionTitle}</div>
-                                                    </div>
-                                                    <button onClick={() => handleRemoveSuccessor(s.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            <AddSuccessorButton planId={plan.id} readiness="3+ Years" employees={employees} currentSuccessors={plan.successors} onAdd={handleAddSuccessor} />
-                                        </div>
-                                    </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-700 uppercase">Département</label>
+                                    <Input required value={newPlanDept} onChange={e => setNewPlanDept(e.target.value)} placeholder="Ex: Finance" />
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                    {plans.length === 0 && (
-                        <div className="text-center py-20 bg-white border border-dashed border-slate-300 rounded-xl">
-                            <Target size={40} className="mx-auto text-slate-300 mb-2" />
-                            <h3 className="text-slate-700 font-bold">Aucun Plan de Succession</h3>
-                            <p className="text-slate-500 text-sm">Ciblez votre premier poste critique.</p>
-                        </div>
-                    )}
+                                <div>
+                                    <label className="text-xs font-bold text-slate-700 uppercase">Criticité</label>
+                                    <select className="w-full text-sm border-slate-200 rounded-md p-2 mt-1" value={newPlanCrit} onChange={e => setNewPlanCrit(e.target.value)}>
+                                        <option value="Low">Faible</option>
+                                        <option value="Medium">Moyenne</option>
+                                        <option value="High">Haute</option>
+                                        <option value="Critical">Critique</option>
+                                    </select>
+                                </div>
+                                <Button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white">Créer le Plan</Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    <div className="md:col-span-3 space-y-6">
+                        {plans.map(plan => (
+                            <Card key={plan.id} className="shadow-sm overflow-hidden">
+                                <CardHeader className="bg-white border-b border-slate-100 flex flex-row items-center justify-between py-4">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <CardTitle className="text-xl text-slate-800">{plan.positionTitle}</CardTitle>
+                                            <Badge variant="outline" className={getCritColor(plan.criticality)}>{plan.criticality}</Badge>
+                                        </div>
+                                        <CardDescription className="mt-1">{plan.department}</CardDescription>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:bg-red-50">
+                                        <Trash2 size={16} />
+                                    </Button>
+                                </CardHeader>
+                                <CardContent className="p-0 bg-slate-50/50">
+                                    <div className="grid md:grid-cols-3 divide-x divide-y md:divide-y-0 divide-slate-100">
+                                        
+                                        {/* Ready Now Column */}
+                                        <DroppableCategory 
+                                            id="Ready Now" 
+                                            title="Prêt Immédiatement" 
+                                            icon={<CheckCircle2 size={16} className="text-emerald-500" />}
+                                            successors={plan.successors.filter(s => s.readiness === 'Ready Now')}
+                                            onRemove={handleRemoveSuccessor}
+                                            renderAdd={() => (
+                                                <AddSuccessorButton planId={plan.id} readiness="Ready Now" employees={employees} currentSuccessors={plan.successors} onAdd={handleAddSuccessor} />
+                                            )}
+                                        />
+
+                                        {/* 1-2 Years Column */}
+                                        <DroppableCategory 
+                                            id="1-2 Years" 
+                                            title="Prêt dans 1-2 Ans" 
+                                            icon={<Clock size={16} className="text-blue-500" />}
+                                            successors={plan.successors.filter(s => s.readiness === '1-2 Years')}
+                                            onRemove={handleRemoveSuccessor}
+                                            renderAdd={() => (
+                                                <AddSuccessorButton planId={plan.id} readiness="1-2 Years" employees={employees} currentSuccessors={plan.successors} onAdd={handleAddSuccessor} />
+                                            )}
+                                        />
+
+                                        {/* 3+ Years Column */}
+                                        <DroppableCategory 
+                                            id="3+ Years" 
+                                            title="Prêt dans 3+ Ans" 
+                                            icon={<Calendar size={16} className="text-amber-500" />}
+                                            successors={plan.successors.filter(s => s.readiness === '3+ Years')}
+                                            onRemove={handleRemoveSuccessor}
+                                            renderAdd={() => (
+                                                <AddSuccessorButton planId={plan.id} readiness="3+ Years" employees={employees} currentSuccessors={plan.successors} onAdd={handleAddSuccessor} />
+                                            )}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
                 </div>
             </div>
+        </DndContext>
+    );
+}
+
+function DroppableCategory({ id, title, icon, successors, onRemove, renderAdd }) {
+    const { setNodeRef, isOver } = useDroppable({ id });
+
+    return (
+        <div ref={setNodeRef} className={cn("p-4 transition-colors", isOver ? "bg-violet-50/50" : "")}>
+            <div className="flex items-center gap-2 mb-4">
+                {icon}
+                <h4 className="font-bold text-slate-700 text-sm">{title}</h4>
+            </div>
+            <div className="space-y-2 min-h-[50px]">
+                {successors.map(s => (
+                    <DraggableSuccessor key={s.id} successor={s} onRemove={onRemove} />
+                ))}
+                {renderAdd()}
+            </div>
+        </div>
+    );
+}
+
+function DraggableSuccessor({ successor, onRemove }) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: successor.id,
+    });
+
+    const style = transform ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 100,
+    } : undefined;
+
+    return (
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            className={cn(
+                "bg-white border border-slate-200 rounded-md p-3 flex justify-between items-center group shadow-sm",
+                isDragging ? "opacity-50 border-violet-500 shadow-xl cursor-grabbing" : "cursor-default"
+            )}
+        >
+            <div className="flex items-center gap-2">
+                <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500">
+                    <GripVertical size={14} />
+                </div>
+                <div>
+                    <div className="font-bold text-slate-800 text-sm">{successor.employee.firstName} {successor.employee.lastName}</div>
+                    <div className="text-xs text-slate-500">{successor.employee.positionTitle}</div>
+                </div>
+            </div>
+            <button onClick={() => onRemove(successor.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Trash2 size={14} />
+            </button>
         </div>
     );
 }

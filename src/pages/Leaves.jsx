@@ -46,7 +46,8 @@ export function Leaves() {
         type: 'Congé Annuel',
         startDate: '',
         endDate: '',
-        reason: ''
+        reason: '',
+        attachment: null
     });
 
     const loadLeaves = async () => {
@@ -184,22 +185,27 @@ END:VCALENDAR`;
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
             const token = localStorage.getItem('sirh_token');
+            
+            const formData = new FormData();
+            formData.append('employeeId', (isManagerOrAdmin && leaveForm.employeeId) ? leaveForm.employeeId : user?.id);
+            formData.append('type', leaveForm.type);
+            formData.append('startDate', leaveForm.startDate);
+            formData.append('endDate', leaveForm.endDate);
+            formData.append('reason', leaveForm.reason);
+            if (leaveForm.attachment) {
+                formData.append('attachment', leaveForm.attachment);
+            }
+
             const res = await fetch(`${API_URL}/api/leaves`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    employeeId: (isManagerOrAdmin && leaveForm.employeeId) ? leaveForm.employeeId : user?.id,
-                    type: leaveForm.type,
-                    startDate: leaveForm.startDate,
-                    endDate: leaveForm.endDate,
-                    reason: leaveForm.reason
-                })
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
             });
 
             if (res.ok) {
                 await loadLeaves();
                 setIsLeaveModalOpen(false);
-                setLeaveForm({ employeeId: user?.id || '', type: 'Congé Annuel', startDate: '', endDate: '', reason: '' });
+                setLeaveForm({ employeeId: user?.id || '', type: 'Congé Annuel', startDate: '', endDate: '', reason: '', attachment: null });
                 showNotification('Demande de congé soumise avec succès.');
                 setActiveTab('my-leaves');
             } else {
@@ -312,6 +318,17 @@ END:VCALENDAR`;
                                             className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                             placeholder="Brève description du motif de congé"
                                         />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Justificatif (JPEG, PNG, PDF - Max 5Mo)</label>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                onChange={(e) => setLeaveForm({ ...leaveForm, attachment: e.target.files[0] })}
+                                                className="cursor-pointer"
+                                            />
+                                        </div>
                                     </div>
                                 </form>
                             </div>

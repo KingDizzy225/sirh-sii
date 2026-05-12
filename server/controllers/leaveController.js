@@ -19,6 +19,7 @@ exports.getAllLeaves = async (req, res) => {
 exports.createLeave = async (req, res) => {
     try {
         const { employeeId, type, startDate, endDate, reason } = req.body;
+        const attachmentPath = req.file ? `/uploads/justificatifs/${req.file.filename}` : null;
 
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -31,6 +32,7 @@ exports.createLeave = async (req, res) => {
                 startDate: start,
                 endDate: end,
                 reason,
+                attachmentPath,
                 status: 'PENDING',
                 durationDays
             },

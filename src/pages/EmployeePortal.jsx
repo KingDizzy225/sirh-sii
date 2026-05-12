@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User, CheckCircle2, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -13,6 +13,13 @@ export function EmployeePortal() {
     const [profile, setProfile] = useState(null);
     const [logs, setLogs] = useState([]);
     const [isClocking, setIsClocking] = useState(false);
+    const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
+    const [absenceForm, setAbsenceForm] = useState({
+        type: 'Absence injustifiée',
+        date: new Date().toISOString().split('T')[0],
+        justification: '',
+        file: null
+    });
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -86,6 +93,35 @@ export function EmployeePortal() {
         } catch (error) {
             console.error("Download error", error);
             alert("Impossible de générer l'attestation.");
+        }
+    };
+
+    const handleAbsenceSubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('type', absenceForm.type);
+        formData.append('date', absenceForm.date);
+        formData.append('justification', absenceForm.justification);
+        if (absenceForm.file) {
+            formData.append('justificatif', absenceForm.file);
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/api/absences`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            if (res.ok) {
+                alert("Demande transmise avec succès.");
+                setIsAbsenceModalOpen(false);
+                setAbsenceForm({ type: 'Absence injustifiée', date: new Date().toISOString().split('T')[0], justification: '', file: null });
+            } else {
+                alert("Erreur lors de l'envoi.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Erreur réseau.");
         }
     };
 
@@ -239,10 +275,10 @@ export function EmployeePortal() {
                     </div>
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Link to="/leaves" className="flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-xl transition-all group">
+                    <div onClick={() => setIsAbsenceModalOpen(true)} className="cursor-pointer flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-xl transition-all group">
                         <Calendar size={32} className="text-indigo-400 group-hover:text-indigo-600 mb-3" />
                         <span className="font-bold text-slate-700 text-center">Je suis absent</span>
-                    </Link>
+                    </div>
                     <Link to="/expenses" className="flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-emerald-50 border border-slate-100 rounded-xl transition-all group">
                         <Receipt size={32} className="text-emerald-400 group-hover:text-emerald-600 mb-3" />
                         <span className="font-bold text-slate-700 text-center">J'ai fait une dépense</span>
@@ -251,10 +287,10 @@ export function EmployeePortal() {
                         <FileText size={32} className="text-blue-400 group-hover:text-blue-600 mb-3" />
                         <span className="font-bold text-slate-700 text-center">J'ai besoin d'une attestation</span>
                     </div>
-                    <Link to="/social-support" className="flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-rose-50 border border-slate-100 rounded-xl transition-all group">
+                    <div onClick={() => { setIsAbsenceModalOpen(true); setAbsenceForm({...absenceForm, type: "Demande d'autorisation"}); }} className="cursor-pointer flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-rose-50 border border-slate-100 rounded-xl transition-all group">
                         <Heart size={32} className="text-rose-400 group-hover:text-rose-600 mb-3" />
-                        <span className="font-bold text-slate-700 text-center">J'ai un problème personnel</span>
-                    </Link>
+                        <span className="font-bold text-slate-700 text-center">Autorisation d'absence</span>
+                    </div>
                 </div>
             </div>
 
@@ -273,6 +309,72 @@ export function EmployeePortal() {
                     </p>
                 </div>
             </div>
+
+            {/* Modal Absence / Autorisation */}
+            <AnimatePresence>
+                {isAbsenceModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                            className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
+                        >
+                            <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                                <h3 className="text-xl font-bold">Déclarer une Absence</h3>
+                                <button onClick={() => setIsAbsenceModalOpen(false)} className="text-white/80 hover:text-white">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleAbsenceSubmit} className="p-8 space-y-5">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Type de demande</label>
+                                    <select 
+                                        className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700"
+                                        value={absenceForm.type}
+                                        onChange={(e) => setAbsenceForm({...absenceForm, type: e.target.value})}
+                                    >
+                                        <option value="Absence injustifiée">Absence (déjà passée)</option>
+                                        <option value="Demande d'autorisation">Autorisation d'absence (future)</option>
+                                        <option value="Retard">Signalement de retard</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Date</label>
+                                    <input 
+                                        type="date" 
+                                        className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700"
+                                        value={absenceForm.date}
+                                        onChange={(e) => setAbsenceForm({...absenceForm, date: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Justification / Commentaire</label>
+                                    <textarea 
+                                        className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none h-24 text-slate-700"
+                                        placeholder="Précisez le motif..."
+                                        value={absenceForm.justification}
+                                        onChange={(e) => setAbsenceForm({...absenceForm, justification: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Pièce jointe (JPEG, PDF)</label>
+                                    <input 
+                                        type="file" 
+                                        accept=".jpg,.jpeg,.png,.pdf"
+                                        onChange={(e) => setAbsenceForm({...absenceForm, file: e.target.files[0]})}
+                                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                    />
+                                </div>
+                                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-6 rounded-2xl text-lg font-bold shadow-lg shadow-indigo-200 mt-4 transition-all active:scale-95">
+                                    Envoyer la demande
+                                </Button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

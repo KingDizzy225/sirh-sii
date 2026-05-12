@@ -125,25 +125,30 @@ exports.generateAndSignDocument = async (req, res) => {
         pdfDoc.fontSize(16).fillColor('#0f172a').text(type === 'Contrat' ? 'CONTRAT DE TRAVAIL' : 'ATTESTATION DE TRAVAIL', { align: 'center', underline: true });
         pdfDoc.moveDown(2);
 
+        const formatDate = (date) => {
+            const d = new Date(date);
+            return isNaN(d.getTime()) ? 'Non précisée' : d.toLocaleDateString('fr-FR');
+        };
+
         // Body
         pdfDoc.fontSize(12).text(`Nous soussignés, la direction de SIRH-SII,`);
         pdfDoc.moveDown();
         if (type === 'Attestation') {
             pdfDoc.text(`Certifions par la présente que M./Mme ${employee.firstName} ${employee.lastName},`);
             pdfDoc.text(`Exerce la fonction de ${employee.positionTitle || employee.role} au sein du département ${employee.department}.`);
-            pdfDoc.text(`Date d'embauche : ${new Date(employee.hireDate).toLocaleDateString('fr-FR')}.`);
+            pdfDoc.text(`Date d'embauche : ${formatDate(employee.hireDate)}.`);
             pdfDoc.moveDown();
             pdfDoc.text(`Cette attestation est délivrée pour servir et valoir ce que de droit.`);
         } else {
             pdfDoc.text(`Engageons M./Mme ${employee.firstName} ${employee.lastName} au poste de ${employee.positionTitle || employee.role}.`);
             pdfDoc.text(`Département : ${employee.department}`);
-            pdfDoc.text(`Date d'embauche officielle : ${new Date(employee.hireDate).toLocaleDateString('fr-FR')}.`);
+            pdfDoc.text(`Date d'embauche officielle : ${formatDate(employee.hireDate)}.`);
             pdfDoc.moveDown();
             pdfDoc.text(`Le présent document stipule l'accord des deux parties listées ci-dessous concernant les termes de l'emploi en vigueur au sein de l'entreprise.`);
         }
 
         pdfDoc.moveDown(4);
-        pdfDoc.text(`Fait numériquement, le ${new Date().toLocaleDateString('fr-FR')}`);
+        pdfDoc.text(`Fait numériquement, le ${formatDate(new Date())}`);
         pdfDoc.moveDown(3);
 
         // Signatures area
@@ -217,17 +222,22 @@ exports.generateAttestation = async (req, res) => {
         pdfDoc.fontSize(16).fillColor('#0f172a').text('ATTESTATION DE TRAVAIL', { align: 'center', underline: true });
         pdfDoc.moveDown(2);
 
+        const formatDate = (date) => {
+            const d = new Date(date);
+            return isNaN(d.getTime()) ? 'Non précisée' : d.toLocaleDateString('fr-FR');
+        };
+
         // Body
         pdfDoc.fontSize(12).fillColor('#333333').text(`Nous soussignés, la direction de SIRH-SII,`);
         pdfDoc.moveDown();
         pdfDoc.text(`Certifions par la présente que M./Mme ${employee.firstName} ${employee.lastName},`);
         pdfDoc.text(`Exerce la fonction de ${employee.positionTitle || employee.role} au sein du département ${employee.department}.`);
-        pdfDoc.text(`Date d'embauche : ${new Date(employee.hireDate).toLocaleDateString('fr-FR')}.`);
+        pdfDoc.text(`Date d'embauche : ${formatDate(employee.hireDate)}.`);
         pdfDoc.moveDown();
         pdfDoc.text(`Cette attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.`);
         
         pdfDoc.moveDown(4);
-        pdfDoc.text(`Fait numériquement, le ${new Date().toLocaleDateString('fr-FR')}`);
+        pdfDoc.text(`Fait numériquement, le ${formatDate(new Date())}`);
         pdfDoc.moveDown(3);
 
         // Fake QR Code box for "Authenticity"

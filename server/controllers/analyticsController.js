@@ -150,8 +150,8 @@ exports.getPredictiveAnalytics = async (req, res) => {
         const promptData = employees.map(emp => {
             const totalLeaves = emp.leaves.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + (l.durationDays || 0), 0);
             const sickLeaves = emp.leaves.filter(l => l.status === 'APPROVED' && l.type === 'Congé Maladie').reduce((sum, l) => sum + (l.durationDays || 0), 0);
-            const avgSalary = emp.payrolls.length > 0 ? emp.payrolls[0].netSalary : 0;
-            const avgScore = emp.performanceReviews.length > 0 ? emp.performanceReviews[0].overallScore : 3;
+            const avgSalary = emp.payrolls.length > 0 ? (emp.payrolls[0].netSalary || 0) : 0;
+            const avgScore = emp.performanceReviews.length > 0 ? (emp.performanceReviews[0].overallScore || 3) : 3;
             const yearsOfService = (new Date() - new Date(emp.hireDate)) / (1000 * 60 * 60 * 24 * 365);
 
             return {
@@ -217,8 +217,8 @@ exports.calculateFlightRisk = async (req, res) => {
         if (!emp) return res.status(404).json({ error: 'Employé introuvable' });
 
         const totalLeaves = emp.leaves.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + (l.durationDays || 0), 0);
-        const avgSalary = emp.payrolls.length > 0 ? emp.payrolls[0].netSalary : 0;
-        const avgScore = emp.performanceReviews.length > 0 ? emp.performanceReviews[0].overallScore : 3;
+        const avgSalary = emp.payrolls.length > 0 ? (emp.payrolls[0].netSalary || 0) : 0;
+        const avgScore = emp.performanceReviews.length > 0 ? (emp.performanceReviews[0].overallScore || 3) : 3;
         const yearsOfService = (new Date() - new Date(emp.hireDate)) / (1000 * 60 * 60 * 24 * 365);
 
         const promptData = {

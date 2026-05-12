@@ -29,12 +29,10 @@ exports.createSimulation = async (req, res) => {
             // Need to map old IDs to new Node IDs so we can rebuild hierarchy
             const idMap = new Map();
 
-            // Pass 1: Create nodes
-            for (const emp of allEmployees) {
-                // Estimate monthly salary from payroll or default
+            // Pass 1: Create nodes (Parallelized)
+            const nodeCreationPromises = allEmployees.map(emp => {
                 const monthlySalary = emp.payrolls.length > 0 ? emp.payrolls[0].baseSalary : 500000;
-
-                const node = await prisma.orgSimulationNode.create({
+                return prisma.orgSimulationNode.create({
                     data: {
                         simulationId: simulation.id,
                         employeeId: emp.id,
@@ -43,22 +41,24 @@ exports.createSimulation = async (req, res) => {
                         monthlySalary,
                         isVacant: false
                     }
-                });
-                idMap.set(emp.id, node.id);
-            }
+                }).then(node => idMap.set(emp.id, node.id));
+            });
 
-            // Pass 2: Update hierarchy
-            for (const emp of allEmployees) {
-                if (emp.managerId && idMap.has(emp.managerId)) {
+            await Promise.all(nodeCreationPromises);
+
+            // Pass 2: Update hierarchy (Parallelized)
+            const hierarchyUpdatePromises = allEmployees
+                .filter(emp => emp.managerId && idMap.has(emp.managerId))
+                .map(emp => {
                     const nodeId = idMap.get(emp.id);
                     const parentNodeId = idMap.get(emp.managerId);
-                    
-                    await prisma.orgSimulationNode.update({
+                    return prisma.orgSimulationNode.update({
                         where: { id: nodeId },
                         data: { parentId: parentNodeId }
                     });
-                }
-            }
+                });
+
+            await Promise.all(hierarchyUpdatePromises);
         }
 
         res.status(201).json(simulation);
