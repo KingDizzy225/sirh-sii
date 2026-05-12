@@ -1,0 +1,432 @@
+Erreur Predictive Analytics (AI failure), switching to heuristic fallback: PrismaClientValidationError: 
+Invalid `prisma.employee.findMany()` invocation in
+/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:49
+
+  135 try {
+  136     if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
+  137 
+→ 138     const employees = await prisma.employee.findMany({
+            where: {
+              status: "ACTIVE"
+            },
+            include: {
+              leaves: {
+                select: {
+                  type: true,
+                  status: true,
+                  durationDays: true
+                }
+              },
+              payrolls: {
+                select: {
+                  netSalary: true,
+                  status: true
+                }
+              },
+              performanceReviews: {
+                select: {
+                  overallScore: true,
+                  ~~~~~~~~~~~~
+          ?       id?: true,
+          ?       employeeId?: true,
+          ?       reviewerName?: true,
+          ?       cycle?: true,
+          ?       rating?: true,
+          ?       status?: true,
+          ?       reviewDate?: true,
+          ?       achievements?: true,
+          ?       reflection?: true,
+          ?       createdAt?: true,
+          ?       employee?: true
+                }
+              }
+            }
+          })
+
+Unknown field `overallScore` for select statement on model `PerformanceReview`. Available options are marked with ?.
+    at wn (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async exports.getPredictiveAnalytics (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:27) {
+  clientVersion: '5.22.0'
+}
+Erreur Predictive Analytics (AI failure), switching to heuristic fallback: PrismaClientValidationError: 
+Invalid `prisma.employee.findMany()` invocation in
+/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:49
+
+  135 try {
+  136     if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
+  137 
+→ 138     const employees = await prisma.employee.findMany({
+            where: {
+              status: "ACTIVE"
+            },
+            include: {
+              leaves: {
+                select: {
+                  type: true,
+                  status: true,
+                  durationDays: true
+                }
+              },
+              payrolls: {
+                select: {
+                  netSalary: true,
+                  status: true
+                }
+              },
+              performanceReviews: {
+                select: {
+                  overallScore: true,
+                  ~~~~~~~~~~~~
+          ?       id?: true,
+          ?       employeeId?: true,
+          ?       reviewerName?: true,
+          ?       cycle?: true,
+          ?       rating?: true,
+          ?       status?: true,
+          ?       reviewDate?: true,
+          ?       achievements?: true,
+          ?       reflection?: true,
+          ?       createdAt?: true,
+          ?       employee?: true
+                }
+              }
+            }
+          })
+
+Unknown field `overallScore` for select statement on model `PerformanceReview`. Available options are marked with ?.
+    at wn (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async exports.getPredictiveAnalytics (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:27) {
+  clientVersion: '5.22.0'
+}
+Erreur Predictive Analytics (AI failure), switching to heuristic fallback: PrismaClientValidationError: 
+Invalid `prisma.employee.findMany()` invocation in
+/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:49
+
+  135 try {
+  136     if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
+  137 
+→ 138     const employees = await prisma.employee.findMany({
+            where: {
+              status: "ACTIVE"
+            },
+            include: {
+              leaves: {
+                select: {
+                  type: true,
+                  status: true,
+                  durationDays: true
+                }
+              },
+              payrolls: {
+                select: {
+                  netSalary: true,
+                  status: true
+                }
+              },
+              performanceReviews: {
+                select: {
+                  overallScore: true,
+                  ~~~~~~~~~~~~
+          ?       id?: true,
+          ?       employeeId?: true,
+          ?       reviewerName?: true,
+          ?       cycle?: true,
+          ?       rating?: true,
+          ?       status?: true,
+          ?       reviewDate?: true,
+          ?       achievements?: true,
+          ?       reflection?: true,
+          ?       createdAt?: true,
+          ?       employee?: true
+                }
+              }
+            }
+          })
+
+Unknown field `overallScore` for select statement on model `PerformanceReview`. Available options are marked with ?.
+    at wn (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async exports.getPredictiveAnalytics (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:27) {
+  clientVersion: '5.22.0'
+}
+Erreur Predictive Analytics (AI failure), switching to heuristic fallback: PrismaClientValidationError: 
+Invalid `prisma.employee.findMany()` invocation in
+/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:49
+
+  135 try {
+  136     if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
+  137 
+→ 138     const employees = await prisma.employee.findMany({
+            where: {
+              status: "ACTIVE"
+            },
+            include: {
+              leaves: {
+                select: {
+                  type: true,
+                  status: true,
+                  durationDays: true
+                }
+              },
+              payrolls: {
+                select: {
+                  netSalary: true,
+                  status: true
+                }
+              },
+              performanceReviews: {
+                select: {
+                  overallScore: true,
+                  ~~~~~~~~~~~~
+          ?       id?: true,
+          ?       employeeId?: true,
+          ?       reviewerName?: true,
+          ?       cycle?: true,
+          ?       rating?: true,
+          ?       status?: true,
+          ?       reviewDate?: true,
+          ?       achievements?: true,
+          ?       reflection?: true,
+          ?       createdAt?: true,
+          ?       employee?: true
+                }
+              }
+            }
+          })
+
+Unknown field `overallScore` for select statement on model `PerformanceReview`. Available options are marked with ?.
+    at wn (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async exports.getPredictiveAnalytics (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:27) {
+  clientVersion: '5.22.0'
+}
+Erreur Predictive Analytics (AI failure), switching to heuristic fallback: PrismaClientValidationError: 
+Invalid `prisma.employee.findMany()` invocation in
+/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:49
+
+  135 try {
+  136     if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
+  137 
+→ 138     const employees = await prisma.employee.findMany({
+            where: {
+              status: "ACTIVE"
+            },
+            include: {
+              leaves: {
+                select: {
+                  type: true,
+                  status: true,
+                  durationDays: true
+                }
+              },
+              payrolls: {
+                select: {
+                  netSalary: true,
+                  status: true
+                }
+              },
+              performanceReviews: {
+                select: {
+                  overallScore: true,
+                  ~~~~~~~~~~~~
+          ?       id?: true,
+          ?       employeeId?: true,
+          ?       reviewerName?: true,
+          ?       cycle?: true,
+          ?       rating?: true,
+          ?       status?: true,
+          ?       reviewDate?: true,
+          ?       achievements?: true,
+          ?       reflection?: true,
+          ?       createdAt?: true,
+          ?       employee?: true
+                }
+              }
+            }
+          })
+
+Unknown field `overallScore` for select statement on model `PerformanceReview`. Available options are marked with ?.
+    at wn (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async exports.getPredictiveAnalytics (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:27) {
+  clientVersion: '5.22.0'
+}
+Erreur Predictive Analytics (AI failure), switching to heuristic fallback: PrismaClientValidationError: 
+Invalid `prisma.employee.findMany()` invocation in
+/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:49
+
+  135 try {
+  136     if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
+  137 
+→ 138     const employees = await prisma.employee.findMany({
+            where: {
+              status: "ACTIVE"
+            },
+            include: {
+              leaves: {
+                select: {
+                  type: true,
+                  status: true,
+                  durationDays: true
+                }
+              },
+              payrolls: {
+                select: {
+                  netSalary: true,
+                  status: true
+                }
+              },
+              performanceReviews: {
+                select: {
+                  overallScore: true,
+                  ~~~~~~~~~~~~
+          ?       id?: true,
+          ?       employeeId?: true,
+          ?       reviewerName?: true,
+          ?       cycle?: true,
+          ?       rating?: true,
+          ?       status?: true,
+          ?       reviewDate?: true,
+          ?       achievements?: true,
+          ?       reflection?: true,
+          ?       createdAt?: true,
+          ?       employee?: true
+                }
+              }
+            }
+          })
+
+Unknown field `overallScore` for select statement on model `PerformanceReview`. Available options are marked with ?.
+    at wn (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async exports.getPredictiveAnalytics (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:27) {
+  clientVersion: '5.22.0'
+}
+Erreur Predictive Analytics (AI failure), switching to heuristic fallback: PrismaClientValidationError: 
+Invalid `prisma.employee.findMany()` invocation in
+/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:49
+
+  135 try {
+  136     if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
+  137 
+→ 138     const employees = await prisma.employee.findMany({
+            where: {
+              status: "ACTIVE"
+            },
+            include: {
+              leaves: {
+                select: {
+                  type: true,
+                  status: true,
+                  durationDays: true
+                }
+              },
+              payrolls: {
+                select: {
+                  netSalary: true,
+                  status: true
+                }
+              },
+              performanceReviews: {
+                select: {
+                  overallScore: true,
+                  ~~~~~~~~~~~~
+          ?       id?: true,
+          ?       employeeId?: true,
+          ?       reviewerName?: true,
+          ?       cycle?: true,
+          ?       rating?: true,
+          ?       status?: true,
+          ?       reviewDate?: true,
+          ?       achievements?: true,
+          ?       reflection?: true,
+          ?       createdAt?: true,
+          ?       employee?: true
+                }
+              }
+            }
+          })
+
+Unknown field `overallScore` for select statement on model `PerformanceReview`. Available options are marked with ?.
+    at wn (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async exports.getPredictiveAnalytics (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:27) {
+  clientVersion: '5.22.0'
+}
+Erreur Predictive Analytics (AI failure), switching to heuristic fallback: PrismaClientValidationError: 
+Invalid `prisma.employee.findMany()` invocation in
+/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:49
+
+  135 try {
+  136     if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
+  137 
+→ 138     const employees = await prisma.employee.findMany({
+            where: {
+              status: "ACTIVE"
+            },
+            include: {
+              leaves: {
+                select: {
+                  type: true,
+                  status: true,
+                  durationDays: true
+                }
+              },
+              payrolls: {
+                select: {
+                  netSalary: true,
+                  status: true
+                }
+              },
+              performanceReviews: {
+                select: {
+                  overallScore: true,
+                  ~~~~~~~~~~~~
+          ?       id?: true,
+          ?       employeeId?: true,
+          ?       reviewerName?: true,
+          ?       cycle?: true,
+          ?       rating?: true,
+          ?       status?: true,
+          ?       reviewDate?: true,
+          ?       achievements?: true,
+          ?       reflection?: true,
+          ?       createdAt?: true,
+          ?       employee?: true
+                }
+              }
+            }
+          })
+
+Unknown field `overallScore` for select statement on model `PerformanceReview`. Available options are marked with ?.
+    at wn (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async exports.getPredictiveAnalytics (/Users/diopibrahim/Desktop/GIT APP/SIRH-SII/server/controllers/analyticsController.js:138:27) {
+  clientVersion: '5.22.0'
+}

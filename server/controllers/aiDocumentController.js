@@ -10,7 +10,7 @@ exports.generateAIDocument = async (req, res) => {
          return res.status(500).json({ error: 'La clé d\'API GEMINI_API_KEY n\'est pas configurée dans le backend (.env).' });
     }
     const genAI = new GoogleGenerativeAI(apiKey);
-    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     try {
         console.log("=> [AI GENERATE] Called by:", req.user?.email);

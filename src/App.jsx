@@ -59,6 +59,7 @@ import { Benefits } from './pages/Benefits';
 import { Ethics } from './pages/Ethics';
 import { Subcontractors } from './pages/Subcontractors';
 import { DeiDashboard } from './pages/DeiDashboard';
+import { RequestCenter } from './pages/RequestCenter';
 
 import { FloatingChat } from './components/FloatingChat';
 import { CareerPath } from './pages/CareerPath';
@@ -185,6 +186,11 @@ const AppContent = () => {
             } />
             
             {/* Other Restricted Routes */}
+            <Route path="/request-center" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <RequestCenter />
+              </ProtectedRoute>
+            } />
             <Route path="/timesheet" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Timesheet />

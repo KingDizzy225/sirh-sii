@@ -27,6 +27,9 @@ model Employee {
   annualLeaveBalance Float  @default(30) @map("annual_leave_balance")
   exitDate        DateTime? @map("exit_date")
   offboardingStatus String? @default("N/A") @map("offboarding_status")
+  contractType    String?   @default("CDI") @map("contract_type")
+  contractEndDate DateTime? @map("contract_end_date")
+  trialPeriodEndDate DateTime? @map("trial_period_end_date")
 
   // Relations
   manager         Employee? @relation("Hierarchy", fields: [managerId], references: [id])

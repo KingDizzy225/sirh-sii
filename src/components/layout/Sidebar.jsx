@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -43,6 +43,7 @@ const getAllNavItems = () => [
 
     // GESTION RH -> PILOTAGE RH
     { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Centre de Demandes', path: '/request-center', icon: Inbox, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Gestion des Absences', path: '/absences', icon: AlertTriangle, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Pilotage RH', permission: 'payroll:view' },
@@ -63,7 +64,6 @@ const getAllNavItems = () => [
     { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Intelligence RH', permission: 'payroll:view' },
     { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },
-    { name: 'Dossiers Support', path: '/social-worker-dashboard', icon: FileText, domain: 'Intelligence RH', permission: 'support_tickets:manage' },
 ];
 
 

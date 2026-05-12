@@ -100,7 +100,7 @@ export function Dashboard() {
             return [
                 ...baseStats,
                 { title: 'Frais', value: analyticsData?.pendingExpenses || 0, change: 'À valider', icon: Activity, color: 'text-rose-600', bg: 'bg-rose-100' },
-                { title: 'Compliance', value: '88%', change: 'Score IA', icon: Scale, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+                { title: 'Demandes Portal', value: analyticsData?.pendingTickets || 0, change: 'Self-Service', icon: Inbox, color: 'text-indigo-600', bg: 'bg-indigo-100' },
                 { title: 'Turnover', value: '3.2%', change: 'Annuel', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-100' },
                 { title: 'Recrutements', value: '12', change: 'En cours', icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100' },
             ];
@@ -277,9 +277,9 @@ export function Dashboard() {
                 <div className="lg:col-span-1">
                     <ComplianceMonitor />
                 </div>
-                <div className="lg:col-span-3">
+            <div className="lg:col-span-3">
                     <AnimatePresence>
-                        {predictiveInsights && predictiveInsights.length > 0 && (
+                        {Array.isArray(predictiveInsights) && predictiveInsights.length > 0 && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}

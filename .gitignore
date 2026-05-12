@@ -174,3 +174,10 @@ server/prisma/*.db
 server/prisma/*.db-journal
 server/uploads/
 node_modules
+
+server/server_stdout.txt
+server/server_stderr.txt
+server/test_gemini.js
+server/list_models.js
+dist/
+.DS_Store

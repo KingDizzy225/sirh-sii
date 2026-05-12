@@ -24,11 +24,16 @@ exports.getStats = async (req, res) => {
             where: { status: 'Disponible' }
         });
 
+        const pendingTickets = await prisma.supportTicket.count({
+            where: { status: 'Ouvert' }
+        });
+
         res.json({
             totalEmployees,
             activeLeaves,
             pendingExpenses,
-            availableAssets
+            availableAssets,
+            pendingTickets
         });
     } catch (error) {
         console.error("Dashboard Stats Error:", error);
