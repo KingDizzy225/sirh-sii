@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const getDomainsForRole = (role) => {
     // Application is exclusively for HR Professionals
-    return ['Intelligence RH', 'Pilotage RH', 'Collaborateurs', 'Accueil', 'Mon Espace'];
+    return ['Accueil', 'Mon Espace', 'Intelligence RH', 'Pilotage RH', 'Employés'];
 };
 
 export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {

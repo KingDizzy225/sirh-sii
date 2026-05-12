@@ -27,17 +27,17 @@ const getAllNavItems = () => [
     { name: 'Matériel Équipe', path: '/assets', icon: Laptop, domain: 'Mon Équipe', permission: 'manager:view' },
     { name: 'Plannings Équipe', path: '/shifts', icon: Calendar, domain: 'Mon Équipe', permission: 'manager:view' },
 
-    // COLLABORATEURS
-    { name: 'Répertoire Employés', path: '/employees', icon: Users, domain: 'Collaborateurs', permission: 'employees:view' },
-    { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Collaborateurs', permission: 'employees:view' },
-    { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'Collaborateurs', permission: 'recruitment:view' },
-    { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Collaborateurs', permission: 'recruitment:view' },
-    { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Collaborateurs', permission: 'onboarding:view' },
-    { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Collaborateurs', permission: 'employees:edit' },
-    { name: 'Flex-Workforce', path: '/subcontractors', icon: Building, domain: 'Collaborateurs', permission: 'employees:edit' },
-    { name: 'Qualité de vie (QVT)', path: '/engagement', icon: HeartPulse, domain: 'Collaborateurs', permission: 'employees:edit' },
-    { name: 'Santé & Sécurité', path: '/hse', icon: Shield, domain: 'Collaborateurs', permission: 'employees:edit' },
-    { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'Collaborateurs', permission: 'employees:edit' },
+    // EMPLOYÉS
+    { name: 'Répertoire Employés', path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
+    { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
+    { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
+    { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Employés', permission: 'recruitment:view' },
+    { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
+    { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Flex-Workforce', path: '/subcontractors', icon: Building, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Qualité de vie (QVT)', path: '/engagement', icon: HeartPulse, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Santé & Sécurité', path: '/hse', icon: Shield, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'Employés', permission: 'employees:edit' },
 
     // GESTION RH -> PILOTAGE RH
     { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
