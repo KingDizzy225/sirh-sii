@@ -32,6 +32,7 @@ const getAllNavItems = () => [
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Simulateur Orga.', path: '/org-simulation', icon: Rocket, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
+    { name: 'Fiches de Poste IA', path: '/job-studio', icon: Sparkles, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
     { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
@@ -50,12 +51,15 @@ const getAllNavItems = () => [
     { name: 'Compétences', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
+    { name: 'Plan de Succession', path: '/succession-planning', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Générateur Workflows', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
     
     // ANALYTIQUE -> INTELLIGENCE RH
     { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Équité Salariale', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Santé d\'Équipe', path: '/team-health', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Anti-Turnover', path: '/retention-center', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Intelligence RH', permission: 'payroll:view' },
     { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },

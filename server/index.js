@@ -108,6 +108,10 @@ app.use('/api/benefits', verifyToken, benefitsRoutes);
 app.use('/api/ethics', ethicsRoutes); // Public & Admin inside
 app.use('/api/subcontractors', verifyToken, subcontractorRoutes);
 app.use('/api/simulations', verifyToken, simulationRoutes);
+app.use('/api/equity', verifyToken, require('./routes/equityRoutes'));
+app.use('/api/succession', verifyToken, require('./routes/successionRoutes'));
+app.use('/api/job-descriptions', verifyToken, require('./routes/jobDescriptionRoutes'));
+app.use('/api/retention', verifyToken, require('./routes/retentionRoutes'));
 
 // V6 Enterprise Upgrade - Chatbot IA
 const chatRoutes = require('./routes/chatRoutes');

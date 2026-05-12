@@ -58,6 +58,8 @@ model Employee {
   kudosSent       Kudo[] @relation("SentKudos")
   kudosReceived   Kudo[] @relation("ReceivedKudos")
   orgNodes        OrgSimulationNode[] @relation("EmployeeOrgNodes")
+  successors      Successor[] @relation("EmployeeSuccessors")
+  retentionActions RetentionAction[] @relation("EmployeeRetention")
 }
 
 // ... (existing code)
@@ -729,4 +731,59 @@ model OrgSimulationNode {
   parent          OrgSimulationNode? @relation("NodeHierarchy", fields: [parentId], references: [id])
   children        OrgSimulationNode[] @relation("NodeHierarchy")
   employee        Employee? @relation("EmployeeOrgNodes", fields: [employeeId], references: [id], onDelete: SetNull)
+}
+
+// ----------------------------------------------------
+// 26. SUCCESSION PLANNING (MODULE 1)
+// ----------------------------------------------------
+
+model SuccessionPlan {
+  id              String   @id @default(uuid())
+  positionTitle   String   @map("position_title")
+  department      String
+  criticality     String   @default("Medium") // 'Low', 'Medium', 'High', 'Critical'
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  successors      Successor[]
+}
+
+model Successor {
+  id               String   @id @default(uuid())
+  planId           String   @map("plan_id")
+  employeeId       String   @map("employee_id")
+  readiness        String   // 'Ready Now', '1-2 Years', '3+ Years'
+  notes            String?  @db.Text
+
+  plan             SuccessionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  employee         Employee       @relation("EmployeeSuccessors", fields: [employeeId], references: [id])
+}
+
+// ----------------------------------------------------
+// 27. JOB DESCRIPTION STUDIO (MODULE 3)
+// ----------------------------------------------------
+
+model JobDescription {
+  id              String   @id @default(uuid())
+  title           String
+  department      String
+  content         String   @db.Text 
+  status          String   @default("DRAFT")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+}
+
+// ----------------------------------------------------
+// 28. RETENTION ACTION CENTER (MODULE 5)
+// ----------------------------------------------------
+
+model RetentionAction {
+  id                String   @id @default(uuid())
+  employeeId        String   @map("employee_id")
+  riskLevel         String   @map("risk_level") // 'Low', 'Medium', 'High'
+  recommendedAction String   @map("recommended_action") @db.Text
+  status            String   @default("PENDING") // 'PENDING', 'COMPLETED', 'REJECTED'
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  employee          Employee @relation("EmployeeRetention", fields: [employeeId], references: [id])
 }

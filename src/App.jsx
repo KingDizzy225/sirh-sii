@@ -11,6 +11,10 @@ import { Employees } from './pages/Employees';
 import { EmployeeProfile } from './pages/EmployeeProfile';
 import { OrgChart } from './pages/OrgChart';
 import { OrgSimulation } from './pages/OrgSimulation';
+import { PayEquityScanner } from './pages/PayEquityScanner';
+import { SuccessionPlanning } from './pages/SuccessionPlanning';
+import { JobDescriptionStudio } from './pages/JobDescriptionStudio';
+import { RetentionCenter } from './pages/RetentionCenter';
 import { Leaves } from './pages/Leaves';
 import { Payroll } from './pages/Payroll';
 import { Recruitment } from './pages/Recruitment';
@@ -157,6 +161,26 @@ const AppContent = () => {
             <Route path="/org-simulation" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <OrgSimulation />
+              </ProtectedRoute>
+            } />
+            <Route path="/pay-equity" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <PayEquityScanner />
+              </ProtectedRoute>
+            } />
+            <Route path="/succession-planning" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <SuccessionPlanning />
+              </ProtectedRoute>
+            } />
+            <Route path="/job-studio" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <JobDescriptionStudio />
+              </ProtectedRoute>
+            } />
+            <Route path="/retention-center" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <RetentionCenter />
               </ProtectedRoute>
             } />
             
