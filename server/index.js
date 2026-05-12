@@ -50,6 +50,7 @@ const timeLogRoutes = require('./routes/timeLogRoutes');
 const careerRoutes = require('./routes/careerRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
 const complianceRoutes = require('./routes/complianceRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 
 const verifyToken = require('./middleware/authMiddleware');
 
@@ -76,6 +77,7 @@ app.use('/api/support/tickets', verifyToken, supportRoutes);
 app.use('/api/career', verifyToken, careerRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/compliance', complianceRoutes);
+app.use('/api/public', publicRoutes);
 
 // V4 New Modules
 const announcementRoutes = require('./routes/announcementRoutes');

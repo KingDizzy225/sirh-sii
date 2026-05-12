@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -21,6 +21,7 @@ const getAllNavItems = () => [
     { name: 'Explorateur Carrière', path: '/career-path', icon: Rocket, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Mes Avantages', path: '/benefits', icon: HeartPulse, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Mes Demandes RH', path: '/hr-requests', icon: MessageSquare, domain: 'Mon Espace', permission: 'myself:view' },
     
     // MON ÉQUIPE
     { name: 'Évaluation Équipe', path: '/performance', icon: Users, domain: 'Mon Équipe', permission: 'manager:view' }, 

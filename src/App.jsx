@@ -60,6 +60,8 @@ import { CareerPath } from './pages/CareerPath';
 import { CommandCenter } from './components/CommandCenter';
 import { TeamHealth } from './pages/TeamHealth';
 import { FeedbackWidget } from './components/FeedbackWidget';
+import { HRRequests } from './pages/HRRequests';
+import { PublicPortal } from './pages/PublicPortal';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -229,6 +231,12 @@ const AppContent = () => {
                 <Support />
               </ProtectedRoute>
             } />
+            
+            <Route path="/hr-requests" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <HRRequests />
+              </ProtectedRoute>
+            } />
 
             <Route path="/social-worker-dashboard" element={
               <ProtectedRoute allowedRoles={['Administrator', 'Social Worker']}>
@@ -317,6 +325,7 @@ const AppContent = () => {
 
 
             {/* System Routes */}
+            <Route path="/portal" element={<PublicPortal />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction!</div>} />
           </Routes>
