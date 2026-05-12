@@ -1,5 +1,6 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
+const { triggerWebhook } = require('./webhookController');
 
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
@@ -68,6 +69,9 @@ exports.createEmployee = async (req, res) => {
                 role: role === 'Administrator' ? 'ADMIN' : (role === 'HR' ? 'HR' : (role === 'Manager' ? 'MANAGER' : 'EMPLOYEE'))
             }
         });
+
+        // Trigger Webhook
+        triggerWebhook('EMPLOYEE_CREATED', newEmployee);
 
         res.status(201).json(newEmployee);
     } catch (error) {

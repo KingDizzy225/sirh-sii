@@ -192,3 +192,58 @@ ${JSON.stringify(promptData)}
         res.status(500).json({ error: 'Erreur lors de la prédiction' });
     }
 };
+
+exports.calculateFlightRisk = async (req, res) => {
+    try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) return res.status(500).json({ error: 'La clé d\'API GEMINI_API_KEY n\'est pas configurée dans le backend.' });
+        
+        const { id } = req.params;
+        const emp = await prisma.employee.findUnique({
+            where: { id },
+            include: {
+                leaves: { select: { type: true, status: true, durationDays: true } },
+                payrolls: { select: { netSalary: true } },
+                PerformanceReview: { select: { overallScore: true } },
+                timeLogs: { orderBy: { timestamp: 'desc' }, take: 10 }
+            }
+        });
+
+        if (!emp) return res.status(404).json({ error: 'Employé introuvable' });
+
+        const totalLeaves = emp.leaves.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + (l.durationDays || 0), 0);
+        const avgSalary = emp.payrolls.length > 0 ? emp.payrolls[0].netSalary : 0;
+        const avgScore = emp.PerformanceReview.length > 0 ? emp.PerformanceReview[0].overallScore : 3;
+        const yearsOfService = (new Date() - new Date(emp.hireDate)) / (1000 * 60 * 60 * 24 * 365);
+
+        const promptData = {
+            name: `${emp.firstName} ${emp.lastName}`,
+            department: emp.department,
+            yearsOfService: yearsOfService.toFixed(1),
+            totalLeaves,
+            avgSalary,
+            avgScore,
+            recentTimeLogs: emp.timeLogs.map(t => t.type)
+        };
+
+        const localGenAI = new GoogleGenerativeAI(apiKey);
+        const localModel = localGenAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const systemPrompt = `Tu es un expert RH en analytique prédictive.
+        Analyse les données de cet employé et retourne un score de risque de démission (Flight Risk) entre 0 et 100, et une raison détaillée de max 2 phrases.
+        Retourne UNIQUEMENT un objet JSON valide de ce type :
+        { "riskScore": 75, "riskLevel": "Élevé", "reason": "Baisse de performance et ancienneté élevée sans évolution de salaire récente." }
+        
+        Données :
+        ${JSON.stringify(promptData)}`;
+
+        const result = await localModel.generateContent(systemPrompt);
+        const textResponse = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+        const insight = JSON.parse(textResponse);
+
+        res.status(200).json(insight);
+    } catch (error) {
+        console.error("Erreur Flight Risk AI:", error);
+        res.status(500).json({ error: 'Erreur lors de l\'évaluation du risque' });
+    }
+};

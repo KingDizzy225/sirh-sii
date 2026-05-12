@@ -3,8 +3,9 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, TrendingUp, AlertOctagon, UserCheck, GripVertical } from 'lucide-react';
+import { Target, TrendingUp, AlertOctagon, UserCheck, GripVertical, Radar as RadarIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -124,7 +125,8 @@ export function TalentManagement() {
                 {[
                     { id: '9box', label: 'Matrice 9-Box', icon: Target },
                     { id: 'succession', label: 'Plan de Succession', icon: UserCheck },
-                    { id: 'retention', label: 'Risque de Départ (Rétention)', icon: AlertOctagon }
+                    { id: 'retention', label: 'Risque de Départ (Rétention)', icon: AlertOctagon },
+                    { id: 'skills', label: 'Cartographie Compétences', icon: RadarIcon }
                 ].map(({ id, label, icon: Icon }) => (
                     <button key={id} onClick={() => setActiveTab(id)}
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-t-lg font-medium transition-all ${
@@ -274,6 +276,47 @@ export function TalentManagement() {
                                 </table>
                             </CardContent>
                         </Card>
+                    )}
+
+                    {activeTab === 'skills' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {talents.map(emp => {
+                                // Données simulées pour la démo, idéalement venant du backend
+                                const skillData = [
+                                    { subject: 'Leadership', A: Math.floor(Math.random() * 60) + 40, fullMark: 100 },
+                                    { subject: 'Tech', A: Math.floor(Math.random() * 60) + 40, fullMark: 100 },
+                                    { subject: 'Com', A: Math.floor(Math.random() * 60) + 40, fullMark: 100 },
+                                    { subject: 'Gestion Projet', A: Math.floor(Math.random() * 60) + 40, fullMark: 100 },
+                                    { subject: 'Innovation', A: Math.floor(Math.random() * 60) + 40, fullMark: 100 },
+                                    { subject: 'Esprit d\'équipe', A: Math.floor(Math.random() * 60) + 40, fullMark: 100 },
+                                ];
+                                return (
+                                    <Card key={emp.id} className="shadow-sm border-indigo-100 hover:shadow-md transition-shadow">
+                                        <CardContent className="p-6">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="h-12 w-12 rounded-full bg-indigo-100 text-indigo-600 font-black flex items-center justify-center text-lg">
+                                                    {emp.name.substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-slate-800">{emp.name}</h3>
+                                                    <p className="text-xs text-slate-500">{emp.position}</p>
+                                                </div>
+                                            </div>
+                                            <div className="h-[250px] w-full">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={skillData}>
+                                                        <PolarGrid stroke="#e2e8f0" />
+                                                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
+                                                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                                        <Radar name="Compétences" dataKey="A" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.4} />
+                                                    </RadarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
             )}

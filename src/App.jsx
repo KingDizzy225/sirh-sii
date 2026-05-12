@@ -58,6 +58,8 @@ import { DeiDashboard } from './pages/DeiDashboard';
 import { FloatingChat } from './components/FloatingChat';
 import { CareerPath } from './pages/CareerPath';
 import { CommandCenter } from './components/CommandCenter';
+import { TeamHealth } from './pages/TeamHealth';
+import { FeedbackWidget } from './components/FeedbackWidget';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -268,6 +270,7 @@ const AppContent = () => {
             <Route path="/kudos" element={<ProtectedRoute><KudosWall /></ProtectedRoute>} />
             <Route path="/ai-sourcing" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><AiSourcing /></ProtectedRoute>} />
             <Route path="/payroll-simulation" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><PayrollSimulation /></ProtectedRoute>} />
+            <Route path="/team-health" element={<ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}><TeamHealth /></ProtectedRoute>} />
             <Route path="/workflows" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><Workflows /></ProtectedRoute>} />
             <Route path="/career-path" element={<ProtectedRoute><CareerPath /></ProtectedRoute>} />
             <Route path="/advances" element={<SalaryAdvances />} />
@@ -322,6 +325,7 @@ const AppContent = () => {
       
       {/* Chatbot Flottant - Accessible depuis toutes les pages */}
       <FloatingChat />
+      <FeedbackWidget />
       <CommandCenter />
     </div>
   );

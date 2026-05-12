@@ -224,59 +224,37 @@ export function EmployeePortal() {
                 </Card>
             </div>
 
-            {/* Accès Rapides */}
-            <h3 className="text-lg font-bold tracking-tight text-slate-800 mt-10 mb-4">
-                Liens Rapides
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Link to="/expenses" className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-primary/50 hover:shadow-md transition-all group">
-                    <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform">
-                        <Receipt size={24} />
+            {/* Guichet Unique RH (Smart Self-Service) */}
+            <div className="mt-10 bg-white rounded-2xl shadow-xl border border-indigo-100 overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <User size={150} />
+                </div>
+                <div className="bg-indigo-600 p-6 flex items-center gap-4 text-white">
+                    <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                        <span className="text-2xl">🤖</span>
                     </div>
                     <div>
-                        <h4 className="font-semibold text-slate-800">Notes de frais</h4>
-                        <p className="text-xs text-slate-500 mt-0.5">Soumettre une dépense</p>
-                    </div>
-                </Link>
-                
-                <Link to="/social-support" className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-primary/50 hover:shadow-md transition-all group">
-                    <div className="p-3 bg-rose-50 text-rose-600 rounded-lg group-hover:scale-110 transition-transform">
-                        <Heart size={24} />
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-slate-800">Assistance Sociale</h4>
-                        <p className="text-xs text-slate-500 mt-0.5">Aide confidentielle</p>
-                    </div>
-                </Link>
-
-                <Link to="/documents" className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-primary/50 hover:shadow-md transition-all group">
-                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg group-hover:scale-110 transition-transform">
-                        <FileText size={24} />
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-slate-800">Mes Documents</h4>
-                        <p className="text-xs text-slate-500 mt-0.5">Attestations & Contrats</p>
-                    </div>
-                </Link>
-
-                <div onClick={handleDownloadAttestation} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-blue-500 hover:shadow-md transition-all group cursor-pointer">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
-                        <FileText size={24} />
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-slate-800">Attestation PDF</h4>
-                        <p className="text-xs text-slate-500 mt-0.5">Générer immédiatement</p>
+                        <h3 className="text-xl font-bold">Guichet Unique RH</h3>
+                        <p className="text-indigo-200 text-sm">Comment puis-je vous aider aujourd'hui ?</p>
                     </div>
                 </div>
-
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:border-primary/50 hover:shadow-md transition-all group cursor-pointer">
-                    <div className="p-3 bg-slate-100 text-slate-600 rounded-lg group-hover:scale-110 transition-transform">
-                        <User size={24} />
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Link to="/leaves" className="flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-xl transition-all group">
+                        <Calendar size={32} className="text-indigo-400 group-hover:text-indigo-600 mb-3" />
+                        <span className="font-bold text-slate-700 text-center">Je suis absent</span>
+                    </Link>
+                    <Link to="/expenses" className="flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-emerald-50 border border-slate-100 rounded-xl transition-all group">
+                        <Receipt size={32} className="text-emerald-400 group-hover:text-emerald-600 mb-3" />
+                        <span className="font-bold text-slate-700 text-center">J'ai fait une dépense</span>
+                    </Link>
+                    <div onClick={handleDownloadAttestation} className="cursor-pointer flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-blue-50 border border-slate-100 rounded-xl transition-all group">
+                        <FileText size={32} className="text-blue-400 group-hover:text-blue-600 mb-3" />
+                        <span className="font-bold text-slate-700 text-center">J'ai besoin d'une attestation</span>
                     </div>
-                    <div>
-                        <h4 className="font-semibold text-slate-800">Mon Profil</h4>
-                        <p className="text-xs text-slate-500 mt-0.5">Mettre à jour mes infos</p>
-                    </div>
+                    <Link to="/social-support" className="flex flex-col items-center justify-center p-6 bg-slate-50 hover:bg-rose-50 border border-slate-100 rounded-xl transition-all group">
+                        <Heart size={32} className="text-rose-400 group-hover:text-rose-600 mb-3" />
+                        <span className="font-bold text-slate-700 text-center">J'ai un problème personnel</span>
+                    </Link>
                 </div>
             </div>
 

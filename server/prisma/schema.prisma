@@ -663,3 +663,28 @@ model DisciplinaryRecord {
 
   employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
+
+// ----------------------------------------------------
+// 29. NOUVELLES FONCTIONNALITES (PHASE 2)
+// ----------------------------------------------------
+
+model ComplianceRule {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  target          String   // 'ALL', 'DEPARTMENT_X', 'ROLE_Y'
+  frequencyMonths Int      // ex: 12 pour 1 an
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+}
+
+model WebhookEndpoint {
+  id              String   @id @default(uuid())
+  name            String
+  url             String
+  eventType       String   // 'EMPLOYEE_CREATED', 'EMPLOYEE_TERMINATED'
+  secret          String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+}

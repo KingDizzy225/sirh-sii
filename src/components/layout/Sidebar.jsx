@@ -54,6 +54,7 @@ const getAllNavItems = () => [
     
     // ANALYTIQUE
     { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Analytique', permission: 'dashboard:view' },
+    { name: 'Santé d\'Équipe', path: '/team-health', icon: HeartPulse, domain: 'Analytique', permission: 'dashboard:view' },
     { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Analytique', permission: 'payroll:view' },
     { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Analytique', permission: 'dashboard:view' },
     { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Analytique', permission: 'dashboard:view' },
