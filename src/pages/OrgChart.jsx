@@ -185,9 +185,15 @@ export function OrgChart() {
         }
     };
 
-    const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
-    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.1));
     const handleZoomReset = () => setZoom(1);
+
+    const handleFitToScreen = () => {
+        // Simple heuristic to fit a wide chart
+        // Assuming 1 node is ~250px wide. We can count leaves or total nodes to guess.
+        setZoom(0.3); // Set to a very small zoom by default for "Fit"
+    };
 
     return (
         <div className="flex-1 flex flex-col bg-slate-50 h-[calc(100vh-4rem)] overflow-hidden">
@@ -215,6 +221,8 @@ export function OrgChart() {
                     </div>
 
                     <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                        <Button variant="ghost" size="sm" onClick={handleFitToScreen} className="h-8 px-2 text-xs font-bold text-indigo-600 hover:bg-white">Ajuster</Button>
+                        <div className="w-px h-4 bg-slate-300 mx-1"></div>
                         <Button variant="ghost" size="icon" onClick={handleZoomOut} className="h-8 w-8 text-slate-600 hover:bg-white"><ZoomOut size={16} /></Button>
                         <Button variant="ghost" onClick={handleZoomReset} className="h-8 px-2 text-xs font-medium text-slate-600 hover:bg-white">{Math.round(zoom * 100)}%</Button>
                         <Button variant="ghost" size="icon" onClick={handleZoomIn} className="h-8 w-8 text-slate-600 hover:bg-white"><ZoomIn size={16} /></Button>
@@ -225,7 +233,7 @@ export function OrgChart() {
             {/* Zoomable / Pannable Canvas Area */}
             <div className="flex-1 overflow-auto bg-slate-50/50 p-8 cursor-grab active:cursor-grabbing relative">
                 <div
-                    className="flex justify-center transition-transform origin-top duration-200 ease-out min-w-max min-h-max"
+                    className="flex justify-center transition-transform origin-top duration-200 ease-out min-w-max min-h-max print:scale-[0.4] print:origin-center"
                     style={{ transform: `scale(${zoom})`, paddingBottom: '100px' }}
                 >
                     {isLoading ? (
