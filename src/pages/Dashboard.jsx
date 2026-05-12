@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, Timer, HeartPulse, Loader2, TrendingUp, Star } from 'lucide-react';
+import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, Timer, HeartPulse, Loader2, TrendingUp, Star, Inbox } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
