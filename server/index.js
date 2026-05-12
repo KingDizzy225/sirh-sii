@@ -93,6 +93,7 @@ const shiftRoutes = require('./routes/shiftRoutes');
 const benefitsRoutes = require('./routes/benefitsRoutes');
 const ethicsRoutes = require('./routes/ethicsRoutes');
 const subcontractorRoutes = require('./routes/subcontractorRoutes');
+const simulationRoutes = require('./routes/simulationRoutes');
 
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/advances', advanceRoutes);
@@ -106,6 +107,7 @@ app.use('/api/shifts', verifyToken, shiftRoutes);
 app.use('/api/benefits', verifyToken, benefitsRoutes);
 app.use('/api/ethics', ethicsRoutes); // Public & Admin inside
 app.use('/api/subcontractors', verifyToken, subcontractorRoutes);
+app.use('/api/simulations', verifyToken, simulationRoutes);
 
 // V6 Enterprise Upgrade - Chatbot IA
 const chatRoutes = require('./routes/chatRoutes');

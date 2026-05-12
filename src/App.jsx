@@ -10,6 +10,7 @@ import { EmployeePortal } from './pages/EmployeePortal';
 import { Employees } from './pages/Employees';
 import { EmployeeProfile } from './pages/EmployeeProfile';
 import { OrgChart } from './pages/OrgChart';
+import { OrgSimulation } from './pages/OrgSimulation';
 import { Leaves } from './pages/Leaves';
 import { Payroll } from './pages/Payroll';
 import { Recruitment } from './pages/Recruitment';
@@ -151,6 +152,11 @@ const AppContent = () => {
             <Route path="/org-chart" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <OrgChart />
+              </ProtectedRoute>
+            } />
+            <Route path="/org-simulation" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <OrgSimulation />
               </ProtectedRoute>
             } />
             

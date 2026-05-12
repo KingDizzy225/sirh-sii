@@ -30,6 +30,7 @@ const getAllNavItems = () => [
     // EMPLOYÉS
     { name: 'Répertoire Employés', path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
+    { name: 'Simulateur Orga.', path: '/org-simulation', icon: Rocket, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
