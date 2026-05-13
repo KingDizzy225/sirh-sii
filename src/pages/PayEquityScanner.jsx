@@ -34,7 +34,10 @@ export function PayEquityScanner() {
         return <div className="flex-1 p-8 flex items-center justify-center text-slate-500">Analyse de la base de données en cours...</div>;
     }
 
-    const filteredDepartments = selectedDept === 'All' ? data.departments : data.departments.filter(d => d.department === selectedDept);
+    const safeDepartments = data?.departments || [];
+    const safeOutliers = data?.outliers || [];
+
+    const filteredDepartments = selectedDept === 'All' ? safeDepartments : safeDepartments.filter(d => d.department === selectedDept);
     
     // Prepare data for Scatter Chart
     const scatterDataM = [];
@@ -42,8 +45,8 @@ export function PayEquityScanner() {
     let xIndex = 1;
 
     filteredDepartments.forEach(dept => {
-        Object.values(dept.positions).forEach(pos => {
-            pos.employees.forEach(emp => {
+        Object.values(dept.positions || {}).forEach(pos => {
+            (pos.employees || []).forEach(emp => {
                 const point = {
                     x: xIndex++, // Spread out on X
                     name: emp.name,
@@ -89,7 +92,7 @@ export function PayEquityScanner() {
                         onChange={(e) => setSelectedDept(e.target.value)}
                     >
                         <option value="All">Tous les départements</option>
-                        {data.departments.map(d => (
+                        {safeDepartments.map(d => (
                             <option key={d.department} value={d.department}>{d.department}</option>
                         ))}
                     </select>
@@ -105,8 +108,8 @@ export function PayEquityScanner() {
                             <TrendingDown className="h-4 w-4 text-emerald-500" />
                         </div>
                         <div className="text-2xl font-bold text-slate-900">
-                            {data.departments.reduce((sum, d) => sum + (d.payGap || 0), 0) / (data.departments.length || 1) > 0 ? '+' : ''}
-                            {(data.departments.reduce((sum, d) => sum + (d.payGap || 0), 0) / (data.departments.length || 1)).toFixed(1)}%
+                            {safeDepartments.reduce((sum, d) => sum + (d.payGap || 0), 0) / (safeDepartments.length || 1) > 0 ? '+' : ''}
+                            {(safeDepartments.reduce((sum, d) => sum + (d.payGap || 0), 0) / (safeDepartments.length || 1)).toFixed(1)}%
                         </div>
                         <p className="text-xs text-slate-400 mt-1">En faveur des hommes (moyenne)</p>
                     </CardContent>
@@ -118,7 +121,7 @@ export function PayEquityScanner() {
                             <p className="text-sm font-medium text-slate-500">Anomalies Détectées</p>
                             <AlertTriangle className="h-4 w-4 text-amber-500" />
                         </div>
-                        <div className="text-2xl font-bold text-slate-900">{data.outliers.length}</div>
+                        <div className="text-2xl font-bold text-slate-900">{safeOutliers.length}</div>
                         <p className="text-xs text-slate-400 mt-1">Écarts injustifiés &gt; 15%</p>
                     </CardContent>
                 </Card>
@@ -130,7 +133,7 @@ export function PayEquityScanner() {
                             <div className="h-2 w-2 rounded-full bg-blue-500" />
                         </div>
                         <div className="text-2xl font-bold text-slate-900 font-mono">
-                            {Math.round(data.departments.reduce((sum, d) => sum + d.avgSalaryMen, 0) / (data.departments.length || 1)).toLocaleString()}
+                            {Math.round(safeDepartments.reduce((sum, d) => sum + (d.avgSalaryMen || 0), 0) / (safeDepartments.length || 1)).toLocaleString()}
                         </div>
                         <p className="text-xs text-slate-400 mt-1">FCFA / mois</p>
                     </CardContent>
@@ -143,7 +146,7 @@ export function PayEquityScanner() {
                             <div className="h-2 w-2 rounded-full bg-pink-500" />
                         </div>
                         <div className="text-2xl font-bold text-slate-900 font-mono">
-                            {Math.round(data.departments.reduce((sum, d) => sum + d.avgSalaryWomen, 0) / (data.departments.length || 1)).toLocaleString()}
+                            {Math.round(safeDepartments.reduce((sum, d) => sum + (d.avgSalaryWomen || 0), 0) / (safeDepartments.length || 1)).toLocaleString()}
                         </div>
                         <p className="text-xs text-slate-400 mt-1">FCFA / mois</p>
                     </CardContent>
@@ -188,11 +191,11 @@ export function PayEquityScanner() {
                         <CardDescription className="text-amber-700/70">Ajustements suggérés par l'IA</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0 flex-1 overflow-y-auto bg-slate-50/30">
-                        {data.outliers.length === 0 ? (
+                        {safeOutliers.length === 0 ? (
                             <div className="p-8 text-center text-slate-500">Aucune anomalie majeure détectée (Variance &lt; 15%).</div>
                         ) : (
                             <div className="divide-y divide-slate-100">
-                                {data.outliers.map((outlier, idx) => (
+                                {safeOutliers.map((outlier, idx) => (
                                     <div key={idx} className="p-4 hover:bg-white transition-colors">
                                         <div className="flex justify-between items-start mb-1">
                                             <span className="font-bold text-slate-800 text-sm">{outlier.name}</span>
