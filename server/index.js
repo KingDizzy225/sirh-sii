@@ -2,11 +2,27 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Security Middleware
+app.use(helmet()); // Protect HTTP headers
+
+// Global Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // Limit each IP to 1000 requests per `window`
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use(limiter);
 
 app.use((req, res, next) => {
     console.log(`[REQUEST] ${req.method} ${req.url}`);
