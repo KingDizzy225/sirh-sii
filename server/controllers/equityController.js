@@ -7,7 +7,7 @@ exports.getPayEquityData = async (req, res) => {
             where: { status: 'ACTIVE' },
             include: {
                 payrolls: {
-                    orderBy: { paymentDate: 'desc' },
+                    orderBy: { period: 'desc' },
                     take: 1
                 }
             }
