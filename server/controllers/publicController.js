@@ -94,12 +94,27 @@ exports.publicClockIn = async (req, res) => {
             return res.status(400).json({ error: "Le nom est requis pour pointer." });
         }
 
+        const nameParts = name.trim().split(' ');
+        if (nameParts.length < 2) {
+            return res.status(400).json({ error: "Veuillez entrer votre prénom et votre nom (ex: Jean Dupont)." });
+        }
+
+        const first = nameParts[0];
+        const second = nameParts.slice(1).join(' ');
+
         const employee = await prisma.employee.findFirst({
             where: {
-                name: {
-                    equals: name,
-                    mode: 'insensitive'
-                }
+                OR: [
+                    { 
+                        firstName: { equals: first, mode: 'insensitive' }, 
+                        lastName: { equals: second, mode: 'insensitive' } 
+                    },
+                    { 
+                        firstName: { equals: second, mode: 'insensitive' }, 
+                        lastName: { equals: first, mode: 'insensitive' } 
+                    }
+                ],
+                status: 'ACTIVE'
             }
         });
         if (!employee) {
