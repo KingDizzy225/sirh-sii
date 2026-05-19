@@ -96,9 +96,14 @@ exports.updateEmployee = async (req, res) => {
         
         if (data.birthDate) {
             data.birthDate = new Date(data.birthDate);
+        } else if (data.birthDate === '') {
+            data.birthDate = null;
         }
+
         if (data.hireDate) {
             data.hireDate = new Date(data.hireDate);
+        } else if (data.hireDate === '') {
+            data.hireDate = null;
         }
 
         const updatedEmployee = await prisma.employee.update({
