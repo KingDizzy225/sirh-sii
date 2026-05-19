@@ -122,6 +122,40 @@ exports.getDashboardAnalytics = async (req, res) => {
                 ],
                 monthlyFlux: monthlyFlux.length > 0 ? monthlyFlux : [
                     { month: 'Mars', Entrées: 2, Départs: 0 }
+                ],
+                timeToHireData: [
+                    { month: 'Jan', days: 24 },
+                    { month: 'Fév', days: 22 },
+                    { month: 'Mar', days: 28 },
+                    { month: 'Avr', days: 21 },
+                    { month: 'Mai', days: 19 },
+                    { month: 'Juin', days: 18 }
+                ],
+                genderPayGapData: [
+                    { department: 'Ingénierie', male: 450, female: 430 },
+                    { department: 'RH', male: 310, female: 320 },
+                    { department: 'Ventes', male: 400, female: 380 },
+                    { department: 'Marketing', male: 350, female: 340 },
+                    { department: 'Finance', male: 390, female: 385 }
+                ],
+                monthlyTurnover: [
+                    { name: 'Jan', rate: 2.1 },
+                    { name: 'Fév', rate: 2.3 },
+                    { name: 'Mar', rate: 2.5 },
+                    { name: 'Avr', rate: 2.2 },
+                    { name: 'Mai', rate: 1.8 },
+                    { name: 'Juin', rate: 1.5 }
+                ],
+                agePyramidData: [
+                    { ageGroup: '18-25', male: -15, female: 12 },
+                    { ageGroup: '26-35', male: -35, female: 40 },
+                    { ageGroup: '36-45', male: -25, female: 22 },
+                    { ageGroup: '46-55', male: -10, female: 8 },
+                    { ageGroup: '56+', male: -5, female: 3 }
+                ],
+                mobilityVsHiringData: [
+                    { name: 'Mobilité Interne', value: 35, color: '#10b981' },
+                    { name: 'Recrutement Externe', value: 65, color: '#3b82f6' }
                 ]
             }
         });
