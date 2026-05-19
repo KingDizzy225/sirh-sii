@@ -66,7 +66,7 @@ exports.getAllTodayLogs = async (req, res) => {
             },
             include: {
                 employee: {
-                    select: { name: true, department: true, position: true }
+                    select: { firstName: true, lastName: true, department: true, positionTitle: true }
                 }
             },
             orderBy: { timestamp: 'desc' } // Most recent first
