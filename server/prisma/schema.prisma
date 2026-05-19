@@ -22,6 +22,14 @@ model Employee {
   hireDate        DateTime  @map("hire_date")
   positionTitle   String    @map("position_title")
   managerId       String?   @map("manager_id") // ID du manager direct
+  
+  // Nouveaux champs RH
+  birthDate       DateTime? @map("birth_date")
+  gender          String?   @default("Non spécifié")
+  phone           String?
+  address         String?
+  nationality     String?
+
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   annualLeaveBalance Float  @default(30) @map("annual_leave_balance")

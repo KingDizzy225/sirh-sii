@@ -41,7 +41,7 @@ exports.getProfile = async (req, res) => {
 // Create a new employee and auto-provision their User account for Self-Service
 exports.createEmployee = async (req, res) => {
     try {
-        const { firstName, lastName, email, role, department, positionTitle, hireDate, status } = req.body;
+        const { firstName, lastName, email, role, department, positionTitle, hireDate, status, birthDate, gender, phone, address, nationality } = req.body;
 
         // Execute sequentially to ensure both are created
         const newEmployee = await prisma.employee.create({
@@ -54,6 +54,11 @@ exports.createEmployee = async (req, res) => {
                 positionTitle,
                 hireDate: hireDate ? new Date(hireDate) : new Date(),
                 status: status || 'ACTIVE',
+                birthDate: birthDate ? new Date(birthDate) : null,
+                gender: gender || 'Non spécifié',
+                phone,
+                address,
+                nationality
             }
         });
 
@@ -87,7 +92,14 @@ exports.createEmployee = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
     try {
         const { id } = req.params;
-        const data = req.body;
+        const data = { ...req.body };
+        
+        if (data.birthDate) {
+            data.birthDate = new Date(data.birthDate);
+        }
+        if (data.hireDate) {
+            data.hireDate = new Date(data.hireDate);
+        }
 
         const updatedEmployee = await prisma.employee.update({
             where: { id },

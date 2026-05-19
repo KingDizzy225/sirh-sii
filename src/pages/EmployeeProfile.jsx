@@ -130,6 +130,16 @@ export function EmployeeProfile() {
         });
     };
 
+    const calculateAge = (dateString) => {
+        if (!dateString) return null;
+        const today = new Date();
+        const birthDate = new Date(dateString);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+        return age;
+    };
+
     const getStatusColor = (status) => {
         switch(status) {
             case 'ACTIVE': return 'success';
@@ -688,8 +698,78 @@ export function EmployeeProfile() {
 
                 </div>
 
-                {/* Colonne Droite : Talent, Solde Congés */}
+                {/* Colonne Droite : Infos Perso, Talent, Solde Congés */}
                 <div className="space-y-6">
+
+                    {/* Carte Informations Personnelles */}
+                    <Card className="border-slate-100 shadow-sm overflow-hidden">
+                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+                                <User size={20} className="text-blue-600" />
+                                Informations Personnelles
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-4">
+                            {employee.birthDate && (
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                                        <Calendar size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Date de Naissance</p>
+                                        <p className="font-medium text-slate-800">{formatDate(employee.birthDate)} <span className="text-slate-500 font-normal">({calculateAge(employee.birthDate)} ans)</span></p>
+                                    </div>
+                                </div>
+                            )}
+                            {employee.gender && employee.gender !== 'Non spécifié' && (
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+                                        <User size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Genre / Sexe</p>
+                                        <p className="font-medium text-slate-800">{employee.gender}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {employee.nationality && (
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                        <Award size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Nationalité</p>
+                                        <p className="font-medium text-slate-800">{employee.nationality}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {employee.phone && (
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                        <Phone size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Téléphone</p>
+                                        <p className="font-medium text-slate-800">{employee.phone}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {employee.address && (
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mt-0.5">
+                                        <MapPin size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Adresse</p>
+                                        <p className="font-medium text-slate-800 leading-snug">{employee.address}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {(!employee.birthDate && !employee.phone && !employee.address && (!employee.gender || employee.gender === 'Non spécifié') && !employee.nationality) && (
+                                <p className="text-sm text-slate-500 italic text-center py-2">Aucune information personnelle renseignée.</p>
+                            )}
+                        </CardContent>
+                    </Card>
                     
                     {/* Carte Talent Profile */}
                     <Card className="border-slate-100 shadow-sm overflow-hidden relative">

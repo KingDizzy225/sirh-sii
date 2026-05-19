@@ -49,8 +49,11 @@ export function Employees() {
                         department: emp.department || 'Non assigné',
                         status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
                         email: emp.email,
-                        phone: '+225 01234567', // A ajouter dans la BDD dans le futur
-                        sex: 'Non spécifié',
+                        phone: emp.phone || '',
+                        gender: emp.gender || 'Non spécifié',
+                        birthDate: emp.birthDate ? emp.birthDate.split('T')[0] : '',
+                        address: emp.address || '',
+                        nationality: emp.nationality || '',
                         onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
                     }));
                     setEmployees(mapped);
@@ -75,7 +78,10 @@ export function Employees() {
         lastName: '',
         phone: '',
         position: '',
-        sex: 'Homme'
+        gender: 'Non spécifié',
+        birthDate: '',
+        address: '',
+        nationality: ''
     });
 
     const showNotification = (message) => {
@@ -113,7 +119,12 @@ export function Employees() {
                     role: 'Employee',
                     department: 'Ressources Humaines', // Simplified default
                     positionTitle: formData.position || 'Poste Non Assigné',
-                    status: 'ACTIVE'
+                    status: 'ACTIVE',
+                    phone: formData.phone,
+                    gender: formData.gender,
+                    birthDate: formData.birthDate,
+                    address: formData.address,
+                    nationality: formData.nationality
                 })
             });
 
@@ -136,7 +147,7 @@ export function Employees() {
             const updatedEmployees = [newEmployeeFormatted, ...employees];
             setEmployees(updatedEmployees);
             setIsAddModalOpen(false);
-            setFormData({ firstName: '', lastName: '', phone: '', position: '', sex: 'Homme' }); // Reset form
+            setFormData({ firstName: '', lastName: '', phone: '', position: '', gender: 'Non spécifié', birthDate: '', address: '', nationality: '' }); // Reset form
             showNotification(`Employé ajouté à la base de données globale.`);
 
         } catch (error) {
@@ -277,6 +288,11 @@ export function Employees() {
             firstName: emp.name.split(' ')[0] || '',
             lastName: emp.name.split(' ').slice(1).join(' ') || '',
             email: emp.email,
+            phone: emp.phone,
+            gender: emp.gender,
+            birthDate: emp.birthDate,
+            address: emp.address,
+            nationality: emp.nationality,
             positionTitle: emp.role,
             department: emp.department,
             status: emp.status === 'Actif' ? 'ACTIVE' : emp.status === 'En congé' ? 'ON_LEAVE' : 'TERMINATED'
@@ -427,18 +443,49 @@ export function Employees() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700">Sexe</label>
-                                        <select
-                                            name="sex"
-                                            value={formData.sex}
+                                        <label className="text-sm font-medium text-slate-700">Date de Naissance</label>
+                                        <Input
+                                            type="date"
+                                            name="birthDate"
+                                            value={formData.birthDate}
                                             onChange={handleInputChange}
-                                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            <option value="Homme">Homme</option>
-                                            <option value="Femme">Femme</option>
-                                            <option value="Autre">Autre</option>
-                                            <option value="Préfère ne pas répondre">Préfère ne pas répondre</option>
-                                        </select>
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Sexe / Genre</label>
+                                            <select
+                                                name="gender"
+                                                value={formData.gender}
+                                                onChange={handleInputChange}
+                                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <option value="Non spécifié">Non spécifié</option>
+                                                <option value="Homme">Homme</option>
+                                                <option value="Femme">Femme</option>
+                                                <option value="Autre">Autre</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Nationalité</label>
+                                            <Input
+                                                name="nationality"
+                                                value={formData.nationality}
+                                                onChange={handleInputChange}
+                                                placeholder="ex. Ivoirienne"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Adresse Complète</label>
+                                        <Input
+                                            name="address"
+                                            value={formData.address}
+                                            onChange={handleInputChange}
+                                            placeholder="ex. Cocody Riviera, Abidjan"
+                                        />
                                     </div>
                                 </form>
                             </div>
@@ -506,6 +553,26 @@ export function Employees() {
                                     <div><label className="text-sm font-medium text-slate-700 block mb-1">Département</label>
                                         <Input value={editForm.department || ''} onChange={e => setEditForm({...editForm, department: e.target.value})} /></div>
                                 </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Téléphone</label>
+                                        <Input value={editForm.phone || ''} onChange={e => setEditForm({...editForm, phone: e.target.value})} /></div>
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Date de Naissance</label>
+                                        <Input type="date" value={editForm.birthDate || ''} onChange={e => setEditForm({...editForm, birthDate: e.target.value})} /></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Sexe / Genre</label>
+                                        <select value={editForm.gender || 'Non spécifié'} onChange={e => setEditForm({...editForm, gender: e.target.value})}
+                                            className="w-full border border-slate-200 rounded-lg p-2.5 text-sm">
+                                            <option value="Non spécifié">Non spécifié</option>
+                                            <option value="Homme">Homme</option>
+                                            <option value="Femme">Femme</option>
+                                            <option value="Autre">Autre</option>
+                                        </select></div>
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Nationalité</label>
+                                        <Input value={editForm.nationality || ''} onChange={e => setEditForm({...editForm, nationality: e.target.value})} /></div>
+                                </div>
+                                <div><label className="text-sm font-medium text-slate-700 block mb-1">Adresse</label>
+                                    <Input value={editForm.address || ''} onChange={e => setEditForm({...editForm, address: e.target.value})} /></div>
                                 <div><label className="text-sm font-medium text-slate-700 block mb-1">Statut</label>
                                     <select value={editForm.status || 'ACTIVE'} onChange={e => setEditForm({...editForm, status: e.target.value})}
                                         className="w-full border border-slate-200 rounded-lg p-2.5 text-sm">
