@@ -52,6 +52,29 @@ export function Login() {
     const handlePortalSubmit = async (e) => {
         e.preventDefault();
         setPortalStatus('loading');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+        if (portalForm.type === 'Pointage') {
+            try {
+                const res = await fetch(`${API_URL}/api/public/clock-in`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: portalForm.email })
+                });
+                if (res.ok) {
+                    setPortalStatus('success');
+                    setTimeout(() => { setIsPortalOpen(false); setPortalStatus(null); }, 3000);
+                } else {
+                    const data = await res.json();
+                    setError(data.error || "Erreur lors du pointage.");
+                    setPortalStatus('error');
+                }
+            } catch (err) {
+                setPortalStatus('error');
+            }
+            return;
+        }
+
         const formData = new FormData();
         formData.append('email', portalForm.email);
         formData.append('type', portalForm.type);
@@ -279,48 +302,52 @@ export function Login() {
                                                 required
                                             />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-slate-400">Type de demande</label>
-                                                <select 
-                                                    className="w-full bg-slate-800 border-slate-700 text-white p-2.5 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                                                    value={portalForm.type}
-                                                    onChange={(e) => setPortalForm({...portalForm, type: e.target.value})}
-                                                >
-                                                    <option value="Absence injustifiée">Justificatif d'absence</option>
-                                                    <option value="Demande d'autorisation">Autorisation d'absence</option>
-                                                    <option value="Retard">Signalement de retard</option>
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-slate-400">Date</label>
-                                                <Input 
-                                                    type="date" 
-                                                    className="bg-slate-800 border-slate-700 text-white"
-                                                    value={portalForm.date}
-                                                    onChange={(e) => setPortalForm({...portalForm, date: e.target.value})}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-400">Commentaire</label>
-                                            <textarea 
-                                                className="w-full bg-slate-800 border-slate-700 text-white p-3 rounded-xl text-sm h-20 outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Précisez le motif..."
-                                                value={portalForm.justification}
-                                                onChange={(e) => setPortalForm({...portalForm, justification: e.target.value})}
-                                            />
+                                            <label className="text-sm font-bold text-slate-400">Type de demande</label>
+                                            <select 
+                                                className="w-full bg-slate-800 border-slate-700 text-white p-2.5 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                                value={portalForm.type}
+                                                onChange={(e) => setPortalForm({...portalForm, type: e.target.value})}
+                                            >
+                                                <option value="Pointage">Pointage (Je suis là)</option>
+                                                <option value="Absence injustifiée">Justificatif d'absence</option>
+                                                <option value="Demande d'autorisation">Autorisation d'absence</option>
+                                                <option value="Retard">Signalement de retard</option>
+                                            </select>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-400">Justificatif (JPEG, PNG, PDF)</label>
-                                            <input 
-                                                type="file" 
-                                                accept=".jpg,.jpeg,.png,.pdf"
-                                                onChange={(e) => setPortalForm({...portalForm, file: e.target.files[0]})}
-                                                className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600/10 file:text-blue-400 hover:file:bg-blue-600/20"
-                                            />
-                                        </div>
+
+                                        {portalForm.type !== 'Pointage' && (
+                                            <>
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-bold text-slate-400">Date</label>
+                                                    <Input 
+                                                        type="date" 
+                                                        className="bg-slate-800 border-slate-700 text-white"
+                                                        value={portalForm.date}
+                                                        onChange={(e) => setPortalForm({...portalForm, date: e.target.value})}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-bold text-slate-400">Commentaire</label>
+                                                    <textarea 
+                                                        className="w-full bg-slate-800 border-slate-700 text-white p-3 rounded-xl text-sm h-20 outline-none focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="Précisez le motif..."
+                                                        value={portalForm.justification}
+                                                        onChange={(e) => setPortalForm({...portalForm, justification: e.target.value})}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-bold text-slate-400">Justificatif (JPEG, PNG, PDF)</label>
+                                                    <input 
+                                                        type="file" 
+                                                        accept=".jpg,.jpeg,.png,.pdf"
+                                                        onChange={(e) => setPortalForm({...portalForm, file: e.target.files[0]})}
+                                                        className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600/10 file:text-blue-400 hover:file:bg-blue-600/20"
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
                                         <Button 
                                             type="submit" 
                                             disabled={portalStatus === 'loading'}

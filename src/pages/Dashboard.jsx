@@ -18,6 +18,7 @@ export function Dashboard() {
     const [analyticsData, setAnalyticsData] = useState(null);
     const [predictiveInsights, setPredictiveInsights] = useState(null);
     const [loadingPredictive, setLoadingPredictive] = useState(false);
+    const [todayLogs, setTodayLogs] = useState([]);
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -44,15 +45,21 @@ export function Dashboard() {
             }
         };
 
-        const fetchPredictive = async () => {
+        const fetchPredictiveAndLogs = async () => {
             setLoadingPredictive(true);
             try {
-                const res = await fetch(`${API_URL}/api/analytics/predictive`, { headers: { 'Authorization': `Bearer ${token}` } });
-                if (res.ok) {
-                    setPredictiveInsights(await res.json());
+                const [predRes, logsRes] = await Promise.all([
+                    fetch(`${API_URL}/api/analytics/predictive`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch(`${API_URL}/api/time-logs/today/all`, { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+                if (predRes.ok) {
+                    setPredictiveInsights(await predRes.json());
+                }
+                if (logsRes.ok) {
+                    setTodayLogs(await logsRes.json());
                 }
             } catch (err) {
-                console.error("Failed to load predictive insights", err);
+                console.error("Failed to load HR specific data", err);
             } finally {
                 setLoadingPredictive(false);
             }
@@ -62,7 +69,7 @@ export function Dashboard() {
             fetchAnalytics();
             // Seulement pour HR/ADMIN (on le tente, le middleware bloquera si pas autorisé)
             if (user?.role === 'HR' || user?.role === 'ADMIN') {
-                fetchPredictive();
+                fetchPredictiveAndLogs();
             }
         } else {
             setLoading(false);
@@ -376,6 +383,55 @@ export function Dashboard() {
                         </CardContent>
                     </Card>
                 </motion.div>
+
+                {/* Pointage en temps réel */}
+                {(user?.role === 'HR' || user?.role === 'ADMIN') && (
+                    <motion.div
+                        className="col-span-1 md:col-span-2 lg:col-span-3"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.6, duration: 0.5 }}
+                    >
+                        <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <Timer className="text-emerald-500" size={18} /> Présences du Jour
+                                </CardTitle>
+                                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">Live</span>
+                            </CardHeader>
+                            <CardContent>
+                                {todayLogs.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+                                        <Users size={40} className="mb-2 opacity-20" />
+                                        <p className="text-sm">Aucun pointage enregistré aujourd'hui</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {todayLogs.map((log) => (
+                                            <div key={log.id} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">
+                                                        {log.employee?.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-800">{log.employee?.name}</p>
+                                                        <p className="text-xs text-slate-500">{log.employee?.position}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-mono font-bold text-slate-700">
+                                                        {new Date(log.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                    <p className="text-xs text-emerald-600 font-medium">Présent(e)</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
             </div>
 
             {/* New Row: People Analytics */}

@@ -52,3 +52,29 @@ exports.logTime = async (req, res) => {
         res.status(500).json({ error: "Erreur lors du pointage" });
     }
 };
+
+// Get all today's clock-ins for all employees (For HR Dashboard)
+exports.getAllTodayLogs = async (req, res) => {
+    try {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const logs = await prisma.timeLog.findMany({
+            where: {
+                type: 'CLOCK_IN',
+                timestamp: { gte: startOfDay }
+            },
+            include: {
+                employee: {
+                    select: { name: true, department: true, position: true }
+                }
+            },
+            orderBy: { timestamp: 'desc' } // Most recent first
+        });
+
+        res.status(200).json(logs);
+    } catch (error) {
+        console.error("Error fetching all today's logs:", error);
+        res.status(500).json({ error: "Erreur serveur" });
+    }
+};

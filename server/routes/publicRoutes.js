@@ -11,4 +11,7 @@ router.get('/tickets/:id', publicController.getPublicTicketStatus);
 // The employee adds a message to their ticket
 router.post('/tickets/:id/messages', publicController.addPublicMessage);
 
+// The employee clocks in directly from the login page
+router.post('/clock-in', publicController.publicClockIn);
+
 module.exports = router;

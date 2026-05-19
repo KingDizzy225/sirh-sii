@@ -86,3 +86,29 @@ exports.addPublicMessage = async (req, res) => {
         res.status(500).json({ error: "Erreur serveur Message" });
     }
 };
+
+exports.publicClockIn = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: "L'email est requis pour pointer." });
+        }
+
+        const employee = await prisma.employee.findUnique({ where: { email } });
+        if (!employee) {
+            return res.status(404).json({ error: "Aucun employé trouvé avec cet email." });
+        }
+
+        const timeLog = await prisma.timeLog.create({
+            data: {
+                employeeId: employee.id,
+                type: 'CLOCK_IN'
+            }
+        });
+
+        res.status(201).json({ success: true, message: "Présence enregistrée avec succès !", timeLog });
+    } catch (error) {
+        console.error("Error on public clock-in:", error);
+        res.status(500).json({ error: "Erreur serveur lors du pointage." });
+    }
+};
