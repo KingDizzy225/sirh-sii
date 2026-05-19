@@ -89,14 +89,21 @@ exports.addPublicMessage = async (req, res) => {
 
 exports.publicClockIn = async (req, res) => {
     try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ error: "L'email est requis pour pointer." });
+        const { name } = req.body;
+        if (!name) {
+            return res.status(400).json({ error: "Le nom est requis pour pointer." });
         }
 
-        const employee = await prisma.employee.findUnique({ where: { email } });
+        const employee = await prisma.employee.findFirst({
+            where: {
+                name: {
+                    equals: name,
+                    mode: 'insensitive'
+                }
+            }
+        });
         if (!employee) {
-            return res.status(404).json({ error: "Aucun employé trouvé avec cet email." });
+            return res.status(404).json({ error: "Aucun employé trouvé avec ce nom." });
         }
 
         const timeLog = await prisma.timeLog.create({

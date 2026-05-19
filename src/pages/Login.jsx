@@ -17,6 +17,7 @@ export function Login() {
     const [isPortalOpen, setIsPortalOpen] = useState(false);
     const [portalForm, setPortalForm] = useState({
         email: '',
+        name: '',
         type: 'Absence injustifiée',
         date: new Date().toISOString().split('T')[0],
         justification: '',
@@ -59,7 +60,7 @@ export function Login() {
                 const res = await fetch(`${API_URL}/api/public/clock-in`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: portalForm.email })
+                    body: JSON.stringify({ name: portalForm.name })
                 });
                 if (res.ok) {
                     setPortalStatus('success');
@@ -291,17 +292,31 @@ export function Login() {
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-400">Votre Email Professionnel</label>
-                                            <Input 
-                                                type="email" 
-                                                className="bg-slate-800 border-slate-700 text-white"
-                                                placeholder="nom.prenom@sii-ci.com"
-                                                value={portalForm.email}
-                                                onChange={(e) => setPortalForm({...portalForm, email: e.target.value})}
-                                                required
-                                            />
-                                        </div>
+                                        {portalForm.type === 'Pointage' ? (
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-slate-400">Votre Nom et Prénom</label>
+                                                <Input 
+                                                    type="text" 
+                                                    className="bg-slate-800 border-slate-700 text-white"
+                                                    placeholder="Ex: Jean Dupont"
+                                                    value={portalForm.name}
+                                                    onChange={(e) => setPortalForm({...portalForm, name: e.target.value})}
+                                                    required
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-slate-400">Votre Email Professionnel</label>
+                                                <Input 
+                                                    type="email" 
+                                                    className="bg-slate-800 border-slate-700 text-white"
+                                                    placeholder="nom.prenom@sii-ci.com"
+                                                    value={portalForm.email}
+                                                    onChange={(e) => setPortalForm({...portalForm, email: e.target.value})}
+                                                    required
+                                                />
+                                            </div>
+                                        )}
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-slate-400">Type de demande</label>
                                             <select 
