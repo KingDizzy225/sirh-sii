@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// Si VITE_API_URL est fourni sans /api à la fin (comme c'est le cas pour la plupart des composants), on l'ajoute.
+const RAW_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = RAW_API_URL.endsWith('/api') ? RAW_API_URL : `${RAW_API_URL}/api`;
 
 const getHeaders = () => {
     const token = localStorage.getItem('sirh_token');
