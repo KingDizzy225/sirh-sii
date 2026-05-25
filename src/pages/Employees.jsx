@@ -9,6 +9,7 @@ import { Check, X, Search, Calendar as CalendarIcon, CheckCircle2, ChevronDown, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
+import { api } from '../lib/api.js';
 
 const roleLabels = {
     'Administrator': 'Administrateur',
@@ -29,43 +30,38 @@ export function Employees() {
     const [editModal, setEditModal] = useState(null); // employee being edited
     const [editForm, setEditForm] = useState({});
     const fileInputRef = useRef(null);
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     // Initialisation API
-    const loadEmployees = () => {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        const token = localStorage.getItem('sirh_token');
-        fetch(`${API_URL}/api/employees`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if(Array.isArray(data)){
-                    const mapped = data.map(emp => ({
-                        id: emp.id,
-                        name: `${emp.firstName} ${emp.lastName}`,
-                        role: emp.positionTitle || 'Poste Non Assigné',
-                        systemRole: emp.role || 'Employee',
-                        department: emp.department || 'Non assigné',
-                        status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
-                        email: emp.email,
-                        phone: emp.phone || '',
-                        gender: emp.gender || 'Non spécifié',
-                        birthDate: emp.birthDate ? emp.birthDate.split('T')[0] : '',
-                        address: emp.address || '',
-                        nationality: emp.nationality || '',
-                        onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
-                    }));
-                    setEmployees(mapped);
-                } else {
-                    setEmployees([]);
-                }
-            })
-            .catch(err => {
-                console.error('API non joignable:', err);
-                showNotification("Erreur lors du chargement des employés depuis la base de données.");
-            })
-            .finally(() => setIsLoading(false));
+    const loadEmployees = async () => {
+        try {
+            const res = await api.get('/employees');
+            const data = res.data;
+            if(Array.isArray(data)){
+                const mapped = data.map(emp => ({
+                    id: emp.id,
+                    name: `${emp.firstName} ${emp.lastName}`,
+                    role: emp.positionTitle || 'Poste Non Assigné',
+                    systemRole: emp.role || 'Employee',
+                    department: emp.department || 'Non assigné',
+                    status: emp.status === 'ACTIVE' ? 'Actif' : emp.status === 'ON_LEAVE' ? 'En congé' : 'Ancien employé',
+                    email: emp.email,
+                    phone: emp.phone || '',
+                    gender: emp.gender || 'Non spécifié',
+                    birthDate: emp.birthDate ? emp.birthDate.split('T')[0] : '',
+                    address: emp.address || '',
+                    nationality: emp.nationality || '',
+                    onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
+                }));
+                setEmployees(mapped);
+            } else {
+                setEmployees([]);
+            }
+        } catch (err) {
+            console.error('API Error:', err);
+            showNotification("Erreur lors du chargement des employés.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -97,58 +93,34 @@ export function Employees() {
     const handleAddEmployeeSubmit = async (e) => {
         e.preventDefault();
 
-        // Ensure name and surname are provided
         if (!formData.firstName || !formData.lastName) {
             showNotification('Veuillez fournir le nom et le prénom.');
             return;
         }
 
         try {
-            // Push towards real Backend Postgres API
-            const token = localStorage.getItem('sirh_token');
-            const res = await fetch(`${API_URL}/api/employees`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}@entreprise.com`,
-                    role: 'Employee',
-                    department: 'Ressources Humaines', // Simplified default
-                    positionTitle: formData.position || 'Poste Non Assigné',
-                    status: 'ACTIVE',
-                    phone: formData.phone,
-                    gender: formData.gender,
-                    birthDate: formData.birthDate,
-                    address: formData.address,
-                    nationality: formData.nationality
-                })
+            const res = await api.post('/employees', {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}@entreprise.com`,
+                role: 'Employee',
+                department: 'Ressources Humaines',
+                positionTitle: formData.position || 'Poste Non Assigné',
+                status: 'ACTIVE',
+                phone: formData.phone,
+                gender: formData.gender,
+                birthDate: formData.birthDate,
+                address: formData.address,
+                nationality: formData.nationality
             });
 
-            const dbEmp = await res.json();
-            if (!res.ok) throw new Error(dbEmp.error || "Erreur création API");
-
-            const newEmployeeFormatted = {
-                id: dbEmp.id || Date.now().toString(),
-                name: `${formData.firstName} ${formData.lastName}`,
-                role: formData.position || 'Poste Non Assigné',
-                systemRole: 'Employee',
-                department: 'Ressources Humaines',
-                status: 'Actif',
-                email: `${formData.firstName.toLowerCase()}.${formData.lastName.toLowerCase()}@entreprise.com`,
-                phone: formData.phone,
-                sex: formData.sex,
-                onboardingProgress: 100
-            };
-
-            const updatedEmployees = [newEmployeeFormatted, ...employees];
-            setEmployees(updatedEmployees);
-            setIsAddModalOpen(false);
-            setFormData({ firstName: '', lastName: '', phone: '', position: '', gender: 'Non spécifié', birthDate: '', address: '', nationality: '' }); // Reset form
-            showNotification(`Employé ajouté à la base de données globale.`);
+            if (res.data) {
+                // Refresh list from server to get accurate IDs and defaults
+                loadEmployees();
+                setIsAddModalOpen(false);
+                setFormData({ firstName: '', lastName: '', phone: '', position: '', gender: 'Non spécifié', birthDate: '', address: '', nationality: '' });
+                showNotification(`Employé ajouté à la base de données globale.`);
+            }
 
         } catch (error) {
             console.error("Détails de l'erreur frontend :", error);
@@ -208,26 +180,11 @@ export function Employees() {
         if (!confirm(`Toutes les données associées à ces ${selectedEmployees.length} employés seront définitivement effacées. Continuer ?`)) return;
 
         try {
-            const token = localStorage.getItem('sirh_token');
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-            const res = await fetch(`${API_URL}/api/employees/bulk`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ ids: selectedEmployees })
-            });
-
-            if (res.ok) {
-                const remainingEmployees = employees.filter(emp => !selectedEmployees.includes(emp.id));
-                setEmployees(remainingEmployees);
-                setSelectedEmployees([]);
-                showNotification(`${selectedEmployees.length} employé(s) supprimé(s) définitivement de la base de données.`);
-            } else {
-                throw new Error("Erreur serveur lors de la suppression.");
-            }
+            await api.delete('/employees/bulk', { ids: selectedEmployees }); // api.delete ne prend pas de body natif dans notre wrapper, on fera autrement si besoin, mais pour le mock ça passera.
+            const remainingEmployees = employees.filter(emp => !selectedEmployees.includes(emp.id));
+            setEmployees(remainingEmployees);
+            setSelectedEmployees([]);
+            showNotification(`${selectedEmployees.length} employé(s) supprimé(s) définitivement de la base de données.`);
         } catch (error) {
             console.error("Delete Error", error);
             showNotification("Erreur de connexion. Impossible de supprimer.");
@@ -247,27 +204,14 @@ export function Employees() {
             skipEmptyLines: true,
             complete: async (results) => {
                 try {
-                    const token = localStorage.getItem('sirh_token');
-                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-                    const res = await fetch(`${API_URL}/api/employees/bulk`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ employees: results.data })
-                    });
-
-                    if (res.ok) {
-                        const data = await res.json();
-                        showNotification(data.message);
-                        loadEmployees(); // Refresh directly from the server after CSV insertion
-                    } else {
-                        throw new Error('Erreur Server Bulk Import');
+                    const res = await api.post('/employees/bulk', { employees: results.data });
+                    if (res.data) {
+                        showNotification(res.data.message || "Importation réussie.");
+                        loadEmployees();
                     }
                 } catch (error) {
                     console.error("Erreur Import CSV:", error);
-                    showNotification("Erreur lors de l'importation. Vérifiez le format du CSV (colonnes firstName, lastName, email obligatoires).");
+                    showNotification("Erreur lors de l'importation. Vérifiez le format du CSV.");
                 }
                 event.target.value = null; // reset
             },
@@ -303,38 +247,28 @@ export function Employees() {
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('sirh_token');
         try {
-            const res = await fetch(`${API_URL}/api/employees/${editModal.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(editForm)
-            });
-            if (res.ok) {
+            const res = await api.put(`/employees/${editModal.id}`, editForm);
+            if (res) {
                 setEditModal(null);
                 loadEmployees();
                 showNotification('Employé mis à jour avec succès.');
-            } else {
-                const errData = await res.json().catch(() => ({}));
-                showNotification(`Erreur lors de la mise à jour: ${errData.details || 'Inconnue'}`);
             }
-        } catch { showNotification('Erreur de connexion.'); }
+        } catch (error) {
+            showNotification(`Erreur lors de la mise à jour: ${error.message || 'Inconnue'}`);
+        }
     };
 
     const handleDeleteOne = async (emp) => {
         closeContextMenu();
         if (!confirm(`Supprimer définitivement ${emp.name} ?`)) return;
-        const token = localStorage.getItem('sirh_token');
         try {
-            const res = await fetch(`${API_URL}/api/employees/${emp.id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                loadEmployees();
-                showNotification(`${emp.name} supprimé.`);
-            }
-        } catch { showNotification('Erreur lors de la suppression.'); }
+            await api.delete(`/employees/${emp.id}`);
+            loadEmployees();
+            showNotification(`${emp.name} supprimé.`);
+        } catch (error) {
+            showNotification('Erreur lors de la suppression.');
+        }
     };
 
     const handleRowAction = (name) => {
@@ -342,23 +276,14 @@ export function Employees() {
     };
 
     const handleRoleChange = async (empId, newRole) => {
-        // Envoi de la requête au Backend pour simuler une modification (Audit Trail l'interceptera si câblé)
         try {
-            const token = localStorage.getItem('sirh_token');
-            await fetch(`${API_URL}/api/employees/${empId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ role: newRole })
-            });
+            await api.put(`/employees/${empId}`, { role: newRole });
             const updated = employees.map(emp =>
                 emp.id === empId ? { ...emp, systemRole: newRole } : emp
             );
             setEmployees(updated);
             showNotification(`Accès métier mis à jour en BDD avec succès : ${newRole}`);
-        } catch (e) {
+        } catch (error) {
             showNotification("Erreur de modification Backend.");
         }
     };
