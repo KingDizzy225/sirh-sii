@@ -52,10 +52,14 @@ export const api = {
     post: async (url, body) => {
         try {
             const fetchUrl = url.startsWith('http') ? url : `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+            const isFormData = body instanceof FormData;
+            const headers = getHeaders();
+            if (isFormData) delete headers['Content-Type'];
+
             const res = await fetch(fetchUrl, {
                 method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify(body)
+                headers,
+                body: isFormData ? body : JSON.stringify(body)
             });
             return await handleResponse(res);
         } catch (error) {
@@ -66,14 +70,36 @@ export const api = {
     put: async (url, body) => {
         try {
             const fetchUrl = url.startsWith('http') ? url : `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+            const isFormData = body instanceof FormData;
+            const headers = getHeaders();
+            if (isFormData) delete headers['Content-Type'];
+
             const res = await fetch(fetchUrl, {
                 method: 'PUT',
-                headers: getHeaders(),
-                body: JSON.stringify(body)
+                headers,
+                body: isFormData ? body : JSON.stringify(body)
             });
             return await handleResponse(res);
         } catch (error) {
             console.warn(`Fallback Démo API PUT ${url}`, error);
+            return { data: { success: true, mock: true, ...body } };
+        }
+    },
+    patch: async (url, body) => {
+        try {
+            const fetchUrl = url.startsWith('http') ? url : `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+            const isFormData = body instanceof FormData;
+            const headers = getHeaders();
+            if (isFormData) delete headers['Content-Type'];
+
+            const res = await fetch(fetchUrl, {
+                method: 'PATCH',
+                headers,
+                body: isFormData ? body : JSON.stringify(body)
+            });
+            return await handleResponse(res);
+        } catch (error) {
+            console.warn(`Fallback Démo API PATCH ${url}`, error);
             return { data: { success: true, mock: true, ...body } };
         }
     },

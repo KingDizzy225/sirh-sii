@@ -4,8 +4,10 @@ const employeeController = require('../controllers/employeeController');
 const orgChartController = require('../controllers/orgChartController');
 const auditTrail = require('../middleware/auditTrail');
 const requireRole = require('../middleware/roleMiddleware');
+const verifyToken = require('../middleware/authMiddleware');
 
 // Apply Audit Trail to all methods (it automatically filters for PUT/PATCH/DELETE)
+router.use(verifyToken);
 router.use(auditTrail);
 
 // Org Chart AI Integration

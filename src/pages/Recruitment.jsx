@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { MapPin, Clock, Plus, UserPlus, CheckCircle2, X, ArrowRight, Star, ThumbsUp, ThumbsDown, ArrowLeft, ChevronRight, Target, Building } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
 
 const STAGES = [
     { id: 'SCREENING', label: 'Sélection', color: 'text-slate-500', bg: 'bg-slate-100' },
@@ -24,21 +25,15 @@ export function Recruitment() {
 
     const fetchData = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            const authConfig = { headers: { 'Authorization': `Bearer ${token}` } };
-
             const [jobsRes, candsRes] = await Promise.all([
-                fetch(`${API_URL}/api/recruitment/jobs`, authConfig),
-                fetch(`${API_URL}/api/recruitment/applicants`, authConfig)
+                api.get(`/recruitment/jobs`),
+                api.get(`/recruitment/applicants`)
             ]);
-            const jobsData = await jobsRes.json();
-            const candsData = await candsRes.json();
 
-            if (Array.isArray(jobsData)) setJobs(jobsData);
-            if (Array.isArray(candsData)) setCandidates(candsData);
+            if (Array.isArray(jobsRes.data)) setJobs(jobsRes.data);
+            if (Array.isArray(candsRes.data)) setCandidates(candsRes.data);
         } catch (e) {
-            console.error("API Recruitment non joignable");
+            console.error("API Recruitment non joignable", e);
         } finally {
             setIsLoading(false);
         }
@@ -72,26 +67,17 @@ export function Recruitment() {
         }
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            const res = await fetch(`${API_URL}/api/recruitment/jobs`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    title: jobForm.title,
-                    department: jobForm.department,
-                    location: jobForm.location || 'À distance',
-                    type: jobForm.contractType,
-                    experience: jobForm.experienceLevel,
-                    description: jobForm.description,
-                    requirements: jobForm.requirements
-                })
+            const { data } = await api.post(`/recruitment/jobs`, {
+                title: jobForm.title,
+                department: jobForm.department,
+                location: jobForm.location || 'À distance',
+                type: jobForm.contractType,
+                experience: jobForm.experienceLevel,
+                description: jobForm.description,
+                requirements: jobForm.requirements
             });
 
-            if (res.ok) {
+            if (data) {
                 await fetchData();
                 setIsJobModalOpen(false);
                 setJobForm({ title: '', department: '', location: '', status: 'Actif', contractType: 'CDI', experienceLevel: 'Intermédiaire', description: '', requirements: '' });
@@ -108,24 +94,15 @@ export function Recruitment() {
         }
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            const res = await fetch(`${API_URL}/api/recruitment/applicants`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    jobOfferId: activeJobId,
-                    firstName: candidateForm.firstName,
-                    lastName: candidateForm.lastName,
-                    email: candidateForm.email,
-                    phone: candidateForm.phone || ''
-                })
+            const { data } = await api.post(`/recruitment/applicants`, {
+                jobOfferId: activeJobId,
+                firstName: candidateForm.firstName,
+                lastName: candidateForm.lastName,
+                email: candidateForm.email,
+                phone: candidateForm.phone || ''
             });
 
-            if (res.ok) {
+            if (data) {
                 await fetchData();
                 setIsCandidateModalOpen(false);
                 setCandidateForm({ firstName: '', lastName: '', email: '', phone: '' });
@@ -140,16 +117,7 @@ export function Recruitment() {
         setCandidates(candidates.map(c => c.id === candidateId ? { ...c, stage: newStage, status: newStage } : c));
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            await fetch(`${API_URL}/api/recruitment/applicants/${candidateId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ status: newStage })
-            });
+            await api.put(`/recruitment/applicants/${candidateId}/status`, { status: newStage });
 
             if (newStage === 'HIRED' && candidate.status !== 'HIRED' && candidate.stage !== 'HIRED') {
                 setTimeout(() => {
@@ -188,14 +156,8 @@ export function Recruitment() {
     const handleAIMatch = async (candidateId) => {
         try {
             setNotification('Analyse IA en cours...');
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            const res = await fetch(`${API_URL}/api/recruitment/applicants/${candidateId}/ai-match`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
+            const { data } = await api.post(`/recruitment/applicants/${candidateId}/ai-match`, {});
+            if (data) {
                 setCandidates(candidates.map(c => 
                     c.id === candidateId ? { ...c, aiScore: data.score, aiSummary: data.summary } : c
                 ));

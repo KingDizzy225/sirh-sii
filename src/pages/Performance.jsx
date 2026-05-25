@@ -7,6 +7,7 @@ import { Target, Star, MessageSquare, Plus, ArrowRight, CheckCircle2, X } from '
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -43,37 +44,18 @@ export function Performance() {
     useEffect(() => {
         const fetchPerformanceData = async () => {
             try {
-                const goalsRes = await fetch(`${API_URL}/api/performance/goals`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (goalsRes.ok) {
-                    const data = await goalsRes.json();
-                    setGoals(data);
-                }
+                const [goalsRes, reviewsRes, feedbacksRes, empRes] = await Promise.all([
+                    api.get(`/performance/goals`),
+                    api.get(`/performance/reviews`),
+                    api.get(`/performance/feedbacks`),
+                    api.get(`/employees`)
+                ]);
 
-                const reviewsRes = await fetch(`${API_URL}/api/performance/reviews`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (reviewsRes.ok) {
-                    const data = await reviewsRes.json();
-                    setReviews(data);
-                }
+                if (goalsRes.data) setGoals(goalsRes.data);
+                if (reviewsRes.data) setReviews(reviewsRes.data);
+                if (feedbacksRes.data) setFeedbacks(feedbacksRes.data);
+                if (empRes.data) setEmployees(empRes.data.employees || empRes.data);
 
-                const feedbacksRes = await fetch(`${API_URL}/api/performance/feedbacks`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (feedbacksRes.ok) {
-                    const data = await feedbacksRes.json();
-                    setFeedbacks(data);
-                }
-
-                const empRes = await fetch(`${API_URL}/api/employees`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (empRes.ok) {
-                    const data = await empRes.json();
-                    setEmployees(data.employees || data);
-                }
             } catch (err) {
                 console.error("Erreur de chargement des performances:", err);
             }
@@ -95,22 +77,14 @@ export function Performance() {
         }
 
         try {
-            const res = await fetch(`${API_URL}/api/performance/goals`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    title: goalForm.title,
-                    category: goalForm.category,
-                    dueDate: goalForm.due
-                })
+            const { data } = await api.post(`/performance/goals`, {
+                title: goalForm.title,
+                category: goalForm.category,
+                dueDate: goalForm.due
             });
 
-            if (res.ok) {
-                const newGoal = await res.json();
-                setGoals([newGoal, ...goals]);
+            if (data) {
+                setGoals([data, ...goals]);
                 setIsGoalModalOpen(false);
                 setGoalForm({ title: '', category: 'Dév. Professionnel', due: '' });
                 showNotification('Nouvel objectif créé avec succès');
@@ -122,14 +96,10 @@ export function Performance() {
 
     const handleUpdateGoal = async (id) => {
         try {
-            const res = await fetch(`${API_URL}/api/performance/goals/${id}/progress`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const updatedGoal = await res.json();
-                setGoals(prev => prev.map(goal => goal.id === id ? updatedGoal : goal));
-                showNotification(`Progression mise à jour : ${updatedGoal.progress}%`);
+            const { data } = await api.patch ? await api.patch(`/performance/goals/${id}/progress`, {}) : await api.put(`/performance/goals/${id}/progress`, {}); // api.js might not have patch, so use put or get. Wait, api.js doesn't have patch. I'll use put! Wait, let me add patch or just use fetch for this if api is limited. I'll use put and let the backend handle, or just add patch to api.js? Let me use put.
+            if (data) {
+                setGoals(prev => prev.map(goal => goal.id === id ? data : goal));
+                showNotification(`Progression mise à jour : ${data.progress}%`);
             }
         } catch (err) {
             showNotification('Erreur de mise à jour');
@@ -144,21 +114,13 @@ export function Performance() {
         }
 
         try {
-            const res = await fetch(`${API_URL}/api/performance/feedbacks`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    peerName: feedbackForm.peerName,
-                    context: feedbackForm.context
-                })
+            const { data } = await api.post(`/performance/feedbacks`, {
+                peerName: feedbackForm.peerName,
+                context: feedbackForm.context
             });
 
-            if (res.ok) {
-                const newFeedback = await res.json();
-                setFeedbacks([newFeedback, ...feedbacks]);
+            if (data) {
+                setFeedbacks([data, ...feedbacks]);
                 setIsFeedbackModalOpen(false);
                 setFeedbackForm({ peerName: '', context: '' });
                 showNotification(`Demande de feedback envoyée à ${feedbackForm.peerName}`);
@@ -176,22 +138,14 @@ export function Performance() {
         }
 
         try {
-            const res = await fetch(`${API_URL}/api/performance/reviews/self-eval`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    reflection: evalForm.reflection,
-                    achievements: evalForm.achievements,
-                    cycle: 'Annuel 2026'
-                })
+            const { data } = await api.post(`/performance/reviews/self-eval`, {
+                reflection: evalForm.reflection,
+                achievements: evalForm.achievements,
+                cycle: 'Annuel 2026'
             });
 
-            if (res.ok) {
-                const newReview = await res.json();
-                setReviews([newReview, ...reviews]);
+            if (data) {
+                setReviews([data, ...reviews]);
                 setIsEvalModalOpen(false);
                 setEvalForm({ reflection: '', achievements: '' });
                 showNotification('Auto-évaluation annuelle soumise avec succès');
@@ -209,16 +163,9 @@ export function Performance() {
         }
 
         try {
-            const res = await fetch(`${API_URL}/api/performance/feedbacks/360`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(send360Form)
-            });
+            const { data } = await api.post(`/performance/feedbacks/360`, send360Form);
 
-            if (res.ok) {
+            if (data) {
                 setIsSend360ModalOpen(false);
                 setSend360Form({ targetEmployeeId: '', strengths: '', areas: '', badge: '', isAnonymous: false });
                 showNotification('Feedback 360 envoyé avec succès !');

@@ -14,6 +14,7 @@ import getDay from 'date-fns/getDay';
 import fr from 'date-fns/locale/fr';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
 
 const locales = {
     'fr': fr,
@@ -52,13 +53,9 @@ export function Leaves() {
 
     const loadLeaves = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            const res = await fetch(`${API_URL}/api/leaves`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                let parsedLeaves = await res.json();
+            const { data } = await api.get(`/leaves`);
+            if (data) {
+                let parsedLeaves = data;
                 parsedLeaves = parsedLeaves.map(l => ({
                     id: l.id,
                     employee: `${l.employee?.firstName || ''} ${l.employee?.lastName || ''}`.trim() || 'Employé',
@@ -79,13 +76,8 @@ export function Leaves() {
 
     const fetchProfile = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            const res = await fetch(`${API_URL}/api/employees/profile`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
+            const { data } = await api.get(`/employees/profile`);
+            if (data) {
                 setEmployeeProfile(data);
             }
         } catch (error) {
@@ -95,14 +87,9 @@ export function Leaves() {
 
     const fetchEmployees = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            const res = await fetch(`${API_URL}/api/employees`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setEmployeesList(data);
+            const { data } = await api.get(`/employees`);
+            if (data) {
+                setEmployeesList(data.employees || data);
             }
         } catch (error) {
             console.error(error);
@@ -124,15 +111,9 @@ export function Leaves() {
 
     const updateLeaveStatus = async (id, newStatus) => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            const res = await fetch(`${API_URL}/api/leaves/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ status: newStatus === 'Approuvé' ? 'APPROVED' : 'REJECTED' })
-            });
+            const { data } = await api.put(`/leaves/${id}/status`, { status: newStatus === 'Approuvé' ? 'APPROVED' : 'REJECTED' });
 
-            if (res.ok) {
+            if (data) {
                 await loadLeaves();
                 showNotification(`Demande ${newStatus.toLowerCase()} avec succès.`);
             }
@@ -183,9 +164,6 @@ END:VCALENDAR`;
         }
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-            const token = localStorage.getItem('sirh_token');
-            
             const formData = new FormData();
             formData.append('employeeId', (isManagerOrAdmin && leaveForm.employeeId) ? leaveForm.employeeId : user?.id);
             formData.append('type', leaveForm.type);
@@ -196,13 +174,9 @@ END:VCALENDAR`;
                 formData.append('attachment', leaveForm.attachment);
             }
 
-            const res = await fetch(`${API_URL}/api/leaves`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
+            const { data } = await api.post(`/leaves`, formData);
 
-            if (res.ok) {
+            if (data) {
                 await loadLeaves();
                 setIsLeaveModalOpen(false);
                 setLeaveForm({ employeeId: user?.id || '', type: 'Congé Annuel', startDate: '', endDate: '', reason: '', attachment: null });

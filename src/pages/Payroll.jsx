@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { useAuth } from '../context/AuthContext';
 import { Download, PlayCircle, FileText, CheckCircle2, Search, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '../lib/api';
 
 export function Payroll() {
     const { user } = useAuth();
@@ -37,11 +38,8 @@ export function Payroll() {
 
     const loadMyPayslips = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/payrolls/my`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
+            const { data } = await api.get(`/payrolls/my`);
+            if (data) {
                 setMyPayslips(data);
             }
         } catch (error) {
@@ -53,11 +51,9 @@ export function Payroll() {
         if (!isHR) return;
         try {
             // Employees
-            const resEmp = await fetch(`${API_URL}/api/employees`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (resEmp.ok) {
-                const data = await resEmp.json();
+            const empRes = await api.get(`/employees`);
+            if (empRes.data) {
+                const data = empRes.data.employees || empRes.data;
                 setEmployees(data);
                 // Initialize variables
                 const vars = {};
@@ -74,11 +70,9 @@ export function Payroll() {
             }
 
             // All Payrolls history
-            const resPay = await fetch(`${API_URL}/api/payrolls`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (resPay.ok) {
-                setAllPayrolls(await resPay.json());
+            const payRes = await api.get(`/payrolls`);
+            if (payRes.data) {
+                setAllPayrolls(payRes.data);
             }
         } catch (error) {
             console.error(error);
@@ -119,16 +113,9 @@ export function Payroll() {
         };
 
         try {
-            const res = await fetch(`${API_URL}/api/payrolls/run`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
+            const { data } = await api.post(`/payrolls/run`, payload);
 
-            if (res.ok) {
+            if (data) {
                 showNotification('Bordereau de paie généré avec succès ! PDF créés.');
                 loadEmployeesAndPayrolls();
                 setActiveTab('history');
@@ -137,6 +124,7 @@ export function Payroll() {
             }
         } catch (error) {
             console.error(error);
+            showNotification('Erreur lors de la génération.');
         } finally {
             setIsGenerating(false);
         }
@@ -225,7 +213,8 @@ export function Payroll() {
 
     const handleDownloadPDF = async (payId) => {
         try {
-            const res = await fetch(`${API_URL}/api/payrolls/${payId}/download`, {
+            // Note: Keep native fetch for blob response since api.js expects JSON/Text
+            const res = await fetch(`${API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`}/payrolls/${payId}/download`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Erreur de téléchargement du PDF (Vérifiez si le fichier existe sur le serveur)');

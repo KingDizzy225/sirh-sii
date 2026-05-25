@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const jobDescriptionController = require('../controllers/jobDescriptionController');
 const requireRole = require('../middleware/roleMiddleware');
+const verifyToken = require('../middleware/authMiddleware');
+
+router.use(verifyToken);
 
 router.get('/', jobDescriptionController.getJobDescriptions);
 router.post('/generate', requireRole('Administrator', 'HR'), jobDescriptionController.generateJobDescription);

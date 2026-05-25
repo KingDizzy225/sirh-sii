@@ -181,8 +181,12 @@ const runPayroll = async (req, res) => {
         const { payrolls } = req.body;
         const results = [];
         
+        const employeeIds = payrolls.map(p => p.employeeId);
+        const employees = await prisma.employee.findMany({ where: { id: { in: employeeIds } } });
+        const employeeMap = employees.reduce((acc, emp) => { acc[emp.id] = emp; return acc; }, {});
+        
         for (let p of payrolls) {
-            const employee = await prisma.employee.findUnique({ where: { id: p.employeeId }});
+            const employee = employeeMap[p.employeeId];
             if (!employee) continue;
 
             const base = parseFloat(p.baseSalary) || 0;

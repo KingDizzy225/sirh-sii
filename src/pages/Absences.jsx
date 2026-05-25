@@ -18,6 +18,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -59,7 +60,7 @@ export function Absences() {
             fetchEmployees();
         }
         fetchMyAbsences();
-    }, [token]);
+    }, [token, isRH]);
 
     const fetchAbsences = async () => {
         try {
@@ -71,31 +72,22 @@ export function Absences() {
             }
             if (filterEmployee) params.append('employeeId', filterEmployee);
 
-            const res = await fetch(`${API_URL}/api/absences?${params}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) setAbsences(await res.json());
+            const { data } = await api.get(`/absences?${params}`);
+            if (data) setAbsences(data);
         } catch (e) { console.error(e); }
     };
 
     const fetchMyAbsences = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/absences/my`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) setMyAbsences(await res.json());
+            const { data } = await api.get(`/absences/my`);
+            if (data) setMyAbsences(data);
         } catch (e) { console.error(e); }
     };
 
     const fetchEmployees = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/employees`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setEmployees(data.employees || data);
-            }
+            const { data } = await api.get(`/employees`);
+            if (data) setEmployees(data.employees || data);
         } catch (e) { console.error(e); }
     };
 
@@ -107,17 +99,13 @@ export function Absences() {
     const handleCreate = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch(`${API_URL}/api/absences`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    ...form,
-                    durationMinutes: form.durationMinutes ? parseInt(form.durationMinutes) : null
-                })
-            });
-            if (res.ok) {
-                const newAbs = await res.json();
-                setAbsences(prev => [newAbs, ...prev]);
+            const body = {
+                ...form,
+                durationMinutes: form.durationMinutes ? parseInt(form.durationMinutes) : null
+            };
+            const { data } = await api.post(`/absences`, body);
+            if (data) {
+                setAbsences(prev => [data, ...prev]);
                 setIsCreateOpen(false);
                 setForm({ employeeId: '', type: 'Retard', date: '', durationMinutes: '', justification: '' });
                 showNotif('Absence enregistrée avec succès.');
@@ -127,12 +115,8 @@ export function Absences() {
 
     const handleStatusChange = async (id, status) => {
         try {
-            const res = await fetch(`${API_URL}/api/absences/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ status })
-            });
-            if (res.ok) {
+            const { data } = await api.put(`/absences/${id}/status`, { status });
+            if (data) {
                 setAbsences(prev => prev.map(a => a.id === id ? { ...a, status } : a));
                 showNotif(`Statut mis à jour : ${status}`);
             }
@@ -145,12 +129,8 @@ export function Absences() {
         try {
             const formData = new FormData();
             formData.append('justificatif', file);
-            const res = await fetch(`${API_URL}/api/absences/${absenceId}/justificatif`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            if (res.ok) {
+            const { data } = await api.post(`/absences/${absenceId}/justificatif`, formData);
+            if (data) {
                 showNotif('Justificatif envoyé avec succès !');
                 fetchMyAbsences();
                 if (isRH) fetchAbsences();
