@@ -315,7 +315,8 @@ export function Employees() {
                 loadEmployees();
                 showNotification('Employé mis à jour avec succès.');
             } else {
-                showNotification('Erreur lors de la mise à jour.');
+                const errData = await res.json().catch(() => ({}));
+                showNotification(`Erreur lors de la mise à jour: ${errData.details || 'Inconnue'}`);
             }
         } catch { showNotification('Erreur de connexion.'); }
     };

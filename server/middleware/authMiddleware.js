@@ -4,16 +4,18 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-sirh-key-2026';
 
 const verifyToken = (req, res, next) => {
     // Le token est généralement envoyé dans le header Authorization: Bearer <token>
-    const authHeader = req.headers['authorization'];
-
-    if (!authHeader) {
-        return res.status(403).json({ error: 'Un token est requis pour l\'authentification' });
-    }
-
-    const token = authHeader.split(' ')[1]; // Extract token after "Bearer"
+    // Ou via la query string pour les téléchargements de fichiers
+    let token = req.query.token;
 
     if (!token) {
-        return res.status(403).json({ error: 'Token non fourni' });
+        const authHeader = req.headers['authorization'];
+        if (authHeader) {
+            token = authHeader.split(' ')[1]; // Extract token after "Bearer"
+        }
+    }
+
+    if (!token) {
+        return res.status(403).json({ error: 'Token non fourni ou manquant' });
     }
 
     try {

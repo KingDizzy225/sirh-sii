@@ -1,4 +1,8 @@
 const prisma = require('../prismaClient');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 // Récupérer toutes les sessions de formation (Cahier de formation)
 exports.getAllTrainings = async (req, res) => {
@@ -213,5 +217,84 @@ exports.markProgressCompleted = async (req, res) => {
     } catch (error) {
         console.error('Error marking progress:', error);
         res.status(500).json({ error: 'Erreur lors de la validation du module' });
+    }
+};
+
+// =======================
+// IA GENERATION MODULE
+// =======================
+
+exports.generateAITraining = async (req, res) => {
+    try {
+        const { topic } = req.body;
+        if (!topic) return res.status(400).json({ error: 'Thème requis' });
+
+        const prompt = `Tu es un expert RH et ingénieur pédagogique. Le RH veut créer un cours sur le thème suivant : "${topic}".
+        Génère une session de formation complète avec exactement 3 modules (chapitres).
+        Le format de réponse doit être STRICTEMENT un objet JSON valide, SANS balises markdown, avec cette structure :
+        {
+            "title": "Titre accrocheur du cours",
+            "description": "Courte description de ce que les employés vont apprendre",
+            "durationHours": 2.5,
+            "modules": [
+                {
+                    "title": "Titre du chapitre 1",
+                    "content": "Contenu pédagogique détaillé de ce chapitre (au moins 2 paragraphes)."
+                },
+                {
+                    "title": "Titre du chapitre 2",
+                    "content": "Contenu pédagogique détaillé..."
+                },
+                {
+                    "title": "Titre du chapitre 3",
+                    "content": "Contenu pédagogique détaillé..."
+                }
+            ]
+        }`;
+
+        const result = await aiModel.generateContent(prompt);
+        const textResponse = await result.response.text();
+        
+        let cleanedJson = textResponse.trim();
+        if (cleanedJson.startsWith('\`\`\`json')) cleanedJson = cleanedJson.replace(/\`\`\`json/g, '');
+        if (cleanedJson.startsWith('\`\`\`')) cleanedJson = cleanedJson.replace(/\`\`\`/g, '');
+        cleanedJson = cleanedJson.replace(/\`\`\`/g, '').trim();
+
+        const courseData = JSON.parse(cleanedJson);
+
+        // Save to DB
+        const trainingSession = await prisma.trainingSession.create({
+            data: {
+                title: courseData.title,
+                description: courseData.description,
+                trainerName: 'IA (Gemini)',
+                date: new Date(),
+                durationHours: courseData.durationHours,
+                status: 'Active'
+            }
+        });
+
+        const modulePromises = courseData.modules.map((m, idx) => {
+            return prisma.courseModule.create({
+                data: {
+                    sessionId: trainingSession.id,
+                    title: m.title,
+                    content: m.content,
+                    orderSequence: idx
+                }
+            });
+        });
+
+        await Promise.all(modulePromises);
+
+        const completeSession = await prisma.trainingSession.findUnique({
+            where: { id: trainingSession.id },
+            include: { modules: true }
+        });
+
+        res.status(201).json(completeSession);
+    } catch (error) {
+        console.error('Error generating AI training:', error);
+        res.status(500).json({ error: 'Erreur lors de la génération IA du cours.' });
     }
 };

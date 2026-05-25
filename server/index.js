@@ -74,6 +74,10 @@ const verifyToken = require('./middleware/authMiddleware');
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Middleware d'Audit Trail
+const auditLog = require('./middleware/auditMiddleware');
+app.use('/api', auditLog);
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', verifyToken, employeeRoutes);
@@ -128,6 +132,7 @@ app.use('/api/equity', verifyToken, require('./routes/equityRoutes'));
 app.use('/api/succession', verifyToken, require('./routes/successionRoutes'));
 app.use('/api/job-descriptions', verifyToken, require('./routes/jobDescriptionRoutes'));
 app.use('/api/retention', verifyToken, require('./routes/retentionRoutes'));
+app.use('/api/audit', verifyToken, require('./routes/auditRoutes'));
 
 // V6 Enterprise Upgrade - Chatbot IA
 const chatRoutes = require('./routes/chatRoutes');

@@ -15,5 +15,6 @@ router.post('/reviews/self-eval', verifyToken, performanceController.submitSelfE
 // === FEEDBACKS ===
 router.get('/feedbacks', verifyToken, performanceController.getFeedbacks);
 router.post('/feedbacks', verifyToken, performanceController.requestFeedback);
+router.post('/feedbacks/360', verifyToken, performanceController.sendFeedback);
 
 module.exports = router;

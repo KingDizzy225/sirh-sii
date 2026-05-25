@@ -10,6 +10,9 @@ router.get('/', verifyToken, trainingController.getAllTrainings);
 // Ajouter une nouvelle formation (réservé aux HR ou ADMIN, ou formateur)
 router.post('/', verifyToken, requireRole(['HR', 'ADMIN']), trainingController.createTraining);
 
+// Générer une formation par IA
+router.post('/generate', verifyToken, requireRole(['HR', 'ADMIN']), trainingController.generateAITraining);
+
 // S'inscrire à une formation existante (LMS)
 router.post('/enroll', verifyToken, trainingController.enrollInTraining);
 

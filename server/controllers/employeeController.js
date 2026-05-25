@@ -75,6 +75,30 @@ exports.createEmployee = async (req, res) => {
             }
         });
 
+        // Automatisation : Création des tâches d'Onboarding Zéro-Papier
+        await prisma.onboardingTask.createMany({
+            data: [
+                {
+                    employeeId: newEmployee.id,
+                    taskName: "Création des accès informatiques et adresse email",
+                    assignedTo: "IT Support",
+                    dueDate: new Date(new Date().setDate(new Date().getDate() + 2))
+                },
+                {
+                    employeeId: newEmployee.id,
+                    taskName: "Signature électronique du contrat de travail",
+                    assignedTo: "Ressources Humaines",
+                    dueDate: new Date(new Date().setDate(new Date().getDate() + 5))
+                },
+                {
+                    employeeId: newEmployee.id,
+                    taskName: "Planification du point d'intégration (1ère semaine)",
+                    assignedTo: "Manager Direct",
+                    dueDate: new Date(new Date().setDate(new Date().getDate() + 7))
+                }
+            ]
+        });
+
         // Trigger Webhook
         triggerWebhook('EMPLOYEE_CREATED', newEmployee);
 
@@ -114,7 +138,7 @@ exports.updateEmployee = async (req, res) => {
         res.status(200).json(updatedEmployee);
     } catch (error) {
         console.error('Error updating employee:', error);
-        res.status(500).json({ error: 'Failed to update employee' });
+        res.status(500).json({ error: 'Failed to update employee', details: error.message });
     }
 };
 
@@ -249,5 +273,38 @@ exports.getEmployeeById = async (req, res) => {
     } catch (error) {
         console.error('Error fetching employee profile by ID:', error);
         res.status(500).json({ error: 'Failed to fetch employee profile' });
+    }
+};
+
+// Get Onboarding Tasks for an Employee
+exports.getOnboardingTasks = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tasks = await prisma.onboardingTask.findMany({
+            where: { employeeId: id },
+            orderBy: { createdAt: 'asc' }
+        });
+        res.status(200).json(tasks);
+    } catch (error) {
+        console.error('Error fetching onboarding tasks:', error);
+        res.status(500).json({ error: 'Failed to fetch onboarding tasks' });
+    }
+};
+
+// Update Onboarding Task Status
+exports.updateOnboardingTask = async (req, res) => {
+    try {
+        const { taskId } = req.params;
+        const { status } = req.body;
+        
+        const updatedTask = await prisma.onboardingTask.update({
+            where: { id: taskId },
+            data: { status }
+        });
+        
+        res.status(200).json(updatedTask);
+    } catch (error) {
+        console.error('Error updating onboarding task:', error);
+        res.status(500).json({ error: 'Failed to update onboarding task' });
     }
 };

@@ -14,7 +14,14 @@ exports.getDashboardAnalytics = async (req, res) => {
             ? ((terminatedEmployees / totalEmployees) * 100).toFixed(1)
             : 0;
 
-        // 2. Turnover par Département (données réelles)
+        const onLeaveEmployees = await prisma.leave.count({
+            where: {
+                status: 'APPROVED',
+                startDate: { lte: new Date() },
+                endDate: { gte: new Date() }
+            }
+        });
+
         const allEmployees = await prisma.employee.findMany({ select: { department: true, status: true } });
         const deptMap = {};
         allEmployees.forEach(e => {
@@ -99,6 +106,98 @@ exports.getDashboardAnalytics = async (req, res) => {
         const totalNetSalary = payrollsThisMonth.reduce((acc, p) => acc + (p.netSalary || 0), 0);
         const avgNetSalary = payrollsThisMonth.length > 0 ? Math.round(totalNetSalary / payrollsThisMonth.length) : 0;
 
+        // 9. Pyramide des âges dynamique
+        const employeesForAge = await prisma.employee.findMany({ 
+            select: { birthDate: true, gender: true }, 
+            where: { status: 'ACTIVE', birthDate: { not: null } } 
+        });
+        
+        const ageGroups = {
+            '18-25': { male: 0, female: 0 },
+            '26-35': { male: 0, female: 0 },
+            '36-45': { male: 0, female: 0 },
+            '46-55': { male: 0, female: 0 },
+            '56+': { male: 0, female: 0 }
+        };
+
+        const currentYear = new Date().getFullYear();
+        employeesForAge.forEach(emp => {
+            const age = currentYear - new Date(emp.birthDate).getFullYear();
+            let group = '56+';
+            if (age >= 18 && age <= 25) group = '18-25';
+            else if (age >= 26 && age <= 35) group = '26-35';
+            else if (age >= 36 && age <= 45) group = '36-45';
+            else if (age >= 46 && age <= 55) group = '46-55';
+            
+            const isMale = emp.gender === 'Homme' || emp.gender === 'Masculin' || emp.gender === 'M';
+            if (isMale) {
+                ageGroups[group].male -= 1; // Negative for Pyramid view on Recharts
+            } else {
+                ageGroups[group].female += 1;
+            }
+        });
+
+        const agePyramidData = Object.keys(ageGroups).map(ageGroup => ({
+            ageGroup,
+            male: ageGroups[ageGroup].male,
+            female: ageGroups[ageGroup].female
+        }));
+
+        // Check if there's any data, if not use fallback to avoid empty charts for demo
+        const hasAgeData = employeesForAge.length > 0;
+        const finalAgePyramidData = hasAgeData ? agePyramidData : [
+            { ageGroup: '18-25', male: -15, female: 12 },
+            { ageGroup: '26-35', male: -35, female: 40 },
+            { ageGroup: '36-45', male: -25, female: 22 },
+            { ageGroup: '46-55', male: -10, female: 8 },
+            { ageGroup: '56+', male: -5, female: 3 }
+        ];
+
+        // 10. Répartition par Ancienneté
+        const seniorityGroups = {
+            '0-1 an': 0,
+            '1-3 ans': 0,
+            '3-5 ans': 0,
+            '5-10 ans': 0,
+            '10+ ans': 0
+        };
+
+        employeesForAge.forEach(emp => {
+            // We need hireDate which isn't in employeesForAge currently! Let's fetch it.
+        });
+        
+        // Fetch hireDate separately to be safe
+        const employeesForSeniority = await prisma.employee.findMany({
+            select: { hireDate: true },
+            where: { status: 'ACTIVE', hireDate: { not: null } }
+        });
+
+        const currentDate = new Date();
+        employeesForSeniority.forEach(emp => {
+            const hireDate = new Date(emp.hireDate);
+            const diffTime = Math.abs(currentDate - hireDate);
+            const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365);
+            
+            if (diffYears <= 1) seniorityGroups['0-1 an']++;
+            else if (diffYears <= 3) seniorityGroups['1-3 ans']++;
+            else if (diffYears <= 5) seniorityGroups['3-5 ans']++;
+            else if (diffYears <= 10) seniorityGroups['5-10 ans']++;
+            else seniorityGroups['10+ ans']++;
+        });
+
+        const seniorityData = Object.keys(seniorityGroups).map(name => ({
+            name,
+            value: seniorityGroups[name]
+        }));
+
+        const finalSeniorityData = employeesForSeniority.length > 0 ? seniorityData : [
+            { name: '0-1 an', value: 15 },
+            { name: '1-3 ans', value: 30 },
+            { name: '3-5 ans', value: 20 },
+            { name: '5-10 ans', value: 10 },
+            { name: '10+ ans', value: 5 }
+        ];
+
         res.status(200).json({
             stats: {
                 totalEmployees,
@@ -146,17 +245,12 @@ exports.getDashboardAnalytics = async (req, res) => {
                     { name: 'Mai', rate: 1.8 },
                     { name: 'Juin', rate: 1.5 }
                 ],
-                agePyramidData: [
-                    { ageGroup: '18-25', male: -15, female: 12 },
-                    { ageGroup: '26-35', male: -35, female: 40 },
-                    { ageGroup: '36-45', male: -25, female: 22 },
-                    { ageGroup: '46-55', male: -10, female: 8 },
-                    { ageGroup: '56+', male: -5, female: 3 }
-                ],
+                agePyramidData: finalAgePyramidData,
                 mobilityVsHiringData: [
                     { name: 'Mobilité Interne', value: 35, color: '#10b981' },
                     { name: 'Recrutement Externe', value: 65, color: '#3b82f6' }
-                ]
+                ],
+                seniorityData: finalSeniorityData
             }
         });
     } catch (error) {
@@ -224,11 +318,54 @@ ${JSON.stringify(promptData)}
     } catch (error) {
         console.error("Erreur Predictive Analytics (AI failure), switching to heuristic fallback:", error);
         // Heuristic fallback for "Expert RH" feel even without AI
-        const fallbackInsights = [
-            { id: "heur-1", name: "Analyse des tendances", riskLevel: "Moyen", reason: "Rotation sectorielle en hausse. Vigilance sur les profils techniques à forte ancienneté." },
-            { id: "heur-2", name: "Alerte Absentéisme", riskLevel: "Faible", reason: "Stabilité globale constatée sur le dernier trimestre. Climat social serein." }
-        ];
-        res.status(200).json(fallbackInsights);
+        const fallbackInsights = [];
+        promptData.forEach(emp => {
+            let riskScore = 0;
+            let reasons = [];
+            
+            // Heuristic 1: Low performance
+            if (emp.avgScore < 3.0) { riskScore += 40; reasons.push("Performance en baisse"); }
+            
+            // Heuristic 2: High seniority without high salary (simulated proxy)
+            if (emp.yearsOfService > 3 && emp.avgSalary < 500000) { riskScore += 30; reasons.push("Ancienneté élevée avec package non compétitif"); }
+            else if (emp.yearsOfService > 5) { riskScore += 15; reasons.push("Forte ancienneté (>5 ans)"); }
+            
+            // Heuristic 3: High absenteeism (sick leaves)
+            if (emp.sickLeaves > 15) { riskScore += 25; reasons.push("Absentéisme maladie fréquent"); }
+            else if (emp.totalLeaves > 30) { riskScore += 10; reasons.push("Congés fréquents"); }
+
+            let riskLevel = 'Faible';
+            if (riskScore >= 60) riskLevel = 'Élevé';
+            else if (riskScore >= 35) riskLevel = 'Moyen';
+
+            if (riskLevel !== 'Faible') {
+                fallbackInsights.push({
+                    id: emp.id,
+                    name: emp.name,
+                    department: emp.department,
+                    riskLevel,
+                    riskScore,
+                    reason: reasons.join(" + ") || "Facteurs multiples détectés"
+                });
+            }
+        });
+
+        // Add a generic one if empty
+        if (fallbackInsights.length === 0) {
+            fallbackInsights.push({
+                id: "heur-sys-1",
+                name: "Système Prédictif",
+                department: "Tous",
+                riskLevel: "Faible",
+                riskScore: 10,
+                reason: "Climat social stable, aucun risque majeur détecté par l'algorithme heuristique."
+            });
+        }
+
+        // Sort by highest risk
+        fallbackInsights.sort((a, b) => b.riskScore - a.riskScore);
+
+        res.status(200).json(fallbackInsights.slice(0, 5));
     }
 };
 

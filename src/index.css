@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,26 +6,26 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%; /* Light gray-blue background */
+    --background: 220 33% 98%; /* Very light, cool gray */
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 212 100% 47%; /* ADP-like vibrant blue */
-    --primary-foreground: 0 0% 100%;
+    --primary: 221 83% 53%; /* Vibrant Royal Blue */
+    --primary-foreground: 210 40% 98%;
     --secondary: 214 32% 91%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 214 32% 91%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 212 100% 47%; /* Use primary as accent for highlights */
-    --accent-foreground: 0 0% 100%;
+    --accent: 262 83% 58%; /* Vibrant Purple for highlights */
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 212 100% 47%;
-    --radius: 0.5rem; /* Slightly sharper corners for a more corporate look */
+    --ring: 221 83% 53%;
+    --radius: 1rem; /* Softer, modern rounded corners */
   }
 
   .dark {
@@ -35,19 +35,19 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 212 100% 47%; /* Keep vibrant blue in dark mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 212 100% 47%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212 100% 47%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
@@ -58,17 +58,36 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
   }
 }
+
+/* Premium Utilities */
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-sm;
+  }
+  
+  .glass-dark {
+    @apply bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 shadow-sm;
+  }
+
+  .glass-panel {
+    @apply bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-2xl border border-white/50 shadow-xl;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+}
+
 /* PWA & Mobile Optimization */
 @media (max-width: 640px) {
   .touch-target { min-height: 48px; min-width: 48px; }
   .mobile-only { display: block !important; }
   .desktop-only { display: none !important; }
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }

@@ -23,6 +23,7 @@ export function Performance() {
     const [goals, setGoals] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
+    const [employees, setEmployees] = useState([]);
     const [notification, setNotification] = useState(null);
 
     // Modal States
@@ -34,6 +35,10 @@ export function Performance() {
     const [goalForm, setGoalForm] = useState({ title: '', category: 'Dév. Professionnel', due: '' });
     const [feedbackForm, setFeedbackForm] = useState({ peerName: '', context: '' });
     const [evalForm, setEvalForm] = useState({ reflection: '', achievements: '' });
+    
+    // 360 Feedback
+    const [isSend360ModalOpen, setIsSend360ModalOpen] = useState(false);
+    const [send360Form, setSend360Form] = useState({ targetEmployeeId: '', strengths: '', areas: '', badge: '', isAnonymous: false });
 
     useEffect(() => {
         const fetchPerformanceData = async () => {
@@ -60,6 +65,14 @@ export function Performance() {
                 if (feedbacksRes.ok) {
                     const data = await feedbacksRes.json();
                     setFeedbacks(data);
+                }
+
+                const empRes = await fetch(`${API_URL}/api/employees`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (empRes.ok) {
+                    const data = await empRes.json();
+                    setEmployees(data.employees || data);
                 }
             } catch (err) {
                 console.error("Erreur de chargement des performances:", err);
@@ -185,6 +198,33 @@ export function Performance() {
             }
         } catch (err) {
             showNotification('Erreur serveur de soumission');
+        }
+    };
+
+    const handleSend360Submit = async (e) => {
+        e.preventDefault();
+        if (!send360Form.targetEmployeeId) {
+            showNotification('Veuillez sélectionner un collègue.');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/api/performance/feedbacks/360`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(send360Form)
+            });
+
+            if (res.ok) {
+                setIsSend360ModalOpen(false);
+                setSend360Form({ targetEmployeeId: '', strengths: '', areas: '', badge: '', isAnonymous: false });
+                showNotification('Feedback 360 envoyé avec succès !');
+            }
+        } catch (err) {
+            showNotification('Erreur réseau lors de l\'envoi du feedback 360');
         }
     };
 
@@ -375,6 +415,95 @@ export function Performance() {
                 )}
             </AnimatePresence>
 
+            {/* 4. Send 360 Feedback Modal */}
+            <AnimatePresence>
+                {isSend360ModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                                <h3 className="text-lg font-bold text-slate-900">Donner un Feedback (360°)</h3>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-100" onClick={() => setIsSend360ModalOpen(false)}>
+                                    <X size={18} />
+                                </Button>
+                            </div>
+
+                            <div className="px-6 py-6 overflow-y-auto">
+                                <form id="send-360-form" onSubmit={handleSend360Submit} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Sélectionner un Collègue</label>
+                                        <select
+                                            value={send360Form.targetEmployeeId}
+                                            onChange={(e) => setSend360Form({ ...send360Form, targetEmployeeId: e.target.value })}
+                                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            required
+                                        >
+                                            <option value="" disabled>Choisir un employé...</option>
+                                            {(Array.isArray(employees) ? employees : []).filter(e => e.id !== user?.id).map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Badge/Kudos (Optionnel)</label>
+                                        <select
+                                            value={send360Form.badge}
+                                            onChange={(e) => setSend360Form({ ...send360Form, badge: e.target.value })}
+                                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <option value="">-- Aucun badge --</option>
+                                            <option value="Team Player">🏆 Team Player</option>
+                                            <option value="Problem Solver">🧠 Problem Solver</option>
+                                            <option value="Innovator">💡 Innovator</option>
+                                            <option value="Mentor">🎓 Mentor</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Points Forts observés</label>
+                                        <textarea
+                                            value={send360Form.strengths}
+                                            onChange={(e) => setSend360Form({ ...send360Form, strengths: e.target.value })}
+                                            className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            placeholder="Qu'est-ce que cette personne fait de bien ?"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Axes d'Amélioration (Constructif)</label>
+                                        <textarea
+                                            value={send360Form.areas}
+                                            onChange={(e) => setSend360Form({ ...send360Form, areas: e.target.value })}
+                                            className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            placeholder="Comment cette personne pourrait s'améliorer ?"
+                                        />
+                                    </div>
+                                    <div className="flex items-center space-x-2 pt-2">
+                                        <input 
+                                            type="checkbox" 
+                                            id="anonymous-check" 
+                                            checked={send360Form.isAnonymous}
+                                            onChange={(e) => setSend360Form({ ...send360Form, isAnonymous: e.target.checked })}
+                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <label htmlFor="anonymous-check" className="text-sm font-medium text-slate-700">
+                                            Rester Anonyme (L'employé ne verra pas votre nom)
+                                        </label>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 sticky bottom-0">
+                                <Button type="button" variant="outline" onClick={() => setIsSend360ModalOpen(false)}>Annuler</Button>
+                                <Button type="submit" form="send-360-form" className="bg-purple-600 hover:bg-purple-700 text-white">Envoyer le Feedback</Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <div className="flex items-center justify-between space-y-2">
                 <div>
@@ -388,9 +517,14 @@ export function Performance() {
                         </Button>
                     )}
                     {activeTab === 'feedback' && (
-                        <Button onClick={() => setIsFeedbackModalOpen(true)} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
-                            <MessageSquare size={18} /> Demander un Feedback
-                        </Button>
+                        <>
+                            <Button onClick={() => setIsFeedbackModalOpen(true)} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
+                                <MessageSquare size={18} /> Demander
+                            </Button>
+                            <Button onClick={() => setIsSend360ModalOpen(true)} className="gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+                                <Star size={18} /> Donner un Feedback
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>
@@ -565,10 +699,15 @@ export function Performance() {
                                 <Card key={feedback.id} className="border-slate-200">
                                     <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
                                         <div>
-                                            <CardTitle className="text-base text-slate-900">Feedback de {feedback.relationship}</CardTitle>
+                                            <CardTitle className="text-base text-slate-900 flex items-center gap-2">
+                                                Feedback de {feedback.relationship}
+                                                {feedback.badge && <span className="bg-purple-100 text-purple-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">{feedback.badge}</span>}
+                                            </CardTitle>
                                             <CardDescription className="text-xs mt-0.5">{new Date(feedback.date).toLocaleDateString('fr-FR')}</CardDescription>
                                         </div>
-                                        <Badge variant="secondary" className="font-normal text-xs">{feedback.provider}</Badge>
+                                        <Badge variant="secondary" className="font-normal text-xs bg-slate-100 text-slate-600 border border-slate-200">
+                                            {feedback.provider}
+                                        </Badge>
                                     </CardHeader>
                                     <CardContent className="pt-4 space-y-4">
                                         <div>

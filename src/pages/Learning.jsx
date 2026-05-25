@@ -78,6 +78,28 @@ export function Learning() {
     const [isAddCourseModalOpen, setIsAddCourseModalOpen] = useState(false);
     const [courseForm, setCourseForm] = useState({ title: '', description: '', trainerName: '', date: '', durationHours: '' });
 
+    // AI Generator State
+    const [isAIGeneratorModalOpen, setIsAIGeneratorModalOpen] = useState(false);
+    const [aiTopic, setAiTopic] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const handleAIGenerate = async (e) => {
+        e.preventDefault();
+        if (!aiTopic) return;
+        setIsGenerating(true);
+        try {
+            await api.post('/trainings/generate', { topic: aiTopic });
+            setIsAIGeneratorModalOpen(false);
+            setAiTopic('');
+            showNotification('Cours généré avec succès par l\'IA ! ✨');
+            fetchLearningData();
+        } catch (err) {
+            showNotification('Erreur lors de la génération IA.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleAddCourseSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -216,12 +238,20 @@ export function Learning() {
                             <p className="text-slate-500 mt-1">Découvrez les modules de formation et suivez la conformité.</p>
                         </div>
                         {isAdminOrHR && activeTab === 'catalog' && (
-                            <Button
-                                onClick={() => setIsAddCourseModalOpen(true)}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-2"
-                            >
-                                <Plus size={18} /> Nouveau Cours
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    onClick={() => setIsAIGeneratorModalOpen(true)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-2"
+                                >
+                                    ✨ Générer avec l'IA
+                                </Button>
+                                <Button
+                                    onClick={() => setIsAddCourseModalOpen(true)}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-2"
+                                >
+                                    <Plus size={18} /> Nouveau Cours
+                                </Button>
+                            </div>
                         )}
                     </div>
 
@@ -452,6 +482,51 @@ export function Learning() {
                             </CardContent>
                             <CardFooter className="bg-slate-50 border-t justify-end p-4">
                                 <Button type="submit" form="new-course-form" className="bg-emerald-600 text-white">Créer</Button>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* AI Generator Modal */}
+            <AnimatePresence>
+                {isAIGeneratorModalOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                        <Card className="w-full max-w-lg border-2 border-indigo-200">
+                            <CardHeader className="flex flex-row items-center justify-between border-b py-4 bg-indigo-50/50">
+                                <div>
+                                    <CardTitle className="text-indigo-900 flex items-center gap-2">
+                                        ✨ Assistant Pédagogique IA
+                                    </CardTitle>
+                                    <CardDescription>Générez un cours complet (avec chapitres) en un clic.</CardDescription>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => !isGenerating && setIsAIGeneratorModalOpen(false)} disabled={isGenerating}><X size={18} /></Button>
+                            </CardHeader>
+                            <CardContent className="py-6">
+                                <form id="ai-generator-form" onSubmit={handleAIGenerate} className="space-y-4">
+                                    <div>
+                                        <label className="text-sm font-medium mb-2 block text-slate-700">De quoi doit parler ce cours ?</label>
+                                        <textarea 
+                                            required 
+                                            className="w-full min-h-[100px] border-2 border-indigo-100 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all" 
+                                            placeholder="Ex: Les bases de la sécurité informatique en entreprise, avec un focus sur le phishing." 
+                                            value={aiTopic} 
+                                            onChange={e => setAiTopic(e.target.value)}
+                                            disabled={isGenerating}
+                                        />
+                                    </div>
+                                    {isGenerating && (
+                                        <div className="text-sm text-indigo-600 flex flex-col items-center justify-center py-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                                            <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+                                            L'IA Gemini analyse votre demande et rédige les modules...
+                                        </div>
+                                    )}
+                                </form>
+                            </CardContent>
+                            <CardFooter className="bg-slate-50 border-t justify-end p-4">
+                                <Button type="submit" form="ai-generator-form" disabled={isGenerating || !aiTopic} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                    {isGenerating ? 'Génération en cours...' : 'Générer le cours complet'}
+                                </Button>
                             </CardFooter>
                         </Card>
                     </div>

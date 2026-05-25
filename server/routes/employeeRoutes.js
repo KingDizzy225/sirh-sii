@@ -22,5 +22,8 @@ router.delete('/bulk', requireRole('Administrator', 'HR'), employeeController.de
 router.get('/:id', employeeController.getEmployeeById);
 router.put('/:id', requireRole('Administrator', 'HR'), employeeController.updateEmployee);
 router.delete('/:id', requireRole('Administrator', 'HR'), employeeController.deleteEmployee);
+// Onboarding Routes
+router.get('/:id/onboarding', employeeController.getOnboardingTasks);
+router.put('/onboarding/:taskId', requireRole('Administrator', 'HR', 'Manager'), employeeController.updateOnboardingTask);
 
 module.exports = router;

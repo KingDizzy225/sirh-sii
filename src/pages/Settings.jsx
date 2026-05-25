@@ -14,6 +14,11 @@ export function Settings() {
     const { user } = useAuth();
     const [usersList, setUsersList] = useState([]);
     const [isFetchingUsers, setIsFetchingUsers] = useState(false);
+    
+    // Webhooks state
+    const [webhooksList, setWebhooksList] = useState([]);
+    const [isFetchingWebhooks, setIsFetchingWebhooks] = useState(false);
+    const [isAddingWebhook, setIsAddingWebhook] = useState(false);
 
     const showNotification = (message) => {
         setNotification(message);
@@ -38,10 +43,31 @@ export function Settings() {
 
     const handleTabChange = (tabName) => {
         setActiveTab(tabName);
-        if (tabName !== 'Company Profile') {
-            showNotification(`Navigation vers les paramètres: ${tabName}`);
+    };
+
+    const fetchWebhooks = async () => {
+        setIsFetchingWebhooks(true);
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/webhooks`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setWebhooksList(data);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsFetchingWebhooks(false);
         }
     };
+
+    React.useEffect(() => {
+        if (activeTab === 'Integrations') {
+            fetchWebhooks();
+        }
+    }, [activeTab]);
 
     const tabNames = {
         'Company Profile': 'Profil de l\'Entreprise',
@@ -477,47 +503,99 @@ export function Settings() {
                                             <CardTitle>Webhooks Sortants</CardTitle>
                                             <CardDescription>Envoyez des événements en temps réel vers des outils externes comme Slack ou Microsoft Teams.</CardDescription>
                                         </div>
-                                        <Button size="sm" onClick={() => showNotification('Ouverture de la boîte de dialogue de création de webhook...')} className="bg-indigo-600 text-white hover:bg-indigo-700">Ajouter un Webhook</Button>
+                                        <Button size="sm" onClick={() => setIsAddingWebhook(true)} className="bg-indigo-600 text-white hover:bg-indigo-700">Ajouter un Webhook</Button>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="grid gap-4 md:grid-cols-2">
-                                        {/* Webhook Card 1 */}
-                                        <div className="border border-slate-200 rounded-lg p-4 bg-white relative">
-                                            <div className="absolute top-4 right-4 flex gap-2">
-                                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 mt-2"></span>
+                                        {isAddingWebhook && (
+                                            <div className="border-2 border-indigo-200 border-dashed rounded-lg p-4 bg-indigo-50/50 md:col-span-2">
+                                                <form onSubmit={async (e) => {
+                                                    e.preventDefault();
+                                                    const formData = new FormData(e.target);
+                                                    try {
+                                                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                                                        const res = await fetch(`${API_URL}/api/webhooks`, {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'Authorization': `Bearer ${localStorage.getItem('sirh_token')}`
+                                                            },
+                                                            body: JSON.stringify(Object.fromEntries(formData))
+                                                        });
+                                                        if (res.ok) {
+                                                            showNotification('Webhook créé avec succès');
+                                                            setIsAddingWebhook(false);
+                                                            fetchWebhooks();
+                                                        }
+                                                    } catch (err) {
+                                                        showNotification('Erreur serveur');
+                                                    }
+                                                }} className="space-y-4">
+                                                    <h4 className="font-semibold text-indigo-900 border-b border-indigo-200 pb-2">Nouveau Webhook Sortant</h4>
+                                                    <div className="grid gap-4 md:grid-cols-2">
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-medium text-slate-700">Nom descriptif</label>
+                                                            <Input name="name" required placeholder="ex. Notif Slack HR" className="bg-white" />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-medium text-slate-700">Événement déclencheur</label>
+                                                            <select name="eventType" required className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                                                                <option value="EMPLOYEE_CREATED">EMPLOYEE_CREATED (Création Profil)</option>
+                                                                <option value="PAYROLL_APPROVED">PAYROLL_APPROVED (Paie Validée)</option>
+                                                                <option value="LEAVE_REQUESTED">LEAVE_REQUESTED (Demande Congé)</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-2 md:col-span-2">
+                                                            <label className="text-xs font-medium text-slate-700">URL de destination cible (POST)</label>
+                                                            <Input name="url" type="url" required placeholder="https://hooks.slack.com/services/..." className="bg-white" />
+                                                        </div>
+                                                        <div className="space-y-2 md:col-span-2">
+                                                            <label className="text-xs font-medium text-slate-700">Secret HMAC (Optionnel)</label>
+                                                            <Input name="secret" type="password" placeholder="Clé secrète pour sécuriser l'appel" className="bg-white" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-end gap-2 pt-2">
+                                                        <Button type="button" variant="ghost" onClick={() => setIsAddingWebhook(false)}>Annuler</Button>
+                                                        <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white">Enregistrer le Webhook</Button>
+                                                    </div>
+                                                </form>
                                             </div>
-                                            <h4 className="font-semibold text-slate-900 mb-1">Slack HR Announcements</h4>
-                                            <p className="text-xs text-slate-500 font-mono mb-3 truncate" title="https://hooks.slack.com/services/T0000/B0000/XXXX">
-                                                https://hooks.slack.com/services/T0000...
-                                            </p>
-                                            <div className="flex flex-wrap gap-1.5 mb-4">
-                                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-medium rounded uppercase tracking-wider">candidate.hired</span>
-                                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-medium rounded uppercase tracking-wider">employee.created</span>
-                                            </div>
-                                            <div className="flex justify-between items-center border-t pt-3 mt-1">
-                                                <span className="text-xs text-slate-400">Sécurisé via HMAC-SHA256</span>
-                                                <Button variant="outline" size="sm" onClick={() => showNotification('Modification de la configuration du webhook...')} className="h-7 text-xs">Modifier</Button>
-                                            </div>
-                                        </div>
+                                        )}
 
-                                        {/* Webhook Card 2 */}
-                                        <div className="border border-slate-200 rounded-lg p-4 bg-white relative">
-                                            <div className="absolute top-4 right-4 flex gap-2">
-                                                <span className="flex h-2 w-2 rounded-full bg-slate-300 mt-2"></span>
-                                            </div>
-                                            <h4 className="font-semibold text-slate-900 mb-1">Teams IT Provisioning</h4>
-                                            <p className="text-xs text-slate-500 font-mono mb-3 truncate" title="https://outlook.office.com/webhook/xxx">
-                                                https://outlook.office.com/webhook/xx...
-                                            </p>
-                                            <div className="flex flex-wrap gap-1.5 mb-4">
-                                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-medium rounded uppercase tracking-wider">onboarding.started</span>
-                                            </div>
-                                            <div className="flex justify-between items-center border-t pt-3 mt-1">
-                                                <span className="text-xs text-slate-400">Statut : En pause</span>
-                                                <Button variant="outline" size="sm" onClick={() => showNotification('Modification de la configuration du webhook...')} className="h-7 text-xs">Modifier</Button>
-                                            </div>
-                                        </div>
+                                        {isFetchingWebhooks ? (
+                                            <div className="col-span-2 text-center py-8 text-slate-500">Chargement des webhooks...</div>
+                                        ) : webhooksList.length === 0 && !isAddingWebhook ? (
+                                            <div className="col-span-2 text-center py-8 text-slate-500">Aucun webhook configuré.</div>
+                                        ) : (
+                                            webhooksList.map(webhook => (
+                                                <div key={webhook.id} className="border border-slate-200 rounded-lg p-4 bg-white relative">
+                                                    <div className="absolute top-4 right-4 flex gap-2">
+                                                        <span className={`flex h-2 w-2 rounded-full mt-2 ${webhook.isActive !== false ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                                                    </div>
+                                                    <h4 className="font-semibold text-slate-900 mb-1">{webhook.name}</h4>
+                                                    <p className="text-xs text-slate-500 font-mono mb-3 truncate" title={webhook.url}>
+                                                        {webhook.url}
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-1.5 mb-4">
+                                                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-medium rounded uppercase tracking-wider">{webhook.eventType}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center border-t pt-3 mt-1">
+                                                        <span className="text-xs text-slate-400">{webhook.secret ? 'Sécurisé' : 'Non sécurisé'}</span>
+                                                        <Button variant="outline" size="sm" onClick={async () => {
+                                                            if (!window.confirm('Voulez-vous supprimer ce webhook ?')) return;
+                                                            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                                                            await fetch(`${API_URL}/api/webhooks/${webhook.id}`, {
+                                                                method: 'DELETE',
+                                                                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+                                                            });
+                                                            fetchWebhooks();
+                                                            showNotification('Webhook supprimé');
+                                                        }} className="h-7 text-xs text-rose-600 hover:bg-rose-50 border-rose-100">Supprimer</Button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>

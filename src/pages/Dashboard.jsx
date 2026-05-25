@@ -65,11 +65,30 @@ export function Dashboard() {
             }
         };
 
+        const fetchEmployeeData = async () => {
+            try {
+                // To fetch onboarding tasks we need the employee ID.
+                // Profile API returns the current employee data.
+                const profileRes = await fetch(`${API_URL}/api/employees/profile`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    const tasksRes = await fetch(`${API_URL}/api/employees/${profileData.id}/onboarding`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (tasksRes.ok) {
+                        setTodayLogs(await tasksRes.json()); // Repurpose todayLogs to store tasks for employees to save state variables
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load employee ESS data", err);
+            }
+        };
+
         if (token) {
             fetchAnalytics();
             // Seulement pour HR/ADMIN (on le tente, le middleware bloquera si pas autorisé)
             if (user?.role === 'HR' || user?.role === 'ADMIN') {
                 fetchPredictiveAndLogs();
+            } else {
+                fetchEmployeeData();
             }
         } else {
             setLoading(false);
@@ -434,162 +453,198 @@ export function Dashboard() {
                 )}
             </div>
 
-            {/* New Row: People Analytics */}
-            <h3 className="text-xl font-bold tracking-tight text-slate-800 mt-8 mb-4">Analytique RH</h3>
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {/* Turnover by Department */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6, duration: 0.4 }}
-                >
-                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Taux de Rotation par Département (%)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[250px] w-full mt-2">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={turnoverByDept} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                        <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                        <Bar dataKey="rate" name="Rotation (%)" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={20} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
+            {/* New Row: People Analytics or ESS */}
+            {user?.role === 'HR' || user?.role === 'ADMIN' ? (
+                <>
+                    <h3 className="text-xl font-bold tracking-tight text-slate-800 mt-8 mb-4">Analytique RH</h3>
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        {/* Turnover by Department */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6, duration: 0.4 }}
+                        >
+                            <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Taux de Rotation par Département (%)</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="h-[250px] w-full mt-2">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={turnoverByDept} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                                                <XAxis type="number" hide />
+                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                <Bar dataKey="rate" name="Rotation (%)" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={20} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
 
-                {/* Time-to-Hire Trend */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7, duration: 0.4 }}
-                >
-                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Tendance du Délai d'Embauche (Jours)</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex flex-col items-center justify-center">
-                            <div className="h-[250px] w-full mt-2">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={timeToHireData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                        <Line type="monotone" dataKey="days" name="Délai Moyen d'Embauche" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                        {/* Time-to-Hire Trend */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.7, duration: 0.4 }}
+                        >
+                            <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Tendance du Délai d'Embauche (Jours)</CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex flex-col items-center justify-center">
+                                    <div className="h-[250px] w-full mt-2">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={timeToHireData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                <Line type="monotone" dataKey="days" name="Délai Moyen d'Embauche" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
 
-                {/* Monthly Turnover Rate */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8, duration: 0.4 }}
-                    className="md:col-span-2 lg:col-span-1"
-                >
-                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Tendance Globale du Turnover (%)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[250px] w-full mt-2">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={monthlyTurnover} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorTurnover" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                        <Area type="monotone" dataKey="rate" name="Rotation (%)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorTurnover)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                        {/* Monthly Turnover Rate */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.8, duration: 0.4 }}
+                            className="md:col-span-2 lg:col-span-1"
+                        >
+                            <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Tendance Globale du Turnover (%)</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="h-[250px] w-full mt-2">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={monthlyTurnover} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="colorTurnover" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                <Area type="monotone" dataKey="rate" name="Rotation (%)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorTurnover)" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
 
-                {/* Age Pyramid */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.9, duration: 0.4 }}
-                    className="md:col-span-1"
-                >
-                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Pyramide des Âges & Ancienneté</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[250px] w-full mt-2">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={agePyramidData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }} stackOffset="sign">
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="ageGroup" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                        <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
-                                        {/* To make a standard age pyramid, males are negative and females are positive, but Recharts handles it via stackOffset="sign" with data mapping, so we'll just stack them side-by-side or standard stacked for visual simplicity here */}
-                                        <Bar dataKey="male" name="Hommes" stackId="a" fill="#78bc1b" radius={[0, 0, 0, 0]} />
-                                        <Bar dataKey="female" name="Femmes" stackId="a" fill="#ec4899" radius={[0, 4, 4, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                        {/* Age Pyramid */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.9, duration: 0.4 }}
+                            className="md:col-span-1"
+                        >
+                            <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Pyramide des Âges & Ancienneté</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="h-[250px] w-full mt-2">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={agePyramidData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }} stackOffset="sign">
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                                                <XAxis type="number" hide />
+                                                <YAxis dataKey="ageGroup" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
+                                                {/* To make a standard age pyramid, males are negative and females are positive, but Recharts handles it via stackOffset="sign" with data mapping, so we'll just stack them side-by-side or standard stacked for visual simplicity here */}
+                                                <Bar dataKey="male" name="Hommes" stackId="a" fill="#78bc1b" radius={[0, 0, 0, 0]} />
+                                                <Bar dataKey="female" name="Femmes" stackId="a" fill="#ec4899" radius={[0, 4, 4, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
 
-                {/* Internal Mobility vs External Hiring */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.0, duration: 0.4 }}
-                    className="md:col-span-1 lg:col-span-2"
-                >
-                    <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Source d'Embauche : Interne vs Externe</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex items-center justify-center">
-                            <div className="h-[250px] w-full mt-2">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={mobilityVsHiringData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={90}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            {mobilityVsHiringData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                        <Legend verticalAlign="middle" align="right" layout="vertical" wrapperStyle={{ fontSize: '12px' }} />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                        {/* Internal Mobility vs External Hiring */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1.0, duration: 0.4 }}
+                            className="md:col-span-1 lg:col-span-2"
+                        >
+                            <Card className="h-full rounded-2xl shadow-sm border-slate-100 hover:shadow-md transition-shadow">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Source d'Embauche : Interne vs Externe</CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex items-center justify-center">
+                                    <div className="h-[250px] w-full mt-2">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={mobilityVsHiringData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={90}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {mobilityVsHiringData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                <Legend verticalAlign="middle" align="right" layout="vertical" wrapperStyle={{ fontSize: '12px' }} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <h3 className="text-xl font-bold tracking-tight text-slate-800 mt-8 mb-4">Mes Tâches d'Intégration</h3>
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                        {todayLogs && todayLogs.length > 0 ? todayLogs.map(task => (
+                            <motion.div key={task.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                                <Card className="h-full rounded-2xl shadow-sm border-slate-100">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex gap-4 items-start">
+                                                <div className={`p-3 rounded-xl ${task.status === 'Completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                    <CheckCircle2 size={24} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-800 text-lg">{task.taskName}</h4>
+                                                    <p className="text-slate-500 text-sm mt-1">Assigné à : <span className="font-medium text-slate-700">{task.assignedTo || 'Vous-même'}</span></p>
+                                                    {task.dueDate && <p className="text-slate-400 text-xs mt-1">À finaliser avant le {new Date(task.dueDate).toLocaleDateString('fr-FR')}</p>}
+                                                </div>
+                                            </div>
+                                            <span className={`text-xs font-bold px-3 py-1 rounded-full ${task.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                {task.status === 'Completed' ? 'Terminé' : 'En cours'}
+                                            </span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )) : (
+                            <div className="col-span-1 md:col-span-2 py-12 text-center text-slate-500">
+                                Vous n'avez aucune tâche d'intégration en cours.
                             </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
-
-            </div>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     );
 }

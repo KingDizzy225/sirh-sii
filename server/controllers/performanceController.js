@@ -188,3 +188,39 @@ exports.requestFeedback = async (req, res) => {
         res.status(500).json({ error: "Erreur lors de la demande de feedback." });
     }
 };
+
+exports.sendFeedback = async (req, res) => {
+    try {
+        const { id, email } = req.user;
+        const { targetEmployeeId, badge, strengths, areas, context, isAnonymous } = req.body;
+
+        if (!targetEmployeeId) {
+            return res.status(400).json({ error: "L'employé ciblé est requis." });
+        }
+
+        // Récupérer le nom de l'envoyeur
+        const sender = await prisma.employee.findUnique({ where: { id } });
+        const providerName = isAnonymous 
+            ? 'Collègue (Anonyme)' 
+            : (sender ? `${sender.firstName} ${sender.lastName}` : email);
+
+        const newFeedback = await prisma.performanceFeedback.create({
+            data: {
+                employeeId: targetEmployeeId,
+                provider: providerName,
+                relationship: 'Collègue (360°)',
+                strengths: strengths || null,
+                areas: areas || null,
+                context: context || null,
+                badge: badge || null,
+                isAnonymous: isAnonymous || false,
+                peerId: id
+            }
+        });
+
+        res.status(201).json(newFeedback);
+    } catch (error) {
+        console.error("Erreur Send 360 Feedback:", error);
+        res.status(500).json({ error: "Erreur serveur lors de l'envoi du feedback." });
+    }
+};

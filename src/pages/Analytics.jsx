@@ -1,26 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+    BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, 
     PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { 
-    TrendingUp, 
-    Users, 
-    DollarSign, 
-    Clock, 
-    Briefcase, 
-    AlertTriangle, 
-    ArrowUpRight, 
-    ArrowDownRight,
-    PieChart as PieIcon,
-    BarChart3,
-    Activity,
-    BrainCircuit
+    TrendingUp, Users, DollarSign, Clock, Briefcase, AlertTriangle, ArrowUpRight, ArrowDownRight,
+    PieChart as PieIcon, BarChart3, Activity, BrainCircuit, Search, Sparkles, Send, Fingerprint
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308'];
+// Refined Palette aligned with our new CSS variables
+const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308'];
 
 export function Analytics() {
     const [data, setData] = useState(null);
@@ -28,6 +19,10 @@ export function Analytics() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
+    
+    // NLQ State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const token = localStorage.getItem('sirh_token');
@@ -42,11 +37,11 @@ export function Analytics() {
                 const json = await res.json();
                 setData(json);
 
-                // Fetch predictive data
                 const predRes = await fetch(`${API_URL}/api/analytics/predictive`, {
                     headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (predRes.ok) {
+                }).catch(e => { console.warn("Predictive API failed:", e); return null; });
+                
+                if (predRes && predRes.ok) {
                     const predJson = await predRes.json();
                     setPredictiveData(predJson);
                 }
@@ -60,354 +55,520 @@ export function Analytics() {
         fetchAnalytics();
     }, [API_URL, token]);
 
+    const handleNLQSubmit = (e) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+        setIsSearching(true);
+        // Simulate AI thinking time
+        setTimeout(() => {
+            setIsSearching(false);
+            setSearchQuery('');
+            alert(`L'IA analyse votre requête : "${searchQuery}"\n(Cette fonctionnalité nécessiterait une intégration backend NLP)`);
+        }, 1500);
+    };
+
     if (loading) return (
         <div className="flex-1 p-8 flex justify-center items-center h-[calc(100vh-4rem)]">
-            <span className="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></span>
+            <span className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></span>
         </div>
     );
 
-    if (error) return <div className="p-8 text-red-500">Erreur: {error}</div>;
+    if (error) return <div className="p-8 text-rose-500 font-bold bg-rose-50 rounded-xl m-8 border border-rose-200">Erreur critique: {error}</div>;
 
     const { stats, charts } = data;
 
-    const StatCard = ({ title, value, icon: Icon, description, trend, trendValue, color }) => (
-        <Card className="border-none shadow-sm overflow-hidden relative">
-            <div className={`absolute top-0 right-0 p-3 opacity-5 text-${color}-600`}>
-                <Icon size={80} />
-            </div>
-            <CardContent className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className={`p-2.5 rounded-xl bg-${color}-50 text-${color}-600`}>
-                        <Icon size={22} />
+    // Animation Variants
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    };
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    };
+
+    const StatCard = ({ title, value, icon: Icon, description, trend, trendValue, color }) => {
+        const colorStyles = {
+            blue: 'text-blue-600 bg-blue-100',
+            indigo: 'text-indigo-600 bg-indigo-100',
+            amber: 'text-amber-600 bg-amber-100',
+            emerald: 'text-emerald-600 bg-emerald-100',
+        };
+        const bgIconColor = {
+            blue: 'text-blue-500', indigo: 'text-indigo-500', amber: 'text-amber-500', emerald: 'text-emerald-500'
+        };
+
+        return (
+            <motion.div variants={itemVariants} whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                <Card className="glass-panel h-full rounded-3xl border-0 overflow-hidden relative group">
+                    <div className={`absolute -top-4 -right-4 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500 group-hover:scale-110 group-hover:rotate-12 ${bgIconColor[color]}`}>
+                        <Icon size={120} />
                     </div>
-                    <p className="text-sm font-semibold text-slate-500">{title}</p>
-                </div>
-                <div className="flex items-end justify-between">
-                    <div>
-                        <h3 className="text-3xl font-black text-slate-900">{value}</h3>
-                        <p className="text-xs text-slate-400 mt-1">{description}</p>
-                    </div>
-                    {trend && (
-                        <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${trend === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                            {trend === 'up' ? <ArrowUpRight size={14}/> : <ArrowDownRight size={14}/>}
-                            {trendValue}
+                    <CardContent className="p-6">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className={`p-3 rounded-2xl shadow-inner ${colorStyles[color]}`}>
+                                <Icon size={24} />
+                            </div>
+                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">{title}</p>
                         </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
-    );
+                        <div className="flex items-end justify-between relative z-10">
+                            <div>
+                                <h3 className="text-4xl font-extrabold text-slate-900 font-['Outfit']">{value}</h3>
+                                <p className="text-xs text-slate-400 mt-2 font-medium">{description}</p>
+                            </div>
+                            {trend && (
+                                <div className={`flex items-center gap-1 text-sm font-bold px-3 py-1.5 rounded-xl shadow-sm ${trend === 'up' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                    {trend === 'up' ? <ArrowUpRight size={16}/> : <ArrowDownRight size={16}/>}
+                                    {trendValue}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        );
+    };
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6 bg-slate-50/50 min-h-screen overflow-y-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                        <TrendingUp className="text-blue-600" size={32} />
-                        HR Analytics Hub
-                    </h2>
-                    <p className="text-slate-500 font-medium">Pilotage stratégique et insights prédictifs basés sur l'IA.</p>
-                </div>
-                <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">
-                    <button 
-                        onClick={() => setActiveTab('overview')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}
-                    >
-                        Vue d'ensemble
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('predictive')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'predictive' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'}`}
-                    >
-                        <BrainCircuit size={16} />
-                        IA Prédictive
-                    </button>
-                </div>
-            </div>
+        <div className="flex-1 space-y-8 p-4 md:p-8 bg-slate-50/50 min-h-[calc(100vh-4rem)] overflow-x-hidden relative">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none -z-10" />
+            <div className="absolute top-[30%] left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-            {activeTab === 'overview' ? (
-                <>
-                    {/* Key Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <StatCard 
-                            title="Effectif Total" 
-                            value={stats.activeEmployees} 
-                            icon={Users} 
-                            description="Collaborateurs actifs"
-                            trend="up"
-                            trendValue="+4%"
-                            color="blue"
-                        />
-                        <StatCard 
-                            title="Turnover" 
-                            value={`${stats.globalTurnover}%`} 
-                            icon={Activity} 
-                            description="Taux de rotation annuel"
-                            trend="down"
-                            trendValue="-2.1%"
-                            color="indigo"
-                        />
-                        <StatCard 
-                            title="Absentéisme" 
-                            value={`${stats.absenceRate}%`} 
-                            icon={Clock} 
-                            description="Taux ce mois-ci"
-                            color="amber"
-                        />
-                        <StatCard 
-                            title="Masse Salariale" 
-                            value={`${(stats.totalNetSalary / 1000000).toFixed(1)}M`} 
-                            icon={DollarSign} 
-                            description="Net versé ce mois (FCFA)"
-                            trend="up"
-                            trendValue="+1.2%"
-                            color="emerald"
-                        />
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="max-w-7xl mx-auto space-y-8">
+                
+                {/* Header & Tabs */}
+                <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3 font-['Outfit']">
+                            <Activity className="text-primary" size={36} />
+                            HR <span className="text-gradient">Analytics</span> Hub
+                        </h2>
+                        <p className="text-slate-500 font-medium text-lg mt-2 flex items-center gap-2">
+                            <Sparkles className="text-amber-400" size={18}/> Pilotage stratégique et insights prédictifs.
+                        </p>
                     </div>
-
-                    {/* Main Charts Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        
-                        {/* Masse Salariale par Département */}
-                        <Card className="border-none shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <BarChart3 size={20} className="text-blue-600" />
-                                    Masse Salariale par Département
-                                </CardTitle>
-                                <CardDescription>Répartition du total des salaires bruts.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="h-[350px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={charts.salaryByDept} layout="vertical" margin={{ left: 40 }}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} />
-                                        <Tooltip 
-                                            cursor={{fill: '#f8fafc'}}
-                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                        />
-                                        <Bar dataKey="Total" fill="#6366f1" radius={[0, 8, 8, 0]} barSize={30} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-
-                        {/* Turnover par Département */}
-                        <Card className="border-none shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <Activity size={20} className="text-rose-600" />
-                                    Taux de Rotation par Département (%)
-                                </CardTitle>
-                                <CardDescription>Départ de collaborateurs sur l'année.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="h-[350px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={charts.turnoverByDept}>
-                                        <defs>
-                                            <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                                        <Area type="monotone" dataKey="rate" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorRate)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-
-                        {/* Flux Entrées/Sorties */}
-                        <Card className="border-none shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <Clock size={20} className="text-emerald-600" />
-                                    Flux de Recrutement (6 mois)
-                                </CardTitle>
-                                <CardDescription>Comparaison des embauches et des départs.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="h-[350px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={charts.monthlyFlux}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis dataKey="month" axisLine={false} tickLine={false} />
-                                        <YAxis axisLine={false} tickLine={false} />
-                                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                                        <Legend verticalAlign="top" align="right" />
-                                        <Bar dataKey="Entrées" fill="#10b981" radius={[6, 6, 0, 0]} />
-                                        <Bar dataKey="Départs" fill="#f43f5e" radius={[6, 6, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-
-                        {/* Types de Contrat */}
-                        <Card className="border-none shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <PieIcon size={20} className="text-purple-600" />
-                                    Structure des Contrats
-                                </CardTitle>
-                                <CardDescription>Répartition par type de contrat (CDI, CDD, etc.).</CardDescription>
-                            </CardHeader>
-                            <CardContent className="h-[350px] flex justify-center">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={charts.contractTypes}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={70}
-                                            outerRadius={100}
-                                            paddingAngle={8}
-                                            dataKey="value"
-                                        >
-                                            {charts.contractTypes.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                                        <Legend verticalAlign="bottom" align="center" />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
+                    <div className="flex bg-white/70 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-white/40">
+                        <button 
+                            onClick={() => setActiveTab('overview')}
+                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-100/50'}`}
+                        >
+                            Vue d'ensemble
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('predictive')}
+                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'predictive' ? 'bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/30' : 'text-slate-600 hover:bg-slate-100/50'}`}
+                        >
+                            <BrainCircuit size={18} />
+                            IA Prédictive
+                        </button>
                     </div>
-                </>
-            ) : (
-                /* Predictive Tab */
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card className="border-none shadow-sm border-l-4 border-l-indigo-600">
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 shadow-inner">
-                                            <BrainCircuit size={28} />
-                                        </div>
-                                        <div>
-                                            <CardTitle className="text-xl font-bold">Predictive Risk Monitor</CardTitle>
-                                            <CardDescription>Analyse multicritère (absences, performance, engagement).</CardDescription>
-                                        </div>
-                                    </div>
-                                    <Badge variant="success">Système Actif</Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                <div className="divide-y divide-slate-100">
-                                    {predictiveData.length === 0 ? (
-                                        <div className="p-12 text-center text-slate-500">
-                                            Aucune donnée prédictive disponible.
-                                        </div>
-                                    ) : (
-                                        predictiveData.map((item, idx) => (
-                                            <div key={idx} className="p-6 flex items-start gap-6 hover:bg-slate-50/50 transition-colors group">
-                                                <div className={`mt-1 p-2.5 rounded-xl ${item.riskLevel === 'Élevé' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
-                                                    <AlertTriangle size={24} />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <div>
-                                                            <h4 className="font-black text-slate-900 text-lg">{item.name}</h4>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.department || 'Tous Départements'}</p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-sm font-black text-slate-900">{item.riskScore || '85'}%</p>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase">Probabilité</p>
-                                                        </div>
+                </motion.div>
+
+                {/* Natural Language Querying (NLQ) Bar */}
+                <motion.div variants={itemVariants}>
+                    <div className="glass-panel rounded-3xl p-2 relative overflow-hidden flex flex-col md:flex-row items-center gap-2 shadow-lg group focus-within:shadow-primary/20 transition-all border border-white/50">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                        <div className="pl-4 text-primary relative z-10 hidden md:block">
+                            <Sparkles size={24} />
+                        </div>
+                        <form onSubmit={handleNLQSubmit} className="flex-1 w-full flex items-center relative z-10 bg-white rounded-2xl shadow-sm border border-slate-100 p-1">
+                            <Search className="ml-4 text-slate-400" size={20} />
+                            <input 
+                                type="text" 
+                                placeholder="Posez une question à vos données RH (ex: Quel est le taux de turnover des développeurs ?)"
+                                className="w-full bg-transparent border-none focus:ring-0 text-slate-700 py-3 px-4 font-medium outline-none placeholder:text-slate-400"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <button type="submit" disabled={isSearching} className="bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 font-bold">
+                                {isSearching ? <span className="animate-pulse">Analyse...</span> : <><Send size={18} /> <span className="hidden md:inline">Demander</span></>}
+                            </button>
+                        </form>
+                    </div>
+                    {/* NLQ Suggestions */}
+                    <div className="flex flex-wrap gap-2 mt-4 ml-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center mr-2">Suggestions AI :</span>
+                        {["Prédire le risque de départ", "Analyser l'équité salariale", "Évolution des effectifs"].map((prompt, i) => (
+                            <button 
+                                key={i} 
+                                onClick={() => setSearchQuery(prompt)}
+                                className="text-xs font-bold bg-white/60 hover:bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm transition-all hover:border-primary/30 hover:text-primary"
+                            >
+                                {prompt}
+                            </button>
+                        ))}
+                    </div>
+                </motion.div>
+
+                <AnimatePresence mode="wait">
+                    {activeTab === 'overview' ? (
+                        <motion.div 
+                            key="overview"
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit={{ opacity: 0, y: -20 }}
+                            className="space-y-8"
+                        >
+                            {/* Key Stats Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <StatCard title="Effectif Total" value={stats.activeEmployees} icon={Users} description="Collaborateurs actifs" trend="up" trendValue="+4%" color="blue" />
+                                <StatCard title="Turnover" value={`${stats.globalTurnover}%`} icon={Activity} description="Taux de rotation annuel" trend="down" trendValue="-2.1%" color="indigo" />
+                                <StatCard title="Absentéisme" value={`${stats.absenceRate}%`} icon={Clock} description="Taux ce mois-ci" color="amber" />
+                                <StatCard title="Masse Salariale" value={`${(stats.totalNetSalary / 1000000).toFixed(1)}M`} icon={DollarSign} description="Net versé ce mois (FCFA)" trend="up" trendValue="+1.2%" color="emerald" />
+                            </div>
+
+                            {/* Main Charts Grid */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                
+                                {/* Masse Salariale par Département */}
+                                <motion.div variants={itemVariants}>
+                                    <Card className="glass-panel border-0 rounded-3xl h-full">
+                                        <CardHeader>
+                                            <CardTitle className="text-xl font-bold font-['Outfit'] flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-blue-100 text-blue-600"><BarChart3 size={20} /></div>
+                                                Masse Salariale par Département
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="h-[350px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={charts.salaryByDept} layout="vertical" margin={{ left: 40, right: 20 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                    <XAxis type="number" hide />
+                                                    <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} />
+                                                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', padding: '12px' }} />
+                                                    <Bar dataKey="Total" fill="var(--primary)" radius={[0, 8, 8, 0]} barSize={24} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+
+                                {/* Turnover par Département */}
+                                <motion.div variants={itemVariants}>
+                                    <Card className="glass-panel border-0 rounded-3xl h-full">
+                                        <CardHeader>
+                                            <CardTitle className="text-xl font-bold font-['Outfit'] flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-rose-100 text-rose-600"><Activity size={20} /></div>
+                                                Taux de Rotation (%)
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="h-[350px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={charts.turnoverByDept} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4}/>
+                                                            <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600, fontSize: 12}} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                                                    <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                    <Area type="monotone" dataKey="rate" stroke="#f43f5e" strokeWidth={4} fillOpacity={1} fill="url(#colorRate)" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+
+                                {/* Flux Entrées/Sorties */}
+                                <motion.div variants={itemVariants}>
+                                    <Card className="glass-panel border-0 rounded-3xl h-full">
+                                        <CardHeader>
+                                            <CardTitle className="text-xl font-bold font-['Outfit'] flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600"><Clock size={20} /></div>
+                                                Flux de Recrutement (6 mois)
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="h-[350px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={charts.monthlyFlux} margin={{ top: 20 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                                                    <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                    <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: '20px' }} iconType="circle" />
+                                                    <Bar dataKey="Entrées" fill="#10b981" radius={[8, 8, 0, 0]} barSize={20} />
+                                                    <Bar dataKey="Départs" fill="#f43f5e" radius={[8, 8, 0, 0]} barSize={20} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+
+                                {/* Types de Contrat */}
+                                <motion.div variants={itemVariants}>
+                                    <Card className="glass-panel border-0 rounded-3xl h-full">
+                                        <CardHeader>
+                                            <CardTitle className="text-xl font-bold font-['Outfit'] flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-purple-100 text-purple-600"><PieIcon size={20} /></div>
+                                                Structure des Contrats
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="h-[350px] flex justify-center">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={charts.contractTypes}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={80}
+                                                        outerRadius={120}
+                                                        paddingAngle={4}
+                                                        dataKey="value"
+                                                        stroke="none"
+                                                    >
+                                                        {charts.contractTypes.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                    <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                                
+                                {/* Pyramide des Âges */}
+                                <motion.div variants={itemVariants}>
+                                    <Card className="glass-panel border-0 rounded-3xl h-full">
+                                        <CardHeader>
+                                            <CardTitle className="text-xl font-bold font-['Outfit'] flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-orange-100 text-orange-600"><Users size={20} /></div>
+                                                Pyramide des Âges
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="h-[350px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={charts.agePyramidData} layout="vertical" stackOffset="sign" margin={{ left: 10, right: 10 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                    <XAxis type="number" hide />
+                                                    <YAxis dataKey="ageGroup" type="category" width={60} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} />
+                                                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} formatter={(value) => Math.abs(value)} />
+                                                    <Legend verticalAlign="top" align="right" iconType="circle" />
+                                                    <Bar dataKey="male" name="Hommes" fill="#3b82f6" stackId="stack" radius={[8, 0, 0, 8]} barSize={24} />
+                                                    <Bar dataKey="female" name="Femmes" fill="#ec4899" stackId="stack" radius={[0, 8, 8, 0]} barSize={24} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+
+                                {/* Répartition par Ancienneté */}
+                                <motion.div variants={itemVariants}>
+                                    <Card className="glass-panel border-0 rounded-3xl h-full">
+                                        <CardHeader>
+                                            <CardTitle className="text-xl font-bold font-['Outfit'] flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-cyan-100 text-cyan-600"><Briefcase size={20} /></div>
+                                                Répartition par Ancienneté
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="h-[350px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={charts.seniorityData || []} margin={{ top: 20 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                                                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                    <Bar dataKey="value" name="Employés" fill="#06b6d4" radius={[8, 8, 0, 0]} barSize={32}>
+                                                        {charts.seniorityData?.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={COLORS[(index+1) % COLORS.length]} />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+
+                                {/* Équité Salariale (Gender Pay Gap) */}
+                                <motion.div variants={itemVariants} className="lg:col-span-2">
+                                    <Card className="glass-panel border-0 rounded-3xl h-full shadow-lg">
+                                        <CardHeader>
+                                            <CardTitle className="text-xl font-bold font-['Outfit'] flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-violet-100 text-violet-600"><DollarSign size={20} /></div>
+                                                Index d'Égalité Professionnelle (Salaire Net Moyen H/F)
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="h-[400px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={charts.genderPayGapData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                    <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                                                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                    <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
+                                                    <Bar dataKey="male" name="Hommes (Moyenne en kFCFA)" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
+                                                    <Bar dataKey="female" name="Femmes (Moyenne en kFCFA)" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={24} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        /* Predictive Tab */
+                        <motion.div 
+                            key="predictive"
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit={{ opacity: 0, y: 20 }}
+                            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+                        >
+                            <div className="lg:col-span-2 space-y-6">
+                                <motion.div variants={itemVariants}>
+                                    <Card className="glass-panel border-0 rounded-3xl overflow-hidden shadow-xl">
+                                        <div className="h-2 w-full bg-gradient-to-r from-primary to-accent" />
+                                        <CardHeader className="bg-white/40 border-b border-white/50">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 rounded-2xl bg-gradient-to-br from-primary to-accent text-white shadow-lg">
+                                                        <BrainCircuit size={28} />
                                                     </div>
-                                                    <p className="text-slate-600 text-sm leading-relaxed">{item.reason}</p>
-                                                    <div className="flex gap-4 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button className="text-xs font-black text-indigo-600 hover:underline uppercase tracking-widest">Planifier Entretien</button>
-                                                        <button className="text-xs font-black text-slate-400 hover:underline uppercase tracking-widest">Voir Profil IA</button>
+                                                    <div>
+                                                        <CardTitle className="text-2xl font-black font-['Outfit']">Predictive Risk Monitor</CardTitle>
+                                                        <CardDescription className="text-slate-500 font-medium mt-1">Analyse comportementale pilotée par l'IA.</CardDescription>
+                                                    </div>
+                                                </div>
+                                                <Badge variant="success" className="animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.4)]">En direct</Badge>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="p-0">
+                                            <div className="divide-y divide-white/50">
+                                                {predictiveData.length === 0 ? (
+                                                    <div className="p-16 text-center text-slate-500 font-medium flex flex-col items-center">
+                                                        <Fingerprint size={48} className="text-slate-300 mb-4 opacity-50" />
+                                                        Aucune anomalie détectée.
+                                                    </div>
+                                                ) : (
+                                                    predictiveData.map((item, idx) => (
+                                                        <motion.div 
+                                                            key={idx} 
+                                                            initial={{ opacity: 0, x: -20 }}
+                                                            animate={{ opacity: 1, x: 0 }}
+                                                            transition={{ delay: idx * 0.1 }}
+                                                            className="p-6 flex items-start gap-6 hover:bg-white/60 transition-all group cursor-pointer"
+                                                        >
+                                                            <div className={`mt-1 p-3 rounded-2xl shadow-sm ${item.riskLevel === 'Élevé' ? 'bg-rose-100 text-rose-600 shadow-rose-200' : 'bg-amber-100 text-amber-600 shadow-amber-200'}`}>
+                                                                <AlertTriangle size={24} />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center justify-between mb-2">
+                                                                    <div>
+                                                                        <h4 className="font-black text-slate-900 text-xl font-['Outfit'] group-hover:text-primary transition-colors">{item.name}</h4>
+                                                                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">{item.department || 'Tous Départements'}</p>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <p className={`text-2xl font-black font-['Outfit'] ${item.riskLevel === 'Élevé' ? 'text-rose-600' : 'text-amber-500'}`}>{item.riskScore || '85'}%</p>
+                                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">Probabilité</p>
+                                                                    </div>
+                                                                </div>
+                                                                <p className="text-slate-600 text-sm leading-relaxed font-medium">{item.reason}</p>
+                                                                <div className="flex gap-4 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <button className="text-xs font-black text-primary hover:underline uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-lg">Action Requise</button>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Budget Sandbox Widget */}
+                                <motion.div variants={itemVariants}>
+                                    <Card className="bg-gradient-to-br from-slate-900 via-[#1e1b4b] to-slate-900 text-white border-0 shadow-2xl overflow-hidden relative rounded-3xl">
+                                        <div className="absolute -top-10 -right-10 p-6 opacity-10 rotate-12">
+                                            <DollarSign size={180} />
+                                        </div>
+                                        <CardHeader>
+                                            <CardTitle className="text-white flex items-center gap-3 text-sm uppercase tracking-widest font-black">
+                                                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                                Simulation Budgétaire IA
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-8 relative z-10 pt-4">
+                                            <div>
+                                                <div className="flex justify-between text-xs mb-3">
+                                                    <span className="text-slate-400 font-medium">Augmentation Salariale Globale</span>
+                                                    <span className="font-black text-emerald-400 text-lg">+5%</span>
+                                                </div>
+                                                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                                    <motion.div 
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: '50%' }}
+                                                        transition={{ duration: 1.5, delay: 0.5 }}
+                                                        className="h-full bg-gradient-to-r from-emerald-400 to-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.5)]" 
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Impact Prédictif (6 mois)</p>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <p className="text-3xl font-black text-white font-['Outfit']">-12%</p>
+                                                        <p className="text-xs text-emerald-400 font-bold mt-1">Turnover</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-3xl font-black text-white font-['Outfit']">+8%</p>
+                                                        <p className="text-xs text-blue-400 font-bold mt-1">Performance</p>
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
 
-                    <div className="space-y-6">
-                        {/* Budget Sandbox Widget */}
-                        <Card className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border-none shadow-xl overflow-hidden relative">
-                            <div className="absolute top-0 right-0 p-6 opacity-10">
-                                <DollarSign size={120} />
+                                            <button className="w-full py-4 rounded-xl bg-white text-slate-900 font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95 shadow-lg">
+                                                Ajuster les Variables
+                                            </button>
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+
+                                {/* IA Insights Feed */}
+                                <motion.div variants={itemVariants}>
+                                    <Card className="glass-panel border-0 rounded-3xl">
+                                        <CardHeader>
+                                            <CardTitle className="text-slate-900 flex items-center gap-2 text-sm uppercase tracking-widest font-black">
+                                                <Sparkles size={16} className="text-primary" />
+                                                Insights Stratégiques
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            {[
+                                                { text: "Alerte : Coût de remplacement projeté à 45M FCFA si les 3 départs prévus se confirment en Ingénierie.", color: "rose", icon: AlertTriangle },
+                                                { text: "Opportunité : 12 collaborateurs ont des compétences dormantes en Python utilisables pour l'automatisation de la Paie.", color: "primary", icon: BrainCircuit },
+                                            ].map((insight, idx) => (
+                                                <div key={idx} className={`p-4 rounded-2xl bg-${insight.color}/10 border border-${insight.color}/20 flex gap-3`}>
+                                                    <insight.icon size={18} className={`text-${insight.color} shrink-0 mt-0.5`} />
+                                                    <p className={`text-sm font-medium text-${insight.color}`}>{insight.text}</p>
+                                                </div>
+                                            ))}
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
                             </div>
-                            <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2 text-sm uppercase tracking-widest font-black">
-                                    <Activity size={16} className="text-emerald-400" />
-                                    Simulation Budgétaire IA
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-6 relative z-10">
-                                <div>
-                                    <div className="flex justify-between text-xs mb-2">
-                                        <span className="text-slate-400">Augmentation Salariale Globale</span>
-                                        <span className="font-black text-emerald-400">+5%</span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-white/10 rounded-full">
-                                        <div className="h-full bg-emerald-500" style={{ width: '50%' }}></div>
-                                    </div>
-                                </div>
-                                
-                                <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-3">Impact Prédictif</p>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-xl font-black text-white">-12%</p>
-                                            <p className="text-[10px] text-emerald-400 font-bold">Turnover</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xl font-black text-white">+8%</p>
-                                            <p className="text-[10px] text-blue-400 font-bold">Performance</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button className="w-full py-3 rounded-xl bg-white text-slate-900 font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">
-                                    Lancer Simulation
-                                </button>
-                            </CardContent>
-                        </Card>
-
-                        {/* IA Insights Feed */}
-                        <Card className="border-none shadow-sm bg-white">
-                            <CardHeader>
-                                <CardTitle className="text-slate-900 flex items-center gap-2 text-sm uppercase tracking-widest font-black">
-                                    <BrainCircuit size={16} className="text-indigo-600" />
-                                    Insights Stratégiques
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {[
-                                    { text: "Alerte : Coût de remplacement projeté à 45M FCFA si les 3 départs prévus se confirment.", color: "rose" },
-                                    { text: "Opportunité : 12 collaborateurs ont des compétences dormantes en Python utilisables pour l'automatisation.", color: "indigo" },
-                                ].map((insight, idx) => (
-                                    <div key={idx} className={`p-3 rounded-xl bg-${insight.color}-50 border border-${insight.color}-100`}>
-                                        <p className={`text-xs font-medium text-${insight.color}-700`}>{insight.text}</p>
-                                    </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
         </div>
     );
 }
 
-function Badge({ children, variant }) {
+function Badge({ children, variant, className = "" }) {
     const styles = {
         destructive: 'bg-rose-100 text-rose-700',
         secondary: 'bg-slate-100 text-slate-700',
-        success: 'bg-emerald-100 text-emerald-700'
+        success: 'bg-emerald-500 text-white shadow-md shadow-emerald-200'
     };
-    return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${styles[variant] || styles.secondary}`}>{children}</span>;
+    return <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${styles[variant] || styles.secondary} ${className}`}>{children}</span>;
 }

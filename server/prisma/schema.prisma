@@ -60,6 +60,7 @@ model Employee {
   pointEvents     PointEvent[]
   talentProfile   TalentProfile? @relation("EmployeeTalent")
   offboardingTasks OffboardingTask[]
+  onboardingTasks  OnboardingTask[]
   shifts          ShiftSchedule[]
   benefits        EmployeeBenefit[]
   timeLogs        TimeLog[]
@@ -368,6 +369,9 @@ model PerformanceFeedback {
   strengths       String?  @default("En attente de retour...")
   areas           String?  @default("En attente de retour...")
   context         String?
+  badge           String?  // Pour la gamification 360
+  isAnonymous     Boolean  @default(false) @map("is_anonymous")
+  peerId          String?  @map("peer_id")
   date            DateTime @default(now())
   createdAt       DateTime @default(now()) @map("created_at")
 
@@ -531,8 +535,21 @@ model TalentProfile {
 }
 
 // ----------------------------------------------------
-// 20. OFFBOARDING & ALUMNI
+// 20. ONBOARDING & OFFBOARDING
 // ----------------------------------------------------
+
+model OnboardingTask {
+  id              String   @id @default(uuid())
+  employeeId      String   @map("employee_id")
+  taskName        String   @map("task_name")
+  status          String   @default("Pending") // 'Pending', 'In Progress', 'Completed'
+  assignedTo      String?  @map("assigned_to")
+  dueDate         DateTime? @map("due_date")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
 
 model OffboardingTask {
   id              String   @id @default(uuid())

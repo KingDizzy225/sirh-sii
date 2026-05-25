@@ -450,11 +450,20 @@ export function EmployeeProfile() {
                                     <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
                                         <FolderOpen size={20} className="text-amber-600" /> Dossier Personnel
                                     </CardTitle>
-                                    {(user?.role === 'HR' || user?.role === 'ADMIN') && (
-                                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2" onClick={() => setShowUploadModal(true)}>
-                                            <Upload size={14} /> Ajouter
-                                        </Button>
-                                    )}
+                                    <div className="flex gap-2">
+                                        {(user?.role === 'HR' || user?.role === 'ADMIN' || user?.id === id) && (
+                                            <Button size="sm" variant="outline" className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 gap-2" onClick={() => {
+                                                window.open(`${API_URL}/api/documents/generate-attestation/${id}?token=${token}`, '_blank');
+                                            }}>
+                                                <FileText size={14} /> Attestation
+                                            </Button>
+                                        )}
+                                        {(user?.role === 'HR' || user?.role === 'ADMIN') && (
+                                            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2" onClick={() => setShowUploadModal(true)}>
+                                                <Upload size={14} /> Ajouter
+                                            </Button>
+                                        )}
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="p-0">
                                     {personnelDocs.length === 0 ? (

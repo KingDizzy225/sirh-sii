@@ -20,6 +20,8 @@ export function CommandCenter() {
     const navigate = useNavigate();
     const inputRef = useRef(null);
 
+    const [employees, setEmployees] = useState([]);
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -40,10 +42,36 @@ export function CommandCenter() {
             setQuery('');
             setSelectedIndex(0);
             setTimeout(() => inputRef.current?.focus(), 100);
+            
+            // Fetch employees dynamically for the search
+            const fetchEmployees = async () => {
+                try {
+                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                    const token = localStorage.getItem('sirh_token');
+                    const res = await fetch(`${API_URL}/api/employees`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setEmployees(data.map(emp => ({
+                            id: `emp-${emp.id}`,
+                            title: `${emp.firstName} ${emp.lastName}`,
+                            path: '/employees', // Redirige vers le répertoire pour l'instant
+                            icon: User,
+                            category: `Employé • ${emp.positionTitle || 'RH'}`
+                        })));
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch employees for search', err);
+                }
+            };
+            fetchEmployees();
         }
     }, [isOpen]);
 
-    const filteredActions = ACTIONS.filter(action =>
+    const ALL_ACTIONS = [...ACTIONS, ...employees];
+
+    const filteredActions = ALL_ACTIONS.filter(action =>
         action.title.toLowerCase().includes(query.toLowerCase()) ||
         action.category.toLowerCase().includes(query.toLowerCase())
     );

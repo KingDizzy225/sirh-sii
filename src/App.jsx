@@ -19,6 +19,7 @@ import { Leaves } from './pages/Leaves';
 import { Payroll } from './pages/Payroll';
 import { Recruitment } from './pages/Recruitment';
 import { Settings } from './pages/Settings';
+import { AuditLogs } from './pages/AuditLogs';
 import { Performance } from './pages/Performance';
 import { Onboarding } from './pages/Onboarding';
 import { Learning } from './pages/Learning';
@@ -259,6 +260,11 @@ const AppContent = () => {
             <Route path="/settings" element={
               <ProtectedRoute allowedRoles={['Administrator']}>
                 <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/audit-logs" element={
+              <ProtectedRoute allowedRoles={['Administrator']}>
+                <AuditLogs />
               </ProtectedRoute>
             } />
 
