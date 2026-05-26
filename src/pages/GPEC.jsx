@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { motion } from 'framer-motion';
 import { Target, AlertTriangle, Plus, Check, Trash2, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { skillsCatalog, getAllSkillsFlat } from '../constants/skillsCatalog';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -201,7 +202,36 @@ export function GPEC() {
                             <button onClick={() => setShowForm(false)} className="text-white bg-transparent border-0 cursor-pointer">✕</button>
                         </div>
                         <form onSubmit={handleCreate} className="p-6 space-y-4">
-                            <div><label className="text-sm font-medium text-slate-700 block mb-1">Nom</label><Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Ex: React.js, Gestion de projet..." /></div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-700 block mb-1">Sélection Rapide (Catalogue)</label>
+                                <select 
+                                    className="w-full border border-slate-200 rounded-lg p-2.5 text-sm mb-2 focus:ring-2 focus:ring-purple-500 outline-none"
+                                    onChange={e => {
+                                        const selectedName = e.target.value;
+                                        if(!selectedName) return;
+                                        const flatSkills = getAllSkillsFlat();
+                                        const skillObj = flatSkills.find(s => s.skill === selectedName);
+                                        let category = form.category;
+                                        if(skillObj) {
+                                            if(skillObj.category.includes('Soft Skills')) category = 'Transversal';
+                                            else if(skillObj.category.includes('Management')) category = 'Managérial';
+                                            else category = 'Technique';
+                                        }
+                                        setForm({...form, name: selectedName, category});
+                                    }}
+                                >
+                                    <option value="">Sélectionner une compétence standard...</option>
+                                    {skillsCatalog.map((cat, idx) => (
+                                        <optgroup key={idx} label={cat.category}>
+                                            {cat.skills.map(skill => (
+                                                <option key={skill} value={skill}>{skill}</option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
+                                </select>
+                                <label className="text-sm font-medium text-slate-700 block mb-1">Nom de la compétence</label>
+                                <Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Saisie manuelle ou sélectionnée ci-dessus..." />
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-sm font-medium text-slate-700 block mb-1">Catégorie</label>
