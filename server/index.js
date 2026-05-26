@@ -139,7 +139,7 @@ const chatRoutes = require('./routes/chatRoutes');
 app.use('/api/chat', verifyToken, chatRoutes);
 
 const absenceRoutes = require('./routes/absenceRoutes');
-app.use('/api/absences', verifyToken, absenceRoutes);
+app.use('/api/absences', absenceRoutes);
 
 const qrRoutes = require('./routes/qrRoutes');
 app.use('/api/qr', qrRoutes); // No verifyToken because /scan is public, and /generate requires it in the route definition
