@@ -166,6 +166,25 @@ export function Payroll() {
         showNotification("Export Comptable CSV Réussi !");
     };
 
+    const handleExportSage = async () => {
+        try {
+            const response = await api.get(`/payrolls/export/sage?period=${selectedMonth}`, { responseType: 'blob' });
+            if (response.data) {
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `export_sage_${selectedMonth}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                showNotification('Export Sage Ligne 100 généré avec succès.');
+            }
+        } catch (error) {
+            console.error('Erreur Export Sage', error);
+            showNotification('Erreur lors de la génération de l\'export Sage.');
+        }
+    };
+
     const handleExportDISA = () => {
         if (allPayrolls.length === 0) {
             showNotification("Aucune donnée de paie à exporter pour la DISA.");
@@ -445,6 +464,9 @@ export function Payroll() {
                                 <CardDescription>Historique global des rémunérations de l'entreprise.</CardDescription>
                             </div>
                             <div className="flex items-center gap-3">
+                                <Button variant="outline" onClick={handleExportSage} className="border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 font-medium">
+                                    <Download size={16} className="mr-2" /> Export Sage L100
+                                </Button>
                                 <Button variant="outline" onClick={handleExportDISA} className="border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 font-medium">
                                     <Download size={16} className="mr-2" /> Export DISA (CNPS)
                                 </Button>

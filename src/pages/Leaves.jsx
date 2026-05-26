@@ -62,7 +62,8 @@ export function Leaves() {
                     type: l.type,
                     duration: `${new Date(l.startDate).getDate()} ${new Date(l.startDate).toLocaleString('fr-FR', { month: 'short' })} - ${new Date(l.endDate).getDate()} ${new Date(l.endDate).toLocaleString('fr-FR', { month: 'short' })} (${l.durationDays} Jours)`,
                     durationDays: l.durationDays,
-                    status: l.status === 'APPROVED' ? 'Approuvé' : l.status === 'REJECTED' ? 'Rejeté' : 'En attente',
+                    status: l.status === 'APPROVED' ? 'Approuvé' : l.status === 'REJECTED' ? 'Rejeté' : l.status === 'PENDING_HR' ? 'En attente RH' : 'En attente Manager',
+                    rawStatus: l.status,
                     appliedOn: new Date(l.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
                     rawStart: new Date(l.startDate),
                     rawEnd: new Date(l.endDate)
@@ -192,7 +193,7 @@ END:VCALENDAR`;
     };
 
     const myLeaves = leaveRequests.filter(req => req.employee === currentUserFullName);
-    const pendingApprovals = leaveRequests.filter(req => req.status === 'En attente' && req.employee !== currentUserFullName);
+    const pendingApprovals = leaveRequests.filter(req => req.status.includes('En attente') && req.employee !== currentUserFullName);
     const allLeaves = leaveRequests;
 
     const currentYear = new Date().getFullYear();
@@ -395,7 +396,7 @@ END:VCALENDAR`;
                                             <TableCell className="text-slate-600">{req.duration}</TableCell>
                                             <TableCell className="text-slate-500">{req.appliedOn}</TableCell>
                                             <TableCell>
-                                                <Badge variant={req.status === 'Approuvé' ? 'success' : req.status === 'En attente' ? 'warning' : 'destructive'}>
+                                                <Badge variant={req.status === 'Approuvé' ? 'success' : req.status.includes('En attente') ? 'warning' : 'destructive'}>
                                                     {req.status}
                                                 </Badge>
                                             </TableCell>
@@ -451,12 +452,13 @@ END:VCALENDAR`;
                                             <TableCell className="text-slate-600">{req.type}</TableCell>
                                             <TableCell className="text-slate-600">{req.duration}</TableCell>
                                             <TableCell>
-                                                <Badge variant={req.status === 'Approuvé' ? 'success' : req.status === 'En attente' ? 'warning' : 'destructive'}>
+                                                <Badge variant={req.status === 'Approuvé' ? 'success' : req.status.includes('En attente') ? 'warning' : 'destructive'}>
                                                     {req.status}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                {req.status === 'En attente' ? (
+                                                {((userRole === 'Manager' && req.rawStatus === 'PENDING') || 
+                                                  ((userRole === 'HR' || userRole === 'ADMIN' || userRole === 'Administrator') && (req.rawStatus === 'PENDING' || req.rawStatus === 'PENDING_HR'))) ? (
                                                     <div className="flex justify-end gap-2">
                                                         <Button
                                                             variant="outline"
@@ -476,7 +478,7 @@ END:VCALENDAR`;
                                                         </Button>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full inline-block">Déjà Traité</span>
+                                                    <span className="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full inline-block">Déjà Traité / En attente autre niveau</span>
                                                 )}
                                             </TableCell>
                                         </TableRow>

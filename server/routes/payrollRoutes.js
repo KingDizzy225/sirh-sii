@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/authMiddleware');
-const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip } = require('../controllers/payrollController');
+const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, exportSage } = require('../controllers/payrollController');
 
 // Accès administrateur / RH
 router.get('/', verifyToken, getPayrolls);
 router.post('/run', verifyToken, runPayroll);
+router.get('/export/sage', verifyToken, exportSage);
 
 // Accès collaborateur (Self-service : voir ses fiches)
 router.get('/my', verifyToken, getMyPayrolls);

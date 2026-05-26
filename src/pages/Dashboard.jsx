@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { ComplianceMonitor } from '../components/dashboard/ComplianceMonitor';
+import { api } from '../lib/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -31,36 +32,7 @@ export function Dashboard() {
                 let statsData = statsRes.data || {};
                 let chartsData = chartsRes.data || {};
 
-                // Vérifier si nous avons reçu de vraies données ou le mock générique de api.js
-                if (!statsData.totalEmployees) {
-                    statsData = {
-                        totalEmployees: 142,
-                        activeLeaves: 12,
-                        pendingExpenses: 5,
-                        pendingTickets: 3
-                    };
-                }
-                
-                if (!chartsData.charts) {
-                    chartsData = {
-                        stats: {
-                            totalEmployees: 142, activeEmployees: 135, globalTurnover: 4.2, 
-                            absenceRate: 2.1, payrollCount: 142, avgNetSalary: 450000, totalNetSalary: 63900000
-                        },
-                        charts: {
-                            turnoverByDept: [{name: 'Tech', rate: 4}, {name: 'RH', rate: 2}],
-                            salaryByDept: [{name: 'Tech', Moyenne: 500000, Total: 20000000}],
-                            contractTypes: [{name: 'CDI', value: 120}, {name: 'CDD', value: 22}],
-                            monthlyFlux: [{month: 'Jan', Entrées: 5, Départs: 2}],
-                            timeToHireData: [{month: 'Jan', days: 24}, {month: 'Fév', days: 20}, {month: 'Mar', days: 18}],
-                            agePyramidData: [{ageGroup: '26-35', male: -35, female: 40}],
-                            genderPayGapData: [{department: 'Tech', male: 500, female: 480}],
-                            seniorityData: [{name: '1-3 ans', value: 45}],
-                            monthlyTurnover: [{name: 'Jan', rate: 2.1}, {name: 'Fév', rate: 1.8}],
-                            mobilityVsHiringData: [{name: 'Interne', value: 30, color: '#3b82f6'}, {name: 'Externe', value: 70, color: '#ec4899'}]
-                        }
-                    };
-                }
+
                 
                 setAnalyticsData({
                     ...statsData,

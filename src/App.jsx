@@ -62,6 +62,7 @@ import { Ethics } from './pages/Ethics';
 import { Subcontractors } from './pages/Subcontractors';
 import { DeiDashboard } from './pages/DeiDashboard';
 import { RequestCenter } from './pages/RequestCenter';
+import { QRPointage } from './pages/QRPointage';
 
 import { FloatingChat } from './components/FloatingChat';
 import { CareerPath } from './pages/CareerPath';
@@ -197,6 +198,11 @@ const AppContent = () => {
             <Route path="/timesheet" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Timesheet />
+              </ProtectedRoute>
+            } />
+            <Route path="/qr-pointage" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <QRPointage />
               </ProtectedRoute>
             } />
             <Route path="/performance" element={

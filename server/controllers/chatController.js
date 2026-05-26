@@ -9,6 +9,7 @@ exports.askChatbot = async (req, res) => {
         const { message } = req.body;
         
         let employeeId = null;
+        let employeeContext = "Vous parlez à un utilisateur non identifié ou non lié à un profil employé.";
         if (req.user && req.user.email) {
             const employee = await prisma.employee.findUnique({
                 where: { email: req.user.email },

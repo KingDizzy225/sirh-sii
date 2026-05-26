@@ -249,12 +249,34 @@ export function Recruitment() {
                     /* KANBAN VIEW (already in the file, keeping logic) */
                     <div className="flex gap-4 overflow-x-auto pb-4">
                         {STAGES.map(stage => (
-                            <div key={stage.id} className="min-w-[300px] bg-slate-100/50 p-3 rounded-xl">
+                            <div 
+                                key={stage.id} 
+                                className="min-w-[300px] bg-slate-100/50 p-3 rounded-xl"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    const candidateId = e.dataTransfer.getData("candidateId");
+                                    if (candidateId) {
+                                        moveCandidate(candidateId, stage.id);
+                                    }
+                                }}
+                            >
                                 <h3 className="text-xs font-black uppercase mb-4">{stage.label}</h3>
                                 {candidates.filter(c => c.jobOfferId === activeJobId && (c.stage === stage.id || c.status === stage.id)).map(c => (
-                                    <Card key={c.id} className="mb-2 p-4">
+                                    <Card 
+                                        key={c.id} 
+                                        className="mb-2 p-4 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+                                        draggable
+                                        onDragStart={(e) => e.dataTransfer.setData("candidateId", c.id)}
+                                        onClick={() => openScorecard(c)}
+                                    >
                                         <p className="font-bold">{c.firstName} {c.lastName}</p>
-                                        <p className="text-xs text-slate-500">{c.email}</p>
+                                        <p className="text-xs text-slate-500 mb-2">{c.email}</p>
+                                        {c.score && (
+                                            <div className="flex items-center gap-1 text-xs font-bold text-amber-500">
+                                                <Star size={12} className="fill-current" /> Note: {c.score}/5
+                                            </div>
+                                        )}
                                     </Card>
                                 ))}
                             </div>

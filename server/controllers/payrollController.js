@@ -320,4 +320,59 @@ const signPayroll = async (req, res) => {
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, signPayroll };
+const exportSage = async (req, res) => {
+    try {
+        const { period } = req.query; // ex: 2026-05
+        
+        // Find all payrolls for the given period
+        const payrolls = await prisma.payroll.findMany({
+            where: {
+                period: period || { startsWith: new Date().toISOString().substring(0, 7) }
+            },
+            include: { employee: true }
+        });
+
+        if (payrolls.length === 0) {
+            return res.status(404).json({ error: "Aucune fiche de paie trouvée pour cette période." });
+        }
+
+        // Generate PNM format for Sage (Format paramétrable: Matricule;Nom;Rubrique;Montant)
+        // Ceci est une simulation basique de l'export Sage Ligne 100
+        let csvContent = "MATRICULE;NOM;PRENOM;CODE_RUBRIQUE;MONTANT\n";
+        
+        payrolls.forEach(p => {
+            const emp = p.employee;
+            const gross = p.baseSalary + (p.overtimeHours || 0) + (p.bonus || 0);
+            
+            // Salaire de base (Rubrique 1000)
+            csvContent += `${emp.id};${emp.lastName};${emp.firstName};1000;${p.baseSalary}\n`;
+            
+            // Primes (Rubrique 2000)
+            if (p.bonus > 0) {
+                csvContent += `${emp.id};${emp.lastName};${emp.firstName};2000;${p.bonus}\n`;
+            }
+
+            // Heures supp (Rubrique 3000)
+            if (p.overtimeHours > 0) {
+                csvContent += `${emp.id};${emp.lastName};${emp.firstName};3000;${p.overtimeHours}\n`;
+            }
+
+            // CNPS (Rubrique 4000)
+            const cnps = gross * 0.063;
+            csvContent += `${emp.id};${emp.lastName};${emp.firstName};4000;${Math.round(cnps)}\n`;
+
+            // CMU (Rubrique 4010)
+            csvContent += `${emp.id};${emp.lastName};${emp.firstName};4010;1000\n`;
+        });
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment(`export_sage_${period || 'current'}.csv`);
+        res.send(csvContent);
+
+    } catch (error) {
+        console.error("Sage Export Error:", error);
+        res.status(500).json({ error: "Erreur lors de l'export Sage." });
+    }
+};
+
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, signPayroll, exportSage };
