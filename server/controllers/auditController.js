@@ -8,7 +8,7 @@ exports.getAuditLogs = async (req, res) => {
         const skip = (page - 1) * limit;
 
         const logs = await prisma.auditLog.findMany({
-            orderBy: { timestamp: 'desc' },
+            orderBy: { createdAt: 'desc' },
             take: limit,
             skip: skip
         });

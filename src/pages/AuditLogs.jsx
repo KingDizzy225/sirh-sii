@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card';
 import { ShieldAlert, User, Clock, Database, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { api } from '../lib/api';
 
 export function AuditLogs() {
     const { user } = useAuth();
@@ -10,9 +11,6 @@ export function AuditLogs() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const token = localStorage.getItem('sirh_token');
-
     useEffect(() => {
         fetchLogs();
     }, [page]);
@@ -20,14 +18,9 @@ export function AuditLogs() {
     const fetchLogs = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/audit?page=${page}&limit=20`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const result = await res.json();
-                setLogs(result.data);
-                setTotalPages(result.pagination.totalPages);
-            }
+            const { data: result } = await api.get(`/audit?page=${page}&limit=20`);
+            setLogs(result.data || []);
+            setTotalPages(result.pagination?.totalPages || 1);
         } catch (err) {
             console.error("Error fetching audit logs", err);
         } finally {
@@ -102,7 +95,7 @@ export function AuditLogs() {
                                             <td className="px-6 py-3 whitespace-nowrap text-slate-600 font-medium">
                                                 <div className="flex items-center gap-2">
                                                     <Clock size={14} className="text-slate-400" />
-                                                    {new Date(log.timestamp).toLocaleString('fr-FR')}
+                                                    {new Date(log.createdAt).toLocaleString('fr-FR')}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-3 whitespace-nowrap">
