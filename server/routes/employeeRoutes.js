@@ -8,22 +8,25 @@ const verifyToken = require('../middleware/authMiddleware');
 // Apply auth to all methods
 router.use(verifyToken);
 
+// Allowed HR/Admin roles (covers both naming conventions)
+const HR_ROLES = ['ADMIN', 'HR', 'Administrator', 'HR_MANAGER'];
+
 // Org Chart AI Integration
-router.post('/generate-org-chart', requireRole('Administrator', 'HR'), orgChartController.generateOrgChartWithAI);
+router.post('/generate-org-chart', requireRole(...HR_ROLES), orgChartController.generateOrgChartWithAI);
 router.get('/org-chart', orgChartController.getOrgChart);
 
 // Employee Routes
 router.get('/', employeeController.getAllEmployees);
 // Note: /bulk must be BEFORE /:id to prevent "bulk" being treated as an id
-router.post('/bulk', requireRole('Administrator', 'HR'), employeeController.importBulkEmployees);
+router.post('/bulk', requireRole(...HR_ROLES), employeeController.importBulkEmployees);
 router.get('/profile', employeeController.getProfile);
-router.post('/', requireRole('Administrator', 'HR'), employeeController.createEmployee);
-router.delete('/bulk', requireRole('Administrator', 'HR'), employeeController.deleteMultipleEmployees);
+router.post('/', requireRole(...HR_ROLES), employeeController.createEmployee);
+router.delete('/bulk', requireRole(...HR_ROLES), employeeController.deleteMultipleEmployees);
 router.get('/:id', employeeController.getEmployeeById);
-router.put('/:id', requireRole('Administrator', 'HR'), employeeController.updateEmployee);
-router.delete('/:id', requireRole('Administrator', 'HR'), employeeController.deleteEmployee);
+router.put('/:id', requireRole(...HR_ROLES), employeeController.updateEmployee);
+router.delete('/:id', requireRole(...HR_ROLES), employeeController.deleteEmployee);
 // Onboarding Routes
 router.get('/:id/onboarding', employeeController.getOnboardingTasks);
-router.put('/onboarding/:taskId', requireRole('Administrator', 'HR', 'Manager'), employeeController.updateOnboardingTask);
+router.put('/onboarding/:taskId', requireRole(...HR_ROLES, 'Manager'), employeeController.updateOnboardingTask);
 
 module.exports = router;
