@@ -142,19 +142,53 @@ exports.updateEmployee = async (req, res) => {
     }
 };
 
+// Helper: supprime toutes les données liées à un employé, puis l'employé lui-même
+const deleteEmployeeWithRelations = async (id) => {
+    // Supprimer dans l'ordre pour respecter les contraintes de clé étrangère
+    await prisma.kudo.deleteMany({ where: { OR: [{ senderId: id }, { receiverId: id }] } });
+    await prisma.payroll.deleteMany({ where: { employeeId: id } });
+    await prisma.leave.deleteMany({ where: { employeeId: id } });
+    await prisma.absence.deleteMany({ where: { employeeId: id } });
+    await prisma.expense.deleteMany({ where: { employeeId: id } });
+    await prisma.salaryAdvance.deleteMany({ where: { employeeId: id } });
+    await prisma.notification.deleteMany({ where: { employeeId: id } });
+    await prisma.employeeDocument.deleteMany({ where: { employeeId: id } });
+    await prisma.employeeSkill.deleteMany({ where: { employeeId: id } });
+    await prisma.assetAssignment.deleteMany({ where: { employeeId: id } });
+    await prisma.trainingParticipation.deleteMany({ where: { employeeId: id } });
+    await prisma.performanceGoal.deleteMany({ where: { employeeId: id } });
+    await prisma.performanceReview.deleteMany({ where: { employeeId: id } });
+    await prisma.performanceFeedback.deleteMany({ where: { employeeId: id } });
+    await prisma.medicalVisit.deleteMany({ where: { employeeId: id } });
+    await prisma.pointEvent.deleteMany({ where: { employeeId: id } });
+    await prisma.employeePoints.deleteMany({ where: { employeeId: id } });
+    await prisma.talentProfile.deleteMany({ where: { employeeId: id } });
+    await prisma.offboardingTask.deleteMany({ where: { employeeId: id } });
+    await prisma.onboardingTask.deleteMany({ where: { employeeId: id } });
+    await prisma.shiftSchedule.deleteMany({ where: { employeeId: id } });
+    await prisma.employeeBenefit.deleteMany({ where: { employeeId: id } });
+    await prisma.timeLog.deleteMany({ where: { employeeId: id } });
+    await prisma.careerHistory.deleteMany({ where: { employeeId: id } });
+    await prisma.disciplinaryRecord.deleteMany({ where: { employeeId: id } });
+    await prisma.orgSimulationNode.deleteMany({ where: { employeeId: id } });
+    await prisma.successor.deleteMany({ where: { employeeId: id } });
+    await prisma.retentionAction.deleteMany({ where: { employeeId: id } });
+    await prisma.supportTicket.deleteMany({ where: { requesterId: id } });
+    // Désassocier les subordonnés avant suppression
+    await prisma.employee.updateMany({ where: { managerId: id }, data: { managerId: null } });
+    // Supprimer l'employé lui-même
+    await prisma.employee.delete({ where: { id } });
+};
+
 // Delete an employee
 exports.deleteEmployee = async (req, res) => {
     try {
         const { id } = req.params;
-
-        await prisma.employee.delete({
-            where: { id }
-        });
-
+        await deleteEmployeeWithRelations(id);
         res.status(204).send();
     } catch (error) {
         console.error('Error deleting employee:', error);
-        res.status(500).json({ error: 'Failed to delete employee' });
+        res.status(500).json({ error: 'Failed to delete employee', details: error.message });
     }
 };
 
@@ -167,16 +201,14 @@ exports.deleteMultipleEmployees = async (req, res) => {
             return res.status(400).json({ error: 'Array of employee IDs is required' });
         }
 
-        const deleteResult = await prisma.employee.deleteMany({
-            where: {
-                id: { in: ids }
-            }
-        });
+        for (const id of ids) {
+            await deleteEmployeeWithRelations(id);
+        }
 
-        res.status(200).json({ message: `Successfully deleted ${deleteResult.count} employees`, count: deleteResult.count });
+        res.status(200).json({ message: `Successfully deleted ${ids.length} employees`, count: ids.length });
     } catch (error) {
         console.error('Error deleting multiple employees:', error);
-        res.status(500).json({ error: 'Failed to delete multiple employees' });
+        res.status(500).json({ error: 'Failed to delete multiple employees', details: error.message });
     }
 };
 
