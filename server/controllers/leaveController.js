@@ -48,6 +48,16 @@ exports.createLeave = async (req, res) => {
             }).catch(console.error);
         }
 
+        // Notify via WebSocket
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('new_notification', {
+                type: 'LEAVE_REQUEST',
+                message: `Nouvelle demande de congé de ${newLeave.employee?.firstName || 'un employé'} (${type})`,
+                date: new Date()
+            });
+        }
+
         res.status(201).json(newLeave);
     } catch (error) {
         console.error('Error creating leave:', error);
@@ -127,6 +137,16 @@ exports.updateLeaveStatus = async (req, res) => {
                 subject: subject,
                 html: `<h1>${subject}</h1><p>${htmlMsg}</p>`
             }).catch(console.error);
+        }
+
+        // Notify via WebSocket
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('new_notification', {
+                type: 'LEAVE_UPDATE',
+                message: `Mise à jour d'un congé (${newStatus}) pour ${result.employee?.firstName || ''}`,
+                date: new Date()
+            });
         }
 
         res.status(200).json(result);

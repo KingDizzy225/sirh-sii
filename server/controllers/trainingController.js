@@ -255,12 +255,12 @@ exports.generateAITraining = async (req, res) => {
         const result = await aiModel.generateContent(prompt);
         const textResponse = await result.response.text();
         
-        let cleanedJson = textResponse.trim();
-        if (cleanedJson.startsWith('\`\`\`json')) cleanedJson = cleanedJson.replace(/\`\`\`json/g, '');
-        if (cleanedJson.startsWith('\`\`\`')) cleanedJson = cleanedJson.replace(/\`\`\`/g, '');
-        cleanedJson = cleanedJson.replace(/\`\`\`/g, '').trim();
-
-        const courseData = JSON.parse(cleanedJson);
+        const match = textResponse.match(/\{[\s\S]*\}/);
+        if (!match) {
+            throw new Error("Impossible de trouver un JSON valide dans la réponse de l'IA.");
+        }
+        
+        const courseData = JSON.parse(match[0]);
 
         // Save to DB
         const trainingSession = await prisma.trainingSession.create({
@@ -295,6 +295,49 @@ exports.generateAITraining = async (req, res) => {
         res.status(201).json(completeSession);
     } catch (error) {
         console.error('Error generating AI training:', error);
-        res.status(500).json({ error: 'Erreur lors de la génération IA du cours.' });
+        
+        // Fallback heuristique si l'API IA plante (ex: quota dépassé)
+        try {
+            const { topic } = req.body;
+            console.log("Utilisation du Fallback (Quota AI dépassé) pour le sujet:", topic);
+            
+            const fallbackSession = await prisma.trainingSession.create({
+                data: {
+                    title: `Initiation: ${topic || 'Formation Générique'}`,
+                    description: `Ce cours a été généré automatiquement par notre module de secours suite à l'indisponibilité temporaire de l'IA. Il couvre les concepts essentiels liés à ${topic}.`,
+                    trainerName: 'Système RH (Secours)',
+                    date: new Date(),
+                    durationHours: 2.0,
+                    status: 'Active'
+                }
+            });
+
+            await prisma.courseModule.createMany({
+                data: [
+                    {
+                        sessionId: fallbackSession.id,
+                        title: "Module 1 - Introduction et Fondamentaux",
+                        content: `Bienvenue dans cette formation sur : ${topic}.\n\nCe premier module aborde les bases fondamentales. Assurez-vous d'avoir pris connaissance des prérequis.`,
+                        orderSequence: 0
+                    },
+                    {
+                        sessionId: fallbackSession.id,
+                        title: "Module 2 - Concepts Avancés",
+                        content: `Maintenant que vous maîtrisez les bases de ${topic}, plongeons dans des cas d'utilisation plus complexes.`,
+                        orderSequence: 1
+                    }
+                ]
+            });
+
+            const completeFallbackSession = await prisma.trainingSession.findUnique({
+                where: { id: fallbackSession.id },
+                include: { modules: true }
+            });
+
+            return res.status(201).json(completeFallbackSession);
+        } catch (fallbackError) {
+            console.error('Erreur du Fallback IA:', fallbackError);
+            res.status(500).json({ error: 'Erreur lors de la génération IA du cours (Quota atteint) et échec du système de secours.' });
+        }
     }
 };

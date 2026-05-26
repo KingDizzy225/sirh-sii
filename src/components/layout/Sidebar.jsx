@@ -3,20 +3,23 @@ import { cn } from '@/lib/utils';
 import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { ThemeToggle } from '../ThemeToggle';
+import { LanguageSwitcher } from '../LanguageSwitcher';
 
-const getAllNavItems = () => [
+const getAllNavItems = (t) => [
     // ACCUEIL
-    { name: 'Vue d\'ensemble', path: '/', icon: Home, domain: 'Accueil', permission: 'dashboard:view' },
+    { name: t('sidebar.dashboard', 'Vue d\'ensemble'), path: '/', icon: Home, domain: 'Accueil', permission: 'dashboard:view' },
     { name: 'Tableau Tâches', path: '/task-board', icon: CheckSquare, domain: 'Accueil', permission: 'dashboard:view' },
     { name: 'Annonces', path: '/announcements', icon: Megaphone, domain: 'Accueil', permission: 'myself:view' },
 
     // MON ESPACE
     { name: 'Mon Profil', path: '/my-space', icon: User, domain: 'Mon Espace', permission: 'myself:view' },
-    { name: 'Mes Absences (Congés)', path: '/leaves', icon: Calendar, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: t('sidebar.leaves', 'Mes Absences (Congés)'), path: '/leaves', icon: Calendar, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Absences & Retards', path: '/absences', icon: AlertTriangle, domain: 'Mon Espace', permission: 'myself:view' },
-    { name: 'Mes Dépenses', path: '/expenses', icon: Receipt, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: t('sidebar.expenses', 'Mes Dépenses'), path: '/expenses', icon: Receipt, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Avance sur Salaire', path: '/advances', icon: Banknote, domain: 'Mon Espace', permission: 'myself:view' },
-    { name: 'Mes Fiches de Paie', path: '/payroll', icon: FileText, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: t('sidebar.payroll', 'Mes Fiches de Paie'), path: '/payroll', icon: FileText, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Kudos & Gamification', path: '/kudos', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Explorateur Carrière', path: '/career-path', icon: Rocket, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
@@ -28,10 +31,10 @@ const getAllNavItems = () => [
     { name: 'Plannings Équipe', path: '/shifts', icon: Calendar, domain: 'Mon Équipe', permission: 'manager:view' },
 
     // EMPLOYÉS
-    { name: 'Répertoire Employés', path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
+    { name: t('sidebar.employees', 'Répertoire Employés'), path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Simulateur Orga.', path: '/org-simulation', icon: Rocket, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Recrutement', path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
+    { name: t('sidebar.recruitment', 'Recrutement'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Fiches de Poste IA', path: '/job-studio', icon: Sparkles, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
@@ -48,7 +51,7 @@ const getAllNavItems = () => [
     { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Suivi Formations', path: '/learning', icon: BookOpen, domain: 'Pilotage RH', permission: 'learning:view' },
-    { name: 'Catalogue Sessions', path: '/trainings', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
+    { name: t('sidebar.learning', 'Catalogue Formations'), path: '/trainings', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
     { name: 'Compétences', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
@@ -57,7 +60,7 @@ const getAllNavItems = () => [
     { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
     
     // ANALYTIQUE -> INTELLIGENCE RH
-    { name: 'Analytique & Coûts', path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: t('sidebar.analytics', 'HR Analytics'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Équité Salariale', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Santé d\'Équipe', path: '/team-health', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Anti-Turnover', path: '/retention-center', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },
@@ -71,8 +74,9 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
     const location = useLocation();
     const { user, logout } = useAuth();
     const userRole = user ? user.role : 'EMPLOYEE';
+    const { t } = useTranslation();
 
-    const allItems = getAllNavItems();
+    const allItems = getAllNavItems(t);
 
     const navItems = allItems.filter(item => {
         if (item.domain !== currentDomain) return false;
@@ -134,13 +138,16 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
                 })}
             </nav>
 
-            <div className="border-t border-slate-100 p-4 bg-slate-50/50 shrink-0">
+            <div className="border-t border-slate-100 p-4 bg-slate-50/50 shrink-0 space-y-1">
+                <ThemeToggle />
+                <LanguageSwitcher />
+
                 {userRole === 'ADMIN' && (
                     <>
                         <Link
                             to="/settings"
                             onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
-                            className="flex w-full items-center gap-3 rounded-md mb-1 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                         >
                             <Settings className="h-5 w-5 text-slate-400" />
                             Paramètres
@@ -148,7 +155,7 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
                         <Link
                             to="/audit-logs"
                             onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
-                            className="flex w-full items-center gap-3 rounded-md mb-2 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                         >
                             <ShieldAlert className="h-5 w-5 text-indigo-400" />
                             Piste d'Audit

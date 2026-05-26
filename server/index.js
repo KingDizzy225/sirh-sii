@@ -155,7 +155,35 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ error: err.message });
 });
 
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: process.env.FRONTEND_URL || '*',
+        methods: ["GET", "POST", "PUT", "DELETE"]
+    }
+});
+
+// Expose io to the global object or requests if needed
+app.set('io', io);
+
+io.on('connection', (socket) => {
+    console.log(`[Socket] Un client est connecté: ${socket.id}`);
+    
+    // Exemple : le client peut rejoindre une "room" selon son rôle ou son ID
+    socket.on('join_room', (userId) => {
+        socket.join(`user_${userId}`);
+        console.log(`[Socket] ${socket.id} a rejoint la room user_${userId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`[Socket] Déconnexion: ${socket.id}`);
+    });
+});
+
 // Start the server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`🚀 SIRH Backend Server running on port ${PORT}`);
 });

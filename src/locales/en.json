@@ -1,0 +1,28 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "employees": "Employee Directory",
+    "leaves": "Leave Management",
+    "expenses": "Expense Reports",
+    "payroll": "Payroll Slips",
+    "recruitment": "Recruitment & Talent",
+    "learning": "Learning Catalog",
+    "performance": "360 Reviews",
+    "analytics": "HR Analytics",
+    "chatbot": "AI Assistant"
+  },
+  "topbar": {
+    "search": "Search...",
+    "profile": "Profile"
+  },
+  "dashboard": {
+    "welcome": "Welcome to your HRIS",
+    "subtitle": "Here is the key company information for today.",
+    "kpis": {
+      "employees": "Active Employees",
+      "turnover": "Turnover Rate",
+      "openPositions": "Open Positions",
+      "pendingLeaves": "Pending Leaves"
+    }
+  }
+}

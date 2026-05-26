@@ -1,0 +1,28 @@
+{
+  "sidebar": {
+    "dashboard": "Tableau de bord",
+    "employees": "Annuaire Collaborateurs",
+    "leaves": "Gestion des Congés",
+    "expenses": "Notes de Frais",
+    "payroll": "Bordereaux de Paie",
+    "recruitment": "Recrutement & Talents",
+    "learning": "Catalogue Formations",
+    "performance": "Évaluations 360",
+    "analytics": "HR Analytics",
+    "chatbot": "Assistant IA"
+  },
+  "topbar": {
+    "search": "Rechercher...",
+    "profile": "Profil"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue sur votre SIRH",
+    "subtitle": "Voici les informations clés de l'entreprise aujourd'hui.",
+    "kpis": {
+      "employees": "Collaborateurs Actifs",
+      "turnover": "Taux de Turnover",
+      "openPositions": "Postes Ouverts",
+      "pendingLeaves": "Congés en attente"
+    }
+  }
+}
