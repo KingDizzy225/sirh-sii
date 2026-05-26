@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Lock, Mail, ShieldCheck, Loader2, Users } from 'lucide-react';
+import { ServerStatus } from '../components/ui/ServerStatus';
 
 export function Login() {
     const [email, setEmail] = useState('');
@@ -129,6 +130,11 @@ export function Login() {
                         <CardTitle className="text-xl text-center text-white">Authentification</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
+                        {/* Status du Serveur Render */}
+                        <div className="mb-4">
+                            <ServerStatus />
+                        </div>
+
                         {/* SSO Buttons */}
                         <div className="grid grid-cols-2 gap-3">
                             <button

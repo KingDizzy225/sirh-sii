@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, Menu, ChevronDown, LogOut, Check, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationCenter } from '../NotificationCenter';
+import { ServerStatus } from '../ui/ServerStatus';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -154,7 +155,7 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
 
                     <div className="border-l border-slate-700 pl-2 ml-1 flex items-center gap-2">
                         <NotificationCenter />
-                        <span className="hidden xl:block text-[8px] font-black text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded uppercase tracking-tighter">V2.2 Live</span>
+                        <ServerStatus minimal />
                     </div>
                 </div>
 
