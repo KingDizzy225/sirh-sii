@@ -63,8 +63,8 @@ export const api = {
             });
             return await handleResponse(res);
         } catch (error) {
-            console.warn(`Fallback Démo API POST ${url}`, error);
-            return { data: { success: true, mock: true, ...body } };
+            console.error(`Erreur API POST ${url}:`, error);
+            throw error;
         }
     },
     put: async (url, body) => {
@@ -81,8 +81,8 @@ export const api = {
             });
             return await handleResponse(res);
         } catch (error) {
-            console.warn(`Fallback Démo API PUT ${url}`, error);
-            return { data: { success: true, mock: true, ...body } };
+            console.error(`Erreur API PUT ${url}:`, error);
+            throw error;
         }
     },
     patch: async (url, body) => {
@@ -99,21 +99,23 @@ export const api = {
             });
             return await handleResponse(res);
         } catch (error) {
-            console.warn(`Fallback Démo API PATCH ${url}`, error);
-            return { data: { success: true, mock: true, ...body } };
+            console.error(`Erreur API PATCH ${url}:`, error);
+            throw error;
         }
     },
-    delete: async (url) => {
+    delete: async (url, body) => {
         try {
             const fetchUrl = url.startsWith('http') ? url : `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+            const headers = getHeaders();
             const res = await fetch(fetchUrl, {
                 method: 'DELETE',
-                headers: getHeaders()
+                headers,
+                body: body ? JSON.stringify(body) : undefined
             });
             return await handleResponse(res);
         } catch (error) {
-            console.warn(`Fallback Démo API DELETE ${url}`, error);
-            return { data: { success: true, mock: true } };
+            console.error(`Erreur API DELETE ${url}:`, error);
+            throw error;
         }
     }
 };
