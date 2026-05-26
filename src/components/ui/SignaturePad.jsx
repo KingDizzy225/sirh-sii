@@ -1,95 +1,48 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { RefreshCcw } from 'lucide-react';
+import React, { useRef } from 'react';
+import SignatureCanvas from 'react-signature-canvas';
+import { Button } from './button';
+import { X, Check } from 'lucide-react';
 
-export function SignaturePad({ onSign }) {
-    const canvasRef = useRef(null);
-    const [isDrawing, setIsDrawing] = useState(false);
+export function SignaturePad({ onSign, onCancel }) {
+    const sigCanvas = useRef({});
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#0f172a';
-    }, []);
-
-    const startDrawing = (e) => {
-        const { offsetX, offsetY } = getCoordinates(e);
-        const ctx = canvasRef.current.getContext('2d');
-        ctx.beginPath();
-        ctx.moveTo(offsetX, offsetY);
-        setIsDrawing(true);
-    };
-
-    const draw = (e) => {
-        if (!isDrawing) return;
-        const { offsetX, offsetY } = getCoordinates(e);
-        const ctx = canvasRef.current.getContext('2d');
-        ctx.lineTo(offsetX, offsetY);
-        ctx.stroke();
-    };
-
-    const stopDrawing = () => {
-        if (isDrawing) {
-            const ctx = canvasRef.current.getContext('2d');
-            ctx.closePath();
-            setIsDrawing(false);
-            
-            // Notify parent
-            const dataUrl = canvasRef.current.toDataURL('image/png');
-            onSign(dataUrl);
+    const clear = () => sigCanvas.current.clear();
+    
+    const save = () => {
+        if (sigCanvas.current.isEmpty()) {
+            alert('Veuillez dessiner votre signature avant de valider.');
+            return;
         }
-    };
-
-    const getCoordinates = (e) => {
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        if (e.touches && e.touches.length > 0) {
-            return {
-                offsetX: e.touches[0].clientX - rect.left,
-                offsetY: e.touches[0].clientY - rect.top
-            };
-        }
-        return {
-            offsetX: e.nativeEvent ? e.nativeEvent.offsetX : e.clientX - rect.left,
-            offsetY: e.nativeEvent ? e.nativeEvent.offsetY : e.clientY - rect.top
-        };
-    };
-
-    const clearCanvas = () => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        onSign(null);
+        const signatureData = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png');
+        onSign(signatureData);
     };
 
     return (
-        <div className="flex flex-col items-center">
-            <div className="border-2 border-slate-300 border-dashed rounded-xl bg-slate-50 relative overflow-hidden touch-none">
-                <canvas
-                    ref={canvasRef}
-                    width={400}
-                    height={150}
-                    className="cursor-crosshair bg-white"
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    onTouchStart={startDrawing}
-                    onTouchMove={draw}
-                    onTouchEnd={stopDrawing}
+        <div className="flex flex-col space-y-4">
+            <div className="border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 relative">
+                <SignatureCanvas 
+                    ref={sigCanvas}
+                    penColor="blue"
+                    canvasProps={{ className: 'signature-canvas w-full h-48 rounded-lg cursor-crosshair' }}
                 />
+                <div className="absolute top-2 right-2 text-xs text-slate-400 select-none pointer-events-none">
+                    Signez ici
+                </div>
             </div>
-            <div className="flex justify-between w-full max-w-[400px] mt-2">
-                <span className="text-xs text-slate-400">Dessinez votre signature</span>
-                <button
-                    type="button"
-                    onClick={clearCanvas}
-                    className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium"
-                >
-                    <RefreshCcw size={12} /> Effacer
-                </button>
+            
+            <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={clear}>
+                    Effacer
+                </Button>
+                {onCancel && (
+                    <Button variant="ghost" onClick={onCancel}>
+                        Annuler
+                    </Button>
+                )}
+                <Button onClick={save} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
+                    <Check size={16} />
+                    Valider la Signature
+                </Button>
             </div>
         </div>
     );

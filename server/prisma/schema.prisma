@@ -109,6 +109,8 @@ model Payroll {
   employeeContributions   Float     @default(0)   @map("employee_contributions")
   netSalary               Float     @default(0)   @map("net_salary")
   pdfPath                 String?   @map("pdf_path")
+  signature               String?   // Base64 signature
+  signedAt                DateTime? @map("signed_at")
   status                  String    @default("DRAFT") // 'DRAFT', 'APPROVED', 'PAID'
   createdAt               DateTime  @default(now()) @map("created_at")
   updatedAt               DateTime  @updatedAt     @map("updated_at")

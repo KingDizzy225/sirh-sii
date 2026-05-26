@@ -21,6 +21,7 @@ import { Recruitment } from './pages/Recruitment';
 import { Settings } from './pages/Settings';
 import { AuditLogs } from './pages/AuditLogs';
 import { Performance } from './pages/Performance';
+import { PayslipViewer } from './pages/PayslipViewer';
 import { Onboarding } from './pages/Onboarding';
 import { Learning } from './pages/Learning';
 import { Support } from './pages/Support';
@@ -143,6 +144,7 @@ const AppContent = () => {
             <Route path="/leaves" element={<Leaves />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/absences" element={<Absences />} />
+            <Route path="/payroll/:id" element={<PayslipViewer />} />
             
             {/* Restricted Directory Routes */}
             <Route path="/employees" element={

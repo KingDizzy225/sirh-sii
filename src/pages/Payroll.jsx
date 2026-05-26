@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { useAuth } from '../context/AuthContext';
-import { Download, PlayCircle, FileText, CheckCircle2, Search, UserCheck } from 'lucide-react';
+import { Download, PlayCircle, FileText, CheckCircle2, Search, UserCheck, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
 
 export function Payroll() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const isHR = user?.role === 'HR' || user?.role === 'ADMIN';
 
     const [activeTab, setActiveTab] = useState(isHR ? 'run-payroll' : 'my-payslips');
@@ -315,10 +317,10 @@ export function Payroll() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <button
-                                                    onClick={() => handleDownloadPDF(pay.id)}
+                                                    onClick={() => navigate(`/payroll/${pay.id}`)}
                                                     className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors cursor-pointer border-none"
                                                 >
-                                                    <Download size={14} /> Télécharger
+                                                    <Eye size={14} /> Voir & Signer
                                                 </button>
                                             </TableCell>
                                         </TableRow>
@@ -471,10 +473,10 @@ export function Payroll() {
                                             <TableCell className="font-bold text-slate-900">{formatCurrency(pay.netSalary)}</TableCell>
                                             <TableCell className="text-right">
                                                 <button
-                                                    onClick={() => handleDownloadPDF(pay.id)}
+                                                    onClick={() => navigate(`/payroll/${pay.id}`)}
                                                     className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md bg-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-300 transition-colors cursor-pointer border-none"
                                                     >
-                                                    <FileText size={14} /> PDF
+                                                    <Eye size={14} /> Consulter
                                                 </button>
                                             </TableCell>
                                         </TableRow>

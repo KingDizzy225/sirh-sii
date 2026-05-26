@@ -2,13 +2,11 @@ const express = require('express');
 const router = express.Router();
 const employeeController = require('../controllers/employeeController');
 const orgChartController = require('../controllers/orgChartController');
-const auditTrail = require('../middleware/auditTrail');
 const requireRole = require('../middleware/roleMiddleware');
 const verifyToken = require('../middleware/authMiddleware');
 
-// Apply Audit Trail to all methods (it automatically filters for PUT/PATCH/DELETE)
+// Apply auth to all methods
 router.use(verifyToken);
-router.use(auditTrail);
 
 // Org Chart AI Integration
 router.post('/generate-org-chart', requireRole('Administrator', 'HR'), orgChartController.generateOrgChartWithAI);

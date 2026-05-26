@@ -137,6 +137,20 @@ const generatePayslipPDF = async (payroll, employee) => {
                .text(`Fait à Abidjan, le ${new Date().toLocaleDateString('fr-FR')}`, 50, y)
                .text('Ce bulletin de paie doit être conservé sans limitation de durée.', { align: 'center' });
             
+            // Render Signature
+            const signatureData = arguments[2] || payroll.signature;
+            if (signatureData) {
+                try {
+                    const base64Data = signatureData.replace(/^data:image\/(png|jpeg);base64,/, "");
+                    const sigBuffer = Buffer.from(base64Data, 'base64');
+                    doc.image(sigBuffer, 350, y - 40, { width: 120, fit: [120, 60] });
+                    doc.fillColor('#15803d').font('Helvetica-Bold').fontSize(8)
+                       .text('Signé Électroniquement', 350, y + 20);
+                } catch (e) {
+                    console.error("Failed to render signature image:", e);
+                }
+            }
+
             doc.end();
             writeStream.on('finish', () => {
                 resolve(`/uploads/payslips/${fileName}`);
@@ -264,4 +278,46 @@ const downloadPayslip = async (req, res) => {
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip };
+const getPayslip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const payroll = await prisma.payroll.findUnique({ where: { id }, include: { employee: true } });
+        if (!payroll) return res.status(404).json({ error: 'Fiche de paie introuvable' });
+        res.json(payroll);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const signPayroll = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { signature } = req.body; // Base64 string
+
+        const payroll = await prisma.payroll.findUnique({ where: { id }, include: { employee: true } });
+        if (!payroll) return res.status(404).json({ error: 'Fiche de paie introuvable' });
+
+        const updatedPayroll = await prisma.payroll.update({
+            where: { id },
+            data: {
+                signature,
+                signedAt: new Date(),
+                status: 'SIGNED'
+            }
+        });
+
+        // Régénérer le PDF avec la signature
+        const newPath = await generatePayslipPDF({
+            ...updatedPayroll,
+            grossSalary: updatedPayroll.baseSalary + updatedPayroll.overtimeHours + updatedPayroll.bonus, // Simplification pour le payload
+        }, payroll.employee, signature);
+        
+        await prisma.payroll.update({ where: { id }, data: { pdfPath: newPath } });
+
+        res.json({ success: true, message: 'Fiche de paie signée avec succès' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, signPayroll };

@@ -31,9 +31,17 @@ const auditLog = (req, res, next) => {
                 else if (req.originalUrl.includes('/api/recruitment')) tableName = 'Recruitment';
                 else tableName = req.originalUrl.split('/')[2] || 'Autre';
 
-                const recordId = req.params?.id || req.body?.employeeId || 'N/A';
+                // Récupération manuelle de l'ID depuis l'URL car req.params est vide au niveau global
+                const urlParts = req.originalUrl.split('?')[0].split('/').filter(Boolean);
+                const lastPart = urlParts[urlParts.length - 1];
+                let recordId = req.body?.employeeId || req.body?.id || 'N/A';
                 
-                const newData = { ...req.body };
+                // Si la dernière partie n'est pas le nom du module (ex: pas 'employees'), c'est probablement un ID
+                if (!['employees', 'leaves', 'payroll', 'performance', 'recruitment', 'bulk'].includes(lastPart)) {
+                    recordId = lastPart;
+                }
+                
+                const newData = req.body ? { ...req.body } : {};
                 if (newData.password) delete newData.password;
 
                 prisma.auditLog.create({
