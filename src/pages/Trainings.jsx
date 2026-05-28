@@ -340,12 +340,12 @@ export function Trainings() {
                             </div>
                             
                             <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                                {/* Vidéo (Simulée avec un placeholder YouTube) */}
-                                <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 shadow-inner">
+                                {/* Vidéo (Simulée avec un placeholder éducatif) */}
+                                <div className="aspect-video w-full max-w-3xl mx-auto rounded-xl overflow-hidden bg-slate-900 shadow-xl mb-12">
                                     <iframe 
                                         width="100%" 
                                         height="100%" 
-                                        src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                                        src="https://www.youtube.com/embed/jNQXAC9IVRw" 
                                         title="Formation Vidéo" 
                                         frameBorder="0" 
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
