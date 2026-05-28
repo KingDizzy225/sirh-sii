@@ -103,7 +103,7 @@ export function Payroll() {
             ...prev,
             [empId]: {
                 ...prev[empId],
-                [field]: parseFloat(value) || 0
+                [field]: value === '' ? '' : (parseFloat(value) || 0)
             }
         }));
     };
@@ -416,7 +416,7 @@ export function Payroll() {
                                                 <TableCell>
                                                     <input 
                                                         type="number" 
-                                                        value={payrollVariables[emp.id]?.baseSalary || 2500} 
+                                                        value={payrollVariables[emp.id]?.baseSalary || ''} 
                                                         onChange={(e) => handleVariableChange(emp.id, 'baseSalary', e.target.value)}
                                                         className="w-24 text-sm font-bold border rounded px-2 py-1 bg-slate-50"
                                                     />
