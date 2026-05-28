@@ -340,11 +340,22 @@ export function Trainings() {
                             </div>
                             
                             <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                                {/* Espace Vidéo (Désactivé) */}
-                                <div className="aspect-video w-full max-w-3xl mx-auto rounded-xl overflow-hidden bg-slate-900 shadow-xl mb-12 flex flex-col items-center justify-center text-slate-400">
-                                    <BookOpen size={48} className="mb-4 text-slate-600" />
-                                    <p className="font-medium text-lg text-slate-300">Contenu de formation textuel</p>
-                                    <p className="text-sm">Veuillez lire le cours et répondre au QCM ci-dessous.</p>
+                                {/* Contenu du cours généré par l'IA */}
+                                <div className="space-y-8 bg-white text-slate-800 rounded-xl p-6 shadow-sm border">
+                                    {activeTraining.modules && activeTraining.modules.length > 0 ? (
+                                        activeTraining.modules.map((mod, index) => (
+                                            <div key={mod.id || index} className="space-y-3">
+                                                <h4 className="text-xl font-bold text-blue-900 border-b pb-2">
+                                                    Chapitre {index + 1} : {mod.title}
+                                                </h4>
+                                                <p className="whitespace-pre-wrap text-slate-700 leading-relaxed">
+                                                    {mod.content}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-slate-500 italic text-center py-8">Aucun contenu textuel disponible pour ce module.</p>
+                                    )}
                                 </div>
 
                                 {/* QCM */}
