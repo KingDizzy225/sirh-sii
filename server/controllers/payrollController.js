@@ -223,6 +223,14 @@ const runPayroll = async (req, res) => {
             const employerContrib = gross * 0.15;                    // Part patronale CNPS ~15%
             const net = gross - empContrib - additionalDeductions;
             
+            // Supprimer l'ancienne paie pour cette période (éviter les doublons et les conflits de mémorisation)
+            await prisma.payroll.deleteMany({
+                where: {
+                    employeeId: employee.id,
+                    period: new Date(p.period)
+                }
+            });
+
             let pr = await prisma.payroll.create({
                 data: {
                     employeeId: employee.id,

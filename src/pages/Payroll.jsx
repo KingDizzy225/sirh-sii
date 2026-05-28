@@ -72,7 +72,13 @@ export function Payroll() {
                 const vars = {};
                 employeesData.forEach(emp => {
                     const empPayrolls = payrollsData.filter(p => p.employeeId === emp.id);
-                    empPayrolls.sort((a, b) => new Date(b.period) - new Date(a.period));
+                    empPayrolls.sort((a, b) => {
+                        const dateDiff = new Date(b.period) - new Date(a.period);
+                        if (dateDiff === 0 && a.createdAt && b.createdAt) {
+                            return new Date(b.createdAt) - new Date(a.createdAt);
+                        }
+                        return dateDiff;
+                    });
                     const latestPay = empPayrolls[0];
 
                     vars[emp.id] = {
