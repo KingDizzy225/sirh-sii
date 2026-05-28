@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { useAuth } from '../context/AuthContext';
 import { FileText, Sparkles, Download, Save, Trash2, Edit2, CheckCircle2, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '../lib/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -23,11 +24,13 @@ export function JobDescriptionStudio() {
 
     const loadJobs = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/job-descriptions`, { headers: { 'Authorization': `Bearer ${token}` } });
-            const data = await res.json();
-            setJobs(data);
+            // Utilisation de api.get pour bénéficier du parsing JSON sécurisé et de la gestion d'erreurs
+            const { data } = await api.get('/job-descriptions');
+            // Sécurité absolue : s'assurer que c'est toujours un tableau pour éviter le crash de map()
+            setJobs(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error(err);
+            console.error('Erreur chargement fiches de poste:', err);
+            setJobs([]); // Fallback
         } finally {
             setLoading(false);
         }
@@ -39,18 +42,14 @@ export function JobDescriptionStudio() {
         e.preventDefault();
         setGenerating(true);
         try {
-            const res = await fetch(`${API_URL}/api/job-descriptions/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ title: newTitle, department: newDept })
-            });
-            const data = await res.json();
+            const { data } = await api.post('/job-descriptions/generate', { title: newTitle, department: newDept });
             setNewTitle('');
             setNewDept('');
             await loadJobs();
             setActiveJob(data);
         } catch (err) {
-            console.error(err);
+            console.error('Erreur génération fiche de poste:', err);
+            // On pourrait ajouter un toast d'erreur ici si nécessaire
         } finally {
             setGenerating(false);
         }
@@ -60,30 +59,23 @@ export function JobDescriptionStudio() {
         if (!activeJob || !editorRef.current) return;
         const newContent = editorRef.current.innerHTML;
         try {
-            await fetch(`${API_URL}/api/job-descriptions/${activeJob.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ content: newContent, status: 'FINAL' })
-            });
+            await api.put(`/job-descriptions/${activeJob.id}`, { content: newContent, status: 'FINAL' });
             alert("Fiche de poste sauvegardée !");
             setActiveJob({ ...activeJob, content: newContent, status: 'FINAL' });
             loadJobs();
         } catch (err) {
-            console.error(err);
+            console.error('Erreur sauvegarde:', err);
         }
     };
 
     const handleDelete = async (id) => {
         if(!window.confirm("Supprimer cette fiche ?")) return;
         try {
-            await fetch(`${API_URL}/api/job-descriptions/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await api.delete(`/job-descriptions/${id}`);
             if (activeJob && activeJob.id === id) setActiveJob(null);
             loadJobs();
         } catch (err) {
-            console.error(err);
+            console.error('Erreur suppression:', err);
         }
     };
 
