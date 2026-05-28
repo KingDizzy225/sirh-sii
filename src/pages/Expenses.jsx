@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '../lib/api';
 
 export function Expenses() {
     const { user } = useAuth();
@@ -49,13 +50,11 @@ export function Expenses() {
     const fetchExpenses = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/expenses`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setExpenses(data);
+            const { data } = await api.get('/expenses');
+            setExpenses(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error fetching expenses", error);
+            setExpenses([]);
         } finally {
             setLoading(false);
         }
@@ -76,20 +75,15 @@ export function Expenses() {
         formData.append('receipt', file);
 
         try {
-            const res = await fetch(`${API_URL}/api/expenses/scan`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            if (res.ok) {
-                const result = await res.json();
-                setScanResult(result);
+            const { data } = await api.post('/expenses/scan', formData);
+            if (data) {
+                setScanResult(data);
                 setForm({
-                    amount: result.amount,
+                    amount: data.amount,
                     currency: 'FCFA',
-                    category: result.category,
-                    merchant: result.merchant,
-                    date: result.date || new Date().toISOString().split('T')[0]
+                    category: data.category,
+                    merchant: data.merchant,
+                    date: data.date || new Date().toISOString().split('T')[0]
                 });
             }
         } catch (error) {
@@ -116,37 +110,22 @@ export function Expenses() {
         if (selectedFile) formData.append('receipt', selectedFile);
 
         try {
-            const res = await fetch(`${API_URL}/api/expenses`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            if (res.ok) {
-                setShowAddModal(false);
-                setForm({ amount: '', currency: 'FCFA', category: 'Repas', merchant: '', date: new Date().toISOString().split('T')[0] });
-                setSelectedFile(null);
-                setScanResult(null);
-                fetchExpenses();
-            } else {
-                alert('Erreur lors de la soumission de la note de frais.');
-            }
+            await api.post('/expenses', formData);
+            setShowAddModal(false);
+            setForm({ amount: '', currency: 'FCFA', category: 'Repas', merchant: '', date: new Date().toISOString().split('T')[0] });
+            setSelectedFile(null);
+            setScanResult(null);
+            fetchExpenses();
         } catch (error) {
             console.error("Error saving expense", error);
-            alert('Erreur réseau. Veuillez réessayer.');
+            alert("Erreur lors de la soumission de la note de frais.");
         }
     };
 
     const handleStatusUpdate = async (id, status, reason = '') => {
         try {
-            const res = await fetch(`${API_URL}/api/expenses/${id}/status`, {
-                method: 'PATCH',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status, rejectionReason: reason })
-            });
-            if (res.ok) fetchExpenses();
+            await api.patch(`/expenses/${id}/status`, { status, rejectionReason: reason });
+            fetchExpenses();
         } catch (error) {
             console.error("Error updating status", error);
         }
