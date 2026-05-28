@@ -340,17 +340,11 @@ export function Trainings() {
                             </div>
                             
                             <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                                {/* Vidéo (Simulée avec un placeholder éducatif) */}
-                                <div className="aspect-video w-full max-w-3xl mx-auto rounded-xl overflow-hidden bg-slate-900 shadow-xl mb-12">
-                                    <iframe 
-                                        width="100%" 
-                                        height="100%" 
-                                        src="https://www.youtube.com/embed/jNQXAC9IVRw" 
-                                        title="Formation Vidéo" 
-                                        frameBorder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                        allowFullScreen
-                                    ></iframe>
+                                {/* Espace Vidéo (Désactivé) */}
+                                <div className="aspect-video w-full max-w-3xl mx-auto rounded-xl overflow-hidden bg-slate-900 shadow-xl mb-12 flex flex-col items-center justify-center text-slate-400">
+                                    <BookOpen size={48} className="mb-4 text-slate-600" />
+                                    <p className="font-medium text-lg text-slate-300">Contenu de formation textuel</p>
+                                    <p className="text-sm">Veuillez lire le cours et répondre au QCM ci-dessous.</p>
                                 </div>
 
                                 {/* QCM */}
