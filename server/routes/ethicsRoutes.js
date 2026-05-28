@@ -9,7 +9,7 @@ router.post('/submit', ethicsController.submitReport);
 router.get('/status/:trackingId', ethicsController.checkStatus);
 
 // Protected routes (Admin / Compliance only - here defaulted to ADMIN/HR)
-router.get('/', verifyToken, requireRole(['Administrator', 'HR']), ethicsController.getReports);
-router.put('/:id', verifyToken, requireRole(['Administrator', 'HR']), ethicsController.updateReport);
+router.get('/', verifyToken, requireRole(['ADMIN', 'HR', 'Administrator', 'HR_MANAGER']), ethicsController.getReports);
+router.put('/:id', verifyToken, requireRole(['ADMIN', 'HR', 'Administrator', 'HR_MANAGER']), ethicsController.updateReport);
 
 module.exports = router;

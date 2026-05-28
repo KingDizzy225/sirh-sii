@@ -68,26 +68,48 @@ export function Payroll() {
                 const employeesData = empRes.data.employees || empRes.data;
                 setEmployees(employeesData);
                 
-                // Initialize variables based on latest payroll history
+                // Initialize variables based on selected month, or fall back to latest payroll history
                 const vars = {};
                 employeesData.forEach(emp => {
                     const empPayrolls = payrollsData.filter(p => p.employeeId === emp.id);
-                    empPayrolls.sort((a, b) => {
-                        const dateDiff = new Date(b.period) - new Date(a.period);
-                        if (dateDiff === 0 && a.createdAt && b.createdAt) {
-                            return new Date(b.createdAt) - new Date(a.createdAt);
+                    
+                    // Look for existing payroll for the selected month
+                    const currentMonthPay = empPayrolls.find(p => {
+                        try {
+                            const dateIso = new Date(p.period).toISOString();
+                            return dateIso.substring(0, 7) === selectedMonth;
+                        } catch (e) {
+                            return false;
                         }
-                        return dateDiff;
                     });
-                    const latestPay = empPayrolls[0];
 
-                    vars[emp.id] = {
-                        baseSalary: latestPay ? latestPay.baseSalary : 350000, // Garde le dernier salaire connu
-                        overtimeHours: 0,
-                        leaveDays: 0,
-                        bonus: 0,
-                        deductions: 0
-                    };
+                    if (currentMonthPay) {
+                        vars[emp.id] = {
+                            baseSalary: currentMonthPay.baseSalary,
+                            overtimeHours: currentMonthPay.overtimeHours || 0,
+                            leaveDays: currentMonthPay.leaveDays || 0,
+                            bonus: currentMonthPay.bonus || 0,
+                            deductions: currentMonthPay.deductions || 0
+                        };
+                    } else {
+                        // Fallback to latest payroll overall for baseSalary, others are 0
+                        empPayrolls.sort((a, b) => {
+                            const dateDiff = new Date(b.period) - new Date(a.period);
+                            if (dateDiff === 0 && a.createdAt && b.createdAt) {
+                                return new Date(b.createdAt) - new Date(a.createdAt);
+                            }
+                            return dateDiff;
+                        });
+                        const latestPay = empPayrolls[0];
+
+                        vars[emp.id] = {
+                            baseSalary: latestPay ? latestPay.baseSalary : 350000,
+                            overtimeHours: 0,
+                            leaveDays: 0,
+                            bonus: 0,
+                            deductions: 0
+                        };
+                    }
                 });
                 setPayrollVariables(vars);
             }
@@ -102,7 +124,7 @@ export function Payroll() {
         } else {
             loadMyPayslips();
         }
-    }, [activeTab, isHR]);
+    }, [activeTab, isHR, selectedMonth]);
 
     const handleVariableChange = (empId, field, value) => {
         setPayrollVariables(prev => ({

@@ -7,9 +7,9 @@ const verifyToken = require('../middleware/authMiddleware');
 router.use(verifyToken);
 
 router.get('/', jobDescriptionController.getJobDescriptions);
-router.post('/generate', requireRole('Administrator', 'HR'), jobDescriptionController.generateJobDescription);
+router.post('/generate', requireRole('ADMIN', 'HR', 'Administrator', 'HR_MANAGER'), jobDescriptionController.generateJobDescription);
 router.get('/:id', jobDescriptionController.getJobDescriptionById);
-router.put('/:id', requireRole('Administrator', 'HR'), jobDescriptionController.updateJobDescription);
-router.delete('/:id', requireRole('Administrator', 'HR'), jobDescriptionController.deleteJobDescription);
+router.put('/:id', requireRole('ADMIN', 'HR', 'Administrator', 'HR_MANAGER'), jobDescriptionController.updateJobDescription);
+router.delete('/:id', requireRole('ADMIN', 'HR', 'Administrator', 'HR_MANAGER'), jobDescriptionController.deleteJobDescription);
 
 module.exports = router;

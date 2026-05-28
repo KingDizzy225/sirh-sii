@@ -4,6 +4,15 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+const getRatingScore = (rating) => {
+    if (!rating) return 3.0;
+    if (rating.includes('Dépasse') || rating.includes('dépasse')) return 4.5;
+    if (rating.includes('Répond') || rating.includes('répond')) return 3.5;
+    if (rating.includes('Attente') || rating.includes('attente')) return 3.0;
+    if (rating.includes('Insuffisant') || rating.includes('Besoin') || rating.includes('insuffisant') || rating.includes('besoin')) return 1.5;
+    return 3.0;
+};
+
 exports.getDashboardAnalytics = async (req, res) => {
     try {
         // 1. Effectifs de base
@@ -268,7 +277,7 @@ exports.getPredictiveAnalytics = async (req, res) => {
             include: {
                 leaves: { select: { type: true, status: true, durationDays: true } },
                 payrolls: { select: { netSalary: true, status: true } },
-                performanceReviews: { select: { overallScore: true } }
+                performanceReviews: { select: { rating: true } }
             }
         });
 
@@ -279,7 +288,7 @@ exports.getPredictiveAnalytics = async (req, res) => {
             const totalLeaves = emp.leaves.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + (l.durationDays || 0), 0);
             const sickLeaves = emp.leaves.filter(l => l.status === 'APPROVED' && l.type === 'Congé Maladie').reduce((sum, l) => sum + (l.durationDays || 0), 0);
             const avgSalary = emp.payrolls.length > 0 ? (emp.payrolls[0].netSalary || 0) : 0;
-            const avgScore = emp.performanceReviews.length > 0 ? (emp.performanceReviews[0].overallScore || 3) : 3;
+            const avgScore = emp.performanceReviews.length > 0 ? getRatingScore(emp.performanceReviews[0].rating) : 3;
             const yearsOfService = (new Date() - new Date(emp.hireDate)) / (1000 * 60 * 60 * 24 * 365);
 
             return {
@@ -380,7 +389,7 @@ exports.calculateFlightRisk = async (req, res) => {
             include: {
                 leaves: { select: { type: true, status: true, durationDays: true } },
                 payrolls: { select: { netSalary: true } },
-                performanceReviews: { select: { overallScore: true } },
+                performanceReviews: { select: { rating: true } },
                 timeLogs: { orderBy: { timestamp: 'desc' }, take: 10 }
             }
         });
@@ -389,7 +398,7 @@ exports.calculateFlightRisk = async (req, res) => {
 
         const totalLeaves = emp.leaves.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + (l.durationDays || 0), 0);
         const avgSalary = emp.payrolls.length > 0 ? (emp.payrolls[0].netSalary || 0) : 0;
-        const avgScore = emp.performanceReviews.length > 0 ? (emp.performanceReviews[0].overallScore || 3) : 3;
+        const avgScore = emp.performanceReviews.length > 0 ? getRatingScore(emp.performanceReviews[0].rating) : 3;
         const yearsOfService = (new Date() - new Date(emp.hireDate)) / (1000 * 60 * 60 * 24 * 365);
 
         const promptData = {
@@ -403,7 +412,7 @@ exports.calculateFlightRisk = async (req, res) => {
         };
 
         const localGenAI = new GoogleGenerativeAI(apiKey);
-        const localModel = localGenAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const localModel = localGenAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const systemPrompt = `Tu es un expert RH en analytique prédictive.
         Analyse les données de cet employé et retourne un score de risque de démission (Flight Risk) entre 0 et 100, et une raison détaillée de max 2 phrases.

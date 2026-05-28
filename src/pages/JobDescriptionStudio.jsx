@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { FileText, Sparkles, Download, Save, Trash2, Edit2, CheckCircle2, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '../lib/api';
+import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -47,9 +48,10 @@ export function JobDescriptionStudio() {
             setNewDept('');
             await loadJobs();
             setActiveJob(data);
+            toast.success("Fiche de poste générée avec succès !");
         } catch (err) {
             console.error('Erreur génération fiche de poste:', err);
-            // On pourrait ajouter un toast d'erreur ici si nécessaire
+            toast.error(err.response?.data?.error || err.message || "Erreur de génération de fiche de poste");
         } finally {
             setGenerating(false);
         }
@@ -60,11 +62,12 @@ export function JobDescriptionStudio() {
         const newContent = editorRef.current.innerHTML;
         try {
             await api.put(`/job-descriptions/${activeJob.id}`, { content: newContent, status: 'FINAL' });
-            alert("Fiche de poste sauvegardée !");
+            toast.success("Fiche de poste sauvegardée !");
             setActiveJob({ ...activeJob, content: newContent, status: 'FINAL' });
             loadJobs();
         } catch (err) {
             console.error('Erreur sauvegarde:', err);
+            toast.error("Erreur lors de la sauvegarde");
         }
     };
 
@@ -73,9 +76,11 @@ export function JobDescriptionStudio() {
         try {
             await api.delete(`/job-descriptions/${id}`);
             if (activeJob && activeJob.id === id) setActiveJob(null);
+            toast.success("Fiche de poste supprimée !");
             loadJobs();
         } catch (err) {
             console.error('Erreur suppression:', err);
+            toast.error("Erreur lors de la suppression");
         }
     };
 
