@@ -8,8 +8,13 @@ export function ServerStatus({ minimal = false }) {
     useEffect(() => {
         const checkHealth = async () => {
             try {
-                // api.js throws on error now, so if it succeeds, backend is online!
-                await api.get('/health');
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                const healthUrl = API_URL.endsWith('/api') ? `${API_URL}/health` : `${API_URL}/api/health`;
+                
+                // Utilisation de fetch direct car api.get cache silencieusement l'erreur via un mock
+                const res = await fetch(healthUrl);
+                if (!res.ok) throw new Error('Serveur injoignable');
+                
                 setStatus('online');
             } catch (error) {
                 setStatus('offline');
