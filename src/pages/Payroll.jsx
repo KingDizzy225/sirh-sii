@@ -52,16 +52,31 @@ export function Payroll() {
     const loadEmployeesAndPayrolls = async () => {
         if (!isHR) return;
         try {
-            // Employees
-            const empRes = await api.get(`/employees`);
+            // Fetch employees and payrolls concurrently
+            const [empRes, payRes] = await Promise.all([
+                api.get('/employees'),
+                api.get('/payrolls')
+            ]);
+            
+            let payrollsData = [];
+            if (payRes.data) {
+                payrollsData = payRes.data;
+                setAllPayrolls(payrollsData);
+            }
+
             if (empRes.data) {
-                const data = empRes.data.employees || empRes.data;
-                setEmployees(data);
-                // Initialize variables
+                const employeesData = empRes.data.employees || empRes.data;
+                setEmployees(employeesData);
+                
+                // Initialize variables based on latest payroll history
                 const vars = {};
-                data.forEach(emp => {
+                employeesData.forEach(emp => {
+                    const empPayrolls = payrollsData.filter(p => p.employeeId === emp.id);
+                    empPayrolls.sort((a, b) => new Date(b.period) - new Date(a.period));
+                    const latestPay = empPayrolls[0];
+
                     vars[emp.id] = {
-                        baseSalary: 350000, // Démo par défaut (FCFA)
+                        baseSalary: latestPay ? latestPay.baseSalary : 350000, // Garde le dernier salaire connu
                         overtimeHours: 0,
                         leaveDays: 0,
                         bonus: 0,
@@ -69,12 +84,6 @@ export function Payroll() {
                     };
                 });
                 setPayrollVariables(vars);
-            }
-
-            // All Payrolls history
-            const payRes = await api.get(`/payrolls`);
-            if (payRes.data) {
-                setAllPayrolls(payRes.data);
             }
         } catch (error) {
             console.error(error);
