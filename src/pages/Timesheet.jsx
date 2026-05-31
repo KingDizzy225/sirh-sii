@@ -106,6 +106,7 @@ export function Timesheet() {
     // Tab 4: QR Pointage States
     const [qrCodes, setQrCodes] = useState({});
     const [qrSearch, setQrSearch] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const showNotif = (msg) => {
         setNotification(msg);
