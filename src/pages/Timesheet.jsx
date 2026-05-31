@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Input } from '../components/ui/input';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
+import { cn } from '@/lib/utils';
+
 import { 
     Clock, Plus, Check, Save, Trash2, ChevronLeft, ChevronRight, Moon, 
     AlertTriangle, User, Users, X, Send, Inbox, MessageSquare, Calendar, 

@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
+import { cn } from '@/lib/utils';
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
