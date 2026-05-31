@@ -45,11 +45,8 @@ const getAllNavItems = (t) => [
     { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'Employés', permission: 'employees:edit' },
 
     // GESTION RH -> PILOTAGE RH
-    { name: 'Pointages (GTA)', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
-    { name: 'Centre de Demandes', path: '/request-center', icon: Inbox, domain: 'Pilotage RH', permission: 'dashboard:view' },
-    { name: 'Gestion des Absences', path: '/absences', icon: AlertTriangle, domain: 'Pilotage RH', permission: 'dashboard:view' },
-    { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Temps, Absences & Demandes', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Paie & Rémunérations', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: t('sidebar.learning', 'Espace Formation (LMS)'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
     { name: 'Talents & GPEC', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Générateur Workflows', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },

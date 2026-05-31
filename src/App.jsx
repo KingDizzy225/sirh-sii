@@ -36,7 +36,6 @@ import { Workflows } from './pages/Workflows';
 import { HSE } from './pages/HSE';
 import { Assets } from './pages/Assets';
 import { Analytics } from './pages/Analytics';
-import { Compensation } from './pages/Compensation';
 import { Announcements } from './pages/Announcements';
 import { SalaryAdvances } from './pages/SalaryAdvances';
 import { MedicalVisits } from './pages/MedicalVisits';
@@ -45,7 +44,6 @@ import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
 import { PublicCareers } from './pages/PublicCareers';
 import { PublicSignature } from './pages/PublicSignature';
-import { Absences } from './pages/Absences';
 
 // V5 New Components
 import { Offboarding } from './pages/Offboarding';
@@ -57,8 +55,6 @@ import { Benefits } from './pages/Benefits';
 import { Ethics } from './pages/Ethics';
 import { Subcontractors } from './pages/Subcontractors';
 import { DeiDashboard } from './pages/DeiDashboard';
-import { RequestCenter } from './pages/RequestCenter';
-import { QRPointage } from './pages/QRPointage';
 
 import { FloatingChat } from './components/FloatingChat';
 import { CareerPath } from './pages/CareerPath';
@@ -140,7 +136,11 @@ const AppContent = () => {
             {/* Employee Accessible Routes (Self-Service) */}
             <Route path="/leaves" element={<Leaves />} />
             <Route path="/expenses" element={<Expenses />} />
-            <Route path="/absences" element={<Absences />} />
+            <Route path="/absences" element={
+              <ProtectedRoute>
+                <Timesheet />
+              </ProtectedRoute>
+            } />
             <Route path="/payroll/:id" element={<PayslipViewer />} />
             
             {/* Restricted Directory Routes */}
@@ -188,17 +188,17 @@ const AppContent = () => {
             {/* Other Restricted Routes */}
             <Route path="/request-center" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <RequestCenter />
+                <Timesheet />
               </ProtectedRoute>
             } />
             <Route path="/timesheet" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+              <ProtectedRoute>
                 <Timesheet />
               </ProtectedRoute>
             } />
             <Route path="/qr-pointage" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <QRPointage />
+                <Timesheet />
               </ProtectedRoute>
             } />
             <Route path="/performance" element={
@@ -303,7 +303,7 @@ const AppContent = () => {
 
             <Route path="/compensation" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <Compensation />
+                <Payroll />
               </ProtectedRoute>
             } />
 
