@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { 
     Clock, Plus, Check, Save, Trash2, ChevronLeft, ChevronRight, Moon, 
     AlertTriangle, User, Users, X, Send, Inbox, MessageSquare, Calendar, 
-    CreditCard, FileText, QrCode, Download, Eye, CheckCircle2, Upload, Filter,
+    CreditCard, FileText, QrCode, Download, Eye, CheckCircle2, Upload, Filter, Search,
     Sparkles, ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
