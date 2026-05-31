@@ -7,6 +7,8 @@ export function CareerPath() {
     const { user } = useAuth();
     const [careerData, setCareerData] = useState(null);
     const [selectedRole, setSelectedRole] = useState(null);
+    const [selectedStartRole, setSelectedStartRole] = useState('');
+    const [allRolesList, setAllRolesList] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -29,10 +31,21 @@ export function CareerPath() {
                         { source: 'Développeur Fullstack', target: 'Product Manager' },
                         { source: 'Lead Tech', target: 'Architecte Logiciel' },
                         { source: 'Lead Tech', target: 'Engineering Manager' }
+                    ],
+                    allRoleTitles: [
+                        'Développeur Fullstack',
+                        'Lead Tech',
+                        'Architecte Logiciel',
+                        'Engineering Manager',
+                        'Product Manager'
                     ]
                 };
 
-                const res = await fetch(`${API_URL}/api/career/path/${user.id}`, {
+                const url = selectedStartRole 
+                    ? `${API_URL}/api/career/path/${user.id}?startRole=${encodeURIComponent(selectedStartRole)}`
+                    : `${API_URL}/api/career/path/${user.id}`;
+
+                const res = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }).catch(() => null);
 
@@ -45,8 +58,14 @@ export function CareerPath() {
                 }
 
                 setCareerData(data);
+                if (data.allRoleTitles) {
+                    setAllRolesList(data.allRoleTitles);
+                }
                 const current = data.nodes.find(n => n.isCurrent);
                 setSelectedRole(current);
+                if (!selectedStartRole && data.currentRole) {
+                    setSelectedStartRole(data.currentRole);
+                }
             } catch (err) {
                 console.error("Failed to fetch career data", err);
             } finally {
@@ -55,7 +74,7 @@ export function CareerPath() {
         };
 
         if (user?.id) fetchCareerData();
-    }, [user]);
+    }, [user, selectedStartRole]);
 
     if (isLoading) {
         return (
@@ -88,7 +107,7 @@ export function CareerPath() {
     return (
         <div className="flex-1 h-screen flex flex-col bg-[#0f172a] text-white overflow-hidden">
             {/* Header Area */}
-            <div className="p-8 pb-0 z-10">
+            <div className="p-8 pb-0 z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -101,6 +120,27 @@ export function CareerPath() {
                         Visualisez votre trajectoire chez SII et projetez-vous vers l'avenir.
                     </p>
                 </motion.div>
+
+                {allRolesList.length > 0 && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-3 self-start md:self-auto bg-slate-800/60 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10"
+                    >
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Poste à explorer :</span>
+                        <select 
+                            value={selectedStartRole}
+                            onChange={(e) => setSelectedStartRole(e.target.value)}
+                            className="bg-transparent border-none text-white text-sm font-bold focus:ring-0 focus:outline-none cursor-pointer pr-8"
+                        >
+                            {allRolesList.map((roleTitle) => (
+                                <option key={roleTitle} value={roleTitle} className="bg-slate-900 text-white font-medium">
+                                    {roleTitle}
+                                </option>
+                            ))}
+                        </select>
+                    </motion.div>
+                )}
             </div>
 
             <div className="flex-1 flex flex-col lg:flex-row relative">
