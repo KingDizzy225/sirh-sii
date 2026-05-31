@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, Target, Star, ChevronRight, Info, Award, BrainCircuit, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
 export function CareerPath() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [careerData, setCareerData] = useState(null);
     const [selectedRole, setSelectedRole] = useState(null);
     const [selectedStartRole, setSelectedStartRole] = useState('');
@@ -299,7 +302,13 @@ export function CareerPath() {
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20"
+                                        onClick={() => {
+                                            toast.success(`Plan de préparation activé pour : ${selectedRole.title}. Redirection vers les formations...`);
+                                            setTimeout(() => {
+                                                navigate('/trainings');
+                                            }, 1500);
+                                        }}
+                                        className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20 cursor-pointer"
                                     >
                                         Se préparer à ce rôle
                                         <ArrowRight size={18} />
