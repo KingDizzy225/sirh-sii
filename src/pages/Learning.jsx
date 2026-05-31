@@ -54,7 +54,7 @@ export function Learning() {
         setLoading(true);
         try {
             // Load courses/sessions
-            const data = await api.get('/trainings');
+            const { data } = await api.get('/trainings');
             const colors = [
                 'from-blue-600 to-indigo-700', 
                 'from-emerald-600 to-teal-700', 
@@ -228,7 +228,7 @@ export function Learning() {
             showNotification('Module de cours ajouté !');
             setModuleForm({ title: '', content: '', mediaUrl: '' });
             
-            const updated = await api.get('/trainings');
+            const { data: updated } = await api.get('/trainings');
             setActiveCourse(updated.find(c => c.id === activeCourse.id));
             fetchAllData();
         } catch (err) {
@@ -241,7 +241,7 @@ export function Learning() {
             await api.delete(`/trainings/modules/${moduleId}`);
             showNotification('Module de cours supprimé.');
             
-            const updated = await api.get('/trainings');
+            const { data: updated } = await api.get('/trainings');
             setActiveCourse(updated.find(c => c.id === activeCourse.id));
             fetchAllData();
         } catch (err) {
@@ -260,7 +260,7 @@ export function Learning() {
             showNotification('Module marqué comme terminé !');
             fetchAllData();
             
-            const updated = await api.get('/trainings');
+            const { data: updated } = await api.get('/trainings');
             const updatedCourse = updated.find(c => c.id === activeCourse.id);
             setActiveCourse(updatedCourse);
 
@@ -310,7 +310,7 @@ export function Learning() {
                 fetchAllData();
                 
                 // Refresh course progress representation
-                const updated = await api.get('/trainings');
+                const { data: updated } = await api.get('/trainings');
                 setActiveCourse(updated.find(c => c.id === activeCourse.id));
             } catch (err) {
                 console.error("Erreur enregistrement validation QCM", err);
