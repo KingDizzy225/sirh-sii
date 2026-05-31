@@ -230,7 +230,7 @@ exports.generateAITraining = async (req, res) => {
         if (!topic) return res.status(400).json({ error: 'Thème requis' });
 
         const prompt = `Tu es un expert RH et ingénieur pédagogique. Le RH veut créer un cours sur le thème suivant : "${topic}".
-        Génère une session de formation complète avec exactement 3 modules (chapitres).
+        Génère une session de formation complète avec exactement 3 modules (chapitres), ainsi qu'un quiz de validation final contenant 5 questions à choix multiples (QCM) avec chacune 4 options de réponse.
         Le format de réponse doit être STRICTEMENT un objet JSON valide, SANS balises markdown, avec cette structure :
         {
             "title": "Titre accrocheur du cours",
@@ -248,6 +248,33 @@ exports.generateAITraining = async (req, res) => {
                 {
                     "title": "Titre du chapitre 3",
                     "content": "Contenu pédagogique détaillé..."
+                }
+            ],
+            "quiz": [
+                {
+                    "question": "Question 1",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "answer": "La bonne option textuelle (doit être exactement l'une des options proposées)"
+                },
+                {
+                    "question": "Question 2",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "answer": "La bonne option textuelle..."
+                },
+                {
+                    "question": "Question 3",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "answer": "La bonne option textuelle..."
+                },
+                {
+                    "question": "Question 4",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "answer": "La bonne option textuelle..."
+                },
+                {
+                    "question": "Question 5",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "answer": "La bonne option textuelle..."
                 }
             ]
         }`;
@@ -269,7 +296,7 @@ exports.generateAITraining = async (req, res) => {
                 description: courseData.description,
                 trainerName: 'IA (Gemini)',
                 date: new Date(),
-                durationHours: courseData.durationHours,
+                durationHours: parseFloat(courseData.durationHours) || 2.0,
                 status: 'Active'
             }
         });
@@ -284,6 +311,19 @@ exports.generateAITraining = async (req, res) => {
                 }
             });
         });
+
+        // Ajouter le QCM final s'il est présent
+        if (Array.isArray(courseData.quiz) && courseData.quiz.length > 0) {
+            modulePromises.push(prisma.courseModule.create({
+                data: {
+                    sessionId: trainingSession.id,
+                    title: "QCM de Validation",
+                    content: JSON.stringify(courseData.quiz),
+                    mediaUrl: "quiz",
+                    orderSequence: courseData.modules.length
+                }
+            }));
+        }
 
         await Promise.all(modulePromises);
 
@@ -317,14 +357,32 @@ exports.generateAITraining = async (req, res) => {
                     {
                         sessionId: fallbackSession.id,
                         title: "Module 1 - Introduction et Fondamentaux",
-                        content: `Bienvenue dans cette formation sur : ${topic}.\n\nCe premier module aborde les bases fondamentales. Assurez-vous d'avoir pris connaissance des prérequis.`,
+                        content: `Bienvenue dans cette formation sur : ${topic}.\n\nCe premier module aborde les bases fondamentales de ${topic}. Prenez le temps de lire ce contenu pour acquérir les connaissances nécessaires.`,
                         orderSequence: 0
                     },
                     {
                         sessionId: fallbackSession.id,
                         title: "Module 2 - Concepts Avancés",
-                        content: `Maintenant que vous maîtrisez les bases de ${topic}, plongeons dans des cas d'utilisation plus complexes.`,
+                        content: `Maintenant que vous maîtrisez les bases de ${topic}, plongeons dans des cas d'utilisation et applications pratiques dans le milieu professionnel.`,
                         orderSequence: 1
+                    },
+                    {
+                        sessionId: fallbackSession.id,
+                        title: "QCM de Validation",
+                        content: JSON.stringify([
+                            {
+                                question: `Quel est le sujet principal abordé dans cette formation ?`,
+                                options: [`${topic}`, "Un sujet de test aléatoire", "Rien du tout"],
+                                answer: `${topic}`
+                            },
+                            {
+                                question: "Avez-vous lu l'intégralité du contenu des modules ?",
+                                options: ["Oui, j'ai lu tous les modules", "Non, pas encore"],
+                                answer: "Oui, j'ai lu tous les modules"
+                            }
+                        ]),
+                        mediaUrl: "quiz",
+                        orderSequence: 2
                     }
                 ]
             });

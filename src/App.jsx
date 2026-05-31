@@ -38,7 +38,6 @@ import { HSE } from './pages/HSE';
 import { Assets } from './pages/Assets';
 import { Analytics } from './pages/Analytics';
 import { Compensation } from './pages/Compensation';
-import { Trainings } from './pages/Trainings';
 import { Announcements } from './pages/Announcements';
 import { SalaryAdvances } from './pages/SalaryAdvances';
 import { MedicalVisits } from './pages/MedicalVisits';
@@ -211,7 +210,7 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
             <Route path="/learning" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+              <ProtectedRoute>
                 <Learning />
               </ProtectedRoute>
             } />
@@ -312,8 +311,8 @@ const AppContent = () => {
             } />
 
             <Route path="/trainings" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <Trainings />
+              <ProtectedRoute>
+                <Learning />
               </ProtectedRoute>
             } />
 
