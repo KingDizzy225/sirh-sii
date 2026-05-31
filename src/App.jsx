@@ -12,7 +12,6 @@ import { EmployeeProfile } from './pages/EmployeeProfile';
 import { OrgChart } from './pages/OrgChart';
 import { OrgSimulation } from './pages/OrgSimulation';
 import { PayEquityScanner } from './pages/PayEquityScanner';
-import { SuccessionPlanning } from './pages/SuccessionPlanning';
 import { JobDescriptionStudio } from './pages/JobDescriptionStudio';
 import { RetentionCenter } from './pages/RetentionCenter';
 import { Leaves } from './pages/Leaves';
@@ -42,8 +41,6 @@ import { Announcements } from './pages/Announcements';
 import { SalaryAdvances } from './pages/SalaryAdvances';
 import { MedicalVisits } from './pages/MedicalVisits';
 import { Rewards } from './pages/Rewards';
-import { GPEC } from './pages/GPEC';
-import { TalentManagement } from './pages/TalentManagement';
 import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
 import { PublicCareers } from './pages/PublicCareers';
@@ -174,7 +171,7 @@ const AppContent = () => {
             } />
             <Route path="/succession-planning" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <SuccessionPlanning />
+                <SkillsMatrix />
               </ProtectedRoute>
             } />
             <Route path="/job-studio" element={
@@ -333,12 +330,12 @@ const AppContent = () => {
             <Route path="/rewards" element={<Rewards />} />
             <Route path="/gpec" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <GPEC />
+                <SkillsMatrix />
               </ProtectedRoute>
             } />
             <Route path="/talent-management" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <TalentManagement />
+                <SkillsMatrix />
               </ProtectedRoute>
             } />
 

@@ -51,10 +51,7 @@ const getAllNavItems = (t) => [
     { name: 'Traitement Paie', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Rémunération', path: '/compensation', icon: PiggyBank, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: t('sidebar.learning', 'Espace Formation (LMS)'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
-    { name: 'Compétences', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
-    { name: 'GPEC++', path: '/gpec', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
-    { name: 'Gestion Talents (9-Box)', path: '/talent-management', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
-    { name: 'Plan de Succession', path: '/succession-planning', icon: Target, domain: 'Pilotage RH', permission: 'skills:view' },
+    { name: 'Talents & GPEC', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Générateur Workflows', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
     
