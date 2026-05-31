@@ -23,13 +23,20 @@ exports.generateAIDocument = async (req, res) => {
         }
 
         // 1. Build the prompt for Gemini
+        const nom = formData?.nom || employee.lastName;
+        const prenoms = formData?.prenoms || employee.firstName;
+        const nationalite = formData?.nationalite || employee.nationality || "Ivoirienne";
+        const fonction = formData?.fonction || employee.positionTitle;
+        const departement = formData?.departement || employee.department;
+
         let prompt = `Rédige un document RH officiel pour l'entreprise ivoirienne SII.\nAdapte strictement le contenu au Code du Travail de la Côte d'Ivoire (les termes, devises en FCFA, etc.).\nLe document est de type: ${type}.\n`;
-        prompt += `Employé: ${employee.firstName} ${employee.lastName}, de département ${employee.department}.\n`;
+        prompt += `Employé concerné: ${prenoms} ${nom}, de nationalité ${nationalite}, occupant le poste de ${fonction} au sein du département ${departement}.\n`;
         prompt += `Informations complémentaires du formulaire:\n`;
         for (const [key, val] of Object.entries(formData || {})) {
+             if (['nom', 'prenoms', 'nationalite', 'fonction', 'departement'].includes(key)) continue;
              prompt += `- ${key}: ${val}\n`;
         }
-        prompt += `\nAssure-toi que le ton soit très formel, juridique et sans fioritures (pas de bla-bla d\'introduction). Le corps du texte uniquement sans objet ni destinataire ni signatures (qui seront générés dynamiquement en bas de document).`;
+        prompt += `\nAssure-toi que le ton soit très formel, juridique et sans fioritures (pas de bla-bla d'introduction). Le corps du texte uniquement sans objet ni destinataire ni signatures (qui seront générés dynamiquement en bas de document).`;
 
         // 2. Call Gemini
         const result = await aiModel.generateContent(prompt);
@@ -37,7 +44,7 @@ exports.generateAIDocument = async (req, res) => {
         const generatedText = response.text();
 
         // 3. Generate PDF
-        const docTitle = `${type} - ${employee.firstName} ${employee.lastName}`;
+        const docTitle = `${type} - ${prenoms} ${nom}`;
         const fileName = `ai_generated_${Date.now()}.pdf`;
         const dirPath = path.join(__dirname, '..', 'uploads', 'documents');
         const filePath = `/uploads/documents/${fileName}`;

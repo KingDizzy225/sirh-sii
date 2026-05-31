@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from './button';
 import { Input } from './input';
@@ -16,6 +16,32 @@ export function AIDocumentModal({ isOpen, onClose, onGenerate, isGenerating, tok
     const [signatureDataUrl, setSignatureDataUrl] = useState(null);
     const [isSigning, setIsSigning] = useState(false);
     const [signDone, setSignDone] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && token) {
+            const fetchProfile = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/employees/profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const profile = await res.json();
+                        setFormData(prev => ({
+                            ...prev,
+                            nom: profile.lastName || '',
+                            prenoms: profile.firstName || '',
+                            nationalite: profile.nationality || 'Ivoirienne',
+                            fonction: profile.positionTitle || '',
+                            departement: profile.department || ''
+                        }));
+                    }
+                } catch (e) {
+                    console.error("Error loading employee profile in AIDocumentModal:", e);
+                }
+            };
+            fetchProfile();
+        }
+    }, [isOpen, token]);
 
     if (!isOpen) return null;
 
@@ -274,6 +300,35 @@ export function AIDocumentModal({ isOpen, onClose, onGenerate, isGenerating, tok
                                 <option value="Ordre de mission">Ordre de mission</option>
                                 <option value="Document Personnalisé (IA Libre)">✨ Document Personnalisé (IA Libre)</option>
                             </select>
+                        </div>
+
+                        {/* Identity fields */}
+                        <div className="pt-4 border-t border-slate-100 space-y-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Identité du destinataire</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Nom *</label>
+                                    <Input required placeholder="Ex: KOUADIO" value={formData.nom || ''} onChange={(e) => handleInputChange('nom', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Prénoms *</label>
+                                    <Input required placeholder="Ex: Jean Koffi" value={formData.prenoms || ''} onChange={(e) => handleInputChange('prenoms', e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Nationalité *</label>
+                                    <Input required placeholder="Ex: Ivoirienne" value={formData.nationalite || ''} onChange={(e) => handleInputChange('nationalite', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-600 block mb-1">Fonction *</label>
+                                    <Input required placeholder="Ex: Développeur Senior" value={formData.fonction || ''} onChange={(e) => handleInputChange('fonction', e.target.value)} />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 block mb-1">Département *</label>
+                                <Input required placeholder="Ex: Direction IT" value={formData.departement || ''} onChange={(e) => handleInputChange('departement', e.target.value)} />
+                            </div>
                         </div>
 
                         <div className="pt-4 border-t border-slate-100">
