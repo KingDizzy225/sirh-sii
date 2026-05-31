@@ -39,7 +39,7 @@ exports.sendMail = async ({ to, subject, html }) => {
     try {
         const trans = await createTransporter();
         const info = await trans.sendMail({
-            from: '"SIRH SII" <no-reply@base44.com>', // sender address
+            from: '"SIRH SII" <no-reply@sirh-sii.com>', // sender address
             to, // list of receivers
             subject, // Subject line
             html, // html body
