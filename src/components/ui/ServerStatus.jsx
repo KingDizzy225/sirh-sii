@@ -6,25 +6,36 @@ export function ServerStatus({ minimal = false }) {
     const [status, setStatus] = useState('checking'); // checking, online, offline
     
     useEffect(() => {
+        let active = true;
+        let timer;
         const checkHealth = async () => {
             try {
                 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
                 const healthUrl = API_URL.endsWith('/api') ? `${API_URL}/health` : `${API_URL}/api/health`;
                 
-                // Utilisation de fetch direct car api.get cache silencieusement l'erreur via un mock
-                const res = await fetch(healthUrl);
+                // Utilisation de fetch direct avec cache-busting
+                const res = await fetch(`${healthUrl}?t=${Date.now()}`, { cache: 'no-store' });
                 if (!res.ok) throw new Error('Serveur injoignable');
                 
-                setStatus('online');
+                if (active) {
+                    setStatus('online');
+                    // Si connecté, revérifier dans 60 secondes
+                    timer = setTimeout(checkHealth, 60000);
+                }
             } catch (error) {
-                setStatus('offline');
+                if (active) {
+                    setStatus('offline');
+                    // Si hors ligne (ou en cours de réveil), vérifier toutes les 5 secondes
+                    timer = setTimeout(checkHealth, 5000);
+                }
             }
         };
 
         checkHealth();
-        // Optionnel : vérifier toutes les 2 minutes si le serveur est toujours là (évite de spammer)
-        const interval = setInterval(checkHealth, 120000);
-        return () => clearInterval(interval);
+        return () => {
+            active = false;
+            clearTimeout(timer);
+        };
     }, []);
 
     if (minimal) {
