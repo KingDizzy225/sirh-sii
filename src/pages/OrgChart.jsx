@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '../components/ui/badge';
 import { ZoomIn, ZoomOut, UserPlus, Search, Wand2, Loader2 } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
+import { api } from '../lib/api.js';
 
 const buildTrueHierarchy = (employees) => {
     try {
@@ -60,14 +61,24 @@ const buildTrueHierarchy = (employees) => {
     }
 };
 
-const OrgNode = ({ node }) => {
+const OrgNode = ({ node, searchQuery }) => {
+    const isMatched = searchQuery && (
+        (node.incumbent?.name && node.incumbent.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (node.title && node.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (node.department && node.department.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
     return (
         <div className="flex flex-col items-center">
             {/* The Node Card */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`relative w-64 rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${node.isVacant || node.isVirtual ? 'bg-slate-50 border-dashed border-slate-300' : 'bg-white border-slate-200'}`}
+                className={`relative w-64 rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${
+                    isMatched 
+                        ? 'ring-4 ring-indigo-500/50 border-indigo-500 bg-indigo-50/10' 
+                        : (node.isVacant || node.isVirtual ? 'bg-slate-50 border-dashed border-slate-300' : 'bg-white border-slate-200')
+                }`}
             >
                 {/* Node Line Top */}
                 <div className="absolute -top-6 left-1/2 w-px h-6 bg-slate-300 -translate-x-1/2" />
@@ -107,7 +118,7 @@ const OrgNode = ({ node }) => {
                             <div key={child.id} className="relative">
                                 {/* Vertical connection to horizontal line */}
                                 <div className="absolute top-0 left-1/2 w-px h-6 -translate-y-full bg-slate-300 -translate-x-1/2" />
-                                <OrgNode node={child} />
+                                <OrgNode node={child} searchQuery={searchQuery} />
                             </div>
                         ))}
                     </div>
@@ -122,17 +133,18 @@ export function OrgChart() {
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    const token = localStorage.getItem('sirh_token');
+    const [isDragging, setIsDragging] = useState(false);
+    const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+    const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
+    const canvasContainerRef = useRef(null);
 
     const fetchEmployeesData = () => {
         setIsLoading(true);
-        fetch(`${API_URL}/api/employees`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(apiEmployees => {
+        api.get('/employees')
+            .then(res => {
+                const apiEmployees = res.data;
                 if (apiEmployees && apiEmployees.length > 0) {
                     setData(buildTrueHierarchy(apiEmployees));
                 } else {
@@ -160,26 +172,17 @@ export function OrgChart() {
         if (!confirm("Voulez-vous générer la hiérarchie par IA (Gemini) ? Cela attribuera intelligemment des managers en fonction des rôles existants.")) return;
         
         setIsGenerating(true);
-        toast.info("L'IA Gemini analyse les postes et génère l'organigramme...");
+        toast.info("L'IA Gemini/Secours analyse les postes et génère l'organigramme...");
 
         try {
-            const res = await fetch(`${API_URL}/api/employees/generate-org-chart`, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            const result = await res.json();
-            if (res.ok) {
-                toast.success(`Succès: ${result.updated} relations hiérarchiques mises à jour !`);
+            const res = await api.post('/employees/generate-org-chart');
+            if (res.data) {
+                toast.success(res.data.message || `Succès: ${res.data.updated} relations hiérarchiques mises à jour !`);
                 fetchEmployeesData(); // Refresh the chart
-            } else {
-                toast.error(result.error || "Erreur de génération");
             }
         } catch (error) {
             console.error("Erreur IA:", error);
-            toast.error("Une erreur réseau est survenue lors de l'appel à l'IA.");
+            toast.error(error.message || "Une erreur est survenue lors de l'appel à l'IA.");
         } finally {
             setIsGenerating(false);
         }
@@ -190,9 +193,31 @@ export function OrgChart() {
     const handleZoomReset = () => setZoom(1);
 
     const handleFitToScreen = () => {
-        // Simple heuristic to fit a wide chart
-        // Assuming 1 node is ~250px wide. We can count leaves or total nodes to guess.
         setZoom(0.3); // Set to a very small zoom by default for "Fit"
+    };
+
+    // Drag-to-pan handlers
+    const handleMouseDown = (e) => {
+        if (!canvasContainerRef.current) return;
+        setIsDragging(true);
+        setPanStart({ x: e.clientX, y: e.clientY });
+        setScrollStart({
+            x: canvasContainerRef.current.scrollLeft,
+            y: canvasContainerRef.current.scrollTop
+        });
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDragging || !canvasContainerRef.current) return;
+        e.preventDefault();
+        const dx = e.clientX - panStart.x;
+        const dy = e.clientY - panStart.y;
+        canvasContainerRef.current.scrollLeft = scrollStart.x - dx;
+        canvasContainerRef.current.scrollTop = scrollStart.y - dy;
+    };
+
+    const handleMouseUpOrLeave = () => {
+        setIsDragging(false);
     };
 
     return (
@@ -207,7 +232,7 @@ export function OrgChart() {
                 <div className="flex items-center gap-4">
                     <Button 
                         variant="default" 
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 font-medium shadow-sm"
                         onClick={handleGenerateAI}
                         disabled={isGenerating}
                     >
@@ -217,7 +242,12 @@ export function OrgChart() {
 
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <Input placeholder="Rechercher..." className="pl-9 w-48 bg-slate-50" />
+                        <Input 
+                            placeholder="Rechercher..." 
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="pl-9 w-48 bg-slate-50" 
+                        />
                     </div>
 
                     <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
@@ -231,7 +261,14 @@ export function OrgChart() {
             </div>
 
             {/* Zoomable / Pannable Canvas Area */}
-            <div className="flex-1 overflow-auto bg-slate-50/50 p-8 cursor-grab active:cursor-grabbing relative">
+            <div 
+                ref={canvasContainerRef}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUpOrLeave}
+                onMouseLeave={handleMouseUpOrLeave}
+                className={`flex-1 overflow-auto bg-slate-50/50 p-8 relative ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+            >
                 <div
                     className="flex justify-center transition-transform origin-top duration-200 ease-out min-w-max min-h-max print:scale-[0.4] print:origin-center"
                     style={{ transform: `scale(${zoom})`, paddingBottom: '100px' }}
@@ -241,10 +278,9 @@ export function OrgChart() {
                             <span className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></span>
                             <p>Chargement de l'organigramme depuis la Base de Données...</p>
                         </div>
-                    ) : (data && <OrgNode node={data} />)}
+                    ) : (data && <OrgNode node={data} searchQuery={searchQuery} />)}
                 </div>
             </div>
         </div>
     );
 }
-
