@@ -211,7 +211,7 @@ export function Employees() {
                     }
                 } catch (error) {
                     console.error("Erreur Import CSV:", error);
-                    showNotification("Erreur lors de l'importation. Vérifiez le format du CSV.");
+                    showNotification(error.message || "Erreur lors de l'importation. Vérifiez le format du CSV.");
                 }
                 event.target.value = null; // reset
             },

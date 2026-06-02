@@ -218,26 +218,114 @@ exports.importBulkEmployees = async (req, res) => {
         const { employees } = req.body;
 
         if (!Array.isArray(employees) || employees.length === 0) {
-            return res.status(400).json({ error: 'Array of employees is required' });
+            return res.status(400).json({ error: 'Un tableau d\'employés est requis' });
         }
 
-        // Format data properly for Prisma
-        const dataToInsert = employees.map(emp => ({
-            firstName: emp.firstName,
-            lastName: emp.lastName,
-            email: emp.email || `${emp.firstName.toLowerCase()}.${emp.lastName.toLowerCase()}@entreprise.com`,
-            role: emp.role || 'Employee',
-            department: emp.department || 'Ressources Humaines',
-            positionTitle: emp.positionTitle || 'Poste Non Assigné',
-            status: emp.status || 'ACTIVE',
-            hireDate: emp.hireDate ? new Date(emp.hireDate) : new Date()
-        }));
+        // Format data properly for Prisma with robust header mapping
+        const dataToInsert = employees
+            .map(emp => {
+                if (!emp || typeof emp !== 'object') return null;
+
+                const getVal = (keys) => {
+                    for (const key of keys) {
+                        if (emp[key] !== undefined && emp[key] !== null) return emp[key].toString().trim();
+                        const lowerKey = key.toLowerCase();
+                        const foundKey = Object.keys(emp).find(k => k.toLowerCase() === lowerKey);
+                        if (foundKey && emp[foundKey] !== undefined && emp[foundKey] !== null) {
+                            return emp[foundKey].toString().trim();
+                        }
+                    }
+                    return null;
+                };
+
+                let firstName = getVal(['firstName', 'prenom', 'Prénom', 'Prenom']);
+                let lastName = getVal(['lastName', 'nom', 'Nom', 'nom de famille']);
+                
+                // If we have a fullName, or if lastName contains a space (meaning it is a full name) and firstName is missing
+                const fullName = getVal(['Nom', 'name', 'nom complet']) || lastName;
+                
+                if (fullName && (!firstName || firstName === lastName)) {
+                    const parts = fullName.trim().split(/\s+/);
+                    if (parts.length >= 2) {
+                        firstName = parts[0];
+                        lastName = parts.slice(1).join(' ');
+                    } else if (parts.length === 1) {
+                        firstName = parts[0];
+                        lastName = lastName && lastName !== fullName ? lastName : 'Collaborateur';
+                    }
+                }
+
+                // Skip if both firstName and lastName are missing
+                if (!firstName && !lastName) return null;
+
+                const email = getVal(['email', 'Email']);
+                
+                let role = getVal(['role', 'Rôle', 'role', 'systemRole']);
+                if (role) {
+                    const rLower = role.toLowerCase();
+                    if (rLower.includes('admin') || rLower.includes('dir')) {
+                        role = 'Administrator';
+                    } else if (rLower.includes('hr') || rLower.includes('rh') || rLower.includes('ressources')) {
+                        role = 'HR';
+                    } else if (rLower.includes('manag') || rLower.includes('chef') || rLower.includes('resp')) {
+                        role = 'Manager';
+                    } else {
+                        role = 'Employee';
+                    }
+                } else {
+                    role = 'Employee';
+                }
+
+                const department = getVal(['department', 'département', 'Département', 'departement']) || 'Ressources Humaines';
+                const positionTitle = getVal(['positionTitle', 'poste', 'Poste', 'position']) || 'Poste Non Assigné';
+                
+                let status = getVal(['status', 'statut', 'Statut']);
+                if (status) {
+                    const sLower = status.toLowerCase();
+                    if (sLower.includes('inact') || sLower.includes('suspend')) {
+                        status = 'INACTIVE';
+                    } else {
+                        status = 'ACTIVE';
+                    }
+                } else {
+                    status = 'ACTIVE';
+                }
+
+                const hireDateVal = getVal(['hireDate', 'date d\'embauche', 'date_embauche', 'embauche']);
+                let hireDate = new Date();
+                if (hireDateVal) {
+                    const parsedDate = new Date(hireDateVal);
+                    if (!isNaN(parsedDate.getTime())) {
+                        hireDate = parsedDate;
+                    }
+                }
+
+                // Standardize email creation by cleaning up special characters and accents
+                const safeFirst = (firstName || 'info').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9.-]/g, "");
+                const safeLast = (lastName || 'collab').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9.-]/g, "");
+                const defaultEmail = `${safeFirst}.${safeLast}@entreprise.com`;
+
+                return {
+                    firstName: firstName || 'Collaborateur',
+                    lastName: lastName || 'Sans Nom',
+                    email: email || defaultEmail,
+                    role,
+                    department,
+                    positionTitle,
+                    status,
+                    hireDate
+                };
+            })
+            .filter(Boolean); // Filter out null/invalid mapping results
+
+        if (dataToInsert.length === 0) {
+            return res.status(400).json({ error: 'Aucun employé valide trouvé. Assurez-vous d\'avoir les en-têtes requis (ex: Nom, Prénom ou firstName, lastName).' });
+        }
 
         // Prisma SQLite doesn't support createMany skipDuplicates — use upsert loop
         let created = 0;
         let skipped = 0;
         const defaultPassword = 'Welcome2026!';
-        const bcrypt = require('bcryptjs');
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
         for (const emp of dataToInsert) {
@@ -245,7 +333,7 @@ exports.importBulkEmployees = async (req, res) => {
                 const existing = await prisma.employee.findUnique({ where: { email: emp.email } });
                 if (existing) { skipped++; continue; }
 
-                await prisma.employee.create({ data: emp });
+                const newEmp = await prisma.employee.create({ data: emp });
 
                 // Auto-create User account
                 const userExists = await prisma.user.findUnique({ where: { email: emp.email } });
@@ -259,6 +347,31 @@ exports.importBulkEmployees = async (req, res) => {
                         }
                     });
                 }
+
+                // Automatisation : Création des tâches d'Onboarding Zéro-Papier pour chaque nouvel employé importé
+                await prisma.onboardingTask.createMany({
+                    data: [
+                        {
+                            employeeId: newEmp.id,
+                            taskName: "Création des accès informatiques et adresse email",
+                            assignedTo: "IT Support",
+                            dueDate: new Date(new Date().setDate(new Date().getDate() + 2))
+                        },
+                        {
+                            employeeId: newEmp.id,
+                            taskName: "Signature électronique du contrat de travail",
+                            assignedTo: "Ressources Humaines",
+                            dueDate: new Date(new Date().setDate(new Date().getDate() + 5))
+                        },
+                        {
+                            employeeId: newEmp.id,
+                            taskName: "Planification du point d'intégration (1ère semaine)",
+                            assignedTo: "Manager Direct",
+                            dueDate: new Date(new Date().setDate(new Date().getDate() + 7))
+                        }
+                    ]
+                });
+
                 created++;
             } catch (err) {
                 console.error(`Skipping ${emp.email}:`, err.message);
@@ -267,7 +380,7 @@ exports.importBulkEmployees = async (req, res) => {
         }
 
         res.status(201).json({
-            message: `${created} employé(s) importé(s) avec succès${skipped > 0 ? `, ${skipped} ignoré(s) (doublons)` : ''}.`,
+            message: `${created} employé(s) importé(s) avec succès${skipped > 0 ? `, ${skipped} ignoré(s) (doublons ou erreurs)` : ''}.`,
             count: created
         });
 
@@ -275,7 +388,7 @@ exports.importBulkEmployees = async (req, res) => {
         console.error('Error importing employees:', error);
         res.status(500).json({ error: 'Failed to import employees' });
     }
-};
+}
 
 // Get Employee By ID with full relations
 exports.getEmployeeById = async (req, res) => {
