@@ -155,3 +155,57 @@ exports.updateLeaveStatus = async (req, res) => {
         res.status(500).json({ error: 'Failed to update leave status' });
     }
 };
+
+// POST /api/leaves/public — Demande de congé depuis le Self-Service (sans connexion)
+exports.createPublicLeave = async (req, res) => {
+    try {
+        const { email, type, startDate, endDate, reason } = req.body;
+        const attachmentPath = req.file ? `/uploads/justificatifs/${req.file.filename}` : null;
+
+        if (!email || !type || !startDate || !endDate) {
+            return res.status(400).json({ error: 'Champs obligatoires manquants (email, type, startDate, endDate).' });
+        }
+
+        const employee = await prisma.employee.findUnique({ where: { email } });
+        if (!employee) {
+            return res.status(404).json({ error: 'Aucun employé trouvé avec cet email. Veuillez vérifier votre adresse.' });
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const durationDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+        const newLeave = await prisma.leave.create({
+            data: {
+                employeeId: employee.id,
+                type,
+                startDate: start,
+                endDate: end,
+                reason: reason || null,
+                attachmentPath,
+                status: 'PENDING',
+                durationDays
+            },
+            include: { employee: true }
+        });
+
+        // Notify via WebSocket
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('new_notification', {
+                type: 'LEAVE_REQUEST',
+                message: `Nouvelle demande de congé de ${newLeave.employee?.firstName || 'un employé'} (${type})`,
+                date: new Date()
+            });
+        }
+
+        res.status(201).json({
+            message: 'Votre demande de congé a été transmise au service RH.',
+            id: newLeave.id,
+            trackingId: newLeave.id
+        });
+    } catch (e) {
+        console.error('Error creating public leave:', e);
+        res.status(500).json({ error: 'Erreur lors de la soumission.' });
+    }
+};

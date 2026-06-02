@@ -67,7 +67,7 @@ export function PublicPortal() {
 
     const formatAmount = (n) => new Intl.NumberFormat('fr-CI').format(n || 0) + ' FCFA';
 
-    // Generic submit handler
+    // Submit handler — routes to the correct backend endpoint per request type
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!name.trim() || !email.trim()) {
@@ -76,44 +76,57 @@ export function PublicPortal() {
         }
         setLoading(true);
 
-        let payload = { name, email };
-
-        if (activeTab === 'general') {
-            payload = {
-                ...payload,
-                title,
-                category,
-                description
-            };
-        } else if (activeTab === 'advance') {
-            payload = {
-                ...payload,
-                title: `Demande d'avance sur salaire - ${formatAmount(parseInt(advanceAmount))}`,
-                category: 'Acompte',
-                description: `Montant demandé : ${formatAmount(parseInt(advanceAmount))}\nPlan de remboursement : ${advanceRepayment} mois\nMensualité estimée : ${formatAmount(monthlyRepayment)}\n\nMotif : ${advanceReason}`
-            };
-        } else if (activeTab === 'absence') {
-            payload = {
-                ...payload,
-                title: `Demande d'absence - ${absenceType}`,
-                category: 'Absence',
-                description: `Type : ${absenceType}\nDate de début : ${absenceDateStart}\nDate de fin : ${absenceDateEnd}\nDurée : ${absenceDuration} jour(s)\n\nMotif : ${absenceReason}`
-            };
-        }
-
         try {
-            const res = await fetch(`${API_URL}/api/public/tickets`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            let res;
+
+            if (activeTab === 'advance') {
+                // → Envoi vers l'inbox Avances (Payroll > Avances)
+                res = await fetch(`${API_URL}/api/advances/public`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        amount: parseInt(advanceAmount),
+                        reason: advanceReason,
+                        repaymentMonths: parseInt(advanceRepayment)
+                    })
+                });
+            } else if (activeTab === 'absence') {
+                // → Envoi vers l'inbox Congés/Absences (Leaves)
+                res = await fetch(`${API_URL}/api/leaves/public`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        type: absenceType,
+                        startDate: absenceDateStart,
+                        endDate: absenceDateEnd,
+                        reason: absenceReason
+                    })
+                });
+            } else {
+                // → Envoi vers l'inbox Support / Tickets RH
+                res = await fetch(`${API_URL}/api/public/tickets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        title,
+                        category,
+                        description
+                    })
+                });
+            }
 
             if (res.ok) {
                 const data = await res.json();
-                setTrackingId(data.trackingId);
+                setTrackingId(data.trackingId || data.id || 'OK');
                 showNotification("Votre demande a été envoyée avec succès au service RH.");
             } else {
-                showNotification("Une erreur est survenue.", true);
+                const errData = await res.json().catch(() => ({}));
+                showNotification(errData.error || "Une erreur est survenue.", true);
             }
         } catch (error) {
             showNotification("Erreur de connexion au serveur.", true);

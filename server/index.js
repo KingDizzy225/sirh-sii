@@ -82,7 +82,7 @@ app.use('/api', auditLog);
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', verifyToken, employeeRoutes);
 app.use('/api/time-logs', verifyToken, timeLogRoutes);
-app.use('/api/leaves', verifyToken, leaveRoutes);
+app.use('/api/leaves', leaveRoutes);
 app.use('/api/recruitment', verifyToken, recruitmentRoutes);
 app.use('/api/trainings', verifyToken, trainingRoutes);
 app.use('/api/analytics', verifyToken, analyticsRoutes);

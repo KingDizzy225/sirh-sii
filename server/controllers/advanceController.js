@@ -68,3 +68,36 @@ exports.updateAdvanceStatus = async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+// POST /api/advances/public — Demande d'avance depuis le Self-Service (sans connexion)
+exports.createPublicAdvance = async (req, res) => {
+    try {
+        const { email, name, amount, reason, repaymentMonths } = req.body;
+
+        if (!email || !amount) {
+            return res.status(400).json({ error: 'Champs obligatoires manquants (email, montant).' });
+        }
+
+        const employee = await prisma.employee.findUnique({ where: { email } });
+        if (!employee) {
+            return res.status(404).json({ error: 'Aucun employé trouvé avec cet email. Veuillez vérifier votre adresse.' });
+        }
+
+        const advance = await prisma.salaryAdvance.create({
+            data: {
+                employeeId: employee.id,
+                amount: parseFloat(amount),
+                reason: reason || null,
+            }
+        });
+
+        res.status(201).json({ 
+            message: 'Votre demande d\'avance a été transmise au service RH.',
+            id: advance.id,
+            trackingId: advance.id
+        });
+    } catch (e) {
+        console.error('Error creating public advance:', e);
+        res.status(500).json({ error: 'Erreur lors de la soumission.' });
+    }
+};
