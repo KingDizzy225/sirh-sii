@@ -461,20 +461,18 @@ END:VCALENDAR`;
                                                   ((userRole === 'HR' || userRole === 'ADMIN' || userRole === 'Administrator') && (req.rawStatus === 'PENDING' || req.rawStatus === 'PENDING_HR'))) ? (
                                                     <div className="flex justify-end gap-2">
                                                         <Button
-                                                            variant="outline"
                                                             size="sm"
                                                             onClick={() => handleApprove(req.id)}
-                                                            className="h-8 border-green-200 bg-white text-green-700 hover:bg-green-50 hover:text-green-800"
+                                                            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                                                         >
-                                                            <Check size={14} className="mr-1" /> Approuver
+                                                            <Check size={14} className="mr-1" /> Valider
                                                         </Button>
                                                         <Button
-                                                            variant="outline"
                                                             size="sm"
                                                             onClick={() => handleReject(req.id)}
-                                                            className="h-8 border-red-200 bg-white text-red-700 hover:bg-red-50 hover:text-red-800"
+                                                            className="h-8 bg-rose-600 hover:bg-rose-700 text-white font-bold"
                                                         >
-                                                            <X size={14} className="mr-1" /> Rejeter
+                                                            <X size={14} className="mr-1" /> Refuser
                                                         </Button>
                                                     </div>
                                                 ) : (

@@ -1022,8 +1022,8 @@ export function Timesheet() {
                                                 )}
                                             </div>
                                             <div className="flex gap-2">
-                                                <Button onClick={() => handleRequestAction('leave', l.id, 'approve')} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-8 rounded-lg">Approuver</Button>
-                                                <Button onClick={() => handleRequestAction('leave', l.id, 'reject')} variant="outline" className="flex-1 border-slate-200 text-rose-600 hover:bg-rose-50 text-[10px] font-bold h-8 rounded-lg">Rejeter</Button>
+                                                <Button onClick={() => handleRequestAction('leave', l.id, 'approve')} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-8 rounded-lg">Valider</Button>
+                                                <Button onClick={() => handleRequestAction('leave', l.id, 'reject')} className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold h-8 rounded-lg">Refuser</Button>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -1056,8 +1056,8 @@ export function Timesheet() {
                                             </div>
                                             {a.reason && <p className="text-[10px] text-slate-500 bg-slate-50 p-2.5 rounded-lg mb-4 italic">"{a.reason}"</p>}
                                             <div className="flex gap-2">
-                                                <Button onClick={() => handleRequestAction('advance', a.id, 'approve')} size="sm" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold h-8 rounded-lg">Valider</Button>
-                                                <Button onClick={() => handleRequestAction('advance', a.id, 'reject')} size="sm" variant="outline" className="flex-1 border-slate-200 hover:bg-slate-50 text-[10px] font-bold h-8 rounded-lg">Refuser</Button>
+                                                <Button onClick={() => handleRequestAction('advance', a.id, 'approve')} size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-8 rounded-lg">Valider</Button>
+                                                <Button onClick={() => handleRequestAction('advance', a.id, 'reject')} size="sm" className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold h-8 rounded-lg">Refuser</Button>
                                             </div>
                                         </Card>
                                     ))}
@@ -1086,8 +1086,8 @@ export function Timesheet() {
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
-                                                <Button onClick={() => handleRequestAction('expense', e.id, 'approve')} size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-8 rounded-lg">Approuver</Button>
-                                                <Button onClick={() => handleRequestAction('expense', e.id, 'reject')} size="sm" variant="outline" className="flex-1 border-slate-200 hover:bg-slate-50 text-[10px] font-bold h-8 rounded-lg">Rejeter</Button>
+                                                <Button onClick={() => handleRequestAction('expense', e.id, 'approve')} size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold h-8 rounded-lg">Valider</Button>
+                                                <Button onClick={() => handleRequestAction('expense', e.id, 'reject')} size="sm" className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold h-8 rounded-lg">Refuser</Button>
                                             </div>
                                         </Card>
                                     ))}

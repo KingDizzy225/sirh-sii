@@ -838,14 +838,14 @@ export function Payroll() {
                                                                 size="sm"
                                                                 className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg"
                                                             >
-                                                                <CheckCheck size={12} className="mr-1" /> Approuver
+                                                                <CheckCheck size={12} className="mr-1" /> Valider
                                                             </Button>
                                                             <Button
                                                                 onClick={() => handleAdvanceAction(adv.id, 'rejected')}
                                                                 size="sm"
-                                                                className="h-7 px-2.5 bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold rounded-lg"
+                                                                className="h-7 px-2.5 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold rounded-lg"
                                                             >
-                                                                <XCircle size={12} className="mr-1" /> Rejeter
+                                                                <XCircle size={12} className="mr-1" /> Refuser
                                                             </Button>
                                                         </div>
                                                     )}
