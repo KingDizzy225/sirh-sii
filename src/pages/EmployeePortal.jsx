@@ -16,7 +16,8 @@ export function EmployeePortal() {
     const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
     const [absenceForm, setAbsenceForm] = useState({
         type: 'Absence injustifiée',
-        date: new Date().toISOString().split('T')[0],
+        dateStart: new Date().toISOString().split('T')[0],
+        dateEnd: new Date().toISOString().split('T')[0],
         justification: '',
         file: null
     });
@@ -168,7 +169,8 @@ export function EmployeePortal() {
         e.preventDefault();
         const formData = new FormData();
         formData.append('type', absenceForm.type);
-        formData.append('date', absenceForm.date);
+        formData.append('dateStart', absenceForm.dateStart);
+        formData.append('dateEnd', absenceForm.dateEnd);
         formData.append('justification', absenceForm.justification);
         if (absenceForm.file) {
             formData.append('justificatif', absenceForm.file);
@@ -183,7 +185,7 @@ export function EmployeePortal() {
             if (res.ok) {
                 alert("Demande transmise avec succès.");
                 setIsAbsenceModalOpen(false);
-                setAbsenceForm({ type: 'Absence injustifiée', date: new Date().toISOString().split('T')[0], justification: '', file: null });
+                setAbsenceForm({ type: 'Absence injustifiée', dateStart: new Date().toISOString().split('T')[0], dateEnd: new Date().toISOString().split('T')[0], justification: '', file: null });
             } else {
                 alert("Erreur lors de l'envoi.");
             }
@@ -608,15 +610,58 @@ export function EmployeePortal() {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-slate-700">Date</label>
+                                    <label className="text-sm font-bold text-slate-700">Date de début *</label>
                                     <input 
                                         type="date" 
                                         className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/50 outline-none text-slate-700 bg-white shadow-sm transition-all"
-                                        value={absenceForm.date}
-                                        onChange={(e) => setAbsenceForm({...absenceForm, date: e.target.value})}
+                                        value={absenceForm.dateStart}
+                                        onChange={(e) => {
+                                            const newStart = e.target.value;
+                                            setAbsenceForm(prev => ({
+                                                ...prev, 
+                                                dateStart: newStart,
+                                                dateEnd: prev.dateEnd < newStart ? newStart : prev.dateEnd
+                                            }));
+                                        }}
                                         required
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Date de fin *</label>
+                                    <input 
+                                        type="date" 
+                                        className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/50 outline-none text-slate-700 bg-white shadow-sm transition-all"
+                                        value={absenceForm.dateEnd}
+                                        min={absenceForm.dateStart}
+                                        onChange={(e) => setAbsenceForm({...absenceForm, dateEnd: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                                {/* Calcul automatique de la durée */}
+                                {absenceForm.dateStart && absenceForm.dateEnd && (
+                                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                            <Clock size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-indigo-500 font-medium">Durée de l'absence</p>
+                                            <p className="text-lg font-bold text-indigo-700 font-['Outfit']">
+                                                {(() => {
+                                                    const start = new Date(absenceForm.dateStart);
+                                                    const end = new Date(absenceForm.dateEnd);
+                                                    const diffTime = end - start;
+                                                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                                                    if (diffDays <= 0) return '—';
+                                                    return `${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+                                                })()}
+                                            </p>
+                                        </div>
+                                        <div className="ml-auto text-right">
+                                            <p className="text-xs text-indigo-400">Du {new Date(absenceForm.dateStart).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</p>
+                                            <p className="text-xs text-indigo-400">Au {new Date(absenceForm.dateEnd).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-slate-700">Justification / Commentaire</label>
                                     <textarea 
