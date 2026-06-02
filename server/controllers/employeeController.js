@@ -6,6 +6,9 @@ const { triggerWebhook } = require('./webhookController');
 exports.getAllEmployees = async (req, res) => {
     try {
         const employees = await prisma.employee.findMany({
+            include: {
+                onboardingTasks: true
+            },
             orderBy: { createdAt: 'desc' }
         });
         res.status(200).json(employees);
@@ -451,5 +454,67 @@ exports.updateOnboardingTask = async (req, res) => {
     } catch (error) {
         console.error('Error updating onboarding task:', error);
         res.status(500).json({ error: 'Failed to update onboarding task' });
+    }
+};
+
+// Initialize Onboarding Tasks for an existing employee
+exports.initOnboardingTasks = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const employee = await prisma.employee.findUnique({
+            where: { id }
+        });
+
+        if (!employee) {
+            return res.status(404).json({ error: 'Employé introuvable' });
+        }
+
+        // Check if employee already has onboarding tasks
+        const existingTasks = await prisma.onboardingTask.findMany({
+            where: { employeeId: id }
+        });
+
+        if (existingTasks.length > 0) {
+            return res.status(400).json({ error: 'Ce collaborateur a déjà un plan d\'intégration actif.' });
+        }
+
+        // Create standard tasks
+        await prisma.onboardingTask.createMany({
+            data: [
+                {
+                    employeeId: id,
+                    taskName: "Création des accès informatiques et adresse email",
+                    assignedTo: "IT Support",
+                    dueDate: new Date(new Date().setDate(new Date().getDate() + 2))
+                },
+                {
+                    employeeId: id,
+                    taskName: "Signature électronique du contrat de travail",
+                    assignedTo: "Ressources Humaines",
+                    dueDate: new Date(new Date().setDate(new Date().getDate() + 5))
+                },
+                {
+                    employeeId: id,
+                    taskName: "Planification du point d'intégration (1ère semaine)",
+                    assignedTo: "Manager Direct",
+                    dueDate: new Date(new Date().setDate(new Date().getDate() + 7))
+                }
+            ]
+        });
+
+        // Retrieve created tasks
+        const createdTasks = await prisma.onboardingTask.findMany({
+            where: { employeeId: id },
+            orderBy: { createdAt: 'asc' }
+        });
+
+        res.status(201).json({
+            message: "Plan d'intégration initialisé avec succès.",
+            tasks: createdTasks
+        });
+    } catch (error) {
+        console.error('Error initializing onboarding tasks:', error);
+        res.status(500).json({ error: 'Failed to initialize onboarding tasks' });
     }
 };

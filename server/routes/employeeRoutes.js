@@ -27,6 +27,7 @@ router.put('/:id', requireRole(...HR_ROLES), employeeController.updateEmployee);
 router.delete('/:id', requireRole(...HR_ROLES), employeeController.deleteEmployee);
 // Onboarding Routes
 router.get('/:id/onboarding', employeeController.getOnboardingTasks);
+router.post('/:id/onboarding', requireRole(...HR_ROLES), employeeController.initOnboardingTasks);
 router.put('/onboarding/:taskId', requireRole(...HR_ROLES, 'Manager'), employeeController.updateOnboardingTask);
 
 module.exports = router;
