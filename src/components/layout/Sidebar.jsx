@@ -17,8 +17,7 @@ const getAllNavItems = (t) => [
     { name: 'Mon Profil', path: '/my-space', icon: User, domain: 'Mon Espace', permission: 'myself:view' },
     { name: t('sidebar.leaves', 'Mes Absences (Congés)'), path: '/leaves', icon: Calendar, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Absences & Retards', path: '/absences', icon: AlertTriangle, domain: 'Mon Espace', permission: 'myself:view' },
-    { name: t('sidebar.expenses', 'Mes Dépenses'), path: '/expenses', icon: Receipt, domain: 'Mon Espace', permission: 'myself:view' },
-    { name: 'Avance sur Salaire', path: '/advances', icon: Banknote, domain: 'Mon Espace', permission: 'myself:view' },
+
     { name: t('sidebar.payroll', 'Mes Fiches de Paie'), path: '/payroll', icon: FileText, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Kudos & Gamification', path: '/kudos', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Explorateur Carrière', path: '/career-path', icon: Rocket, domain: 'Mon Espace', permission: 'myself:view' },

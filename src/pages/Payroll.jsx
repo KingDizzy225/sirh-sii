@@ -7,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { useAuth } from '../context/AuthContext';
 import { 
     Download, PlayCircle, FileText, CheckCircle2, Search, UserCheck, 
-    Eye, PiggyBank, Calculator, Briefcase, AlertCircle, Save, Sparkles 
+    Eye, PiggyBank, Calculator, Briefcase, AlertCircle, Save, Sparkles,
+    Banknote, Receipt, Clock, XCircle, CheckCheck, Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
@@ -43,10 +44,45 @@ export function Payroll() {
     const [campaignEmployees, setCampaignEmployees] = useState([]);
     const [globalBudget] = useState(250000); // 250,000 FCFA budget envelope for salary increases
 
+    // Salary Advances State
+    const [advancesFilter, setAdvancesFilter] = useState('all');
+    const [advancesData, setAdvancesData] = useState([
+        { id: 'ADV-001', employee: 'Amadou Diallo', department: 'Commercial', amount: 150000, reason: 'Urgence médicale familiale', requestDate: '2026-05-10', status: 'pending', repayment: '3 mois' },
+        { id: 'ADV-002', employee: 'Fatou Sow', department: 'Finance', amount: 200000, reason: 'Frais de scolarité enfants', requestDate: '2026-05-12', status: 'approved', repayment: '4 mois' },
+        { id: 'ADV-003', employee: 'Ibrahim Ndiaye', department: 'IT', amount: 100000, reason: 'Réparation véhicule', requestDate: '2026-05-15', status: 'pending', repayment: '2 mois' },
+        { id: 'ADV-004', employee: 'Mariama Ba', department: 'RH', amount: 80000, reason: 'Déménagement', requestDate: '2026-05-18', status: 'rejected', repayment: '2 mois' },
+        { id: 'ADV-005', employee: 'Oumar Traoré', department: 'Logistique', amount: 120000, reason: 'Mariage', requestDate: '2026-05-20', status: 'approved', repayment: '3 mois' },
+    ]);
+
+    // Expenses (Notes de Frais) State
+    const [expensesFilter, setExpensesFilter] = useState('all');
+    const [expensesData, setExpensesData] = useState([
+        { id: 'EXP-001', employee: 'Amadou Diallo', category: 'Déplacement', description: 'Mission client Abidjan', amount: 85000, date: '2026-05-08', status: 'pending', receipt: true },
+        { id: 'EXP-002', employee: 'Fatou Sow', category: 'Restauration', description: 'Repas réunion partenaires', amount: 25000, date: '2026-05-09', status: 'approved', receipt: true },
+        { id: 'EXP-003', employee: 'Ibrahim Ndiaye', category: 'Formation', description: 'Certification AWS Cloud', amount: 350000, date: '2026-05-11', status: 'pending', receipt: false },
+        { id: 'EXP-004', employee: 'Mariama Ba', category: 'Matériel', description: 'Fournitures bureau', amount: 15000, date: '2026-05-14', status: 'approved', receipt: true },
+        { id: 'EXP-005', employee: 'Oumar Traoré', category: 'Déplacement', description: 'Carburant livraisons', amount: 45000, date: '2026-05-16', status: 'rejected', receipt: true },
+        { id: 'EXP-006', employee: 'Aïcha Koné', category: 'Hébergement', description: 'Hôtel mission Dakar', amount: 120000, date: '2026-05-19', status: 'pending', receipt: true },
+    ]);
+
+
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
     };
+
+    // Handlers for Advances
+    const handleAdvanceAction = (id, action) => {
+        setAdvancesData(prev => prev.map(a => a.id === id ? { ...a, status: action } : a));
+        showNotification(action === 'approved' ? '✅ Avance approuvée avec succès.' : '❌ Avance rejetée.');
+    };
+
+    // Handlers for Expenses
+    const handleExpenseAction = (id, action) => {
+        setExpensesData(prev => prev.map(e => e.id === id ? { ...e, status: action } : e));
+        showNotification(action === 'approved' ? '✅ Note de frais approuvée.' : '❌ Note de frais rejetée.');
+    };
+
 
     // Load data routines
     const loadMyPayslips = async () => {
@@ -341,7 +377,9 @@ export function Payroll() {
                     { id: 'my-payslips', label: 'Mes Bulletins de Salaire', icon: FileText },
                     { id: 'run-payroll', label: 'Préparation de la Paie', icon: PlayCircle, hidden: !isHR },
                     { id: 'history', label: 'Registre & Téléchargements', icon: Search, hidden: !isHR },
-                    { id: 'campaign', label: 'Campagne Salariale', icon: PiggyBank, hidden: !isHR }
+                    { id: 'campaign', label: 'Campagne Salariale', icon: PiggyBank, hidden: !isHR },
+                    { id: 'advances', label: 'Avances sur Salaire', icon: Banknote, hidden: !isHR },
+                    { id: 'expenses', label: 'Notes de Frais', icon: Receipt, hidden: !isHR },
                 ].map(tab => {
                     if (tab.hidden) return null;
                     const Icon = tab.icon;
@@ -693,6 +731,247 @@ export function Payroll() {
                                                 </TableCell>
                                             </TableRow>
                                         )}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+                {/* 5. AVANCES SUR SALAIRE */}
+                {isHR && activeTab === 'advances' && (
+                    <div className="space-y-6">
+                        {/* KPIs */}
+                        <div className="grid gap-4 md:grid-cols-3">
+                            <Card className="border-none shadow-sm bg-white">
+                                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">En Attente</CardTitle>
+                                    <Clock className="h-4 w-4 text-amber-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-black text-amber-600">{advancesData.filter(a => a.status === 'pending').length}</div>
+                                    <p className="text-xs text-slate-400 mt-1">{formatCurrency(advancesData.filter(a => a.status === 'pending').reduce((s, a) => s + a.amount, 0))}</p>
+                                </CardContent>
+                            </Card>
+                            <Card className="border-none shadow-sm bg-white">
+                                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Approuvées</CardTitle>
+                                    <CheckCheck className="h-4 w-4 text-emerald-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-black text-emerald-600">{advancesData.filter(a => a.status === 'approved').length}</div>
+                                    <p className="text-xs text-slate-400 mt-1">{formatCurrency(advancesData.filter(a => a.status === 'approved').reduce((s, a) => s + a.amount, 0))}</p>
+                                </CardContent>
+                            </Card>
+                            <Card className="border-none shadow-sm bg-white">
+                                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Rejetées</CardTitle>
+                                    <XCircle className="h-4 w-4 text-rose-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-black text-rose-600">{advancesData.filter(a => a.status === 'rejected').length}</div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                            <CardHeader className="py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div>
+                                    <CardTitle className="text-sm font-bold text-slate-800">Demandes d'Avances sur Salaire</CardTitle>
+                                    <CardDescription>Gérez et arbitrez toutes les demandes soumises par les employés via le portail.</CardDescription>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                    <Filter size={14} className="text-slate-400" />
+                                    <select
+                                        value={advancesFilter}
+                                        onChange={e => setAdvancesFilter(e.target.value)}
+                                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    >
+                                        <option value="all">Toutes</option>
+                                        <option value="pending">En attente</option>
+                                        <option value="approved">Approuvées</option>
+                                        <option value="rejected">Rejetées</option>
+                                    </select>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-0 overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50/30">
+                                            <TableHead>Référence</TableHead>
+                                            <TableHead>Employé</TableHead>
+                                            <TableHead>Département</TableHead>
+                                            <TableHead>Montant</TableHead>
+                                            <TableHead>Motif</TableHead>
+                                            <TableHead>Remboursement</TableHead>
+                                            <TableHead>Date Demande</TableHead>
+                                            <TableHead>Statut</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="text-xs">
+                                        {advancesData
+                                            .filter(a => advancesFilter === 'all' || a.status === advancesFilter)
+                                            .map(adv => (
+                                            <TableRow key={adv.id} className="hover:bg-slate-50/30 font-semibold">
+                                                <td className="p-4 font-mono text-indigo-700 font-bold">{adv.id}</td>
+                                                <td className="p-4 font-bold text-slate-800">{adv.employee}</td>
+                                                <td className="p-4 text-slate-500">{adv.department}</td>
+                                                <td className="p-4 font-black text-slate-900">{formatCurrency(adv.amount)}</td>
+                                                <td className="p-4 text-slate-500 max-w-[160px] truncate">{adv.reason}</td>
+                                                <td className="p-4 text-slate-500">{adv.repayment}</td>
+                                                <td className="p-4 text-slate-400">{new Date(adv.requestDate).toLocaleDateString('fr-FR')}</td>
+                                                <td className="p-4">
+                                                    <Badge className={cn(
+                                                        'text-[10px] font-bold border',
+                                                        adv.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                        adv.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                                        'bg-amber-50 text-amber-700 border-amber-200'
+                                                    )}>
+                                                        {adv.status === 'approved' ? 'Approuvée' : adv.status === 'rejected' ? 'Rejetée' : 'En attente'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    {adv.status === 'pending' && (
+                                                        <div className="flex gap-1.5 justify-end">
+                                                            <Button
+                                                                onClick={() => handleAdvanceAction(adv.id, 'approved')}
+                                                                size="sm"
+                                                                className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg"
+                                                            >
+                                                                <CheckCheck size={12} className="mr-1" /> Approuver
+                                                            </Button>
+                                                            <Button
+                                                                onClick={() => handleAdvanceAction(adv.id, 'rejected')}
+                                                                size="sm"
+                                                                className="h-7 px-2.5 bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold rounded-lg"
+                                                            >
+                                                                <XCircle size={12} className="mr-1" /> Rejeter
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {adv.status !== 'pending' && <span className="text-slate-300 text-[10px] font-bold">Traité</span>}
+                                                </td>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
+                {/* 6. NOTES DE FRAIS */}
+                {isHR && activeTab === 'expenses' && (
+                    <div className="space-y-6">
+                        {/* KPIs */}
+                        <div className="grid gap-4 md:grid-cols-4">
+                            {[
+                                { label: 'En Attente', count: expensesData.filter(e => e.status === 'pending').length, amount: expensesData.filter(e => e.status === 'pending').reduce((s, e) => s + e.amount, 0), color: 'amber', icon: Clock },
+                                { label: 'Approuvées', count: expensesData.filter(e => e.status === 'approved').length, amount: expensesData.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), color: 'emerald', icon: CheckCheck },
+                                { label: 'Rejetées', count: expensesData.filter(e => e.status === 'rejected').length, amount: 0, color: 'rose', icon: XCircle },
+                                { label: 'Total Mois', count: expensesData.length, amount: expensesData.reduce((s, e) => s + e.amount, 0), color: 'indigo', icon: Receipt },
+                            ].map(kpi => (
+                                <Card key={kpi.label} className="border-none shadow-sm bg-white">
+                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">{kpi.label}</CardTitle>
+                                        <kpi.icon className={`h-4 w-4 text-${kpi.color}-500`} />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className={`text-2xl font-black text-${kpi.color}-600`}>{kpi.count}</div>
+                                        {kpi.amount > 0 && <p className="text-xs text-slate-400 mt-1">{formatCurrency(kpi.amount)}</p>}
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+
+                        <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                            <CardHeader className="py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div>
+                                    <CardTitle className="text-sm font-bold text-slate-800">Notes de Frais Professionnels</CardTitle>
+                                    <CardDescription>Validez et remboursez les frais professionnels soumis par les collaborateurs via le portail employé.</CardDescription>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                    <Filter size={14} className="text-slate-400" />
+                                    <select
+                                        value={expensesFilter}
+                                        onChange={e => setExpensesFilter(e.target.value)}
+                                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    >
+                                        <option value="all">Tous</option>
+                                        <option value="pending">En attente</option>
+                                        <option value="approved">Approuvées</option>
+                                        <option value="rejected">Rejetées</option>
+                                    </select>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-0 overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50/30">
+                                            <TableHead>Réf.</TableHead>
+                                            <TableHead>Employé</TableHead>
+                                            <TableHead>Catégorie</TableHead>
+                                            <TableHead>Description</TableHead>
+                                            <TableHead>Montant</TableHead>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Justificatif</TableHead>
+                                            <TableHead>Statut</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="text-xs">
+                                        {expensesData
+                                            .filter(e => expensesFilter === 'all' || e.status === expensesFilter)
+                                            .map(exp => (
+                                            <TableRow key={exp.id} className="hover:bg-slate-50/30 font-semibold">
+                                                <td className="p-4 font-mono text-indigo-700 font-bold">{exp.id}</td>
+                                                <td className="p-4 font-bold text-slate-800">{exp.employee}</td>
+                                                <td className="p-4">
+                                                    <Badge variant="outline" className="text-[10px] font-bold border-slate-200 text-slate-600">{exp.category}</Badge>
+                                                </td>
+                                                <td className="p-4 text-slate-500 max-w-[180px] truncate">{exp.description}</td>
+                                                <td className="p-4 font-black text-slate-900">{formatCurrency(exp.amount)}</td>
+                                                <td className="p-4 text-slate-400">{new Date(exp.date).toLocaleDateString('fr-FR')}</td>
+                                                <td className="p-4">
+                                                    {exp.receipt
+                                                        ? <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">✓ Fourni</Badge>
+                                                        : <Badge className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">✗ Manquant</Badge>
+                                                    }
+                                                </td>
+                                                <td className="p-4">
+                                                    <Badge className={cn(
+                                                        'text-[10px] font-bold border',
+                                                        exp.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                        exp.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                                        'bg-amber-50 text-amber-700 border-amber-200'
+                                                    )}>
+                                                        {exp.status === 'approved' ? 'Approuvée' : exp.status === 'rejected' ? 'Rejetée' : 'En attente'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    {exp.status === 'pending' && (
+                                                        <div className="flex gap-1.5 justify-end">
+                                                            <Button
+                                                                onClick={() => handleExpenseAction(exp.id, 'approved')}
+                                                                disabled={!exp.receipt}
+                                                                size="sm"
+                                                                className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg disabled:opacity-40"
+                                                            >
+                                                                <CheckCheck size={12} className="mr-1" /> Valider
+                                                            </Button>
+                                                            <Button
+                                                                onClick={() => handleExpenseAction(exp.id, 'rejected')}
+                                                                size="sm"
+                                                                className="h-7 px-2.5 bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold rounded-lg"
+                                                            >
+                                                                <XCircle size={12} className="mr-1" /> Rejeter
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {exp.status !== 'pending' && <span className="text-slate-300 text-[10px] font-bold">Traité</span>}
+                                                </td>
+                                            </TableRow>
+                                        ))}
                                     </TableBody>
                                 </Table>
                             </CardContent>

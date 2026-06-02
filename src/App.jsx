@@ -135,7 +135,11 @@ const AppContent = () => {
 
             {/* Employee Accessible Routes (Self-Service) */}
             <Route path="/leaves" element={<Leaves />} />
-            <Route path="/expenses" element={<Expenses />} />
+            <Route path="/expenses" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Expenses />
+              </ProtectedRoute>
+            } />
             <Route path="/absences" element={
               <ProtectedRoute>
                 <Timesheet />
@@ -321,7 +325,11 @@ const AppContent = () => {
             <Route path="/team-health" element={<ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}><TeamHealth /></ProtectedRoute>} />
             <Route path="/workflows" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><Workflows /></ProtectedRoute>} />
             <Route path="/career-path" element={<ProtectedRoute><CareerPath /></ProtectedRoute>} />
-            <Route path="/advances" element={<SalaryAdvances />} />
+            <Route path="/advances" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <SalaryAdvances />
+              </ProtectedRoute>
+            } />
             <Route path="/medical" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <MedicalVisits />
