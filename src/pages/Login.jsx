@@ -245,7 +245,7 @@ export function Login() {
                                 type="button"
                                 variant="outline"
                                 className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white flex items-center justify-center gap-2 h-10 text-sm"
-                                onClick={() => setIsPortalOpen(true)}
+                                onClick={() => navigate('/portal')}
                             >
                                 <Users size={16} /> Self Service Employé (Demande RH)
                             </Button>
