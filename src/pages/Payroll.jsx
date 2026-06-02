@@ -46,13 +46,7 @@ export function Payroll() {
 
     // Salary Advances State
     const [advancesFilter, setAdvancesFilter] = useState('all');
-    const [advancesData, setAdvancesData] = useState([
-        { id: 'ADV-001', employee: 'Amadou Diallo', department: 'Commercial', amount: 150000, reason: 'Urgence médicale familiale', requestDate: '2026-05-10', status: 'pending', repayment: '3 mois' },
-        { id: 'ADV-002', employee: 'Fatou Sow', department: 'Finance', amount: 200000, reason: 'Frais de scolarité enfants', requestDate: '2026-05-12', status: 'approved', repayment: '4 mois' },
-        { id: 'ADV-003', employee: 'Ibrahim Ndiaye', department: 'IT', amount: 100000, reason: 'Réparation véhicule', requestDate: '2026-05-15', status: 'pending', repayment: '2 mois' },
-        { id: 'ADV-004', employee: 'Mariama Ba', department: 'RH', amount: 80000, reason: 'Déménagement', requestDate: '2026-05-18', status: 'rejected', repayment: '2 mois' },
-        { id: 'ADV-005', employee: 'Oumar Traoré', department: 'Logistique', amount: 120000, reason: 'Mariage', requestDate: '2026-05-20', status: 'approved', repayment: '3 mois' },
-    ]);
+    const [advancesData, setAdvancesData] = useState([]);
 
     // Expenses (Notes de Frais) State
     const [expensesFilter, setExpensesFilter] = useState('all');
@@ -72,9 +66,40 @@ export function Payroll() {
     };
 
     // Handlers for Advances
-    const handleAdvanceAction = (id, action) => {
-        setAdvancesData(prev => prev.map(a => a.id === id ? { ...a, status: action } : a));
-        showNotification(action === 'approved' ? '✅ Avance approuvée avec succès.' : '❌ Avance rejetée.');
+    const loadAdvances = async () => {
+        try {
+            const { data } = await api.get(`/advances`);
+            if (data) {
+                const mapped = data.map(a => ({
+                    id: a.id,
+                    employee: a.employee,
+                    department: a.department || 'Opérations',
+                    amount: a.amount,
+                    reason: a.reason || '—',
+                    status: (a.status === 'Approuvé' || a.status === 'APPROVED' || a.status === 'approved') ? 'approved' :
+                            (a.status === 'Rejeté' || a.status === 'REJECTED' || a.status === 'rejected') ? 'rejected' : 'pending',
+                    repayment: '3 mois',
+                    requestDate: a.requestedAt || new Date().toISOString()
+                }));
+                setAdvancesData(mapped);
+            }
+        } catch (e) {
+            console.error("Error fetching advances:", e);
+        }
+    };
+
+    const handleAdvanceAction = async (id, action) => {
+        try {
+            const status = action === 'approved' ? 'Approuvé' : 'Rejeté';
+            const { data } = await api.put(`/advances/${id}/status`, { status });
+            if (data) {
+                await loadAdvances();
+                showNotification(action === 'approved' ? '✅ Avance approuvée avec succès.' : '❌ Avance rejetée.');
+            }
+        } catch (e) {
+            console.error("Error updating advance status:", e);
+            showNotification('Erreur lors du traitement de la demande.', true);
+        }
     };
 
     // Handlers for Expenses
@@ -171,6 +196,7 @@ export function Payroll() {
     useEffect(() => {
         if (isHR) {
             loadEmployeesAndPayrolls();
+            loadAdvances();
         }
         loadMyPayslips();
     }, [activeTab, isHR, selectedMonth]);
