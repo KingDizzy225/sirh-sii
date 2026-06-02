@@ -190,10 +190,23 @@ export function OrgChart() {
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.1));
-    const handleZoomReset = () => setZoom(1);
+    const handleZoomReset = () => {
+        setZoom(1);
+        if (canvasContainerRef.current) {
+            canvasContainerRef.current.scrollLeft = 0;
+            canvasContainerRef.current.scrollTop = 0;
+        }
+    };
 
     const handleFitToScreen = () => {
-        setZoom(0.3); // Set to a very small zoom by default for "Fit"
+        setZoom(0.5);
+        setTimeout(() => {
+            if (canvasContainerRef.current) {
+                const container = canvasContainerRef.current;
+                container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+                container.scrollTop = 0;
+            }
+        }, 50);
     };
 
     // Drag-to-pan handlers
