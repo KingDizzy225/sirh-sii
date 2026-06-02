@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User, CheckCircle2, Award, Sparkles, X, MessageCircle, Send, Bot } from 'lucide-react';
+import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User, CheckCircle2, Award, Sparkles, X, MessageCircle, Send, Bot, Banknote, TrendingUp, AlertCircle, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +20,17 @@ export function EmployeePortal() {
         justification: '',
         file: null
     });
+
+    // Salary Advance State
+    const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
+    const [advanceForm, setAdvanceForm] = useState({
+        amount: '',
+        reason: '',
+        repaymentMonths: '3'
+    });
+    const [myAdvances, setMyAdvances] = useState([]);
+    const [isSubmittingAdvance, setIsSubmittingAdvance] = useState(false);
+    const [advanceNotification, setAdvanceNotification] = useState(null);
 
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -86,9 +97,24 @@ export function EmployeePortal() {
             }
         };
 
+        const fetchMyAdvances = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/advances`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const all = await res.json();
+                    setMyAdvances(all.filter(a => a.employee === user?.name) || all);
+                }
+            } catch (err) {
+                console.error("Failed to load advances", err);
+            }
+        };
+
         if (token) {
             fetchProfile();
             fetchLogs();
+            fetchMyAdvances();
         }
     }, [token]);
 
@@ -164,6 +190,62 @@ export function EmployeePortal() {
         } catch (err) {
             console.error(err);
             alert("Erreur réseau.");
+        }
+    };
+
+    const handleAdvanceSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmittingAdvance(true);
+        try {
+            const res = await fetch(`${API_URL}/api/advances`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                    amount: parseInt(advanceForm.amount),
+                    reason: advanceForm.reason,
+                    repaymentMonths: parseInt(advanceForm.repaymentMonths)
+                })
+            });
+            if (res.ok) {
+                const newAdv = await res.json();
+                setMyAdvances(prev => [newAdv, ...prev]);
+                setIsAdvanceModalOpen(false);
+                setAdvanceForm({ amount: '', reason: '', repaymentMonths: '3' });
+                setAdvanceNotification('✅ Votre demande d\'avance a été soumise avec succès !');
+                setTimeout(() => setAdvanceNotification(null), 4000);
+            } else {
+                setAdvanceNotification('❌ Erreur lors de l\'envoi de la demande.');
+                setTimeout(() => setAdvanceNotification(null), 4000);
+            }
+        } catch (err) {
+            console.error(err);
+            setAdvanceNotification('❌ Erreur réseau. Veuillez réessayer.');
+            setTimeout(() => setAdvanceNotification(null), 4000);
+        } finally {
+            setIsSubmittingAdvance(false);
+        }
+    };
+
+    const formatAmount = (n) => new Intl.NumberFormat('fr-CI').format(n || 0) + ' FCFA';
+
+    const getAdvanceStatusStyle = (status) => {
+        switch(status) {
+            case 'Approuvé': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'Rejeté': return 'bg-red-100 text-red-700 border-red-200';
+            case 'Déduit': return 'bg-blue-100 text-blue-700 border-blue-200';
+            default: return 'bg-amber-100 text-amber-700 border-amber-200';
+        }
+    };
+
+    const getAdvanceStatusIcon = (status) => {
+        switch(status) {
+            case 'Approuvé': return <CheckCircle2 size={14} />;
+            case 'Rejeté': return <X size={14} />;
+            case 'Déduit': return <Check size={14} />;
+            default: return <Clock size={14} />;
         }
     };
 
@@ -388,17 +470,16 @@ export function EmployeePortal() {
                             <span className="font-semibold text-slate-700 text-center group-hover:text-slate-900">Je suis absent</span>
                         </motion.div>
 
-                        <Link to="/expenses">
-                            <motion.div 
-                                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                                className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl shadow-sm border border-slate-100 hover:border-emerald-300 hover:shadow-md transition-all group h-full"
-                            >
-                                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mb-4 group-hover:bg-emerald-500 group-hover:text-white text-emerald-500 transition-colors duration-300">
-                                    <Receipt size={28} />
-                                </div>
-                                <span className="font-semibold text-slate-700 text-center group-hover:text-slate-900">Nouvelle dépense</span>
-                            </motion.div>
-                        </Link>
+                        <motion.div 
+                            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                            onClick={() => setIsAdvanceModalOpen(true)}
+                            className="cursor-pointer flex flex-col items-center justify-center p-6 bg-white rounded-3xl shadow-sm border border-slate-100 hover:border-emerald-300 hover:shadow-md transition-all group h-full"
+                        >
+                            <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mb-4 group-hover:bg-emerald-500 group-hover:text-white text-emerald-500 transition-colors duration-300">
+                                <Banknote size={28} />
+                            </div>
+                            <span className="font-semibold text-slate-700 text-center group-hover:text-slate-900">Avance sur salaire</span>
+                        </motion.div>
 
                         <motion.div 
                             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -423,6 +504,55 @@ export function EmployeePortal() {
                         </motion.div>
                     </div>
                 </motion.div>
+
+                {/* Section: Suivi de mes Avances sur Salaire */}
+                {myAdvances.length > 0 && (
+                    <motion.div variants={itemVariants}>
+                        <div className="mt-4 mb-2 flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                <TrendingUp size={16} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800 font-['Outfit']">Mes Demandes d'Avance</h3>
+                        </div>
+                        
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {myAdvances.slice(0, 6).map((adv, idx) => (
+                                <motion.div
+                                    key={adv.id || idx}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.05 }}
+                                    className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all"
+                                >
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                                <Banknote size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-lg font-bold text-slate-900 font-['Outfit']">{formatAmount(adv.amount)}</p>
+                                                <p className="text-xs text-slate-400">{adv.requestedAt || adv.requestDate || '—'}</p>
+                                            </div>
+                                        </div>
+                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${getAdvanceStatusStyle(adv.status)}`}>
+                                            {getAdvanceStatusIcon(adv.status)}
+                                            {adv.status || 'En attente'}
+                                        </span>
+                                    </div>
+                                    {adv.reason && (
+                                        <p className="text-sm text-slate-500 line-clamp-2">{adv.reason}</p>
+                                    )}
+                                    {adv.repaymentMonths && (
+                                        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-400">
+                                            <Clock size={12} />
+                                            <span>Remboursement : {adv.repaymentMonths} mois</span>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
 
                 {/* Privacy Section Highlight */}
                  <motion.div variants={itemVariants} className="mt-8 bg-slate-900 text-white rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between shadow-xl">
@@ -510,6 +640,140 @@ export function EmployeePortal() {
                                 <div className="pt-4">
                                     <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-xl text-lg font-bold shadow-xl shadow-primary/20 transition-all active:scale-95">
                                         Envoyer la demande
+                                    </Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Advance Notification Toast */}
+            <AnimatePresence>
+                {advanceNotification && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -30 }}
+                        className="fixed top-6 left-1/2 -translate-x-1/2 z-[110] bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-md"
+                    >
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                            <CheckCircle2 size={18} className="text-emerald-400" />
+                        </div>
+                        <span className="text-sm font-medium">{advanceNotification}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal Demande d'Avance sur Salaire */}
+            <AnimatePresence>
+                {isAdvanceModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ type: "spring", duration: 0.5 }}
+                            className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100"
+                        >
+                            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white flex justify-between items-center relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <Banknote size={80} />
+                                </div>
+                                <div className="relative z-10">
+                                    <h3 className="text-2xl font-bold font-['Outfit'] flex items-center gap-2">
+                                        <Banknote size={24} />
+                                        Demande d'Avance
+                                    </h3>
+                                    <p className="text-emerald-100 text-sm mt-1">Soumettez votre demande d'avance sur salaire</p>
+                                </div>
+                                <button onClick={() => setIsAdvanceModalOpen(false)} className="relative z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleAdvanceSubmit} className="p-8 space-y-6 bg-slate-50/50">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Montant demandé (FCFA) *</label>
+                                    <div className="relative">
+                                        <DollarSign size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input 
+                                            type="number" 
+                                            min="10000"
+                                            step="5000"
+                                            className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500/50 outline-none text-slate-700 bg-white shadow-sm transition-all text-lg font-semibold"
+                                            placeholder="Ex: 150 000"
+                                            value={advanceForm.amount}
+                                            onChange={(e) => setAdvanceForm({...advanceForm, amount: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400">Montant minimum : 10 000 FCFA</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Plan de remboursement *</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {['1', '2', '3', '4'].map(m => (
+                                            <button
+                                                key={m}
+                                                type="button"
+                                                onClick={() => setAdvanceForm({...advanceForm, repaymentMonths: m})}
+                                                className={`py-3 rounded-xl text-sm font-bold transition-all border ${
+                                                    advanceForm.repaymentMonths === m 
+                                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-200' 
+                                                        : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50'
+                                                }`}
+                                            >
+                                                {m} mois
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {advanceForm.amount && (
+                                        <div className="mt-2 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                                            <p className="text-xs text-emerald-700 font-medium flex items-center gap-1">
+                                                <TrendingUp size={14} />
+                                                Mensualité estimée : <span className="font-bold">{formatAmount(Math.ceil(parseInt(advanceForm.amount) / parseInt(advanceForm.repaymentMonths)))}</span> / mois
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">Motif de la demande *</label>
+                                    <textarea 
+                                        className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500/50 outline-none h-28 text-slate-700 bg-white shadow-sm transition-all resize-none"
+                                        placeholder="Précisez le motif de votre demande d'avance (ex: urgence médicale, frais de scolarité, etc.)"
+                                        value={advanceForm.reason}
+                                        onChange={(e) => setAdvanceForm({...advanceForm, reason: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                                    <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                                    <div className="text-xs text-amber-700 space-y-1">
+                                        <p className="font-bold">Conditions d'avance sur salaire :</p>
+                                        <ul className="list-disc pl-4 space-y-0.5">
+                                            <li>L'avance ne peut excéder 50% du salaire net</li>
+                                            <li>Le remboursement est déduit automatiquement sur le bulletin de paie</li>
+                                            <li>Délai de traitement : 48 à 72 heures ouvrables</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div className="pt-2">
+                                    <Button 
+                                        type="submit" 
+                                        disabled={isSubmittingAdvance || !advanceForm.amount || !advanceForm.reason}
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-xl text-lg font-bold shadow-xl shadow-emerald-200/50 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isSubmittingAdvance ? (
+                                            <span className="flex items-center gap-2">
+                                                <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
+                                                Envoi en cours...
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <Send size={20} />
+                                                Soumettre la demande
+                                            </span>
+                                        )}
                                     </Button>
                                 </div>
                             </form>
