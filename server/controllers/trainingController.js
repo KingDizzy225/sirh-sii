@@ -42,7 +42,7 @@ exports.getAllTrainings = async (req, res) => {
 // Ajouter une nouvelle formation terminée
 exports.createTraining = async (req, res) => {
     try {
-        const { title, description, trainerName, date, durationHours, participantIds } = req.body;
+        const { title, description, trainerName, date, durationHours, participantIds, targetSkill, targetLevel } = req.body;
 
         if (!title || !trainerName || !date || !durationHours) {
             return res.status(400).json({ error: 'Données invalides: Titre, formateur, date et durée complétés requis.' });
@@ -58,7 +58,9 @@ exports.createTraining = async (req, res) => {
                 trainerName,
                 date: new Date(date),
                 durationHours: parseFloat(durationHours),
-                status: newStatus
+                status: newStatus,
+                targetSkill: targetSkill || null,
+                targetLevel: targetLevel || 'Intermédiaire'
             }
         });
 
@@ -73,6 +75,29 @@ exports.createTraining = async (req, res) => {
             await prisma.trainingParticipation.createMany({
                 data: participationsData
             });
+
+            // 2b. GPEC : Attribuer automatiquement la compétence aux participants
+            if (targetSkill) {
+                for (const employeeId of participantIds) {
+                    const existingSkill = await prisma.employeeSkill.findFirst({
+                        where: { employeeId, skillName: targetSkill }
+                    });
+                    if (existingSkill) {
+                        await prisma.employeeSkill.update({
+                            where: { id: existingSkill.id },
+                            data: { proficiencyLevel: targetLevel || 'Intermédiaire' }
+                        });
+                    } else {
+                        await prisma.employeeSkill.create({
+                            data: {
+                                employeeId,
+                                skillName: targetSkill,
+                                proficiencyLevel: targetLevel || 'Intermédiaire'
+                            }
+                        });
+                    }
+                }
+            }
         }
 
         // 3. Retourner la session complète (avec les relations)
@@ -211,6 +236,30 @@ exports.markProgressCompleted = async (req, res) => {
                 where: { id: participation.id },
                 data: { completionStatus: 'Completed' }
             });
+
+            // GPEC integration: Auto-assign target skill
+            const course = await prisma.trainingSession.findUnique({
+                where: { id: sessionId }
+            });
+            if (course && course.targetSkill) {
+                const existingSkill = await prisma.employeeSkill.findFirst({
+                    where: { employeeId: id, skillName: course.targetSkill }
+                });
+                if (existingSkill) {
+                    await prisma.employeeSkill.update({
+                        where: { id: existingSkill.id },
+                        data: { proficiencyLevel: course.targetLevel || 'Intermédiaire' }
+                    });
+                } else {
+                    await prisma.employeeSkill.create({
+                        data: {
+                            employeeId: id,
+                            skillName: course.targetSkill,
+                            proficiencyLevel: course.targetLevel || 'Intermédiaire'
+                        }
+                    });
+                }
+            }
         }
 
         res.status(200).json(progress);
@@ -231,11 +280,14 @@ exports.generateAITraining = async (req, res) => {
 
         const prompt = `Tu es un expert RH et ingénieur pédagogique. Le RH veut créer un cours sur le thème suivant : "${topic}".
         Génère une session de formation complète avec exactement 3 modules (chapitres), ainsi qu'un quiz de validation final contenant 5 questions à choix multiples (QCM) avec chacune 4 options de réponse.
+        Détermine également une compétence GPEC unique ciblée par ce cours (ex: "React", "Management d'Équipe", "Négociation", "Communication Orale", "Droit du Travail", "UI/UX Design", "Sécurité au Travail", etc.) et le niveau visé ("Débutant", "Intermédiaire", "Avancé" ou "Expert").
         Le format de réponse doit être STRICTEMENT un objet JSON valide, SANS balises markdown, avec cette structure :
         {
             "title": "Titre accrocheur du cours",
             "description": "Courte description de ce que les employés vont apprendre",
             "durationHours": 2.5,
+            "targetSkill": "Nom de la compétence GPEC ciblée",
+            "targetLevel": "Niveau de compétence visé (Débutant, Intermédiaire, Avancé ou Expert)",
             "modules": [
                 {
                     "title": "Titre du chapitre 1",
@@ -297,7 +349,9 @@ exports.generateAITraining = async (req, res) => {
                 trainerName: 'IA (Gemini)',
                 date: new Date(),
                 durationHours: parseFloat(courseData.durationHours) || 2.0,
-                status: 'Active'
+                status: 'Active',
+                targetSkill: courseData.targetSkill || null,
+                targetLevel: courseData.targetLevel || 'Intermédiaire'
             }
         });
 
@@ -348,7 +402,9 @@ exports.generateAITraining = async (req, res) => {
                     trainerName: 'Système RH (Secours)',
                     date: new Date(),
                     durationHours: 2.0,
-                    status: 'Active'
+                    status: 'Active',
+                    targetSkill: topic || 'Formation Générique',
+                    targetLevel: 'Débutant'
                 }
             });
 

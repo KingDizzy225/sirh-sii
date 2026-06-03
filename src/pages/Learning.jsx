@@ -21,6 +21,7 @@ export function Learning() {
     const [courses, setCourses] = useState([]);
     const [employees, setEmployees] = useState([]);
     const [employeeProgress, setEmployeeProgress] = useState([]);
+    const [skillDefinitions, setSkillDefinitions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [notification, setNotification] = useState(null);
 
@@ -38,8 +39,8 @@ export function Learning() {
     const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
 
     // Forms
-    const [courseForm, setCourseForm] = useState({ title: '', description: '', trainerName: '', date: '', durationHours: '' });
-    const [sessionForm, setSessionForm] = useState({ title: '', description: '', trainerName: '', date: '', durationHours: '' });
+    const [courseForm, setCourseForm] = useState({ title: '', description: '', trainerName: '', date: '', durationHours: '', targetSkill: '', targetLevel: 'Intermédiaire' });
+    const [sessionForm, setSessionForm] = useState({ title: '', description: '', trainerName: '', date: '', durationHours: '', targetSkill: '', targetLevel: 'Intermédiaire' });
     const [selectedParticipants, setSelectedParticipants] = useState([]);
     const [aiTopic, setAiTopic] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -102,6 +103,14 @@ export function Learning() {
             });
             setEmployeeProgress(globalProgress);
 
+            // Load GPEC skill definitions
+            try {
+                const skillRes = await api.get('/gpec/skill-definitions');
+                setSkillDefinitions(skillRes.data || []);
+            } catch (err) {
+                console.error("Erreur de chargement référentiel GPEC", err);
+            }
+
             // Load employees list for session logs
             if (isAdminOrHR) {
                 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -152,7 +161,6 @@ export function Learning() {
             setIsGenerating(false);
         }
     };
-
     // Manual Course Creation
     const handleAddCourseSubmit = async (e) => {
         e.preventDefault();
@@ -163,10 +171,12 @@ export function Learning() {
                 trainerName: courseForm.trainerName,
                 date: courseForm.date || new Date().toISOString(),
                 durationHours: parseFloat(courseForm.durationHours),
-                participantIds: []
+                participantIds: [],
+                targetSkill: courseForm.targetSkill || null,
+                targetLevel: courseForm.targetLevel || 'Intermédiaire'
             });
             setIsAddCourseModalOpen(false);
-            setCourseForm({ title: '', description: '', trainerName: '', date: '', durationHours: '' });
+            setCourseForm({ title: '', description: '', trainerName: '', date: '', durationHours: '', targetSkill: '', targetLevel: 'Intermédiaire' });
             showNotification('Nouveau cours en ligne initialisé ! Ajoutez des chapitres dans le Studio LMS.');
             fetchAllData();
         } catch (err) {
@@ -184,10 +194,12 @@ export function Learning() {
                 trainerName: sessionForm.trainerName,
                 date: sessionForm.date,
                 durationHours: parseFloat(sessionForm.durationHours),
-                participantIds: selectedParticipants
+                participantIds: selectedParticipants,
+                targetSkill: sessionForm.targetSkill || null,
+                targetLevel: sessionForm.targetLevel || 'Intermédiaire'
             });
             setIsAddSessionModalOpen(false);
-            setSessionForm({ title: '', description: '', trainerName: '', date: '', durationHours: '' });
+            setSessionForm({ title: '', description: '', trainerName: '', date: '', durationHours: '', targetSkill: '', targetLevel: 'Intermédiaire' });
             setSelectedParticipants([]);
             showNotification('Session de formation archivée et validée pour les participants.');
             fetchAllData();
@@ -436,14 +448,22 @@ export function Learning() {
                                                 </div>
                                             </div>
                                             <CardContent className="p-5 flex-1 flex flex-col justify-between">
-                                                <div>
-                                                    <h4 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug mb-2">
-                                                        {course.title}
-                                                    </h4>
-                                                    <p className="text-sm text-slate-500 line-clamp-3 mb-4">
-                                                        {course.description || "Aucune description fournie pour ce module de formation."}
-                                                    </p>
-                                                </div>
+                                                 <div>
+                                                     <h4 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug mb-2">
+                                                         {course.title}
+                                                     </h4>
+                                                     {course.targetSkill && (
+                                                         <div className="inline-flex items-center gap-1.5 mb-3 bg-indigo-50 border border-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg">
+                                                             <Award size={13} className="shrink-0" />
+                                                             <span className="text-[11px] font-bold">
+                                                                 Cible : {course.targetSkill} ({course.targetLevel || 'Intermédiaire'})
+                                                             </span>
+                                                         </div>
+                                                     )}
+                                                     <p className="text-sm text-slate-500 line-clamp-3 mb-4">
+                                                         {course.description || "Aucune description fournie pour ce module de formation."}
+                                                     </p>
+                                                 </div>
                                                 
                                                 <div className="flex items-center justify-between border-t pt-4 text-xs text-slate-500">
                                                     <span className="flex items-center gap-1"><BookOpen size={14} />{course.totalModules} Chapitres</span>
@@ -840,7 +860,15 @@ export function Learning() {
                                                                     <div>
                                                                         <h4 className="font-extrabold text-sm text-white">Félicitations ! Vous avez validé ce cours !</h4>
                                                                         <p className="text-xs text-emerald-400/90 mt-0.5">Votre score est de {quizResult.score}% ({quizResult.correctCount} / {quizResult.totalCount} réponses correctes).</p>
-                                                                        <p className="text-xs text-slate-400 mt-2">La certification de formation a été enregistrée avec succès dans votre dossier RH.</p>
+                                                                        {activeCourse.targetSkill && (
+                                                                            <div className="mt-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2.5 flex items-center gap-2">
+                                                                                <Award size={16} className="text-emerald-400" />
+                                                                                <span className="text-xs text-white">
+                                                                                    Nouvelle compétence acquise : <strong className="text-emerald-300">{activeCourse.targetSkill} ({activeCourse.targetLevel || 'Intermédiaire'})</strong>
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        <p className="text-xs text-slate-400 mt-2">La certification de formation a été enregistrée avec succès dans votre dossier RH et votre profil GPEC.</p>
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -953,6 +981,35 @@ export function Learning() {
                                             <Input required type="number" step="0.5" value={courseForm.durationHours} onChange={e => setCourseForm({...courseForm, durationHours: e.target.value})} placeholder="Ex: 3" />
                                         </div>
                                     </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Compétence visée (GPEC)</label>
+                                            <select
+                                                required
+                                                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                value={courseForm.targetSkill}
+                                                onChange={e => setCourseForm({...courseForm, targetSkill: e.target.value})}
+                                            >
+                                                <option value="">Sélectionner...</option>
+                                                {skillDefinitions.map(s => (
+                                                    <option key={s.id} value={s.name}>{s.name} ({s.category})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Niveau visé</label>
+                                            <select
+                                                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                value={courseForm.targetLevel}
+                                                onChange={e => setCourseForm({...courseForm, targetLevel: e.target.value})}
+                                            >
+                                                <option value="Débutant">Débutant</option>
+                                                <option value="Intermédiaire">Intermédiaire</option>
+                                                <option value="Avancé">Avancé</option>
+                                                <option value="Expert">Expert</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Description générale</label>
                                         <textarea required className="w-full h-24 border border-slate-200 rounded-lg p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" value={courseForm.description} onChange={e => setCourseForm({...courseForm, description: e.target.value})} placeholder="Donnez un court aperçu des compétences visées..." />
@@ -1049,6 +1106,33 @@ export function Learning() {
                                         <div className="space-y-1">
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Volume horaire (heures)</label>
                                             <Input required type="number" step="0.5" value={sessionForm.durationHours} onChange={e => setSessionForm({...sessionForm, durationHours: e.target.value})} placeholder="Ex: 7" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Compétence visée (GPEC)</label>
+                                            <select
+                                                required
+                                                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                value={sessionForm.targetSkill}
+                                                onChange={e => setSessionForm({...sessionForm, targetSkill: e.target.value})}
+                                            >
+                                                <option value="">Sélectionner...</option>
+                                                {skillDefinitions.map(s => (
+                                                    <option key={s.id} value={s.name}>{s.name} ({s.category})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Niveau visé</label>
+                                            <select
+                                                className="w-full text-sm border border-slate-200 rounded-lg p-2.5 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                value={sessionForm.targetLevel}
+                                                onChange={e => setSessionForm({...sessionForm, targetLevel: e.target.value})}
+                                            >
+                                                <option value="Débutant">Débutant</option>
+                                                <option value="Intermédiaire">Intermédiaire</option>
+                                                <option value="Avancé">Avancé</option>
+                                                <option value="Expert">Expert</option>
+                                            </select>
                                         </div>
                                     </div>
 

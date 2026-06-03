@@ -136,8 +136,8 @@ export function OrgChart() {
     const [searchQuery, setSearchQuery] = useState('');
 
     const [isDragging, setIsDragging] = useState(false);
+    const [pan, setPan] = useState({ x: 0, y: 0 });
     const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-    const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
     const canvasContainerRef = useRef(null);
 
     const fetchEmployeesData = () => {
@@ -189,44 +189,30 @@ export function OrgChart() {
     };
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
-    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.1));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.2));
     const handleZoomReset = () => {
         setZoom(1);
-        if (canvasContainerRef.current) {
-            canvasContainerRef.current.scrollLeft = 0;
-            canvasContainerRef.current.scrollTop = 0;
-        }
+        setPan({ x: 0, y: 0 });
     };
 
     const handleFitToScreen = () => {
-        setZoom(0.5);
-        setTimeout(() => {
-            if (canvasContainerRef.current) {
-                const container = canvasContainerRef.current;
-                container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-                container.scrollTop = 0;
-            }
-        }, 50);
+        setZoom(0.65);
+        setPan({ x: 0, y: 10 });
     };
 
     // Drag-to-pan handlers
     const handleMouseDown = (e) => {
-        if (!canvasContainerRef.current) return;
         setIsDragging(true);
-        setPanStart({ x: e.clientX, y: e.clientY });
-        setScrollStart({
-            x: canvasContainerRef.current.scrollLeft,
-            y: canvasContainerRef.current.scrollTop
-        });
+        setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     };
 
     const handleMouseMove = (e) => {
-        if (!isDragging || !canvasContainerRef.current) return;
+        if (!isDragging) return;
         e.preventDefault();
-        const dx = e.clientX - panStart.x;
-        const dy = e.clientY - panStart.y;
-        canvasContainerRef.current.scrollLeft = scrollStart.x - dx;
-        canvasContainerRef.current.scrollTop = scrollStart.y - dy;
+        setPan({
+            x: e.clientX - panStart.x,
+            y: e.clientY - panStart.y
+        });
     };
 
     const handleMouseUpOrLeave = () => {
@@ -280,11 +266,14 @@ export function OrgChart() {
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUpOrLeave}
                 onMouseLeave={handleMouseUpOrLeave}
-                className={`flex-1 overflow-auto bg-slate-50/50 p-8 relative ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+                className={`flex-1 overflow-hidden bg-slate-50/50 p-8 relative ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
             >
                 <div
-                    className="flex justify-center transition-transform origin-top duration-200 ease-out min-w-max min-h-max print:scale-[0.4] print:origin-center"
-                    style={{ transform: `scale(${zoom})`, paddingBottom: '100px' }}
+                    className="absolute left-1/2 top-12 flex justify-center min-w-max min-h-max print:scale-[0.4] print:origin-center select-none"
+                    style={{ 
+                        transform: `translate(calc(-50% + ${pan.x}px), ${pan.y}px) scale(${zoom})`, 
+                        transformOrigin: 'top center'
+                    }}
                 >
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center p-12 text-slate-500">

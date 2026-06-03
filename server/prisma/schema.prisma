@@ -283,6 +283,8 @@ model TrainingSession {
   date          DateTime // Date de réalisation
   durationHours Float    @map("duration_hours") // Durée en heures
   status        String   @default("Completed") // Par défaut les formations ajoutées sont considérées comme effectuées
+  targetSkill   String?  @map("target_skill")
+  targetLevel   String?  @default("Intermédiaire") @map("target_level")
   createdAt     DateTime @default(now()) @map("created_at")
 
   participations TrainingParticipation[]
