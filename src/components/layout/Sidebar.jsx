@@ -46,6 +46,7 @@ const getAllNavItems = (t) => [
     // GESTION RH -> PILOTAGE RH
     { name: 'Temps, Absences & Demandes', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Paie & Rémunérations', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Agent Comptable IA', path: '/accounting', icon: Calculator, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: t('sidebar.learning', 'Espace Formation (LMS)'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
     { name: 'Talents & GPEC', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Générateur Workflows', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },

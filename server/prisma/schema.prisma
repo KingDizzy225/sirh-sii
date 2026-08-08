@@ -814,3 +814,102 @@ model RetentionAction {
 
   employee Employee @relation("EmployeeRetention", fields: [employeeId], references: [id], onDelete: Cascade)
 }
+
+// ----------------------------------------------------
+// 29. AGENT COMPTABLE IA — FÉDÉRATION DE FOOTBALL AMÉRICAIN (CÔTE D'IVOIRE)
+// ----------------------------------------------------
+
+model AccountingDocument {
+  id              String    @id @default(uuid())
+  source          String    @default("UPLOAD") // 'EMAIL', 'UPLOAD'
+  emailFrom       String?   @map("email_from")
+  emailSubject    String?   @map("email_subject")
+  emailReceivedAt DateTime? @map("email_received_at")
+  emailMessageId  String?   @map("email_message_id")
+
+  fileName String @map("file_name")
+  filePath String @map("file_path")
+  mimeType String @map("mime_type")
+  fileSize Int    @default(0) @map("file_size")
+
+  status String @default("RECU") // 'RECU', 'ANALYSE', 'VALIDE', 'REJETE', 'ERREUR'
+
+  // Champs extraits par l'Agent Comptable IA
+  docType       String?   @map("doc_type") // 'FACTURE_FOURNISSEUR', 'FACTURE_CLIENT', 'RECU', 'NOTE_DE_FRAIS', 'RELEVE_BANCAIRE', 'AUTRE'
+  vendor        String? // Fournisseur / Émetteur de la pièce
+  invoiceNumber String?   @map("invoice_number")
+  invoiceDate   DateTime? @map("invoice_date")
+  dueDate       DateTime? @map("due_date")
+  currency      String    @default("XOF")
+  amountHT      Float?    @map("amount_ht")
+  amountTVA     Float?    @map("amount_tva")
+  amountTTC     Float?    @map("amount_ttc")
+  category      String? // 'Équipements Sportifs', 'Déplacements', 'Arbitrage', 'Compétitions', 'Subventions', 'Salaires & Primes', 'Fonctionnement', 'Médical', 'Autre'
+  aiSummary     String?   @db.Text @map("ai_summary")
+  aiConfidence  Float?    @map("ai_confidence")
+  analyzedAt    DateTime? @map("analyzed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  journalEntries   JournalEntry[]
+  paymentSchedules PaymentSchedule[]
+}
+
+model JournalEntry {
+  id         String   @id @default(uuid())
+  documentId String?  @map("document_id")
+  entryDate  DateTime @default(now()) @map("entry_date")
+  journal    String   @default("ACH") // 'ACH' (Achats), 'VTE' (Ventes), 'BQ' (Banque), 'CAI' (Caisse), 'OD' (Opérations Diverses)
+  reference  String?
+  label      String
+  status     String   @default("BROUILLON") // 'BROUILLON', 'VALIDEE'
+  createdBy  String   @default("Agent Comptable IA") @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  document AccountingDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  lines    JournalLine[]
+}
+
+model JournalLine {
+  id           String @id @default(uuid())
+  entryId      String @map("entry_id")
+  accountCode  String @map("account_code") // Plan comptable SYSCOHADA révisé
+  accountLabel String @map("account_label")
+  debit        Float  @default(0)
+  credit       Float  @default(0)
+
+  entry JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+}
+
+model PaymentSchedule {
+  id           String   @id @default(uuid())
+  documentId   String?  @map("document_id")
+  title        String
+  counterparty String // Bénéficiaire / Créancier
+  totalAmount  Float    @map("total_amount")
+  currency     String   @default("XOF")
+  status       String   @default("ACTIF") // 'ACTIF', 'SOLDE', 'ANNULE'
+  notes        String?  @db.Text
+  createdBy    String   @default("Agent Comptable IA") @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  document     AccountingDocument?  @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  installments PaymentInstallment[]
+}
+
+model PaymentInstallment {
+  id            String    @id @default(uuid())
+  scheduleId    String    @map("schedule_id")
+  position      Int       @default(1)
+  dueDate       DateTime  @map("due_date")
+  amount        Float
+  status        String    @default("A_PAYER") // 'A_PAYER', 'PAYE', 'EN_RETARD'
+  paidAt        DateTime? @map("paid_at")
+  paymentMethod String?   @map("payment_method") // 'Virement', 'Chèque', 'Espèces', 'Mobile Money'
+  reference     String?
+
+  schedule PaymentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+}

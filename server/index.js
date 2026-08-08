@@ -149,6 +149,9 @@ app.use('/api/qr', qrRoutes); // No verifyToken because /scan is public, and /ge
 const kudoRoutes = require('./routes/kudoRoutes');
 app.use('/api/kudos', kudoRoutes);
 
+// Agent Comptable IA (Fédération de Football Américain CI)
+app.use('/api/accounting', verifyToken, require('./routes/accountingRoutes'));
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);
@@ -186,4 +189,7 @@ io.on('connection', (socket) => {
 // Start the server
 server.listen(PORT, () => {
     console.log(`🚀 SIRH Backend Server running on port ${PORT}`);
+
+    // Relève automatique de la boîte email de l'Agent Comptable IA (si configurée)
+    require('./services/accountingInboxService').start();
 });

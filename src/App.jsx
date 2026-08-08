@@ -56,6 +56,8 @@ import { Ethics } from './pages/Ethics';
 import { Subcontractors } from './pages/Subcontractors';
 import { DeiDashboard } from './pages/DeiDashboard';
 
+import { AgentComptable } from './pages/AgentComptable';
+
 import { FloatingChat } from './components/FloatingChat';
 import { CareerPath } from './pages/CareerPath';
 import { CommandCenter } from './components/CommandCenter';
@@ -321,6 +323,7 @@ const AppContent = () => {
             <Route path="/announcements" element={<Announcements />} />
             <Route path="/kudos" element={<ProtectedRoute><KudosWall /></ProtectedRoute>} />
             <Route path="/ai-sourcing" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><AiSourcing /></ProtectedRoute>} />
+            <Route path="/accounting" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><AgentComptable /></ProtectedRoute>} />
             <Route path="/payroll-simulation" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><PayrollSimulation /></ProtectedRoute>} />
             <Route path="/team-health" element={<ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}><TeamHealth /></ProtectedRoute>} />
             <Route path="/workflows" element={<ProtectedRoute allowedRoles={['Administrator', 'HR']}><Workflows /></ProtectedRoute>} />
