@@ -160,26 +160,33 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
                 </div>
 
                 <div className="relative border-l border-slate-700 pl-3 sm:pl-4">
-                    <button
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className="flex items-center gap-3 hover:bg-slate-800 p-1.5 rounded-lg transition-colors text-left"
-                    >
-                        <div className="hidden sm:block">
-                            <p className="text-sm font-medium text-slate-100 leading-none">{user.name}</p>
-                            <p className="text-xs text-slate-400 mt-1">{user.role}</p>
-                        </div>
-                        <div className="h-9 w-9 rounded-full bg-slate-700 text-slate-100 flex items-center justify-center font-bold shadow-inner border border-slate-600">
-                            {user.name.split(' ').map(n => n[0]).join('')}
-                        </div>
-                        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
+                    {(() => {
+                        const userName = user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email || 'Utilisateur');
+                        const initials = userName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U';
+
+                        return (
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="flex items-center gap-3 hover:bg-slate-800 p-1.5 rounded-lg transition-colors text-left"
+                            >
+                                <div className="hidden sm:block">
+                                    <p className="text-sm font-medium text-slate-100 leading-none">{userName}</p>
+                                    <p className="text-xs text-slate-400 mt-1">{user?.role || 'RH'}</p>
+                                </div>
+                                <div className="h-9 w-9 rounded-full bg-slate-700 text-slate-100 flex items-center justify-center font-bold shadow-inner border border-slate-600">
+                                    {initials}
+                                </div>
+                                <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                        );
+                    })()}
 
                     {/* User Dropdown */}
                     {isDropdownOpen && (
                         <div className="absolute right-0 top-full mt-3 w-56 rounded-xl border border-slate-200 bg-white shadow-xl py-2 z-50 text-slate-800">
                             <div className="px-4 py-3 border-b border-slate-100 mb-2">
-                                <p className="text-sm font-semibold text-slate-900">{user.name}</p>
-                                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                                <p className="text-sm font-semibold text-slate-900">{user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Utilisateur'}</p>
+                                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
                             </div>
 
                             <button

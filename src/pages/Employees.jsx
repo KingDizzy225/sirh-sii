@@ -229,8 +229,8 @@ export function Employees() {
 
     const openEdit = (emp) => {
         setEditForm({
-            firstName: emp.name.split(' ')[0] || '',
-            lastName: emp.name.split(' ').slice(1).join(' ') || '',
+            firstName: (emp.name || '').split(' ')[0] || '',
+            lastName: (emp.name || '').split(' ').slice(1).join(' ') || '',
             email: emp.email,
             phone: emp.phone,
             gender: emp.gender,
@@ -598,7 +598,7 @@ export function Employees() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-medium text-muted-foreground">
-                                                {emp.name.split(' ').map(n => n[0]).join('')}
+                                                {(emp.name || 'Emp').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                             </div>
                                             <div>
                                                 <div className="font-medium text-slate-900">{emp.name}</div>

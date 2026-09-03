@@ -145,9 +145,18 @@ const qrRoutes = require('./routes/qrRoutes');
 app.use('/api/qr', qrRoutes); // No verifyToken because /scan is public, and /generate requires it in the route definition
 
 
-// V8 Gamification & Kudos
+// V8 Gamification & Kudos & Referrals
 const kudoRoutes = require('./routes/kudoRoutes');
 app.use('/api/kudos', kudoRoutes);
+
+const referralRoutes = require('./routes/referralRoutes');
+app.use('/api/referrals', referralRoutes);
+
+const mentorshipRoutes = require('./routes/mentorshipRoutes');
+app.use('/api/mentorship', mentorshipRoutes);
+
+const contractRoutes = require('./routes/contractRoutes');
+app.use('/api/contracts', contractRoutes);
 
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {

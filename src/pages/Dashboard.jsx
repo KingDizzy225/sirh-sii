@@ -175,7 +175,7 @@ export function Dashboard() {
             <div className="flex items-center justify-between space-y-2 mb-8">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                        Bonjour, {user?.name.split(' ')[0] || 'Utilisateur'} !
+                        Bonjour, {(user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Utilisateur')).split(' ')[0]} !
                     </h2>
                     <p className="text-slate-500 mt-1">Voici ce qui se passe aujourd'hui.</p>
                 </div>

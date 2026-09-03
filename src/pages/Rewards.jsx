@@ -105,7 +105,7 @@ export function Rewards() {
                                     <motion.div key={e.employeeId} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                                         className={`flex flex-col items-center justify-end ${h} w-28 ${bg} rounded-t-2xl p-3 text-center shadow-md`}>
                                         <p className="text-2xl">{BADGES[e.badge]?.icon}</p>
-                                        <p className="text-xs font-bold text-white mt-1">{e.name.split(' ')[0]}</p>
+                                        <p className="text-xs font-bold text-white mt-1">{(e.name || e.employee?.firstName || 'Employé').split(' ')[0]}</p>
                                         <p className="text-xs text-white/80">{e.total} pts</p>
                                     </motion.div>
                                 );

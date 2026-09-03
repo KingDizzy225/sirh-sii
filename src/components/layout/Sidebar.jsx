@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,8 @@ const getAllNavItems = (t) => [
 
     { name: t('sidebar.payroll', 'Mes Fiches de Paie'), path: '/payroll', icon: FileText, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Kudos & Gamification', path: '/kudos', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Cooptation & Parrainages', path: '/referrals', icon: UserPlus, domain: 'Mon Espace', permission: 'myself:view' },
+    { name: 'Mentorat & Partage', path: '/mentorship', icon: GraduationCap, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Explorateur Carrière', path: '/career-path', icon: Rocket, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Assistance Sociale', path: '/social-support', icon: Heart, domain: 'Mon Espace', permission: 'myself:view' },
     { name: 'Mes Avantages', path: '/benefits', icon: HeartPulse, domain: 'Mon Espace', permission: 'myself:view' },
@@ -31,9 +33,11 @@ const getAllNavItems = (t) => [
 
     // EMPLOYÉS
     { name: t('sidebar.employees', 'Répertoire Employés'), path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
+    { name: 'Générateur de Contrats', path: '/contracts', icon: FileText, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Simulateur Orga.', path: '/org-simulation', icon: Rocket, domain: 'Employés', permission: 'employees:edit' },
     { name: t('sidebar.recruitment', 'Recrutement'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
+    { name: 'Portail Cooptation', path: '/referrals', icon: UserPlus, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Fiches de Poste IA', path: '/job-studio', icon: Sparkles, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Sourcing IA', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },

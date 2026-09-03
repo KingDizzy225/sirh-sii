@@ -72,6 +72,9 @@ model Employee {
   orgNodes             OrgSimulationNode[]     @relation("EmployeeOrgNodes")
   successors           Successor[]             @relation("EmployeeSuccessors")
   retentionActions     RetentionAction[]       @relation("EmployeeRetention")
+  referrals            Referral[]              @relation("EmployeeReferrals")
+  mentorRelations      MentorshipRelation[]    @relation("MentorEmployee")
+  menteeRelations      MentorshipRelation[]    @relation("MenteeEmployee")
 }
 
 // ... (existing code)
@@ -244,6 +247,7 @@ model JobOffer {
   createdAt      DateTime @default(now()) @map("created_at")
 
   applicants Applicant[]
+  referrals  Referral[]
 }
 
 model User {
@@ -816,3 +820,76 @@ model RetentionAction {
 
   employee Employee @relation("EmployeeRetention", fields: [employeeId], references: [id], onDelete: Cascade)
 }
+
+// ----------------------------------------------------
+// 30. COOPTATION & PARRAINAGE (EMPLOYEE REFERRALS)
+// ----------------------------------------------------
+
+model Referral {
+  id                 String   @id @default(uuid())
+  referrerId         String   @map("referrer_id")
+  jobOfferId         String   @map("job_offer_id")
+  candidateFirstName String   @map("candidate_first_name")
+  candidateLastName  String   @map("candidate_last_name")
+  candidateEmail     String   @map("candidate_email")
+  candidatePhone     String?  @map("candidate_phone")
+  relationship       String?  @default("Ancien collègue")
+  status             String   @default("SUBMITTED") // 'SUBMITTED', 'SCREENING', 'INTERVIEW', 'HIRED', 'REJECTED'
+  notes              String?
+  bonusAmount        Float    @default(150000) @map("bonus_amount")
+  bonusPaid          Boolean  @default(false) @map("bonus_paid")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  referrer Employee @relation("EmployeeReferrals", fields: [referrerId], references: [id], onDelete: Cascade)
+  jobOffer JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 31. MENTORAT & ECHANGE DE COMPETENCES (OPTION B)
+// ----------------------------------------------------
+
+model MentorshipRelation {
+  id        String   @id @default(uuid())
+  mentorId  String   @map("mentor_id")
+  menteeId  String   @map("mentee_id")
+  skillName String   @map("skill_name")
+  goals     String?
+  status    String   @default("REQUESTED") // 'REQUESTED', 'ACTIVE', 'COMPLETED', 'DECLINED'
+  createdAt DateTime @default(now()) @map("created_at")
+
+  mentor   Employee            @relation("MentorEmployee", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentee   Employee            @relation("MenteeEmployee", fields: [menteeId], references: [id], onDelete: Cascade)
+  sessions MentorshipSession[]
+}
+
+model MentorshipSession {
+  id              String   @id @default(uuid())
+  relationId      String   @map("relation_id")
+  topic           String
+  date            DateTime
+  durationMinutes Int      @default(60) @map("duration_minutes")
+  notes           String?
+  rating          Int?     @default(5)
+  status          String   @default("SCHEDULED") // 'SCHEDULED', 'COMPLETED', 'CANCELLED'
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  relation MentorshipRelation @relation(fields: [relationId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 32. SMART CONTRACT BUILDER (OPTION C)
+// ----------------------------------------------------
+
+model ContractTemplate {
+  id           String   @id @default(uuid())
+  title        String
+  contractType String   @map("contract_type") // 'CDI', 'CDD', 'Stage', 'Freelance'
+  clauses      String   @db.Text
+  isDefault    Boolean  @default(false) @map("is_default")
+  createdBy    String   @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+}
+
+

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -45,7 +46,9 @@ import { useAuth } from './context/AuthContext';
 import { PublicCareers } from './pages/PublicCareers';
 import { PublicSignature } from './pages/PublicSignature';
 
-// V5 New Components
+import { Referrals } from './pages/Referrals';
+import { Mentorship } from './pages/Mentorship';
+import { ContractStudio } from './pages/ContractStudio';
 import { Offboarding } from './pages/Offboarding';
 import { KudosWall } from './pages/KudosWall';
 import { AiSourcing } from './pages/AiSourcing';
@@ -124,6 +127,7 @@ const AppContent = () => {
         />
         
         <main className="flex-1 overflow-y-auto bg-slate-50/50 p-6">
+          <ErrorBoundary>
           <Routes>
             {/* Redirect root based on role */}
             <Route path="/" element={
@@ -265,6 +269,18 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
+            <Route path="/mentorship" element={
+              <ProtectedRoute>
+                <Mentorship />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/contracts" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <ContractStudio />
+              </ProtectedRoute>
+            } />
+
             <Route path="/settings" element={
               <ProtectedRoute allowedRoles={['Administrator']}>
                 <Settings />
@@ -370,6 +386,11 @@ const AppContent = () => {
                 <DeiDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/referrals" element={
+              <ProtectedRoute>
+                <Referrals />
+              </ProtectedRoute>
+            } />
 
 
             {/* System Routes */}
@@ -377,6 +398,7 @@ const AppContent = () => {
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction!</div>} />
           </Routes>
+          </ErrorBoundary>
         </main>
       </div>
       
