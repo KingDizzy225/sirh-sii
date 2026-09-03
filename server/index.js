@@ -193,6 +193,13 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
     console.log(`🚀 SIRH Backend Server running on port ${PORT}`);
+    try {
+        const prisma = require('./prismaClient');
+        await prisma.$connect();
+        console.log("✅ Connexion à la base de données PostgreSQL établie avec succès.");
+    } catch (dbErr) {
+        console.warn("⚠️ Avertissement Connexion Base de Données : La base distante est en veille ou en cours de connexion.", dbErr.message);
+    }
 });
