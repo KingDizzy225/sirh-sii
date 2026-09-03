@@ -63,6 +63,11 @@ const getAllNavItems = (t) => [
     { name: 'Simulateur Masse Salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Intelligence RH', permission: 'payroll:view' },
     { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },
+
+    // NOUVELLES FONCTIONNALITÉS
+    { name: 'WhatsApp Self-Service RH', path: '/whatsapp-bot', icon: MessageSquare, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Hub Santé au Travail', path: '/medical-hub', icon: Stethoscope, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Baromètre Social & eNPS', path: '/climate-surveys', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
 ];
 
 

@@ -75,6 +75,7 @@ model Employee {
   referrals            Referral[]              @relation("EmployeeReferrals")
   mentorRelations      MentorshipRelation[]    @relation("MentorEmployee")
   menteeRelations      MentorshipRelation[]    @relation("MenteeEmployee")
+  medicalRecords       MedicalRecord[]
 }
 
 // ... (existing code)
@@ -891,5 +892,64 @@ model ContractTemplate {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 }
+
+// ----------------------------------------------------
+// 33. WHATSAPP & SMS GATEWAY (OPTION A)
+// ----------------------------------------------------
+
+model WhatsappLog {
+  id          String   @id @default(uuid())
+  phoneNumber String   @map("phone_number")
+  command     String
+  response    String   @db.Text
+  status      String   @default("SUCCESS") // 'SUCCESS', 'ERROR'
+  createdAt   DateTime @default(now()) @map("created_at")
+}
+
+// ----------------------------------------------------
+// 34. HUB SANTÉ ET VISITES MÉDICALES (OPTION B)
+// ----------------------------------------------------
+
+model MedicalRecord {
+  id              String    @id @default(uuid())
+  employeeId      String    @map("employee_id")
+  visitType       String    @map("visit_type") // 'ANNUAL', 'RECRUITMENT', 'RECONVERSION'
+  visitDate       DateTime  @map("visit_date")
+  doctorName      String?   @map("doctor_name")
+  aptitudeStatus  String    @map("aptitude_status") // 'FIT', 'FIT_WITH_RESTRICTION', 'UNFIT'
+  nextCheckupDate DateTime? @map("next_checkup_date")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ----------------------------------------------------
+// 35. BAROMÈTRE CLIMAT SOCIAL & ENPS (OPTION C)
+// ----------------------------------------------------
+
+model ClimateSurvey {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("ACTIVE") // 'ACTIVE', 'CLOSED'
+  enpsScore   Float    @default(0) @map("enps_score")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  responses SurveyResponse[]
+}
+
+model SurveyResponse {
+  id         String   @id @default(uuid())
+  surveyId   String   @map("survey_id")
+  score      Int      // 0 to 10
+  feedback   String?  @db.Text
+  department String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  survey ClimateSurvey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+}
+
 
 

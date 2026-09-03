@@ -158,6 +158,15 @@ app.use('/api/mentorship', mentorshipRoutes);
 const contractRoutes = require('./routes/contractRoutes');
 app.use('/api/contracts', contractRoutes);
 
+const whatsappRoutes = require('./routes/whatsappRoutes');
+app.use('/api/whatsapp', whatsappRoutes);
+
+const medicalRoutes = require('./routes/medicalRoutes');
+app.use('/api/medical', medicalRoutes);
+
+const surveyRoutes = require('./routes/surveyRoutes');
+app.use('/api/surveys', surveyRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

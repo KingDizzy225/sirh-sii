@@ -49,6 +49,9 @@ import { PublicSignature } from './pages/PublicSignature';
 import { Referrals } from './pages/Referrals';
 import { Mentorship } from './pages/Mentorship';
 import { ContractStudio } from './pages/ContractStudio';
+import { WhatsappGateway } from './pages/WhatsappGateway';
+import { MedicalVisitsHub } from './pages/MedicalVisitsHub';
+import { ClimateSurveys } from './pages/ClimateSurveys';
 import { Offboarding } from './pages/Offboarding';
 import { KudosWall } from './pages/KudosWall';
 import { AiSourcing } from './pages/AiSourcing';
@@ -278,6 +281,24 @@ const AppContent = () => {
             <Route path="/contracts" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <ContractStudio />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/whatsapp-bot" element={
+              <ProtectedRoute>
+                <WhatsappGateway />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/medical-hub" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Social Worker']}>
+                <MedicalVisitsHub />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/climate-surveys" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <ClimateSurveys />
               </ProtectedRoute>
             } />
 
