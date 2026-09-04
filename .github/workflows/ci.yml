@@ -49,5 +49,8 @@ jobs:
       - name: Installation des dépendances
         run: npm ci
 
+      - name: Règles des hooks React
+        run: npx eslint src --config eslint.hooks.config.js
+
       - name: Build de production
         run: npm run build
