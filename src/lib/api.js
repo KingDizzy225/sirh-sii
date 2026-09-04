@@ -10,7 +10,7 @@ const getHeaders = () => {
     };
 };
 
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== 'false';
 
 // Session expirée ou jeton invalide : on nettoie et on renvoie vers la connexion
 // plutôt que de laisser l'utilisateur devant une page vide ou des données de repli.
@@ -24,6 +24,11 @@ const handleUnauthorized = () => {
 
 const handleResponse = async (res) => {
     if (res.status === 401 || res.status === 403) {
+        // En mode démo le jeton est fictif : le serveur le rejette forcément.
+        // Rediriger ici enfermerait l'application dans une boucle de connexion.
+        if (DEMO_MODE) {
+            throw new Error('Non autorisé (mode démo)');
+        }
         handleUnauthorized();
         throw new Error('Session expirée. Veuillez vous reconnecter.');
     }

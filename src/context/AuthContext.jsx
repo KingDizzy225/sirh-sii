@@ -7,10 +7,11 @@ export const useAuth = () => useContext(AuthContext);
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Mode démo : session administrateur ouverte sans authentification réelle.
-// Désactivé par défaut — il ne s'active que si VITE_DEMO_MODE vaut
-// explicitement "true" au moment du build. Ne jamais l'activer en production :
-// il contourne entièrement la vérification des identifiants.
-export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+// ACTIF par défaut tant que l'application est en phase de démonstration.
+// Pour passer en exploitation réelle, définir VITE_DEMO_MODE="false" :
+// l'écran de connexion devient obligatoire et les identifiants sont vérifiés.
+// Un bandeau orange signale en permanence que le mode démo est actif.
+export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== 'false';
 
 const DEMO_USER = {
     id: 'demo-admin-id',
