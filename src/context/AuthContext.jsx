@@ -6,11 +6,11 @@ export const useAuth = () => useContext(AuthContext);
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-// Mode démo : session administrateur ouverte sans authentification réelle.
-// ACTIF par défaut tant que l'application est en phase de démonstration.
-// Pour passer en exploitation réelle, définir VITE_DEMO_MODE="false" :
-// l'écran de connexion devient obligatoire et les identifiants sont vérifiés.
-// Un bandeau orange signale en permanence que le mode démo est actif.
+// L'écran de connexion est toujours affiché : aucune session n'est ouverte
+// automatiquement. Tant que VITE_DEMO_MODE ne vaut pas "false", un bouton
+// « accès démonstration » reste proposé sur cet écran, pour ne jamais se
+// retrouver bloqué si les comptes de test ne sont pas encore en base.
+// En production réelle : VITE_DEMO_MODE="false" fait disparaître ce bouton.
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== 'false';
 
 const DEMO_USER = {
@@ -45,13 +45,8 @@ export const AuthProvider = ({ children }) => {
                     setUser(JSON.parse(savedUser));
                     setToken(savedToken);
                 }
-            } else if (DEMO_MODE) {
-                localStorage.setItem('sirh_token', DEMO_TOKEN);
-                localStorage.setItem('sirh_user', JSON.stringify(DEMO_USER));
-                setUser(DEMO_USER);
-                setToken(DEMO_TOKEN);
             }
-            // Hors mode démo et sans session : l'utilisateur est dirigé vers /login
+            // Sans session enregistrée : l'utilisateur est dirigé vers /login
         } catch (error) {
             console.error('Erreur lors du chargement de la session:', error);
             localStorage.removeItem('sirh_token');
@@ -85,20 +80,26 @@ export const AuthProvider = ({ children }) => {
                 error: data.error || "Identifiants incorrects."
             };
         } catch (error) {
-            // Serveur injoignable
-            if (DEMO_MODE) {
-                console.warn('API indisponible, ouverture d\'une session de démonstration:', error);
-                localStorage.setItem('sirh_token', DEMO_TOKEN);
-                localStorage.setItem('sirh_user', JSON.stringify(DEMO_USER));
-                setUser(DEMO_USER);
-                setToken(DEMO_TOKEN);
-                return { success: true };
-            }
+            // Serveur injoignable : ne jamais transformer une panne en connexion réussie
+            console.warn('Connexion impossible, serveur injoignable:', error);
             return {
                 success: false,
-                error: "Serveur injoignable. Vérifiez votre connexion et réessayez."
+                error: DEMO_MODE
+                    ? "Serveur injoignable. Utilisez l'accès démonstration ci-dessous."
+                    : "Serveur injoignable. Vérifiez votre connexion et réessayez."
             };
         }
+    };
+
+    // Accès démonstration explicite : ouvert seulement depuis le bouton dédié
+    // de l'écran de connexion, jamais automatiquement.
+    const loginAsDemo = () => {
+        if (!DEMO_MODE) return { success: false, error: 'Mode démonstration désactivé.' };
+        localStorage.setItem('sirh_token', DEMO_TOKEN);
+        localStorage.setItem('sirh_user', JSON.stringify(DEMO_USER));
+        setUser(DEMO_USER);
+        setToken(DEMO_TOKEN);
+        return { success: true };
     };
 
     const logout = () => {
@@ -109,7 +110,17 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, isLoading, login, logout, demoMode: DEMO_MODE }}>
+        <AuthContext.Provider value={{
+            user,
+            token,
+            isLoading,
+            login,
+            loginAsDemo,
+            logout,
+            demoMode: DEMO_MODE,
+            // Vrai uniquement si la session courante est une session de démonstration
+            isDemoSession: token === DEMO_TOKEN
+        }}>
             {children}
         </AuthContext.Provider>
     );

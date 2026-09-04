@@ -30,7 +30,7 @@ export function Login() {
     });
     const [portalStatus, setPortalStatus] = useState(null);
 
-    const { login } = useAuth();
+    const { login, loginAsDemo, demoMode } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -243,6 +243,16 @@ export function Login() {
                             <p>Comptes test : <span className="text-slate-400 font-mono">admin@</span>, <span className="text-slate-400 font-mono">drh@</span>, <span className="text-slate-400 font-mono">rh1@sirh.com</span></p>
                             <p>Mot de passe : <span className="text-slate-400 font-mono">SIIRH</span></p>
                         </div>
+
+                        {demoMode && (
+                            <button
+                                type="button"
+                                onClick={() => { loginAsDemo(); navigate('/'); }}
+                                className="w-full text-xs font-semibold text-amber-400/80 hover:text-amber-300 border border-dashed border-amber-700/40 hover:border-amber-600/60 rounded-lg py-2.5 transition-colors"
+                            >
+                                Accès démonstration (sans identifiants)
+                            </button>
+                        )}
 
                         <div className="flex flex-col gap-2">
                             <Button

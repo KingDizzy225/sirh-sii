@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Bell, Menu, ChevronDown, LogOut, Check, Users } from 'lucide-react';
-import { useAuth, DEMO_MODE } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { NotificationCenter } from '../NotificationCenter';
 import { ServerStatus } from '../ui/ServerStatus';
 
@@ -12,7 +12,7 @@ const getDomainsForRole = (role) => {
 };
 
 export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
-    const { user, logout, token } = useAuth();
+    const { user, logout, token, isDemoSession } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
@@ -58,9 +58,9 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
 
     return (
         <>
-        {DEMO_MODE && (
+        {isDemoSession && (
             <div className="w-full bg-amber-500 text-amber-950 text-center text-xs font-bold py-1.5 tracking-wide">
-                MODE DÉMONSTRATION — authentification désactivée, les données affichées ne sont pas réelles
+                MODE DÉMONSTRATION — session sans authentification, les données affichées ne sont pas réelles
             </div>
         )}
         <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between bg-slate-900 border-b border-slate-800 px-4 md:px-6 shadow-md text-white">
