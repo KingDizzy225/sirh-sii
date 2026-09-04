@@ -1,10 +1,11 @@
 const prisma = require('../prismaClient');
+const { ROLES, BRIDGES } = require('../data/careerCatalog');
 
 exports.getCareerPath = async (req, res) => {
     try {
         const { employeeId } = req.params;
         const { startRole } = req.query;
-        
+
         // Fetch current employee to get their role and department
         const employee = await prisma.employee.findUnique({
             where: { id: employeeId },
@@ -15,107 +16,78 @@ exports.getCareerPath = async (req, res) => {
             return res.status(404).json({ error: "Employé non trouvé" });
         }
 
-        // Complete list of roles across 6 main departments at SII Côte d'Ivoire
-        const allRoles = [
-            // Tech / IT
-            { id: 'tech1', title: 'Support Technique Junior', department: 'Tech', level: 1 },
-            { id: 'tech2', title: 'Développeur Junior', department: 'Tech', level: 1 },
-            { id: 'tech3', title: 'Développeur Senior', department: 'Tech', level: 2 },
-            { id: 'tech4', title: 'Ingénieur DevOps', department: 'Tech', level: 2 },
-            { id: 'tech5', title: 'Lead Developer', department: 'Tech', level: 3 },
-            { id: 'tech6', title: 'Architecte Solution', department: 'Tech', level: 4 },
-            { id: 'tech7', title: 'Engineering Manager', department: 'Tech', level: 4 },
-            { id: 'tech8', title: 'CTO', department: 'Tech', level: 5 },
-
-            // Product
-            { id: 'prod1', title: 'Product Owner', department: 'Product', level: 2 },
-            { id: 'prod2', title: 'Product Manager', department: 'Product', level: 3 },
-            { id: 'prod3', title: 'UX/UI Designer', department: 'Product', level: 2 },
-            { id: 'prod4', title: 'Lead Designer', department: 'Product', level: 3 },
-            { id: 'prod5', title: 'Chief Product Officer', department: 'Product', level: 5 },
-
-            // Human Resources
-            { id: 'hr1', title: 'Assistant RH', department: 'Ressources Humaines', level: 1 },
-            { id: 'hr2', title: 'Chargé de Recrutement', department: 'Ressources Humaines', level: 2 },
-            { id: 'hr3', title: 'Responsable RH', department: 'Ressources Humaines', level: 3 },
-            { id: 'hr4', title: 'Directeur RH', department: 'Ressources Humaines', level: 4 },
-
-            // Finance
-            { id: 'fin1', title: 'Comptable Junior', department: 'Finance', level: 1 },
-            { id: 'fin2', title: 'Comptable Senior', department: 'Finance', level: 2 },
-            { id: 'fin3', title: 'Contrôleur de Gestion', department: 'Finance', level: 3 },
-            { id: 'fin4', title: 'Directeur Financier', department: 'Finance', level: 4 },
-
-            // Sales / Commercial
-            { id: 'sales1', title: 'Commercial Junior', department: 'Sales', level: 1 },
-            { id: 'sales2', title: 'Commercial Senior', department: 'Sales', level: 2 },
-            { id: 'sales3', title: 'Key Account Manager', department: 'Sales', level: 3 },
-            { id: 'sales4', title: 'Directeur Commercial', department: 'Sales', level: 4 },
-
-            // HSE (Hygiène, Sécurité, Environnement)
-            { id: 'hse1', title: 'Agent HSE', department: 'HSE', level: 1 },
-            { id: 'hse2', title: 'Inspecteur HSE', department: 'HSE', level: 2 },
-            { id: 'hse3', title: 'Responsable HSE', department: 'HSE', level: 3 },
-            { id: 'hse4', title: 'Directeur HSE', department: 'HSE', level: 4 }
-        ];
-
-        // Determine starting role
+        // Determine starting role (référentiel complet : server/data/careerCatalog.js)
         const startingRoleTitle = startRole || employee.positionTitle;
-        const currentRole = allRoles.find(r => r.title.toLowerCase() === startingRoleTitle.toLowerCase()) || 
-                            { title: startingRoleTitle, level: 2, department: employee.department || 'Tech' };
+        const currentRole = ROLES.find(r => r.title.toLowerCase() === startingRoleTitle.toLowerCase()) ||
+                            { title: startingRoleTitle, level: 2, department: employee.department || 'Tech / IT', skills: [] };
 
-        // Filter nodes to keep constellation readable and relevant
-        const filteredRoles = allRoles.filter(role => {
+        // Filter nodes to keep the constellation readable:
+        // - toute la famille du poste courant
+        // - les passerelles directes depuis/vers le poste courant
+        // - le sommet de la famille (niveau 5) et les passerelles de 2e niveau vers la Direction
+        const bridgeTitles = new Set();
+        BRIDGES.forEach(b => {
+            if (b.source === currentRole.title) bridgeTitles.add(b.target);
+            if (b.target === currentRole.title) bridgeTitles.add(b.source);
+        });
+
+        const filteredRoles = ROLES.filter(role => {
             if (role.title === currentRole.title) return true;
             if (role.department === currentRole.department) return true;
-            
-            // Cross-department opportunities with level difference <= 1
-            if (Math.abs(role.level - currentRole.level) <= 1 && (
-                (currentRole.department === 'Tech' && role.department === 'Product') ||
-                (currentRole.department === 'Product' && role.department === 'Tech') ||
-                (currentRole.department === 'Ressources Humaines' && role.department === 'HSE')
-            )) {
-                return true;
-            }
-            // Executive roles
-            if (role.level === 5) return true;
+            if (bridgeTitles.has(role.title)) return true;
             return false;
         });
+
+        const includedTitles = new Set(filteredRoles.map(r => r.title));
 
         const nodes = filteredRoles.map(role => ({
             ...role,
             isCurrent: role.title === currentRole.title,
-            isPossible: role.level >= currentRole.level && (role.department === currentRole.department || role.level >= 4)
+            isPossible: role.level >= currentRole.level &&
+                (role.department === currentRole.department || bridgeTitles.has(role.title))
         }));
 
+        // Links : progression verticale au sein d'une famille (vers le niveau supérieur
+        // le plus proche réellement présent) + passerelles inter-familles du référentiel
         const links = [];
-        // Connect nodes based on level progression
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = 0; j < nodes.length; j++) {
-                // Progression within same department
-                if (nodes[i].level === nodes[j].level - 1 && nodes[i].department === nodes[j].department) {
-                    links.push({ source: nodes[i].title, target: nodes[j].title });
-                }
-                // Bridges from Lead Dev to management or product roles
-                if (nodes[i].title === 'Lead Developer' && ['Product Manager', 'Engineering Manager'].includes(nodes[j].title)) {
-                    links.push({ source: nodes[i].title, target: nodes[j].title });
-                }
-                // Transition to CTO
-                if (['Architecte Solution', 'Engineering Manager'].includes(nodes[i].title) && nodes[j].title === 'CTO') {
-                    links.push({ source: nodes[i].title, target: nodes[j].title });
-                }
-                // Transition to Chief Product Officer
-                if (nodes[i].title === 'Product Manager' && nodes[j].title === 'Chief Product Officer') {
-                    links.push({ source: nodes[i].title, target: nodes[j].title });
-                }
+        const byDept = {};
+        nodes.forEach(n => {
+            byDept[n.department] = byDept[n.department] || [];
+            byDept[n.department].push(n);
+        });
+        Object.values(byDept).forEach(deptNodes => {
+            deptNodes.forEach(node => {
+                const higherLevels = deptNodes.filter(n => n.level > node.level).map(n => n.level);
+                if (higherLevels.length === 0) return;
+                const nextLevel = Math.min(...higherLevels);
+                deptNodes
+                    .filter(n => n.level === nextLevel)
+                    .forEach(target => links.push({ source: node.title, target: target.title }));
+            });
+        });
+        BRIDGES.forEach(b => {
+            if (includedTitles.has(b.source) && includedTitles.has(b.target)) {
+                links.push({ source: b.source, target: b.target });
             }
-        }
+        });
 
-        res.status(200).json({ 
-            nodes, 
-            links, 
+        // Catalogue groupé par famille pour le sélecteur du frontend
+        const families = [];
+        ROLES.forEach(role => {
+            let family = families.find(f => f.name === role.department);
+            if (!family) {
+                family = { name: role.department, roles: [] };
+                families.push(family);
+            }
+            family.roles.push(role.title);
+        });
+
+        res.status(200).json({
+            nodes,
+            links,
             currentRole: currentRole.title,
-            allRoleTitles: allRoles.map(r => r.title)
+            allRoleTitles: ROLES.map(r => r.title),
+            families
         });
     } catch (error) {
         console.error("Error fetching career path:", error);

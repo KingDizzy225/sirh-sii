@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, Target, Star, ChevronRight, Info, Award, BrainCircuit, ArrowRight } from 'lucide-react';
@@ -12,6 +12,7 @@ export function CareerPath() {
     const [selectedRole, setSelectedRole] = useState(null);
     const [selectedStartRole, setSelectedStartRole] = useState('');
     const [allRolesList, setAllRolesList] = useState([]);
+    const [families, setFamilies] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -20,27 +21,25 @@ export function CareerPath() {
                 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
                 const token = localStorage.getItem('sirh_token');
                 
-                // Fallback mock data
+                // Fallback mock data (mode hors-ligne)
                 const MOCK_CAREER_DATA = {
                     nodes: [
-                        { id: 1, title: 'Développeur Fullstack', department: 'Tech', level: 3, isCurrent: true },
-                        { id: 2, title: 'Lead Tech', department: 'Tech', level: 4, isPossible: true },
-                        { id: 3, title: 'Architecte Logiciel', department: 'Tech', level: 5, isPossible: false },
-                        { id: 4, title: 'Engineering Manager', department: 'Management', level: 5, isPossible: false },
-                        { id: 5, title: 'Product Manager', department: 'Produit', level: 4, isPossible: true }
+                        { id: 1, title: 'Développeur Confirmé', department: 'Tech / IT', level: 2, isCurrent: true, skills: ['Conception logicielle', 'Tests automatisés', 'Revue de code'] },
+                        { id: 2, title: 'Développeur Senior', department: 'Tech / IT', level: 3, isPossible: true, skills: ['Architecture applicative', 'Mentorat', 'Performance & sécurité'] },
+                        { id: 3, title: 'Lead Developer', department: 'Tech / IT', level: 4, isPossible: true, skills: ['Leadership technique', 'Architecture', 'Encadrement d\'équipe'] },
+                        { id: 4, title: 'Engineering Manager', department: 'Tech / IT', level: 4, isPossible: false, skills: ['Management d\'équipe', 'Delivery', 'Développement des talents'] },
+                        { id: 5, title: 'Product Owner', department: 'Produit & Design', level: 2, isPossible: true, skills: ['Backlog & priorisation', 'Agilité', 'User stories'] }
                     ],
                     links: [
-                        { source: 'Développeur Fullstack', target: 'Lead Tech' },
-                        { source: 'Développeur Fullstack', target: 'Product Manager' },
-                        { source: 'Lead Tech', target: 'Architecte Logiciel' },
-                        { source: 'Lead Tech', target: 'Engineering Manager' }
+                        { source: 'Développeur Confirmé', target: 'Développeur Senior' },
+                        { source: 'Développeur Senior', target: 'Lead Developer' },
+                        { source: 'Développeur Senior', target: 'Product Owner' },
+                        { source: 'Lead Developer', target: 'Engineering Manager' }
                     ],
-                    allRoleTitles: [
-                        'Développeur Fullstack',
-                        'Lead Tech',
-                        'Architecte Logiciel',
-                        'Engineering Manager',
-                        'Product Manager'
+                    allRoleTitles: ['Développeur Confirmé', 'Développeur Senior', 'Lead Developer', 'Engineering Manager', 'Product Owner'],
+                    families: [
+                        { name: 'Tech / IT', roles: ['Développeur Confirmé', 'Développeur Senior', 'Lead Developer', 'Engineering Manager'] },
+                        { name: 'Produit & Design', roles: ['Product Owner'] }
                     ]
                 };
 
@@ -63,6 +62,9 @@ export function CareerPath() {
                 setCareerData(data);
                 if (data.allRoleTitles) {
                     setAllRolesList(data.allRoleTitles);
+                }
+                if (data.families) {
+                    setFamilies(data.families);
                 }
                 const current = data.nodes.find(n => n.isCurrent);
                 setSelectedRole(current);
@@ -91,21 +93,29 @@ export function CareerPath() {
         );
     }
 
-    // Helper to calculate coordinates for nodes in a "constellation" layout
-    const getCoords = (index, total, isCurrent) => {
-        if (isCurrent) return { x: 50, y: 50 }; // Center
-        const angle = (index / (total - 1)) * Math.PI * 1.5 - Math.PI * 0.75;
-        const radius = 35 + Math.random() * 5;
-        return {
-            x: 50 + radius * Math.cos(angle),
-            y: 50 + radius * Math.sin(angle)
-        };
-    };
+    // Constellation déterministe : le poste courant au centre, les autres en anneaux
+    // selon l'écart de niveau, regroupés par famille (stable d'un rendu à l'autre)
+    const nodesWithCoords = useMemo(() => {
+        if (!careerData?.nodes) return [];
+        const current = careerData.nodes.find(n => n.isCurrent);
+        const currentLevel = current?.level ?? 2;
+        const others = careerData.nodes
+            .filter(n => !n.isCurrent)
+            .sort((a, b) => a.department.localeCompare(b.department) || a.level - b.level || a.title.localeCompare(b.title));
 
-    const nodesWithCoords = careerData?.nodes.map((node, i) => {
-        const coords = getCoords(i, careerData.nodes.length, node.isCurrent);
-        return { ...node, ...coords };
-    }) || [];
+        return careerData.nodes.map(node => {
+            if (node.isCurrent) return { ...node, x: 50, y: 50 };
+            const i = others.findIndex(n => n.title === node.title);
+            const angle = -Math.PI / 2 + (i / others.length) * Math.PI * 2;
+            const levelDiff = Math.min(Math.abs(node.level - currentLevel), 3);
+            const radius = 16 + levelDiff * 9;
+            return {
+                ...node,
+                x: 50 + radius * Math.cos(angle),
+                y: 50 + radius * Math.sin(angle)
+            };
+        });
+    }, [careerData]);
 
     return (
         <div className="flex-1 h-screen flex flex-col bg-[#0f172a] text-white overflow-hidden">
@@ -136,11 +146,23 @@ export function CareerPath() {
                             onChange={(e) => setSelectedStartRole(e.target.value)}
                             className="bg-transparent border-none text-white text-sm font-bold focus:ring-0 focus:outline-none cursor-pointer pr-8"
                         >
-                            {allRolesList.map((roleTitle) => (
-                                <option key={roleTitle} value={roleTitle} className="bg-slate-900 text-white font-medium">
-                                    {roleTitle}
-                                </option>
-                            ))}
+                            {families.length > 0 ? (
+                                families.map((family) => (
+                                    <optgroup key={family.name} label={family.name} className="bg-slate-900 text-slate-400">
+                                        {family.roles.map((roleTitle) => (
+                                            <option key={roleTitle} value={roleTitle} className="bg-slate-900 text-white font-medium">
+                                                {roleTitle}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                ))
+                            ) : (
+                                allRolesList.map((roleTitle) => (
+                                    <option key={roleTitle} value={roleTitle} className="bg-slate-900 text-white font-medium">
+                                        {roleTitle}
+                                    </option>
+                                ))
+                            )}
                         </select>
                     </motion.div>
                 )}
@@ -274,8 +296,10 @@ export function CareerPath() {
                                         <p className="text-xl font-black">L{selectedRole.level}</p>
                                     </div>
                                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Potentiel</p>
-                                        <p className="text-xl font-black text-emerald-400">Haut</p>
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Débouchés</p>
+                                        <p className="text-xl font-black text-emerald-400">
+                                            {careerData?.links.filter(l => l.source === selectedRole.title).length || 0}
+                                        </p>
                                     </div>
                                 </div>
 
@@ -285,18 +309,41 @@ export function CareerPath() {
                                         Compétences Requises
                                     </h4>
                                     <div className="space-y-3">
-                                        {['Leadership Équipe', 'Architecture Cloud', 'Vision Stratégique'].map((skill, idx) => (
+                                        {(selectedRole.skills?.length ? selectedRole.skills : ['Compétences métier', 'Communication', 'Autonomie']).map((skill, idx) => (
                                             <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                                                 <span className="text-sm font-medium">{skill}</span>
                                                 <div className="flex gap-1">
                                                     {[1, 2, 3, 4, 5].map(s => (
-                                                        <div key={s} className={`h-1 w-3 rounded-full ${s <= (4-idx) ? 'bg-blue-500' : 'bg-slate-700'}`}></div>
+                                                        <div key={s} className={`h-1 w-3 rounded-full ${s <= Math.min(selectedRole.level + 1, 5) ? 'bg-blue-500' : 'bg-slate-700'}`}></div>
                                                     ))}
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
+
+                                {careerData?.links.some(l => l.source === selectedRole.title) && (
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                            <ChevronRight size={14} className="text-emerald-400" />
+                                            Évolutions Possibles
+                                        </h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {[...new Set(careerData.links.filter(l => l.source === selectedRole.title).map(l => l.target))].map((target) => (
+                                                <button
+                                                    key={target}
+                                                    onClick={() => {
+                                                        const node = nodesWithCoords.find(n => n.title === target);
+                                                        if (node) setSelectedRole(node);
+                                                    }}
+                                                    className="px-3 py-1.5 bg-white/5 hover:bg-blue-600/30 border border-white/10 hover:border-blue-400/40 rounded-full text-xs font-bold transition-colors cursor-pointer"
+                                                >
+                                                    {target} →
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {!selectedRole.isCurrent && (
                                     <motion.button
