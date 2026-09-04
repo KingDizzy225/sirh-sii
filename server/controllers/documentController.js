@@ -2,6 +2,7 @@ const prisma = require('../prismaClient');
 const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
+const { canAccessEmployeeData } = require('../lib/access');
 
 exports.uploadDocument = async (req, res) => {
     try {
@@ -202,6 +203,9 @@ exports.generateAndSignDocument = async (req, res) => {
 exports.generateAttestation = async (req, res) => {
     try {
         const { employeeId } = req.params;
+        if (!(await canAccessEmployeeData(req.user, employeeId))) {
+            return res.status(403).json({ error: "Accès interdit : attestation d'un autre employé." });
+        }
         const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
 
         if (!employee) {
@@ -263,6 +267,9 @@ exports.generateAttestation = async (req, res) => {
 exports.getEmployeeDocuments = async (req, res) => {
     try {
         const { employeeId } = req.params;
+        if (!(await canAccessEmployeeData(req.user, employeeId))) {
+            return res.status(403).json({ error: "Accès interdit aux documents de cet employé." });
+        }
         const docs = await prisma.employeeDocument.findMany({
             where: { employeeId },
             orderBy: { createdAt: 'desc' }

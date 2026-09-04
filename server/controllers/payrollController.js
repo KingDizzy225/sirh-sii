@@ -3,6 +3,16 @@ const prisma = new PrismaClient();
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
+const { hasRole } = require('../middleware/roleMiddleware');
+
+// Une fiche de paie n'est lisible que par la RH/l'administration
+// ou par l'employé concerné lui-même.
+const canAccessPayroll = async (user, payroll) => {
+    if (hasRole(user, ['ADMIN', 'HR'])) return true;
+    if (!user || !user.email || !payroll) return false;
+    const employee = await prisma.employee.findUnique({ where: { email: user.email } });
+    return Boolean(employee && employee.id === payroll.employeeId);
+};
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads/payslips');
@@ -272,6 +282,9 @@ const downloadPayslip = async (req, res) => {
         const { id } = req.params;
         const payroll = await prisma.payroll.findUnique({ where: { id }, include: { employee: true } });
         if (!payroll) return res.status(404).json({ error: 'Fiche de paie introuvable' });
+        if (!(await canAccessPayroll(req.user, payroll))) {
+            return res.status(403).json({ error: 'Accès interdit à cette fiche de paie.' });
+        }
 
         // Regenerate PDF on demand if not found
         const absolutePath = path.join(__dirname, '..', payroll.pdfPath || '');
@@ -291,6 +304,9 @@ const getPayslip = async (req, res) => {
         const { id } = req.params;
         const payroll = await prisma.payroll.findUnique({ where: { id }, include: { employee: true } });
         if (!payroll) return res.status(404).json({ error: 'Fiche de paie introuvable' });
+        if (!(await canAccessPayroll(req.user, payroll))) {
+            return res.status(403).json({ error: 'Accès interdit à cette fiche de paie.' });
+        }
         res.json(payroll);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -304,6 +320,9 @@ const signPayroll = async (req, res) => {
 
         const payroll = await prisma.payroll.findUnique({ where: { id }, include: { employee: true } });
         if (!payroll) return res.status(404).json({ error: 'Fiche de paie introuvable' });
+        if (!(await canAccessPayroll(req.user, payroll))) {
+            return res.status(403).json({ error: 'Vous ne pouvez signer que votre propre fiche de paie.' });
+        }
 
         const updatedPayroll = await prisma.payroll.update({
             where: { id },

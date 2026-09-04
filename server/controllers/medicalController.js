@@ -1,8 +1,19 @@
 const prisma = require('../prismaClient');
+const { hasRole } = require('../middleware/roleMiddleware');
 
 exports.getMedicalRecords = async (req, res) => {
     try {
+        // Données de santé : la RH, l'administration et le service social voient
+        // l'ensemble du suivi ; tout autre utilisateur ne voit que son propre dossier.
+        let where = {};
+        if (!hasRole(req.user, ['ADMIN', 'HR', 'SOCIAL_WORKER'])) {
+            const employee = await prisma.employee.findUnique({ where: { email: req.user.email } });
+            if (!employee) return res.json([]);
+            where = { employeeId: employee.id };
+        }
+
         const records = await prisma.medicalRecord.findMany({
+            where,
             include: {
                 employee: { select: { id: true, firstName: true, lastName: true, department: true, positionTitle: true } }
             },
