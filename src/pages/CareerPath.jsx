@@ -43,11 +43,10 @@ export function CareerPath() {
                     ]
                 };
 
-                const url = selectedStartRole 
-                    ? `${API_URL}/api/career/path/${user.id}?startRole=${encodeURIComponent(selectedStartRole)}`
-                    : `${API_URL}/api/career/path/${user.id}`;
+                const query = selectedStartRole ? `?startRole=${encodeURIComponent(selectedStartRole)}` : '';
 
-                const res = await fetch(url, {
+                // 1) Parcours personnalisé (session valide)
+                const res = await fetch(`${API_URL}/api/career/path/${user.id}${query}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }).catch(() => null);
 
@@ -55,8 +54,16 @@ export function CareerPath() {
                 if (res && res.ok) {
                     data = await res.json();
                 } else {
-                    console.warn("Using mock career data");
-                    data = MOCK_CAREER_DATA;
+                    // 2) Référentiel métiers public : l'explorateur reste utilisable
+                    // même sans session valide (démo) ou profil rattaché
+                    const catalogRes = await fetch(`${API_URL}/api/career/catalog${query}`).catch(() => null);
+                    if (catalogRes && catalogRes.ok) {
+                        data = await catalogRes.json();
+                    } else {
+                        // 3) Hors-ligne complet
+                        console.warn("Using mock career data");
+                        data = MOCK_CAREER_DATA;
+                    }
                 }
 
                 setCareerData(data);

@@ -94,7 +94,7 @@ app.use('/api/notifications', verifyToken, notificationRoutes);
 app.use('/api/assets', verifyToken, assetRoutes);
 app.use('/api/dashboard', verifyToken, dashboardRoutes);
 app.use('/api/support/tickets', verifyToken, supportRoutes);
-app.use('/api/career', verifyToken, careerRoutes);
+app.use('/api/career', careerRoutes); // verifyToken appliqué route par route (/catalog est public)
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/public', publicRoutes);

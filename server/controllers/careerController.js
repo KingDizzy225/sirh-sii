@@ -1,25 +1,11 @@
 const prisma = require('../prismaClient');
 const { ROLES, BRIDGES } = require('../data/careerCatalog');
 
-exports.getCareerPath = async (req, res) => {
-    try {
-        const { employeeId } = req.params;
-        const { startRole } = req.query;
-
-        // Fetch current employee to get their role and department
-        const employee = await prisma.employee.findUnique({
-            where: { id: employeeId },
-            include: { skills: true }
-        });
-
-        if (!employee) {
-            return res.status(404).json({ error: "Employé non trouvé" });
-        }
-
-        // Determine starting role (référentiel complet : server/data/careerCatalog.js)
-        const startingRoleTitle = startRole || employee.positionTitle;
-        const currentRole = ROLES.find(r => r.title.toLowerCase() === startingRoleTitle.toLowerCase()) ||
-                            { title: startingRoleTitle, level: 2, department: employee.department || 'Tech / IT', skills: [] };
+// Construit la constellation (nœuds + liens) autour d'un poste de départ.
+// Partagé par le parcours personnalisé et le catalogue public.
+const buildConstellation = (startingRoleTitle, fallbackDepartment = 'Tech / IT') => {
+        const currentRole = ROLES.find(r => r.title.toLowerCase() === String(startingRoleTitle).toLowerCase()) ||
+                            { title: startingRoleTitle, level: 2, department: fallbackDepartment, skills: [] };
 
         // Filter nodes to keep the constellation readable:
         // - toute la famille du poste courant
@@ -82,16 +68,47 @@ exports.getCareerPath = async (req, res) => {
             family.roles.push(role.title);
         });
 
-        res.status(200).json({
+        return {
             nodes,
             links,
             currentRole: currentRole.title,
             allRoleTitles: ROLES.map(r => r.title),
             families
+        };
+};
+
+exports.getCareerPath = async (req, res) => {
+    try {
+        const { employeeId } = req.params;
+        const { startRole } = req.query;
+
+        // Fetch current employee to get their role and department
+        const employee = await prisma.employee.findUnique({
+            where: { id: employeeId },
+            include: { skills: true }
         });
+
+        if (!employee) {
+            return res.status(404).json({ error: "Employé non trouvé" });
+        }
+
+        const startingRoleTitle = startRole || employee.positionTitle;
+        res.status(200).json(buildConstellation(startingRoleTitle, employee.department || 'Tech / IT'));
     } catch (error) {
         console.error("Error fetching career path:", error);
         res.status(500).json({ error: "Erreur lors de la récupération du plan de carrière" });
+    }
+};
+
+// Catalogue métiers public : référentiel générique, sans donnée personnelle.
+// Permet à l'explorateur de fonctionner hors session (démo, mode déconnecté).
+exports.getCatalog = async (req, res) => {
+    try {
+        const startingRoleTitle = req.query.startRole || ROLES[0].title;
+        res.status(200).json(buildConstellation(startingRoleTitle));
+    } catch (error) {
+        console.error("Error fetching career catalog:", error);
+        res.status(500).json({ error: "Erreur lors de la récupération du référentiel métiers" });
     }
 };
 
