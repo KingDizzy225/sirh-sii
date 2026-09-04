@@ -81,20 +81,9 @@ export function CareerPath() {
         if (user?.id) fetchCareerData();
     }, [user, selectedStartRole]);
 
-    if (isLoading) {
-        return (
-            <div className="h-full w-full flex items-center justify-center bg-slate-50">
-                <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"
-                />
-            </div>
-        );
-    }
-
     // Constellation déterministe : le poste courant au centre, les autres en anneaux
-    // selon l'écart de niveau, regroupés par famille (stable d'un rendu à l'autre)
+    // selon l'écart de niveau, regroupés par famille (stable d'un rendu à l'autre).
+    // Doit rester au-dessus de tout return conditionnel : l'ordre des hooks est fixe.
     const nodesWithCoords = useMemo(() => {
         if (!careerData?.nodes) return [];
         const current = careerData.nodes.find(n => n.isCurrent);
@@ -116,6 +105,18 @@ export function CareerPath() {
             };
         });
     }, [careerData]);
+
+    if (isLoading) {
+        return (
+            <div className="h-full w-full flex items-center justify-center bg-slate-50">
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 h-screen flex flex-col bg-[#0f172a] text-white overflow-hidden">
