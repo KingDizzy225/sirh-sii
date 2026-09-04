@@ -47,7 +47,8 @@ export const RequirePermission = ({ permission, children, fallbackPath = "/dashb
     if (isLoading) return null;
 
     // Simplified auth check for UI elements based on User Role.  To enhance later.
-    const hasPerm = user && (user.role === 'ADMIN' || user.role === 'HR');
+    // Le rôle peut être brut (DB: ADMIN/HR) ou déjà mappé côté front (Administrator)
+    const hasPerm = user && ['ADMIN', 'Administrator', 'HR'].includes(user.role);
 
     if (hasPerm || permission === 'view:own') {
         return children;

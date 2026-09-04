@@ -416,6 +416,8 @@ const AppContent = () => {
 
             {/* System Routes */}
             <Route path="/portal" element={<PublicPortal />} />
+            {/* Alias : d'anciens fallbacks pointent vers /dashboard alors que le tableau de bord est sur / */}
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction!</div>} />
           </Routes>
