@@ -5,6 +5,7 @@ const PDFDocument = require('pdfkit');
 const { canAccessEmployeeData } = require('../lib/access');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
+const { getPublicAppUrl } = require('../lib/publicUrl');
 
 exports.uploadDocument = async (req, res) => {
     try {
@@ -230,8 +231,7 @@ exports.generateAttestation = async (req, res) => {
             }
         });
 
-        const publicBaseUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
-        const verifyUrl = `${publicBaseUrl}/verify/${token}`;
+        const verifyUrl = `${getPublicAppUrl()}/verify/${token}`;
         const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
         const qrBuffer = Buffer.from(qrDataUrl.split(',')[1], 'base64');
 
