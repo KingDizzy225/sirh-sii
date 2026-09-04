@@ -303,7 +303,7 @@ const AppContent = () => {
             } />
 
             <Route path="/settings" element={
-              <ProtectedRoute allowedRoles={['Administrator']}>
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Settings />
               </ProtectedRoute>
             } />

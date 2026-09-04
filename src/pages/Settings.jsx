@@ -237,7 +237,7 @@ export function Settings() {
                     {renderTabButton('Security')}
                     {user?.role === 'ADMIN' && renderTabButton('Access Management')}
                     {renderTabButton('Integrations', 'settings:manage')}
-                    {(user?.role === 'ADMIN' || user?.role === 'HR') && renderTabButton('Work Sites')}
+                    {['ADMIN', 'Administrator', 'HR'].includes(user?.role) && renderTabButton('Work Sites')}
                     {renderTabButton('Notifications')}
                     {renderTabButton('Billing', 'settings:manage')}
                 </div>
@@ -547,7 +547,7 @@ export function Settings() {
                         </motion.div>
                     )}
 
-                    {activeTab === 'Work Sites' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
+                    {activeTab === 'Work Sites' && ['ADMIN', 'Administrator', 'HR'].includes(user?.role) && (
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                             <Card>
                                 <CardHeader>

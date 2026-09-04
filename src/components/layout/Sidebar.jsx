@@ -143,25 +143,25 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
                 <ThemeToggle />
                 <LanguageSwitcher />
 
-                {userRole === 'ADMIN' && (
-                    <>
-                        <Link
-                            to="/settings"
-                            onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
-                            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                        >
-                            <Settings className="h-5 w-5 text-slate-400" />
-                            Paramètres
-                        </Link>
-                        <Link
-                            to="/audit-logs"
-                            onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
-                            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                        >
-                            <ShieldAlert className="h-5 w-5 text-indigo-400" />
-                            Piste d'Audit
-                        </Link>
-                    </>
+                {['ADMIN', 'Administrator', 'HR'].includes(userRole) && (
+                    <Link
+                        to="/settings"
+                        onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    >
+                        <Settings className="h-5 w-5 text-slate-400" />
+                        Paramètres
+                    </Link>
+                )}
+                {['ADMIN', 'Administrator'].includes(userRole) && (
+                    <Link
+                        to="/audit-logs"
+                        onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
+                        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    >
+                        <ShieldAlert className="h-5 w-5 text-indigo-400" />
+                        Piste d'Audit
+                    </Link>
                 )}
                 
                 <button 
