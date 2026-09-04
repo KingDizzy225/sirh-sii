@@ -168,6 +168,10 @@ app.use('/api/surveys', surveyRoutes);
 const workSiteRoutes = require('./routes/workSiteRoutes');
 app.use('/api/worksites', verifyToken, workSiteRoutes);
 
+// Suivi des traitements RH planifiés (contrôles de rôle dans les routes)
+const jobRoutes = require('./routes/jobRoutes');
+app.use('/api/jobs', jobRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);
