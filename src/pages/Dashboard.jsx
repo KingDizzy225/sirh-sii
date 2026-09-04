@@ -443,7 +443,13 @@ export function Dashboard() {
                                                     <p className="text-sm font-mono font-bold text-slate-700">
                                                         {new Date(log.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
-                                                    <p className="text-xs text-emerald-600 font-medium">Présent(e)</p>
+                                                    {log.withinPerimeter === true ? (
+                                                        <p className="text-xs text-emerald-600 font-medium">Sur site{log.workSite?.name ? ` · ${log.workSite.name}` : ''}</p>
+                                                    ) : log.withinPerimeter === false ? (
+                                                        <p className="text-xs text-amber-600 font-medium">Hors zone ({log.distanceMeters} m)</p>
+                                                    ) : (
+                                                        <p className="text-xs text-emerald-600 font-medium">Présent(e)</p>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}

@@ -20,6 +20,11 @@ export function Settings() {
     const [isFetchingWebhooks, setIsFetchingWebhooks] = useState(false);
     const [isAddingWebhook, setIsAddingWebhook] = useState(false);
 
+    // Work sites (pointage géolocalisé) state
+    const [workSites, setWorkSites] = useState([]);
+    const [isAddingSite, setIsAddingSite] = useState(false);
+    const [siteForm, setSiteForm] = useState({ name: '', latitude: '', longitude: '', radiusMeters: '200' });
+
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
@@ -63,9 +68,102 @@ export function Settings() {
         }
     };
 
+    const fetchWorkSites = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/worksites`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+            });
+            if (res.ok) setWorkSites(await res.json());
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const saveWorkSite = async (e) => {
+        e.preventDefault();
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/worksites`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('sirh_token')}`
+                },
+                body: JSON.stringify({
+                    name: siteForm.name,
+                    latitude: parseFloat(siteForm.latitude),
+                    longitude: parseFloat(siteForm.longitude),
+                    radiusMeters: parseInt(siteForm.radiusMeters, 10)
+                })
+            });
+            if (res.ok) {
+                showNotification('Site de pointage créé avec succès');
+                setIsAddingSite(false);
+                setSiteForm({ name: '', latitude: '', longitude: '', radiusMeters: '200' });
+                fetchWorkSites();
+            } else {
+                const data = await res.json();
+                showNotification(data.error || 'Erreur lors de la création du site');
+            }
+        } catch (err) {
+            showNotification('Erreur serveur');
+        }
+    };
+
+    const toggleWorkSite = async (site) => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/worksites/${site.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('sirh_token')}`
+                },
+                body: JSON.stringify({ isActive: !site.isActive })
+            });
+            if (res.ok) fetchWorkSites();
+        } catch (err) {
+            showNotification('Erreur serveur');
+        }
+    };
+
+    const deleteWorkSite = async (site) => {
+        if (!window.confirm(`Supprimer le site "${site.name}" ? Les pointages existants seront conservés.`)) return;
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/worksites/${site.id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+            });
+            if (res.ok) {
+                showNotification('Site supprimé');
+                fetchWorkSites();
+            }
+        } catch (err) {
+            showNotification('Erreur serveur');
+        }
+    };
+
+    const useMyPosition = () => {
+        if (!navigator.geolocation) return showNotification('Géolocalisation non disponible sur ce navigateur');
+        navigator.geolocation.getCurrentPosition(
+            (pos) => setSiteForm(f => ({
+                ...f,
+                latitude: pos.coords.latitude.toFixed(6),
+                longitude: pos.coords.longitude.toFixed(6)
+            })),
+            () => showNotification('Impossible de récupérer votre position'),
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
+
     React.useEffect(() => {
         if (activeTab === 'Integrations') {
             fetchWebhooks();
+        }
+        if (activeTab === 'Work Sites') {
+            fetchWorkSites();
         }
     }, [activeTab]);
 
@@ -75,6 +173,7 @@ export function Settings() {
         'Security': 'Sécurité du Compte',
         'Access Management': 'Comptes et Rôles',
         'Integrations': 'Intégrations',
+        'Work Sites': 'Sites de pointage',
         'Notifications': 'Notifications',
         'Billing': 'Facturation'
     };
@@ -138,6 +237,7 @@ export function Settings() {
                     {renderTabButton('Security')}
                     {user?.role === 'ADMIN' && renderTabButton('Access Management')}
                     {renderTabButton('Integrations', 'settings:manage')}
+                    {(user?.role === 'ADMIN' || user?.role === 'HR') && renderTabButton('Work Sites')}
                     {renderTabButton('Notifications')}
                     {renderTabButton('Billing', 'settings:manage')}
                 </div>
@@ -442,6 +542,93 @@ export function Settings() {
                                             </Button>
                                         </div>
                                     </form>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'Work Sites' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <CardTitle>Sites de pointage géolocalisés</CardTitle>
+                                            <CardDescription>Définissez les lieux où le pointage mobile est considéré comme valide. Un pointage effectué hors du rayon est enregistré mais signalé "Hors zone" à la RH.</CardDescription>
+                                        </div>
+                                        <Button size="sm" onClick={() => setIsAddingSite(true)} className="bg-indigo-600 text-white hover:bg-indigo-700">Ajouter un Site</Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {isAddingSite && (
+                                        <div className="border-2 border-indigo-200 border-dashed rounded-lg p-4 bg-indigo-50/50">
+                                            <form onSubmit={saveWorkSite} className="space-y-4">
+                                                <h4 className="font-semibold text-indigo-900 border-b border-indigo-200 pb-2">Nouveau Site de Pointage</h4>
+                                                <div className="grid gap-4 md:grid-cols-2">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-medium text-slate-700">Nom du site</label>
+                                                        <Input required placeholder="ex. Siège Abidjan Plateau" className="bg-white" value={siteForm.name} onChange={e => setSiteForm(f => ({ ...f, name: e.target.value }))} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-medium text-slate-700">Rayon autorisé (mètres)</label>
+                                                        <Input required type="number" min="10" className="bg-white" value={siteForm.radiusMeters} onChange={e => setSiteForm(f => ({ ...f, radiusMeters: e.target.value }))} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-medium text-slate-700">Latitude</label>
+                                                        <Input required type="number" step="any" placeholder="5.323600" className="bg-white" value={siteForm.latitude} onChange={e => setSiteForm(f => ({ ...f, latitude: e.target.value }))} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-medium text-slate-700">Longitude</label>
+                                                        <Input required type="number" step="any" placeholder="-4.016100" className="bg-white" value={siteForm.longitude} onChange={e => setSiteForm(f => ({ ...f, longitude: e.target.value }))} />
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button type="button" variant="outline" size="sm" onClick={useMyPosition}>📍 Utiliser ma position actuelle</Button>
+                                                    <div className="flex-1" />
+                                                    <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddingSite(false)}>Annuler</Button>
+                                                    <Button type="submit" size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700">Enregistrer le Site</Button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    )}
+
+                                    {workSites.length === 0 && !isAddingSite ? (
+                                        <p className="text-sm text-slate-500 py-6 text-center">Aucun site configuré : le pointage est accepté partout, sans contrôle de zone.</p>
+                                    ) : (
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="bg-slate-50 border-b">
+                                                    <tr>
+                                                        <th className="px-4 py-3 font-medium text-slate-500">Site</th>
+                                                        <th className="px-4 py-3 font-medium text-slate-500">Coordonnées</th>
+                                                        <th className="px-4 py-3 font-medium text-slate-500">Rayon</th>
+                                                        <th className="px-4 py-3 font-medium text-slate-500">Statut</th>
+                                                        <th className="px-4 py-3 font-medium text-slate-500 text-right">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y">
+                                                    {workSites.map(site => (
+                                                        <tr key={site.id}>
+                                                            <td className="px-4 py-3 font-medium">{site.name}</td>
+                                                            <td className="px-4 py-3 text-slate-500 font-mono text-xs">{site.latitude.toFixed(5)}, {site.longitude.toFixed(5)}</td>
+                                                            <td className="px-4 py-3 text-slate-500">{site.radiusMeters} m</td>
+                                                            <td className="px-4 py-3">
+                                                                {site.isActive
+                                                                    ? <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs">Actif</span>
+                                                                    : <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-xs">Inactif</span>}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                                                                <Button variant="ghost" size="sm" onClick={() => toggleWorkSite(site)} className="h-8 px-2 text-slate-600 hover:bg-slate-100">
+                                                                    {site.isActive ? 'Désactiver' : 'Activer'}
+                                                                </Button>
+                                                                <Button variant="ghost" size="sm" onClick={() => deleteWorkSite(site)} className="text-rose-600 h-8 px-2 hover:bg-rose-50">Supprimer</Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </motion.div>

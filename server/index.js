@@ -164,6 +164,10 @@ app.use('/api/whatsapp', whatsappRoutes);
 const surveyRoutes = require('./routes/surveyRoutes');
 app.use('/api/surveys', surveyRoutes);
 
+// V9 Pointage géolocalisé
+const workSiteRoutes = require('./routes/workSiteRoutes');
+app.use('/api/worksites', verifyToken, workSiteRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

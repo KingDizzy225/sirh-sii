@@ -13,6 +13,7 @@ export function EmployeePortal() {
     const [profile, setProfile] = useState(null);
     const [logs, setLogs] = useState([]);
     const [isClocking, setIsClocking] = useState(false);
+    const [clockNotice, setClockNotice] = useState(null); // { tone: 'success' | 'warning', text }
     const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
     const [absenceForm, setAbsenceForm] = useState({
         type: 'Absence injustifiée',
@@ -119,20 +120,52 @@ export function EmployeePortal() {
         }
     }, [token]);
 
+    // Récupère la position GPS (résout null si refusée/indisponible : le pointage n'est jamais bloqué)
+    const getPosition = () => new Promise((resolve) => {
+        if (!navigator.geolocation) return resolve(null);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+                accuracy: pos.coords.accuracy
+            }),
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+        );
+    });
+
     const handleClock = async (type) => {
         setIsClocking(true);
+        setClockNotice(null);
         try {
+            const coords = await getPosition();
             const res = await fetch(`${API_URL}/api/time-logs`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ type })
+                body: JSON.stringify({ type, ...(coords || {}) })
             });
             if (res.ok) {
                 const newLog = await res.json();
                 setLogs([...logs, newLog]);
+                if (newLog.locationStatus === 'OFF_SITE') {
+                    setClockNotice({
+                        tone: 'warning',
+                        text: `Pointage enregistré hors zone (à ${newLog.distanceMeters} m du site ${newLog.workSite?.name || ''}).`
+                    });
+                } else if (newLog.locationStatus === 'NO_GPS') {
+                    setClockNotice({
+                        tone: 'warning',
+                        text: "Pointage enregistré sans position GPS. Autorisez la localisation pour valider votre présence sur site."
+                    });
+                } else if (newLog.locationStatus === 'ON_SITE') {
+                    setClockNotice({
+                        tone: 'success',
+                        text: `Pointage validé sur site${newLog.workSite?.name ? ` (${newLog.workSite.name})` : ''}.`
+                    });
+                }
             }
         } catch (err) {
             console.error("Failed to clock", err);
@@ -440,6 +473,13 @@ export function EmployeePortal() {
                                         </Button>
                                     )}
                                     
+                                    {clockNotice && (
+                                        <div className={`flex items-start gap-2 text-xs font-medium rounded-xl p-3 ${clockNotice.tone === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
+                                            {clockNotice.tone === 'success' ? <CheckCircle2 size={14} className="mt-0.5 shrink-0" /> : <AlertCircle size={14} className="mt-0.5 shrink-0" />}
+                                            <span>{clockNotice.text}</span>
+                                        </div>
+                                    )}
+
                                     <Link to="/timesheet">
                                         <Button variant="ghost" className="w-full text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-100/50">
                                             Voir mon historique
