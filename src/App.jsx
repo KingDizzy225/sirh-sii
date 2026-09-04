@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -68,6 +68,7 @@ import { CommandCenter } from './components/CommandCenter';
 import { TeamHealth } from './pages/TeamHealth';
 import { FeedbackWidget } from './components/FeedbackWidget';
 import { PublicPortal } from './pages/PublicPortal';
+import { VerifyDocument } from './pages/VerifyDocument';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -79,8 +80,20 @@ const Unauthorized = () => (
 
 const AppContent = () => {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentDomain, setCurrentDomain] = useState('Accueil'); // 'Accueil', 'Mon Espace', 'Mon Équipe', 'Collaborateurs', 'Gestion RH', 'Analytique'
+
+  // Vérification publique d'un document (QR d'attestation) : rendue hors de
+  // toute session, qu'un utilisateur soit connecté ou non — le visiteur est
+  // typiquement un tiers (banque, bailleur) sans compte.
+  if (location.pathname.startsWith('/verify/')) {
+    return (
+      <Routes>
+        <Route path="/verify/:token" element={<VerifyDocument />} />
+      </Routes>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -98,6 +111,7 @@ const AppContent = () => {
         <Route path="/careers" element={<PublicCareers />} />
         <Route path="/sign/:id" element={<PublicSignature />} />
         <Route path="/portal" element={<PublicPortal />} />
+        <Route path="/verify/:token" element={<VerifyDocument />} />
         <Route path="*" element={<Login />} />
       </Routes>
     );

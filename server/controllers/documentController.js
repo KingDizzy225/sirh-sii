@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const { canAccessEmployeeData } = require('../lib/access');
+const crypto = require('crypto');
+const QRCode = require('qrcode');
 
 exports.uploadDocument = async (req, res) => {
     try {
@@ -212,6 +214,27 @@ exports.generateAttestation = async (req, res) => {
             return res.status(404).json({ error: 'Employé introuvable' });
         }
 
+        // Enregistrement du document au registre : c'est ce jeton, aléatoire et
+        // non devinable, que le QR code encodera et qu'un tiers pourra vérifier.
+        const token = crypto.randomBytes(24).toString('hex');
+        const issued = await prisma.issuedDocument.create({
+            data: {
+                token,
+                type: 'ATTESTATION_TRAVAIL',
+                employeeId: employee.id,
+                issuedByEmail: req.user && req.user.email ? req.user.email : null,
+                employeeName: `${employee.firstName} ${employee.lastName}`,
+                positionTitle: employee.positionTitle || employee.role,
+                department: employee.department,
+                hireDate: employee.hireDate
+            }
+        });
+
+        const publicBaseUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+        const verifyUrl = `${publicBaseUrl}/verify/${token}`;
+        const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
+        const qrBuffer = Buffer.from(qrDataUrl.split(',')[1], 'base64');
+
         const pdfDoc = new PDFDocument({ margin: 50 });
         const fileName = `Attestation_${employee.lastName}_${Date.now()}.pdf`;
 
@@ -244,14 +267,20 @@ exports.generateAttestation = async (req, res) => {
         pdfDoc.text(`Fait numériquement, le ${formatDate(new Date())}`);
         pdfDoc.moveDown(3);
 
-        // Fake QR Code box for "Authenticity"
-        const qrSize = 80;
+        // QR de vérification : renvoie vers une page publique confirmant
+        // l'authenticité du document, sans exposer d'information sensible.
+        const qrSize = 90;
         const qrX = 50;
         const qrY = pdfDoc.y;
-        pdfDoc.rect(qrX, qrY, qrSize, qrSize).stroke('#2563eb');
-        pdfDoc.fontSize(8).fillColor('#2563eb').text('SCAN VERIF', qrX + 15, qrY + 35);
-        
+        pdfDoc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
+
+        pdfDoc.fontSize(7).fillColor('#64748b')
+            .text('Scannez pour vérifier', qrX, qrY + qrSize + 4, { width: qrSize, align: 'center' })
+            .text("l'authenticité", qrX, qrY + qrSize + 13, { width: qrSize, align: 'center' });
+
         pdfDoc.fontSize(12).fillColor('#333333').text('Direction RH SIRH-SII', 350, qrY + 20);
+        pdfDoc.fontSize(7).fillColor('#94a3b8')
+            .text(`Référence : ${issued.token.slice(0, 12).toUpperCase()}`, 350, qrY + 45);
 
         pdfDoc.end();
 

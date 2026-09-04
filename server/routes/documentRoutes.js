@@ -36,6 +36,11 @@ router.delete('/:id', verifyToken, requireRole(['HR', 'ADMIN']), documentControl
 
 // Dossier Personnel
 router.get('/employee/:employeeId', verifyToken, documentController.getEmployeeDocuments);
+
+// Registre des documents officiels émis (attestations) et révocation
+const verificationController = require('../controllers/verificationController');
+router.get('/issued/:employeeId', verifyToken, requireRole(['HR', 'ADMIN']), verificationController.listIssuedDocuments);
+router.post('/issued/:id/revoke', verifyToken, requireRole(['HR', 'ADMIN']), verificationController.revokeDocument);
 router.post('/employee/:employeeId/upload', verifyToken, requireRole('HR', 'ADMIN'), upload.single('file'), documentController.uploadEmployeeDocument);
 
 // Public Signature Routes

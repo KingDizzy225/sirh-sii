@@ -76,6 +76,7 @@ model Employee {
   mentorRelations      MentorshipRelation[]    @relation("MentorEmployee")
   menteeRelations      MentorshipRelation[]    @relation("MenteeEmployee")
   medicalRecords       MedicalRecord[]
+  issuedDocuments      IssuedDocument[]
 }
 
 // ... (existing code)
@@ -407,6 +408,33 @@ model EmployeeDocument {
 // ----------------------------------------------------
 // 12. NOTIFICATIONS & ALERTES
 // ----------------------------------------------------
+
+// Registre des documents officiels émis, pour vérification publique par QR code.
+//
+// Les informations sont figées au moment de l'émission : vérifier un document,
+// c'est confirmer ce qu'il affirmait à sa date, même si la situation du salarié
+// a changé depuis. Seules les mentions déjà portées sur le document sont
+// exposées publiquement — jamais de rémunération ni de coordonnées.
+model IssuedDocument {
+  id            String    @id @default(uuid())
+  token         String    @unique // aléatoire et non devinable, encodé dans le QR
+  type          String // 'ATTESTATION_TRAVAIL'
+  employeeId    String    @map("employee_id")
+  issuedAt      DateTime  @default(now()) @map("issued_at")
+  issuedByEmail String?   @map("issued_by_email")
+  revokedAt     DateTime? @map("revoked_at")
+  revokedReason String?   @map("revoked_reason")
+
+  // Instantané des mentions portées sur le document
+  employeeName  String  @map("employee_name")
+  positionTitle String? @map("position_title")
+  department    String?
+  hireDate      DateTime? @map("hire_date")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("issued_document")
+}
 
 // Journal des tâches planifiées.
 // Le service Render s'endort et redémarre fréquemment : les tâches ne peuvent
