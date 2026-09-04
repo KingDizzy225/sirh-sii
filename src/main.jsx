@@ -8,6 +8,13 @@ import { registerSW } from 'virtual:pwa-register'
 const updateSW = registerSW({
   onNeedRefresh() {},
   onOfflineReady() {},
+  // Revérifie une nouvelle version du service worker toutes les heures,
+  // sinon les utilisateurs peuvent rester longtemps sur un bundle en cache
+  onRegisteredSW(swUrl, registration) {
+    if (registration) {
+      setInterval(() => registration.update(), 60 * 60 * 1000)
+    }
+  },
 })
 
 import { ThemeProvider } from './components/ThemeProvider'
