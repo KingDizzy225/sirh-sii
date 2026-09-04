@@ -8,6 +8,7 @@
     "build": "npx prisma generate",
     "postinstall": "npx prisma generate",
     "create-admin": "node scripts/createAdmin.js",
+    "run-jobs": "node scripts/runJobs.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -27,6 +28,7 @@
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
     "multer": "^2.1.1",
+    "node-cron": "^4.6.0",
     "nodemailer": "^10.0.0",
     "pdfkit": "^0.18.0",
     "qrcode": "^1.5.4",

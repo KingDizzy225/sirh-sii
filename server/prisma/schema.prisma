@@ -408,6 +408,22 @@ model EmployeeDocument {
 // 12. NOTIFICATIONS & ALERTES
 // ----------------------------------------------------
 
+// Journal des tâches planifiées.
+// Le service Render s'endort et redémarre fréquemment : les tâches ne peuvent
+// pas se fier au seul déclenchement horaire. Chaque exécution est enregistrée
+// pour une période donnée, ce qui rend les traitements rejouables sans risque
+// de double application (un rattrapage a lieu à chaque réveil du serveur).
+model ScheduledJobRun {
+  id        String   @id @default(uuid())
+  jobName   String   @map("job_name") // ex: 'LEAVE_ACCRUAL'
+  period    String // ex: '2026-09' pour un traitement mensuel, '2026-09-04' pour un quotidien
+  runAt     DateTime @default(now()) @map("run_at")
+  details   String? // résumé lisible de ce qui a été traité
+
+  @@unique([jobName, period])
+  @@map("scheduled_job_run")
+}
+
 model Notification {
   id         String   @id @default(uuid())
   employeeId String   @map("employee_id")

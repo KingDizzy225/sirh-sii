@@ -209,6 +209,12 @@ server.listen(PORT, async () => {
         const prisma = require('./prismaClient');
         await prisma.$connect();
         console.log("✅ Connexion à la base de données PostgreSQL établie avec succès.");
+
+        // Traitements RH récurrents (acquisition des congés, alertes d'échéances).
+        // Démarrés après la connexion : ils rattrapent les périodes manquées
+        // pendant la mise en veille du service.
+        const { startScheduledJobs } = require('./jobs');
+        startScheduledJobs();
     } catch (dbErr) {
         console.warn("⚠️ Avertissement Connexion Base de Données : La base distante est en veille ou en cours de connexion.", dbErr.message);
     }
