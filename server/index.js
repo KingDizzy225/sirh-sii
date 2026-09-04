@@ -161,9 +161,6 @@ app.use('/api/contracts', contractRoutes);
 const whatsappRoutes = require('./routes/whatsappRoutes');
 app.use('/api/whatsapp', whatsappRoutes);
 
-const medicalRoutes = require('./routes/medicalRoutes');
-app.use('/api/medical', medicalRoutes);
-
 const surveyRoutes = require('./routes/surveyRoutes');
 app.use('/api/surveys', surveyRoutes);
 
