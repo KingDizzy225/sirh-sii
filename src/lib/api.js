@@ -10,7 +10,24 @@ const getHeaders = () => {
     };
 };
 
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+
+// Session expirée ou jeton invalide : on nettoie et on renvoie vers la connexion
+// plutôt que de laisser l'utilisateur devant une page vide ou des données de repli.
+const handleUnauthorized = () => {
+    localStorage.removeItem('sirh_token');
+    localStorage.removeItem('sirh_user');
+    if (!window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login?expired=1');
+    }
+};
+
 const handleResponse = async (res) => {
+    if (res.status === 401 || res.status === 403) {
+        handleUnauthorized();
+        throw new Error('Session expirée. Veuillez vous reconnecter.');
+    }
+
     // Handling 204 No Content
     if (res.status === 204) return { data: null };
 
@@ -29,11 +46,22 @@ const handleResponse = async (res) => {
     return { data };
 };
 
+// Jeu de démonstration : réservé au mode démo. Hors de ce mode, ces chiffres
+// seraient indiscernables de vraies données RH et fausseraient les décisions.
 const getMockDataForUrl = (url) => {
     if (url.includes('dashboard')) return { data: { employees: { total: 150 }, payroll: { total: 45000000 }, performance: { average: 4.2 } } };
     if (url.includes('employees')) return { data: [{ id: '1', firstName: 'Jean', lastName: 'Kouassi', role: 'Developer' }] };
     return { data: [] }; // Return empty array for lists by default
 };
+
+// Repli hors mode démo : structure vide, jamais de valeurs inventées.
+// L'interface affiche alors « aucune donnée » plutôt que des chiffres faux.
+const getEmptyDataForUrl = (url) => {
+    if (url.includes('dashboard') || url.includes('stats')) return { data: null };
+    return { data: [] };
+};
+
+const getFallbackForUrl = (url) => (DEMO_MODE ? getMockDataForUrl(url) : getEmptyDataForUrl(url));
 
 export const api = {
     get: async (url) => {
@@ -45,8 +73,10 @@ export const api = {
             });
             return await handleResponse(res);
         } catch (error) {
-            console.warn(`Fallback Démo API GET ${url}`, error);
-            return getMockDataForUrl(url);
+            // La session expirée a déjà déclenché la redirection : ne pas masquer l'erreur
+            if (error.message && error.message.includes('Session expirée')) throw error;
+            console.warn(`API GET ${url} indisponible, repli appliqué`, error);
+            return getFallbackForUrl(url);
         }
     },
     post: async (url, body) => {

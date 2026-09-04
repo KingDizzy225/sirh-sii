@@ -8,7 +8,7 @@ async function testGeneration() {
         
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role, name: user.name },
-            process.env.JWT_SECRET || 'super-secret-sirh-key-2026',
+            require('./config/jwt').JWT_SECRET,
             { expiresIn: '1h' }
         );
 

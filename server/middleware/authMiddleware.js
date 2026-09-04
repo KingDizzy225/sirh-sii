@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-sirh-key-2026';
+const { JWT_SECRET } = require('../config/jwt');
 
 const verifyToken = (req, res, next) => {
     // Le token est généralement envoyé dans le header Authorization: Bearer <token>

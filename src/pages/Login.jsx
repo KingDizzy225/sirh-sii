@@ -11,7 +11,11 @@ import { ServerStatus } from '../components/ui/ServerStatus';
 export function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(
+        new URLSearchParams(window.location.search).has('expired')
+            ? 'Votre session a expiré. Veuillez vous reconnecter.'
+            : null
+    );
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [ssoLoading, setSsoLoading] = useState(null);
     const [ssoSuccess, setSsoSuccess] = useState(null);

@@ -2,8 +2,7 @@ const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Clé secrète JWT (À mettre idéalement dans .env)
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-sirh-key-2026';
+const { JWT_SECRET } = require('../config/jwt');
 
 exports.login = async (req, res) => {
     try {
