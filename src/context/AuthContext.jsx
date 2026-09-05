@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { DEMO_TOKEN } from '../lib/api';
 
 const AuthContext = createContext();
 
@@ -23,7 +24,17 @@ const DEMO_USER = {
     department: 'Ressources Humaines',
     positionTitle: 'Directeur RH'
 };
-const DEMO_TOKEN = 'demo-sirh-token-2026';
+// Compte réel utilisé par l'accès démonstration. Le bouton ouvrait auparavant
+// une session au jeton fictif : le serveur le rejetait, et toutes les requêtes
+// répondaient 401. Les pages passant par `lib/api.js` retombaient sur les jeux
+// de démonstration et paraissaient fonctionner ; celles qui appellent `fetch`
+// directement recevaient l'objet `{ error }` et le plaçaient dans un état de
+// liste, d'où « x.filter is not a function » sur une grande partie des modules.
+//
+// En se connectant pour de bon, la démonstration emprunte exactement le même
+// chemin qu'un utilisateur réel — ce qui la rend aussi plus fidèle en clientèle.
+const DEMO_EMAIL = import.meta.env.VITE_DEMO_EMAIL || 'admin@sirh.com';
+const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD || 'SIIRH';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -37,8 +48,13 @@ export const AuthProvider = ({ children }) => {
             const savedUser = localStorage.getItem('sirh_user');
 
             if (savedToken && savedUser && savedUser !== 'undefined') {
-                // Une session de démo ne doit jamais survivre à la désactivation du mode démo
-                if (savedToken === DEMO_TOKEN && !DEMO_MODE) {
+                // Le jeton fictif n'est jamais restauré. Le serveur le refuse,
+                // et une session ouverte avec lui laissait l'application dans un
+                // état où chaque requête répondait 401 sans que rien ne le
+                // signale : l'utilisateur restait « connecté » devant des
+                // modules en erreur. L'accès démonstration ouvre désormais une
+                // vraie session ; il suffit de recliquer dessus.
+                if (savedToken === DEMO_TOKEN) {
                     localStorage.removeItem('sirh_token');
                     localStorage.removeItem('sirh_user');
                 } else {
@@ -93,13 +109,28 @@ export const AuthProvider = ({ children }) => {
 
     // Accès démonstration explicite : ouvert seulement depuis le bouton dédié
     // de l'écran de connexion, jamais automatiquement.
-    const loginAsDemo = () => {
+    const loginAsDemo = async () => {
         if (!DEMO_MODE) return { success: false, error: 'Mode démonstration désactivé.' };
+
+        // On tente d'abord une vraie connexion : la démonstration dispose alors
+        // d'un jeton que le serveur accepte, et tous les modules fonctionnent.
+        const reel = await login(DEMO_EMAIL, DEMO_PASSWORD);
+        if (reel.success) return { success: true, session: 'reelle' };
+
+        // Repli hors ligne : le serveur dort, ou les comptes de test ont été
+        // retirés. La session fictive existe pour ne jamais rester bloqué à
+        // l'écran de connexion pendant une démonstration ; les pages branchées
+        // sur `lib/api.js` affichent alors les jeux de démonstration, les autres
+        // resteront vides — sans casser, cf. `listeSure` dans lib/api.js.
+        console.warn(
+            "[DÉMO] Connexion au compte de démonstration impossible (" + (reel.error || 'motif inconnu') + ").\n" +
+            "→ Session locale ouverte : les modules interrogeant directement l'API resteront vides."
+        );
         localStorage.setItem('sirh_token', DEMO_TOKEN);
         localStorage.setItem('sirh_user', JSON.stringify(DEMO_USER));
         setUser(DEMO_USER);
         setToken(DEMO_TOKEN);
-        return { success: true };
+        return { success: true, session: 'locale', avertissement: reel.error };
     };
 
     const logout = () => {

@@ -242,7 +242,7 @@ export function Login() {
                         {demoMode && (
                             <button
                                 type="button"
-                                onClick={() => { loginAsDemo(); navigate('/'); }}
+                                onClick={async () => { await loginAsDemo(); navigate('/'); }}
                                 className="w-full text-xs font-semibold text-amber-400/80 hover:text-amber-300 border border-dashed border-amber-700/40 hover:border-amber-600/60 rounded-lg py-2.5 transition-colors"
                             >
                                 Accès démonstration (sans identifiants)

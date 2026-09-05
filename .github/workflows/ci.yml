@@ -90,5 +90,8 @@ jobs:
       - name: Règles des hooks React
         run: npx eslint src --config eslint.hooks.config.js
 
+      - name: Réponses fetch contrôlées avant affectation
+        run: node scripts/check-fetch-guards.cjs
+
       - name: Build de production
         run: npm run build

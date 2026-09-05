@@ -12,6 +12,11 @@ const getHeaders = () => {
 
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== 'false';
 
+// Jeton de la session de démonstration hors ligne — ouverte uniquement quand le
+// serveur est injoignable. Défini ici, dans le module bas niveau, et importé par
+// AuthContext : une seule définition, et la dépendance ne va que dans un sens.
+export const DEMO_TOKEN = 'demo-sirh-token-2026';
+
 // Session expirée ou jeton invalide : on nettoie et on renvoie vers la connexion
 // plutôt que de laisser l'utilisateur devant une page vide ou des données de repli.
 const handleUnauthorized = () => {
@@ -20,6 +25,32 @@ const handleUnauthorized = () => {
     if (!window.location.pathname.startsWith('/login')) {
         window.location.assign('/login?expired=1');
     }
+};
+
+/**
+ * Garantit qu'une valeur destinée à un état de liste est bien un tableau.
+ *
+ * Une réponse d'erreur est un objet — `{ error: "..." }`. Placée telle quelle
+ * dans un état de liste par un `setX(await res.json())` sans garde, elle faisait
+ * échouer le premier `.filter()` du rendu et l'écran entier basculait sur la
+ * page d'erreur : « x.filter is not a function ».
+ *
+ * L'échec n'est pas masqué pour autant : il est journalisé avec le motif
+ * renvoyé par le serveur, faute de quoi une page vide deviendrait
+ * indiscernable d'une absence de données.
+ *
+ * @param {*} valeur Ce que le serveur a renvoyé.
+ * @param {string} origine Nom de la ressource, pour le journal.
+ * @returns {Array} La valeur si c'est un tableau, sinon un tableau vide.
+ */
+export const listeSure = (valeur, origine = 'ressource') => {
+    if (Array.isArray(valeur)) return valeur;
+    if (valeur && typeof valeur === 'object' && (valeur.error || valeur.message)) {
+        console.error(`[API] ${origine} : ${valeur.error || valeur.message}`);
+    } else if (valeur !== undefined && valeur !== null) {
+        console.error(`[API] ${origine} : réponse inattendue (${typeof valeur}) là où une liste était attendue.`);
+    }
+    return [];
 };
 
 const handleResponse = async (res) => {
@@ -37,10 +68,14 @@ const handleResponse = async (res) => {
     }
 
     if (res.status === 401 || res.status === 403) {
-        // En mode démo le jeton est fictif : le serveur le rejette forcément.
-        // Rediriger ici enfermerait l'application dans une boucle de connexion.
-        if (DEMO_MODE) {
-            throw new Error('Non autorisé (mode démo)');
+        // Seule la session de repli hors ligne porte un jeton que le serveur ne
+        // peut pas accepter ; rediriger dans ce cas enfermerait l'application
+        // dans une boucle de connexion. La condition portait auparavant sur le
+        // mode démo tout entier, si bien qu'une session réellement expirée n'y
+        // déclenchait aucune déconnexion : l'utilisateur restait « connecté »
+        // devant des modules vides ou en erreur, sans rien pour l'en informer.
+        if (localStorage.getItem('sirh_token') === DEMO_TOKEN) {
+            throw new Error('Non autorisé (session de démonstration hors ligne)');
         }
         handleUnauthorized();
         throw new Error('Session expirée. Veuillez vous reconnecter.');

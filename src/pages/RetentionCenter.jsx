@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/badge';
 import { useAuth } from '../context/AuthContext';
 import { ShieldAlert, Target, Trash2, CheckCircle2, XCircle, AlertTriangle, UserMinus, BrainCircuit, Sparkles, TrendingUp, History, Fingerprint } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { listeSure } from '../lib/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -25,8 +26,12 @@ export function RetentionCenter() {
                 fetch(`${API_URL}/api/retention`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_URL}/api/employees`, { headers: { 'Authorization': `Bearer ${token}` } })
             ]);
-            setActions(await actionRes.json());
-            setEmployees(await empRes.json());
+            // Les deux réponses étaient placées telles quelles dans un état de
+            // liste, sans vérifier ni le statut ni la forme. Sur une session
+            // refusée, `{ error: "..." }` devenait `actions`, et le premier
+            // `.filter()` du rendu faisait tomber tout le module.
+            setActions(listeSure(await actionRes.json(), 'actions de rétention'));
+            setEmployees(listeSure(await empRes.json(), 'employés'));
         } catch (err) {
             console.error(err);
         } finally {
