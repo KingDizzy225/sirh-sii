@@ -56,14 +56,14 @@ exports.clockIn = async (req, res) => {
             return res.status(404).json({ error: "Employé non reconnu" });
         }
 
-        // Create time log
+        // Le pointage QR écrivait des champs (date, timeIn, status, notes) qui
+        // n'existent pas sur TimeLog : Prisma rejetant les champs inconnus,
+        // chaque scan échouait en erreur serveur. Le modèle attend un type et
+        // un horodatage, comme le pointage depuis l'application.
         const timeLog = await prisma.timeLog.create({
             data: {
                 employeeId,
-                date: new Date(),
-                timeIn: new Date(),
-                status: 'PRESENT',
-                notes: `Pointage QR Code - ${type}`
+                type: type === 'CLOCK_OUT' ? 'CLOCK_OUT' : 'CLOCK_IN'
             }
         });
 

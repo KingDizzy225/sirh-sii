@@ -98,7 +98,7 @@ exports.markAsRead = async (req, res) => {
         const { notifId } = req.params;
         await prisma.notification.update({
             where: { id: notifId },
-            data: { read: true }
+            data: { isRead: true }
         });
         res.json({ success: true });
     } catch (error) {
@@ -110,8 +110,8 @@ exports.markAllAsRead = async (req, res) => {
     try {
         const { id } = req.user;
         await prisma.notification.updateMany({
-            where: { employeeId: id, read: false },
-            data: { read: true }
+            where: { employeeId: id, isRead: false },
+            data: { isRead: true }
         });
         res.json({ success: true });
     } catch (error) {

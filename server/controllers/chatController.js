@@ -74,12 +74,23 @@ ${message}
         // Si l'IA a détecté une demande de création de congé valide
         if (responseData.intent === 'CREATE_LEAVE' && responseData.actionData && employeeId) {
             try {
+                // Le champ s'appelle `type`, non `leaveType`, et durationDays
+                // est obligatoire : la demande échouait silencieusement alors
+                // que le chatbot annonçait au salarié que son congé était posé.
+                const debut = new Date(responseData.actionData.startDate);
+                const fin = new Date(responseData.actionData.endDate);
+                const jours = Math.max(
+                    Math.round((fin - debut) / 86400000) + 1,
+                    1
+                );
+
                 await prisma.leave.create({
                     data: {
                         employeeId: employeeId,
-                        leaveType: 'ANNUAL',
-                        startDate: new Date(responseData.actionData.startDate),
-                        endDate: new Date(responseData.actionData.endDate),
+                        type: 'Congé Annuel',
+                        startDate: debut,
+                        endDate: fin,
+                        durationDays: jours,
                         reason: responseData.actionData.reason || "Demande via Assistant IA",
                         status: 'PENDING'
                     }

@@ -273,6 +273,9 @@ model Applicant {
   status      String // 'Applied', 'Screening', 'Interview', 'Offered', 'Hired', 'Rejected'
   matchScore  Int      @default(0) @map("match_score") // Score de correspondance (ex: 85)
   source      String   @default("LinkedIn")
+  // Chemin du CV téléversé. Le contrôleur l'écrivait déjà alors que le champ
+  // n'existait pas : toute candidature depuis le site carrière échouait.
+  resumeUrl   String?  @map("resume_url")
   appliedDate DateTime @default(now()) @map("applied_date")
 
   jobOffer JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)

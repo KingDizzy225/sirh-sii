@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "check-routes": "node scripts/check-routes.cjs",
+    "check-schema": "node scripts/check-schema-usage.cjs",
     "preview": "vite preview"
   },
   "dependencies": {

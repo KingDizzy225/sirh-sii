@@ -166,7 +166,7 @@ exports.publicApply = async (req, res) => {
                 phone: aiExtractedData.phone || '',
                 resumeUrl: `/uploads/cvs/${req.file.filename}`,
                 source: 'Site Carrière',
-                status: 'NOUVEAU',
+                status: 'Applied',
                 jobOfferId: jobOfferId || null
             }
         });

@@ -37,6 +37,9 @@ jobs:
       - name: Cohérence des routes frontend / serveur
         run: node scripts/check-routes.cjs
 
+      - name: Cohérence des champs écrits et du schéma Prisma
+        run: node scripts/check-schema-usage.cjs
+
   frontend:
     name: Frontend — build Vite
     runs-on: ubuntu-latest
