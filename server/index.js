@@ -39,10 +39,23 @@ app.use(express.json({ limit: '50mb' })); // Parse JSON bodies with higher limit
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Health Check Route
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+    // Indicateur d'exploitation : savoir si des comptes ont été provisionnés
+    // permet de distinguer « mot de passe erroné » de « base sans compte »,
+    // les deux se traduisant sinon par le même 401 côté connexion.
+    // Volontairement booléen : aucun décompte ni aucune adresse n'est exposé.
+    let comptesProvisionnes = null;
+    try {
+        const prisma = require('./prismaClient');
+        comptesProvisionnes = (await prisma.user.count()) > 0;
+    } catch {
+        comptesProvisionnes = null; // base injoignable
+    }
+
     res.status(200).json({
         status: 'success',
         message: 'SIRH API is running and healthy!',
+        comptesProvisionnes,
         timestamp: new Date().toISOString()
     });
 });
