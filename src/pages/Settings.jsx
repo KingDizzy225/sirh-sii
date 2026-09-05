@@ -665,6 +665,7 @@ export function Settings() {
                                                                             : run.jobName === 'DEADLINE_ALERTS' ? "Alertes d'échéances"
                                                                             : run.jobName === 'PENDING_REMINDERS' ? 'Relance des demandes en attente'
                                                                             : run.jobName === 'TIMELOG_ANOMALIES' ? 'Anomalies de pointage'
+                                                                            : run.jobName === 'CELEBRATIONS' ? 'Anniversaires et jubilés'
                                                                             : run.jobName}
                                                                     </td>
                                                                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">{run.period}</td>
