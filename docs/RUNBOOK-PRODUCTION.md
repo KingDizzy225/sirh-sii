@@ -154,6 +154,24 @@ partir du schéma qui a lui-même produit cette base — les deux décrivent la 
 structure. Au prochain démarrage, `migrate deploy` réussira et `db push` ne sera
 plus jamais atteint.
 
+### Étape 4 ter — Reprise des bulletins de paie *(base conservée uniquement)*
+
+Les fiches enregistrées avant la correction du calcul portent un net erroné :
+il retranchait la part patronale au lieu des retenues du salarié, et leur
+décomposition (brut, CNPS, CMU, ITS) n'était stockée nulle part.
+
+```bash
+cd server
+DATABASE_URL="<url-externe>" npm run repair-payrolls            # simulation
+DATABASE_URL="<url-externe>" npm run repair-payrolls -- --confirm
+```
+
+La simulation affiche l'écart fiche par fiche et le total sur la masse nette.
+Le recalcul rapproche la base des bulletins PDF déjà remis aux salariés : c'est
+le PDF qui portait le bon montant. Sans cette reprise, les déclarations
+sociales du mois sortiraient avec des cotisations à zéro sur ces fiches — le
+récapitulatif de l'onglet **Déclarations Sociales** le signale avant tout dépôt.
+
 ### Étape 5 — Connexion nominative
 
 Ouvrir l'application et se connecter avec l'adresse et le mot de passe de
