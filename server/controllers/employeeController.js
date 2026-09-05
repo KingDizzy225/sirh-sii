@@ -1,6 +1,7 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
 const { triggerWebhook } = require('./webhookController');
+const { buildOnboardingTasks } = require('../data/onboardingTemplates');
 
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
@@ -80,26 +81,7 @@ exports.createEmployee = async (req, res) => {
 
         // Automatisation : Création des tâches d'Onboarding Zéro-Papier
         await prisma.onboardingTask.createMany({
-            data: [
-                {
-                    employeeId: newEmployee.id,
-                    taskName: "Création des accès informatiques et adresse email",
-                    assignedTo: "IT Support",
-                    dueDate: new Date(new Date().setDate(new Date().getDate() + 2))
-                },
-                {
-                    employeeId: newEmployee.id,
-                    taskName: "Signature électronique du contrat de travail",
-                    assignedTo: "Ressources Humaines",
-                    dueDate: new Date(new Date().setDate(new Date().getDate() + 5))
-                },
-                {
-                    employeeId: newEmployee.id,
-                    taskName: "Planification du point d'intégration (1ère semaine)",
-                    assignedTo: "Manager Direct",
-                    dueDate: new Date(new Date().setDate(new Date().getDate() + 7))
-                }
-            ]
+            data: buildOnboardingTasks(newEmployee)
         });
 
         // Trigger Webhook
@@ -353,27 +335,8 @@ exports.importBulkEmployees = async (req, res) => {
 
                 // Automatisation : Création des tâches d'Onboarding Zéro-Papier pour chaque nouvel employé importé
                 await prisma.onboardingTask.createMany({
-                    data: [
-                        {
-                            employeeId: newEmp.id,
-                            taskName: "Création des accès informatiques et adresse email",
-                            assignedTo: "IT Support",
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + 2))
-                        },
-                        {
-                            employeeId: newEmp.id,
-                            taskName: "Signature électronique du contrat de travail",
-                            assignedTo: "Ressources Humaines",
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + 5))
-                        },
-                        {
-                            employeeId: newEmp.id,
-                            taskName: "Planification du point d'intégration (1ère semaine)",
-                            assignedTo: "Manager Direct",
-                            dueDate: new Date(new Date().setDate(new Date().getDate() + 7))
-                        }
-                    ]
-                });
+            data: buildOnboardingTasks(newEmp)
+        });
 
                 created++;
             } catch (err) {
@@ -481,26 +444,7 @@ exports.initOnboardingTasks = async (req, res) => {
 
         // Create standard tasks
         await prisma.onboardingTask.createMany({
-            data: [
-                {
-                    employeeId: id,
-                    taskName: "Création des accès informatiques et adresse email",
-                    assignedTo: "IT Support",
-                    dueDate: new Date(new Date().setDate(new Date().getDate() + 2))
-                },
-                {
-                    employeeId: id,
-                    taskName: "Signature électronique du contrat de travail",
-                    assignedTo: "Ressources Humaines",
-                    dueDate: new Date(new Date().setDate(new Date().getDate() + 5))
-                },
-                {
-                    employeeId: id,
-                    taskName: "Planification du point d'intégration (1ère semaine)",
-                    assignedTo: "Manager Direct",
-                    dueDate: new Date(new Date().setDate(new Date().getDate() + 7))
-                }
-            ]
+            data: buildOnboardingTasks({ id: id, department: employee?.department })
         });
 
         // Retrieve created tasks
