@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
     Download, PlayCircle, FileText, CheckCircle2, Search, UserCheck, 
     Eye, PiggyBank, Calculator, Briefcase, AlertCircle, Save, Sparkles,
-    Banknote, Receipt, Clock, XCircle, CheckCheck, Filter
+    Banknote, Receipt, Clock, XCircle, CheckCheck, Filter, Landmark, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
@@ -39,6 +39,12 @@ export function Payroll() {
 
     // Payroll variables form for HR (employeeId -> {variables})
     const [payrollVariables, setPayrollVariables] = useState({});
+
+    // Déclaration sociale du mois : montants agrégés par le serveur à partir
+    // des bulletins enregistrés. Rien n'est recalculé ici — c'est justement ce
+    // que faisait l'ancien export DISA, avec des taux qui avaient divergé.
+    const [declaration, setDeclaration] = useState(null);
+    const [declarationEnCours, setDeclarationEnCours] = useState(false);
 
     // Compensation Campaign State
     const [campaignEmployees, setCampaignEmployees] = useState([]);
@@ -193,10 +199,24 @@ export function Payroll() {
         }
     };
 
+    const chargerDeclaration = async () => {
+        setDeclarationEnCours(true);
+        try {
+            const reponse = await api.get(`/payrolls/declaration?period=${selectedMonth}`);
+            setDeclaration(reponse.data || null);
+        } catch (error) {
+            console.error('Erreur chargement déclaration', error);
+            setDeclaration(null);
+        } finally {
+            setDeclarationEnCours(false);
+        }
+    };
+
     useEffect(() => {
         if (isHR) {
             loadEmployeesAndPayrolls();
             loadAdvances();
+            if (activeTab === 'declaration') chargerDeclaration();
         }
         loadMyPayslips();
     }, [activeTab, isHR, selectedMonth]);
@@ -424,6 +444,7 @@ export function Payroll() {
                     { id: 'my-payslips', label: 'Mes Bulletins de Salaire', icon: FileText },
                     { id: 'run-payroll', label: 'Préparation de la Paie', icon: PlayCircle, hidden: !isHR },
                     { id: 'history', label: 'Registre & Téléchargements', icon: Search, hidden: !isHR },
+                    { id: 'declaration', label: 'Déclarations Sociales', icon: Landmark, hidden: !isHR },
                     { id: 'campaign', label: 'Campagne Salariale', icon: PiggyBank, hidden: !isHR },
                     { id: 'advances', label: 'Avances sur Salaire', icon: Banknote, hidden: !isHR },
                     { id: 'expenses', label: 'Notes de Frais', icon: Receipt, hidden: !isHR },
@@ -660,7 +681,149 @@ export function Payroll() {
                     </div>
                 )}
 
-                {/* 4. COMPENSATION CAMPAIGN */}
+                {/* 4. DÉCLARATIONS SOCIALES */}
+                {isHR && activeTab === 'declaration' && (
+                    <div className="space-y-6">
+                        <Card className="border-none shadow-sm bg-white">
+                            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div>
+                                    <CardTitle className="text-sm font-bold text-slate-800">
+                                        Déclaration sociale — {declaration?.periode || selectedMonth}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Montants agrégés à partir des bulletins enregistrés. À vérifier avant tout dépôt auprès de la CNPS et de la DGI.
+                                    </CardDescription>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="month"
+                                        value={selectedMonth}
+                                        onChange={(e) => setSelectedMonth(e.target.value)}
+                                        className="border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700"
+                                    />
+                                    <Button variant="outline" size="sm" onClick={handleExportDISA}
+                                        className="border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 text-xs font-bold">
+                                        <Download size={14} className="mr-1.5" /> Export DISA
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {declarationEnCours && (
+                                    <p className="text-sm text-slate-500 py-8 text-center">Calcul en cours…</p>
+                                )}
+
+                                {!declarationEnCours && !declaration && (
+                                    <p className="text-sm text-slate-500 py-8 text-center">
+                                        Déclaration indisponible pour cette période.
+                                    </p>
+                                )}
+
+                                {!declarationEnCours && declaration && declaration.effectifDeclare === 0 && (
+                                    <p className="text-sm text-slate-500 py-8 text-center">
+                                        Aucun bulletin sur {declaration.periode}. Exécutez la paie du mois avant de déclarer.
+                                    </p>
+                                )}
+
+                                {!declarationEnCours && declaration && declaration.effectifDeclare > 0 && (
+                                    <div className="space-y-6">
+                                        {/* Ce qui empêcherait une déclaration sincère est montré avant les
+                                            totaux : une fois le fichier déposé, l'erreur est chez l'organisme. */}
+                                        {declaration.anomalies.length > 0 && (
+                                            <div className="space-y-2">
+                                                {declaration.anomalies.map((a, i) => (
+                                                    <div key={i} className={cn(
+                                                        "flex items-start gap-3 rounded-lg border p-3",
+                                                        a.gravite === 'bloquante'
+                                                            ? "border-rose-200 bg-rose-50"
+                                                            : "border-amber-200 bg-amber-50"
+                                                    )}>
+                                                        <ShieldAlert size={16} className={cn("mt-0.5 shrink-0",
+                                                            a.gravite === 'bloquante' ? "text-rose-600" : "text-amber-600")} />
+                                                        <div className="text-xs">
+                                                            <p className={cn("font-bold",
+                                                                a.gravite === 'bloquante' ? "text-rose-800" : "text-amber-800")}>
+                                                                {a.libelle}
+                                                            </p>
+                                                            <p className="text-slate-600 mt-0.5">{a.consequence} {a.remede}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="grid gap-4 md:grid-cols-3">
+                                            {[
+                                                { titre: 'CNPS à verser', valeur: declaration.aVerser.cnps, detail: `part salariale ${formatCurrency(declaration.totaux.cnpsSalarie)} + part patronale ${formatCurrency(declaration.totaux.cnpsPatronal)}`, couleur: 'text-indigo-700' },
+                                                { titre: 'ITS à reverser', valeur: declaration.aVerser.impots, detail: `assiette ${formatCurrency(declaration.totaux.assietteITS)}`, couleur: 'text-rose-700' },
+                                                { titre: 'CMU', valeur: declaration.aVerser.cmu, detail: `${declaration.effectifDeclare} salarié(s) déclaré(s)`, couleur: 'text-emerald-700' }
+                                            ].map(k => (
+                                                <div key={k.titre} className="rounded-xl border border-slate-200 p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{k.titre}</p>
+                                                    <p className={cn("text-2xl font-black mt-1", k.couleur)}>{formatCurrency(k.valeur)}</p>
+                                                    <p className="text-xs text-slate-400 mt-1">{k.detail}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="grid gap-4 md:grid-cols-3 text-sm">
+                                            <div className="rounded-xl bg-slate-50 p-4">
+                                                <p className="text-xs font-bold uppercase text-slate-500">Masse salariale brute</p>
+                                                <p className="text-lg font-black text-slate-900 mt-1">{formatCurrency(declaration.totaux.brut)}</p>
+                                            </div>
+                                            <div className="rounded-xl bg-slate-50 p-4">
+                                                <p className="text-xs font-bold uppercase text-slate-500">Net versé aux salariés</p>
+                                                <p className="text-lg font-black text-slate-900 mt-1">{formatCurrency(declaration.totaux.net)}</p>
+                                            </div>
+                                            <div className="rounded-xl bg-slate-900 p-4">
+                                                <p className="text-xs font-bold uppercase text-slate-400">Coût employeur total</p>
+                                                <p className="text-lg font-black text-white mt-1">{formatCurrency(declaration.coutEmployeur)}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="overflow-x-auto">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow className="bg-slate-50/30">
+                                                        <TableHead>Collaborateur</TableHead>
+                                                        <TableHead className="text-right">Brut</TableHead>
+                                                        <TableHead className="text-right">CNPS salarié</TableHead>
+                                                        <TableHead className="text-right">CNPS patronal</TableHead>
+                                                        <TableHead className="text-right">ITS</TableHead>
+                                                        <TableHead className="text-right">Net</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody className="text-xs">
+                                                    {declaration.lignes.map(l => (
+                                                        <TableRow key={l.employeeId} className={cn("font-semibold", !l.complet && "bg-rose-50/50")}>
+                                                            <td className="p-3 font-bold text-slate-900">
+                                                                {l.nom}
+                                                                {!l.complet && <span className="ml-2 text-rose-600 font-normal">(sans détail)</span>}
+                                                            </td>
+                                                            <td className="p-3 text-right text-slate-700">{formatCurrency(l.brut ?? 0)}</td>
+                                                            <td className="p-3 text-right text-slate-700">{formatCurrency(l.cnpsSalarie ?? 0)}</td>
+                                                            <td className="p-3 text-right text-slate-700">{formatCurrency(l.cnpsPatronal ?? 0)}</td>
+                                                            <td className="p-3 text-right text-slate-700">{formatCurrency(l.its ?? 0)}</td>
+                                                            <td className="p-3 text-right text-slate-900 font-black">{formatCurrency(l.net ?? 0)}</td>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+
+                                        <p className="text-xs text-slate-400">
+                                            Taux appliqués : CNPS part salariale {(declaration.taux.cnpsSalarie * 100).toFixed(2).replace('.', ',')} %,
+                                            part patronale {(declaration.taux.cnpsPatronal * 100).toFixed(2).replace('.', ',')} %,
+                                            CMU {formatCurrency(declaration.taux.cmuForfait)} par salarié.
+                                            Ces taux doivent être confirmés par votre comptable.
+                                        </p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
+                {/* 5. COMPENSATION CAMPAIGN */}
                 {isHR && activeTab === 'campaign' && (
                     <div className="space-y-6">
                         {/* Envelope Budget KPIs */}

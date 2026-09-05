@@ -28,15 +28,23 @@ function lireModeles() {
     for (const m of src.matchAll(/model\s+(\w+)\s*\{([\s\S]*?)\n\}/g)) {
         const nom = m[1];
         const champs = new Set();
+        const obligatoires = new Set();
         for (const ligne of m[2].split('\n')) {
             const t = ligne.trim();
             if (!t || t.startsWith('//') || t.startsWith('@@')) continue;
-            const champ = t.match(/^(\w+)\s+\S/);
-            if (champ) champs.add(champ[1]);
+            const champ = t.match(/^(\w+)\s+(\S+)/);
+            if (!champ) continue;
+            champs.add(champ[1]);
+            // Un type sans « ? » final est obligatoire. Les listes (`Type[]`)
+            // sont des relations, jamais nulles non plus mais hors sujet ici.
+            if (!champ[2].endsWith('?') && !champ[2].endsWith('[]')) {
+                obligatoires.add(champ[1]);
+            }
         }
-        modeles[nom] = champs;
+        const entree = { champs, obligatoires };
+        modeles[nom] = entree;
         // Prisma expose les modèles en camelCase : prisma.employee -> Employee
-        modeles[nom[0].toLowerCase() + nom.slice(1)] = champs;
+        modeles[nom[0].toLowerCase() + nom.slice(1)] = entree;
     }
     return modeles;
 }
@@ -85,15 +93,73 @@ const modeles = lireModeles();
 const anomalies = [];
 let ecrituresAnalysees = 0;
 
-for (const fichier of fs.readdirSync(CONTROLEURS).filter(f => f.endsWith('.js'))) {
-    const src = fs.readFileSync(path.join(CONTROLEURS, fichier), 'utf8');
+/** Fichiers serveur susceptibles d'appeler Prisma. */
+function fichiersServeur() {
+    const trouves = [];
+    const parcourir = (dossier) => {
+        if (!fs.existsSync(dossier)) return;
+        for (const entree of fs.readdirSync(dossier, { withFileTypes: true })) {
+            const complet = path.join(dossier, entree.name);
+            if (entree.isDirectory()) {
+                if (entree.name === 'node_modules') continue;
+                parcourir(complet);
+            } else if (entree.name.endsWith('.js')) {
+                trouves.push(complet);
+            }
+        }
+    };
+    for (const sous of ['controllers', 'jobs', 'lib', 'middleware', 'routes', 'scripts']) {
+        parcourir(path.join(ROOT, 'server', sous));
+    }
+    return trouves;
+}
 
+for (const chemin of fichiersServeur()) {
+    const src = fs.readFileSync(chemin, 'utf8');
+    const fichier = path.relative(path.join(ROOT, 'server'), chemin);
+
+    // --- a. Filtres `not: null` sur des champs obligatoires -----------------
+    // Prisma rejette `not: null` sur un champ non nullable, à l'exécution
+    // seulement. Deux occurrences avaient tué le tableau de bord analytique et
+    // le récapitulatif hebdomadaire, chacune pendant des mois.
+    const lecture = /prisma\.(\w+)\.(findMany|findFirst|findUnique|count|aggregate|groupBy|deleteMany|updateMany)\s*\(/g;
+    for (const m of src.matchAll(lecture)) {
+        const modele = m[1];
+        const entree = modeles[modele];
+        if (!entree) continue;
+
+        const apres = src.indexOf('{', m.index + m[0].length - 1);
+        if (apres === -1) continue;
+        const args = blocEquilibre(src, apres);
+        if (!args) continue;
+
+        const posWhere = args.search(/\bwhere\s*:\s*\{/);
+        if (posWhere === -1) continue;
+        const ouvrant = args.indexOf('{', posWhere);
+        const bloc = blocEquilibre(args, ouvrant);
+        if (!bloc) continue;
+
+        for (const f of bloc.matchAll(/(\w+)\s*:\s*\{\s*not\s*:\s*null\s*\}/g)) {
+            if (entree.obligatoires.has(f[1])) {
+                const ligne = src.slice(0, m.index).split('\n').length;
+                anomalies.push({
+                    fichier, ligne, modele, champ: f[1], operation: m[2],
+                    genre: 'not-null'
+                });
+            }
+        }
+    }
+
+    if (!chemin.startsWith(CONTROLEURS)) continue;
+
+    // --- b. Champs écrits absents du schéma ---------------------------------
     // prisma.<modele>.create / update / upsert / createMany ... { data: { ... } }
     const motif = /prisma\.(\w+)\.(create|update|upsert|createMany|updateMany)\s*\(/g;
     for (const m of src.matchAll(motif)) {
         const modele = m[1];
-        const champs = modeles[modele];
-        if (!champs) continue; // modèle inconnu : hors périmètre
+        const entree = modeles[modele];
+        if (!entree) continue; // modèle inconnu : hors périmètre
+        const champs = entree.champs;
 
         const apres = src.indexOf('{', m.index + m[0].length - 1);
         if (apres === -1) continue;
@@ -123,13 +189,27 @@ for (const fichier of fs.readdirSync(CONTROLEURS).filter(f => f.endsWith('.js'))
 console.log(`Modèles lus : ${Object.keys(modeles).length / 2} · écritures analysées : ${ecrituresAnalysees}`);
 
 if (anomalies.length === 0) {
-    console.log('\n✅ Tous les champs écrits existent dans le schéma.');
+    console.log('\n✅ Champs écrits et filtres cohérents avec le schéma.');
     process.exit(0);
 }
 
-console.log(`\n❌ ${anomalies.length} champ(s) écrit(s) sans exister dans le schéma :\n`);
-for (const a of anomalies) {
-    console.log(`   ${a.fichier}:${a.ligne} — prisma.${a.modele}.${a.operation}() écrit « ${a.champ} »`);
+const inconnus = anomalies.filter(a => a.genre !== 'not-null');
+const notNull = anomalies.filter(a => a.genre === 'not-null');
+
+if (inconnus.length > 0) {
+    console.log(`\n❌ ${inconnus.length} champ(s) écrit(s) sans exister dans le schéma :\n`);
+    for (const a of inconnus) {
+        console.log(`   ${a.fichier}:${a.ligne} — prisma.${a.modele}.${a.operation}() écrit « ${a.champ} »`);
+    }
+    console.log('\nPrisma rejette les champs inconnus : ces appels échouent à l\'exécution.');
 }
-console.log('\nPrisma rejette les champs inconnus : ces appels échouent à l\'exécution.');
+
+if (notNull.length > 0) {
+    console.log(`\n❌ ${notNull.length} filtre(s) « not: null » sur un champ obligatoire :\n`);
+    for (const a of notNull) {
+        console.log(`   ${a.fichier}:${a.ligne} — prisma.${a.modele}.${a.operation}() filtre « ${a.champ}: { not: null } »`);
+    }
+    console.log('\nPrisma refuse « not: null » sur un champ non nullable : la requête');
+    console.log('échoue à l\'exécution. Le filtre est de toute façon sans objet.');
+}
 process.exit(1);

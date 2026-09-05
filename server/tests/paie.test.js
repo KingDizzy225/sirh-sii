@@ -124,6 +124,34 @@ async function main() {
     verifier('rubrique 5000 égale le net enregistré',
         rubrique(5000) !== null && Math.abs(rubrique(5000) - fiche.netSalary) <= 1);
 
+    console.log('\n=== Déclaration sociale ===');
+    const res3 = faireRes();
+    await ctrl.getDeclaration({ query: { period: '2026-08' }, user: { role: 'ADMIN' } }, res3);
+    const d = res3.corps || {};
+    verifier('la déclaration répond', res3.statut === null && d.periode === '2026-08', d.periode || 'aucune');
+    verifier('le brut déclaré égale le brut du bulletin',
+        proche(d.totaux?.brut, fiche.grossSalary), fcfa(d.totaux?.brut || 0));
+    verifier('la CNPS à verser cumule part salariale et part patronale',
+        proche(d.aVerser?.cnps, fiche.cnpsEmployee + fiche.employerContributions),
+        fcfa(d.aVerser?.cnps || 0));
+    verifier('le coût employeur vaut brut + part patronale',
+        proche(d.coutEmployeur, fiche.grossSalary + fiche.employerContributions),
+        fcfa(d.coutEmployeur || 0));
+    verifier('la ligne du salarié est signalée complète',
+        d.lignes?.length === 1 && d.lignes[0].complet === true);
+
+    // Une fiche privée de sa décomposition doit être signalée, pas déclarée à zéro
+    // en silence : c'est le mode de défaillance qui coûte le plus cher ici.
+    await prisma.payroll.update({
+        where: { id: fiche.id },
+        data: { grossSalary: null, cnpsEmployee: null }
+    });
+    const res4 = faireRes();
+    await ctrl.getDeclaration({ query: { period: '2026-08' }, user: { role: 'ADMIN' } }, res4);
+    const bloquantes = (res4.corps?.anomalies || []).filter(a => a.gravite === 'bloquante');
+    verifier('une fiche sans décomposition lève une anomalie bloquante',
+        bloquantes.length === 1, bloquantes[0]?.libelle || 'aucune anomalie levée');
+
     await prisma.payroll.deleteMany({ where: { employeeId: emp.id } });
     await prisma.employee.delete({ where: { id: emp.id } });
 }

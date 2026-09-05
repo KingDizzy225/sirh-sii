@@ -113,6 +113,35 @@ exports.getDashboardAnalytics = async (req, res) => {
         const totalNetSalary = payrollsThisMonth.reduce((acc, p) => acc + (p.netSalary || 0), 0);
         const avgNetSalary = payrollsThisMonth.length > 0 ? Math.round(totalNetSalary / payrollsThisMonth.length) : 0;
 
+        // 8 bis. Variations d'un mois sur l'autre.
+        // L'interface affichait des pourcentages écrits en dur (« +4 % »,
+        // « −2,1 % ») à côté de valeurs réelles : le lecteur ne pouvait pas les
+        // distinguer d'une mesure. Ils sont désormais calculés, et valent null
+        // lorsqu'il n'existe pas de mois précédent auquel se comparer.
+        const debutMoisPrecedent = new Date(startOfMonth);
+        debutMoisPrecedent.setMonth(debutMoisPrecedent.getMonth() - 1);
+
+        const [paiesMoisPrecedent, entreesCeMois, sortiesCeMois] = await Promise.all([
+            prisma.payroll.findMany({
+                where: { period: { gte: debutMoisPrecedent, lt: startOfMonth }, status: 'APPROVED' },
+                select: { netSalary: true }
+            }),
+            prisma.employee.count({ where: { hireDate: { gte: startOfMonth } } }),
+            prisma.employee.count({ where: { exitDate: { gte: startOfMonth } } })
+        ]);
+
+        const netMoisPrecedent = paiesMoisPrecedent.reduce((a, p) => a + (p.netSalary || 0), 0);
+        const variation = (actuel, precedent) =>
+            precedent > 0 ? parseFloat((((actuel - precedent) / precedent) * 100).toFixed(1)) : null;
+
+        const effectifDebutMois = activeEmployees - entreesCeMois + sortiesCeMois;
+        const variations = {
+            effectif: variation(activeEmployees, effectifDebutMois),
+            masseSalariale: variation(totalNetSalary, netMoisPrecedent),
+            entreesCeMois,
+            sortiesCeMois
+        };
+
         // 9. Pyramide des âges dynamique
         const employeesForAge = await prisma.employee.findMany({ 
             select: { birthDate: true, gender: true }, 
@@ -173,10 +202,12 @@ exports.getDashboardAnalytics = async (req, res) => {
             // We need hireDate which isn't in employeesForAge currently! Let's fetch it.
         });
         
-        // Fetch hireDate separately to be safe
+        // `hireDate` est obligatoire au schéma : Prisma rejette `not: null` sur
+        // un champ non nullable, et l'ensemble du tableau de bord analytique
+        // répondait en erreur serveur. Le filtre était de toute façon inutile.
         const employeesForSeniority = await prisma.employee.findMany({
             select: { hireDate: true },
-            where: { status: 'ACTIVE', hireDate: { not: null } }
+            where: { status: 'ACTIVE' }
         });
 
         const currentDate = new Date();
@@ -213,7 +244,8 @@ exports.getDashboardAnalytics = async (req, res) => {
                 absenceRate: parseFloat(absenceRate) || 0,
                 payrollCount: payrollsThisMonth.length,
                 avgNetSalary,
-                totalNetSalary: Math.round(totalNetSalary)
+                totalNetSalary: Math.round(totalNetSalary),
+                variations
             },
             charts: {
                 turnoverByDept: turnoverByDept.length > 0 ? turnoverByDept : [
@@ -267,9 +299,12 @@ exports.getDashboardAnalytics = async (req, res) => {
 };
 
 exports.getPredictiveAnalytics = async (req, res) => {
+    // `promptData` était déclaré à l'intérieur du `try` et lu depuis le `catch`,
+    // où il n'existe pas : le repli heuristique — écrit précisément pour que la
+    // fonction marche sans IA — levait lui-même une ReferenceError. Toute
+    // indisponibilité de l'IA se soldait donc par une erreur serveur.
+    let promptData = [];
     try {
-        if (!aiModel) return res.status(500).json({ error: 'IA non configurée' });
-
         const employees = await prisma.employee.findMany({
             where: { status: 'ACTIVE' },
             include: {
@@ -282,7 +317,7 @@ exports.getPredictiveAnalytics = async (req, res) => {
         if (employees.length === 0) return res.json([]);
 
         // Anonymize/Simplify data for the prompt
-        const promptData = employees.map(emp => {
+        promptData = employees.map(emp => {
             const totalLeaves = emp.leaves.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + (l.durationDays || 0), 0);
             const sickLeaves = emp.leaves.filter(l => l.status === 'APPROVED' && l.type === 'Congé Maladie').reduce((sum, l) => sum + (l.durationDays || 0), 0);
             const avgSalary = emp.payrolls.length > 0 ? (emp.payrolls[0].netSalary || 0) : 0;
@@ -315,15 +350,29 @@ Données :
 ${JSON.stringify(promptData)}
 `;
 
+        // L'absence de clé n'est plus une erreur : elle mène au repli, comme
+        // n'importe quelle autre indisponibilité de l'IA.
+        if (!aiModel) throw new Error('IA non configurée — repli heuristique.');
+
         const result = await aiModel.generateContent(systemPrompt);
         const response = await result.response;
         const textResponse = response.text();
         const textRes = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
         const insights = JSON.parse(textRes);
 
-        res.status(200).json(Array.isArray(insights) ? insights : []);
+        return res.status(200).json(Array.isArray(insights) ? insights : []);
     } catch (error) {
-        console.error("Erreur Predictive Analytics (AI failure), switching to heuristic fallback:", error);
+        console.warn("Analytique prédictive : repli heuristique —", error.message);
+
+        // Si l'échec porte sur la lecture des données et non sur l'IA, il n'y a
+        // rien à analyser. Le repli conclurait alors « climat social stable » —
+        // une affirmation rassurante tirée d'une absence d'information.
+        if (promptData.length === 0) {
+            return res.status(500).json({
+                error: "Analyse indisponible : les données des collaborateurs n'ont pas pu être lues."
+            });
+        }
+
         // Heuristic fallback for "Expert RH" feel even without AI
         const fallbackInsights = [];
         promptData.forEach(emp => {

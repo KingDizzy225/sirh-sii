@@ -128,6 +128,19 @@ export function Analytics() {
         visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
     };
 
+    /**
+     * Traduit une variation calculée en propriétés d'affichage.
+     * Renvoie un objet vide lorsque la variation est nulle ou indisponible :
+     * l'indicateur disparaît alors, au lieu d'afficher un écart imaginaire.
+     */
+    const ecart = (valeur) => {
+        if (valeur === null || valeur === undefined || valeur === 0) return {};
+        return {
+            trend: valeur > 0 ? 'up' : 'down',
+            trendValue: `${valeur > 0 ? '+' : ''}${valeur}%`
+        };
+    };
+
     const StatCard = ({ title, value, icon: Icon, description, trend, trendValue, color }) => {
         const colorStyles = {
             blue: 'text-blue-600 bg-blue-100',
@@ -291,10 +304,21 @@ export function Analytics() {
                         >
                             {/* Key Stats Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <StatCard title="Effectif Total" value={stats.activeEmployees} icon={Users} description="Collaborateurs actifs" trend="up" trendValue="+4%" color="blue" />
-                                <StatCard title="Turnover" value={`${stats.globalTurnover}%`} icon={Activity} description="Taux de rotation annuel" trend="down" trendValue="-2.1%" color="indigo" />
-                                <StatCard title="Absentéisme" value={`${stats.absenceRate}%`} icon={Clock} description="Taux ce mois-ci" color="amber" />
-                                <StatCard title="Masse Salariale" value={`${(stats.totalNetSalary / 1000000).toFixed(1)}M`} icon={DollarSign} description="Net versé ce mois (FCFA)" trend="up" trendValue="+1.2%" color="emerald" />
+                                {/* Les écarts affichés sont ceux calculés par le serveur d'un
+                                    mois sur l'autre. Ils étaient auparavant écrits en dur
+                                    (« +4 % », « −2,1 % ») à côté de valeurs réelles, sans
+                                    qu'on puisse les distinguer d'une mesure. Absents quand
+                                    il n'y a pas de mois précédent auquel se comparer. */}
+                                <StatCard title="Effectif Total" value={stats.activeEmployees} icon={Users}
+                                    description="Collaborateurs actifs" color="blue"
+                                    {...ecart(stats.variations?.effectif)} />
+                                <StatCard title="Turnover" value={`${stats.globalTurnover}%`} icon={Activity}
+                                    description="Taux de rotation annuel" color="indigo" />
+                                <StatCard title="Absentéisme" value={`${stats.absenceRate}%`} icon={Clock}
+                                    description="Taux ce mois-ci" color="amber" />
+                                <StatCard title="Masse Salariale" value={`${(stats.totalNetSalary / 1000000).toFixed(1)}M`}
+                                    icon={DollarSign} description="Net versé ce mois (FCFA)" color="emerald"
+                                    {...ecart(stats.variations?.masseSalariale)} />
                             </div>
 
                             {/* Main Charts Grid */}

@@ -461,4 +461,117 @@ const exportSage = async (req, res) => {
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, signPayroll, exportSage };
+/**
+ * Récapitulatif de la déclaration sociale d'un mois.
+ *
+ * Jusqu'ici, la déclaration CNPS partait sous forme d'un CSV construit dans le
+ * navigateur, sans que personne ne voie les totaux avant l'envoi. Un montant
+ * faux ne se remarquait qu'après dépôt auprès de l'organisme.
+ *
+ * Cette route agrège les montants **enregistrés** sur les bulletins — elle ne
+ * recalcule rien — et signale ce qui empêcherait une déclaration sincère :
+ * fiches sans décomposition, salariés sans bulletin du mois, bulletins encore
+ * à l'état de brouillon.
+ */
+const getDeclaration = async (req, res) => {
+    try {
+        const mois = intervalleMois(req.query.period);
+
+        const [fiches, effectifActif] = await Promise.all([
+            prisma.payroll.findMany({
+                where: { period: { gte: mois.gte, lt: mois.lt } },
+                include: {
+                    employee: {
+                        select: {
+                            id: true, firstName: true, lastName: true,
+                            department: true, hireDate: true, status: true
+                        }
+                    }
+                },
+                orderBy: { employee: { lastName: 'asc' } }
+            }),
+            prisma.employee.count({ where: { status: 'ACTIVE' } })
+        ]);
+
+        const total = (champ) => fiches.reduce((s, f) => s + (f[champ] || 0), 0);
+
+        // Une fiche sans décomposition sortirait à zéro dans la déclaration.
+        const sansDetail = fiches.filter(f => f.grossSalary == null);
+        const brouillons = fiches.filter(f => f.status === 'DRAFT');
+
+        const anomalies = [];
+        if (sansDetail.length > 0) {
+            anomalies.push({
+                gravite: 'bloquante',
+                libelle: `${sansDetail.length} bulletin(s) sans décomposition des cotisations`,
+                consequence: 'Ils seraient déclarés à zéro.',
+                remede: 'Relancer la paie du mois, ou exécuter npm run repair-payrolls.'
+            });
+        }
+        if (fiches.length > 0 && fiches.length < effectifActif) {
+            anomalies.push({
+                gravite: 'avertissement',
+                libelle: `${effectifActif - fiches.length} salarié(s) actif(s) sans bulletin ce mois-ci`,
+                consequence: 'Ils seront absents de la déclaration.',
+                remede: 'Vérifier les entrées et sorties du mois avant dépôt.'
+            });
+        }
+        if (brouillons.length > 0) {
+            anomalies.push({
+                gravite: 'avertissement',
+                libelle: `${brouillons.length} bulletin(s) encore à l'état de brouillon`,
+                consequence: 'Des montants non validés seraient déclarés.',
+                remede: 'Approuver ou corriger ces bulletins.'
+            });
+        }
+
+        res.json({
+            periode: mois.libelle,
+            effectifDeclare: fiches.length,
+            effectifActif,
+            taux: {
+                cnpsSalarie: TAUX.cnpsSalarie,
+                cnpsPatronal: TAUX.cnpsPatronal,
+                cmuForfait: TAUX.cmuForfait
+            },
+            totaux: {
+                brut: total('grossSalary'),
+                cnpsSalarie: total('cnpsEmployee'),
+                cnpsPatronal: total('employerContributions'),
+                cmu: total('cmu'),
+                assietteITS: total('taxableIncome'),
+                its: total('its'),
+                retenuesSalariales: total('employeeContributions'),
+                net: total('netSalary')
+            },
+            // Ce que l'entreprise verse effectivement à chaque organisme.
+            aVerser: {
+                cnps: total('cnpsEmployee') + total('employerContributions'),
+                cmu: total('cmu'),
+                impots: total('its')
+            },
+            coutEmployeur: total('grossSalary') + total('employerContributions'),
+            anomalies,
+            lignes: fiches.map(f => ({
+                employeeId: f.employeeId,
+                nom: `${f.employee?.lastName || ''} ${f.employee?.firstName || ''}`.trim(),
+                departement: f.employee?.department || null,
+                dateEmbauche: f.employee?.hireDate || null,
+                brut: f.grossSalary,
+                cnpsSalarie: f.cnpsEmployee,
+                cnpsPatronal: f.employerContributions,
+                cmu: f.cmu,
+                assietteITS: f.taxableIncome,
+                its: f.its,
+                net: f.netSalary,
+                statut: f.status,
+                complet: f.grossSalary != null
+            }))
+        });
+    } catch (error) {
+        console.error('Erreur déclaration sociale :', error);
+        res.status(500).json({ error: 'Erreur lors du calcul de la déclaration.' });
+    }
+};
+
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, signPayroll, exportSage, getDeclaration };

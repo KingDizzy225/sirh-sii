@@ -63,7 +63,10 @@ async function envoyerRecapHebdomadaire(referenceDate = new Date()) {
 
         // Destinataires : direction RH et administration
         const destinataires = await prisma.employee.findMany({
-            where: { ...actifs, role: { in: ['HR', 'Administrator'] }, email: { not: null } },
+            // `email` est obligatoire au schéma : `not: null` y était rejeté par
+            // Prisma, et le récapitulatif hebdomadaire échouait donc chaque
+            // semaine sans que rien ne le signale.
+            where: { ...actifs, role: { in: ['HR', 'Administrator'] } },
             select: { email: true }
         });
 
