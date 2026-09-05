@@ -69,6 +69,28 @@ const JSON_INSTRUCTION =
     'après, et aucune balise de bloc de code.';
 
 /**
+ * Traduit une erreur de l'API en motif actionnable.
+ *
+ * Le code HTTP dit ce qu'il faut corriger, et par qui : une clé refusée relève
+ * de l'exploitant, une surcharge passagère ne relève de personne. Les confondre
+ * sous un même « erreur technique » laisse chercher au mauvais endroit.
+ */
+function motifLisible(erreur) {
+    const statut = erreur?.status;
+    if (statut === 401) return "Clé Anthropic refusée : ANTHROPIC_API_KEY est absente, expirée ou révoquée.";
+    if (statut === 403) return "Clé Anthropic sans droit d'accès à ce modèle.";
+    if (statut === 400 && /model/i.test(erreur.message || '')) {
+        return `Modèle « ${MODEL} » refusé par l'API. Vérifier la variable ANTHROPIC_MODEL.`;
+    }
+    if (statut === 429) return "Quota Anthropic atteint ou crédits épuisés.";
+    if (statut >= 500) return "Service Anthropic momentanément indisponible.";
+    if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|fetch failed/i.test(erreur?.message || '')) {
+        return "Service Anthropic injoignable depuis le serveur (réseau ou pare-feu).";
+    }
+    return `Appel à l'IA en échec : ${erreur?.message || 'motif inconnu'}`;
+}
+
+/**
  * Équivalent de `genAI.getGenerativeModel(...)`.
  * @param {object} options - `generationConfig.responseMimeType` reconnu.
  */
@@ -123,7 +145,18 @@ function getGenerativeModel(options = {}) {
                 }];
             }
 
-            const response = await getClient().beta.messages.create(request);
+            let response;
+            try {
+                response = await getClient().beta.messages.create(request);
+            } catch (erreur) {
+                // Les appelants remplacent toute panne IA par « difficultés
+                // techniques », si bien qu'une clé invalide et une coupure
+                // réseau se présentent de la même façon — et que personne ne
+                // sait quoi corriger. On journalise le détail et on remonte un
+                // motif exploitable.
+                console.error('[IA] Échec de l\'appel Anthropic :', erreur.status || '', erreur.message);
+                throw new Error(motifLisible(erreur));
+            }
 
             if (response.stop_reason === 'refusal') {
                 const detail = response.stop_details || {};
@@ -145,4 +178,23 @@ function getGenerativeModel(options = {}) {
     };
 }
 
-module.exports = { getGenerativeModel, MODEL };
+/**
+ * Vérifie que l'IA répond, avec la requête la plus courte possible.
+ * Sert au diagnostic depuis les paramètres : distinguer « l'IA est en panne »
+ * de « la fonction est cassée » demande autrement de lire les journaux du
+ * serveur, ce dont l'exploitant ne dispose pas toujours.
+ */
+async function diagnostiquer() {
+    if (!process.env.ANTHROPIC_API_KEY) {
+        return { disponible: false, modele: MODEL, motif: "ANTHROPIC_API_KEY n'est pas définie sur le serveur." };
+    }
+    try {
+        const modele = getGenerativeModel({});
+        const r = await modele.generateContent('Réponds exactement : OK');
+        return { disponible: true, modele: MODEL, reponse: (await r.response.text()).trim().slice(0, 40) };
+    } catch (e) {
+        return { disponible: false, modele: MODEL, motif: e.message };
+    }
+}
+
+module.exports = { getGenerativeModel, diagnostiquer, MODEL };

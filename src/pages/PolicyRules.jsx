@@ -28,6 +28,7 @@ export function PolicyRules() {
     const [chargement, setChargement] = useState(true);
     const [erreur, setErreur] = useState(null);
     const [message, setMessage] = useState(null);
+    const [etatIA, setEtatIA] = useState(null);
 
     const [edition, setEdition] = useState(null);
     const [enregistrement, setEnregistrement] = useState(false);
@@ -52,6 +53,15 @@ export function PolicyRules() {
             setErreur(e.message || 'Chargement impossible.');
         } finally {
             setChargement(false);
+        }
+        // L'état de l'IA se lit à part : des règles bien saisies ne servent à
+        // rien si l'assistant ne peut pas appeler le modèle, et les deux
+        // pannes se ressemblent vues du salarié.
+        try {
+            const { data } = await api.get('/jobs/ia');
+            setEtatIA(data || null);
+        } catch {
+            setEtatIA(null);
         }
     };
 
@@ -199,6 +209,17 @@ export function PolicyRules() {
                     )}
                 </p>
             </div>
+
+            {etatIA && !etatIA.disponible && (
+                <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3">
+                    <AlertTriangle size={16} className="text-rose-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-rose-900">
+                        <strong>L'assistant RH ne peut pas répondre :</strong> {etatIA.motif}
+                        {' '}Les règles ci-dessous sont bien enregistrées, mais resteront sans effet
+                        tant que ce point n'est pas réglé.
+                    </p>
+                </div>
+            )}
 
             {chargement ? (
                 <p className="py-12 text-center text-sm text-slate-400">Chargement…</p>

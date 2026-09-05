@@ -145,6 +145,12 @@ ${message}
         });
     } catch(err) {
         console.error("Chat Error:", err);
-        res.status(500).json({ reply: 'Désolé, je rencontre des difficultés techniques actuellement.' });
+        // Le motif remonté par l'adaptateur est exploitable — clé refusée,
+        // quota atteint, service injoignable — là où « difficultés techniques »
+        // laissait chercher au hasard. Il ne contient aucun secret.
+        res.status(500).json({
+            reply: "Je ne peux pas répondre pour le moment.",
+            motif: err.message || null
+        });
     }
 };

@@ -43,4 +43,14 @@ router.post('/run', verifyToken, requireRole(['ADMIN']), async (req, res) => {
     }
 });
 
+/**
+ * Diagnostic de l'IA. Placé ici, auprès du suivi des traitements : c'est la
+ * même question d'exploitation — « qu'est-ce qui tourne, et qu'est-ce qui ne
+ * tourne pas ».
+ */
+router.get('/ia', verifyToken, requireRole(['ADMIN', 'HR']), async (req, res) => {
+    const { diagnostiquer } = require('../lib/claudeAI');
+    res.json(await diagnostiquer());
+});
+
 module.exports = router;
