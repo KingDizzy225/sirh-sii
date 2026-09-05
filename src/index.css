@@ -103,9 +103,18 @@
    l'affichage large inchangé.
    ------------------------------------------------------------------ */
 @media (max-width: 767px) {
-  .flex.items-center.justify-between {
+  /* Portée limitée au contenu : la barre d'en-tête et la barre inférieure ont
+     une hauteur fixe, s'y replier ferait déborder leur seconde ligne sur la
+     page. Seuls les en-têtes de page à l'intérieur de <main> sont concernés. */
+  main .flex.items-center.justify-between {
     flex-wrap: wrap;
     gap: 0.625rem;
+  }
+
+  /* Le groupe de boutons d'action se replie lui aussi : sur la page Employés,
+     « Importer / Exporter / Ajouter » dépassait encore la largeur d'écran. */
+  main .flex.items-center.justify-between > .flex {
+    flex-wrap: wrap;
   }
 
   /* Récupérer la largeur perdue en marges : sur 375 px, 48 px de padding
