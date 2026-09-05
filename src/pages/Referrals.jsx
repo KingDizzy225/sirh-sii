@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
+import { donneesDemo, DEMO } from '../data/demoData';
 
 const STATUS_CONFIG = {
     SUBMITTED: { label: 'Reçu', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Clock, step: 1 },
@@ -19,59 +20,14 @@ const STATUS_CONFIG = {
     REJECTED: { label: 'Non Retenu', color: 'bg-rose-100 text-rose-700 border-rose-200', icon: XCircle, step: 0 }
 };
 
-const MOCK_JOBS = [
-    { id: 'job-1', title: 'Développeur Fullstack React / Node', department: 'Technologie', location: 'Abidjan / Hybride', type: 'CDI', status: 'Active', description: 'Rejoignez notre équipe digitale pour concevoir et développer des applications web haute performance.' },
-    { id: 'job-2', title: 'Chef de Projet SI & Transformation', department: 'Systèmes d\'Information', location: 'Abidjan', type: 'CDI', status: 'Active', description: 'Pilotage des grands projets de transformation numérique pour nos filiales régionales.' },
-    { id: 'job-3', title: 'Consultant RH & GPEC Senior', department: 'Ressources Humaines', location: 'Dakar / Remote', type: 'CDI', status: 'Active', description: 'Accompagnement de la cartographie des compétences et des plans de succession.' }
-];
-
-const MOCK_REFERRALS = [
-    {
-        id: 'ref-1',
-        candidateFirstName: 'Marc',
-        candidateLastName: 'Kouassi',
-        candidateEmail: 'marc.kouassi@email.com',
-        candidatePhone: '+225 07 48 92 10',
-        relationship: 'Ancien collègue',
-        status: 'INTERVIEW',
-        bonusAmount: 150000,
-        referrer: { firstName: 'Sarah', lastName: 'Jenkins' },
-        jobOffer: { title: 'Développeur Fullstack React / Node', department: 'Technologie' }
-    },
-    {
-        id: 'ref-2',
-        candidateFirstName: 'Awa',
-        candidateLastName: 'Diallo',
-        candidateEmail: 'awa.diallo@email.com',
-        candidatePhone: '+221 77 12 34 56',
-        relationship: 'Camarade d\'école',
-        status: 'HIRED',
-        bonusAmount: 200000,
-        referrer: { firstName: 'Ibrahim', lastName: 'Diop' },
-        jobOffer: { title: 'Chef de Projet SI & Transformation', department: 'Systèmes d\'Information' }
-    }
-];
-
-const MOCK_STATS = {
-    totalReferrals: 8,
-    hiredReferrals: 3,
-    pendingReferrals: 4,
-    totalBonusPaid: 450000,
-    leaderboard: [
-        { referrerId: 'emp-1', totalCount: 4, employee: { firstName: 'Ibrahim', lastName: 'Diop', positionTitle: 'Lead Dev', department: 'IT' } },
-        { referrerId: 'emp-2', totalCount: 2, employee: { firstName: 'Sarah', lastName: 'Jenkins', positionTitle: 'Directrice RH', department: 'RH' } },
-        { referrerId: 'emp-3', totalCount: 1, employee: { firstName: 'Koffi', lastName: 'Bamba', positionTitle: 'Manager Projets', department: 'SI' } }
-    ]
-};
-
 export function Referrals() {
     const { user } = useAuth();
     const isHrOrAdmin = user?.role === 'Administrator' || user?.role === 'HR' || user?.role === 'ADMIN' || true;
 
     const [activeTab, setActiveTab] = useState('referrals'); // 'referrals' | 'jobs' | 'leaderboard'
-    const [referrals, setReferrals] = useState(MOCK_REFERRALS);
-    const [jobOffers, setJobOffers] = useState(MOCK_JOBS);
-    const [stats, setStats] = useState(MOCK_STATS);
+    const [referrals, setReferrals] = useState(donneesDemo(DEMO.cooptations, []));
+    const [jobOffers, setJobOffers] = useState(donneesDemo(DEMO.offres, []));
+    const [stats, setStats] = useState(donneesDemo(DEMO.statistiquesCooptation, { total: 0, enCours: 0, recrutes: 0, primesVersees: 0 }));
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState(null);
 

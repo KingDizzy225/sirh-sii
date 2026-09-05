@@ -9,16 +9,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
-
-const MOCK_EMPLOYEES = [
-    { id: 'emp-1', firstName: 'Jean', lastName: 'Kouassi', positionTitle: 'Ingénieur DevOps', department: 'Technologie', email: 'jean.kouassi@entreprise.com', baseSalary: '850 000' },
-    { id: 'emp-2', firstName: 'Awa', lastName: 'Traoré', positionTitle: 'Chef de Projet RH', department: 'Ressources Humaines', email: 'awa.traore@entreprise.com', baseSalary: '750 000' },
-    { id: 'emp-3', firstName: 'Koffi', lastName: 'N\'Guessan', positionTitle: 'Analyste Financier', department: 'Finance', email: 'koffi.nguessan@entreprise.com', baseSalary: '650 000' }
-];
+import { donneesDemo, DEMO } from '../data/demoData';
 
 export function ContractStudio() {
-    const [employees, setEmployees] = useState(MOCK_EMPLOYEES);
-    const [selectedEmployeeId, setSelectedEmployeeId] = useState(MOCK_EMPLOYEES[0].id);
+    const [employees, setEmployees] = useState(donneesDemo(DEMO.employes, []));
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState(donneesDemo(DEMO.employes[0].id, ''));
     const [contractType, setContractType] = useState('CDI');
     const [baseSalary, setBaseSalary] = useState('850 000');
     const [probationMonths, setProbationMonths] = useState('3');

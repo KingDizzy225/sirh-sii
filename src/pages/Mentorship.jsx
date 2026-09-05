@@ -10,32 +10,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
-
-const MOCK_MENTORS = [
-    { id: 'm-1', firstName: 'Ibrahim', lastName: 'Diop', department: 'Technologie', positionTitle: 'Architecte Software', skills: ['React', 'Node.js', 'Prisma', 'Architecture Microservices'], rating: 4.9, activeMentees: 2, bio: 'Passionné par l\'ingénierie moderne et le partage de connaissances.' },
-    { id: 'm-2', firstName: 'Sarah', lastName: 'Jenkins', department: 'Ressources Humaines', positionTitle: 'Directrice RH & Talent', skills: ['GPEC', 'Management RH', 'Leadership', 'Négociation'], rating: 5.0, activeMentees: 3, bio: '15 ans d\'expérience dans l\'accompagnement des carrières et de la mobilité interne.' },
-    { id: 'm-3', firstName: 'Marc', lastName: 'Kouassi', department: 'Cybersécurité', positionTitle: 'Expert Sécurité SI', skills: ['Sécurité Web', 'Audit ISO 27001', 'Penetration Testing'], rating: 4.8, activeMentees: 1, bio: 'Spécialiste de la protection des données sensibles et de la conformité réglementaire.' }
-];
-
-const MOCK_MENTORSHIPS = [
-    {
-        id: 'rel-1',
-        skillName: 'Architecture Microservices',
-        goals: 'Maîtriser la création d\'APIs robustes et le découplage des données.',
-        status: 'ACTIVE',
-        mentor: { firstName: 'Ibrahim', lastName: 'Diop', positionTitle: 'Architecte Software', department: 'Technologie' },
-        mentee: { firstName: 'Jean', lastName: 'Kone', positionTitle: 'Développeur Fullstack', department: 'IT' },
-        sessions: [
-            { id: 's-1', topic: 'Bases des microservices & Gateway', date: '2026-08-15', durationMinutes: 60, rating: 5, notes: 'Très bonne compréhension des principes REST.' }
-        ]
-    }
-];
+import { donneesDemo, DEMO } from '../data/demoData';
 
 export function Mentorship() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('mentors'); // 'mentors' | 'active' | 'sessions'
-    const [mentors, setMentors] = useState(MOCK_MENTORS);
-    const [mentorships, setMentorships] = useState(MOCK_MENTORSHIPS);
+    const [mentors, setMentors] = useState(donneesDemo(DEMO.mentors, []));
+    const [mentorships, setMentorships] = useState(donneesDemo(DEMO.mentorats, []));
     const [searchSkill, setSearchSkill] = useState('');
     const [notification, setNotification] = useState(null);
 

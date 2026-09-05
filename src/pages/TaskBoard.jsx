@@ -8,15 +8,7 @@ import {
     ArrowRight, Filter, Settings, Search
 } from 'lucide-react';
 import { Input } from '../components/ui/input';
-
-const MOCK_ASSIGNED_TASKS = [
-    { id: 'AT-001', title: 'Créer e-mail & comptes', employee: 'Michael Chang', department: 'IT', status: 'PENDING', dueDate: '2026-03-02', type: 'ONBOARDING' },
-    { id: 'AT-002', title: 'Préparer ordinateur et bureau', employee: 'Michael Chang', department: 'IT', status: 'IN_PROGRESS', dueDate: '2026-03-03', type: 'ONBOARDING' },
-    { id: 'AT-003', title: 'Signer contrat de travail', employee: 'Michael Chang', department: 'HR', status: 'DONE', dueDate: '2026-02-28', type: 'ONBOARDING' },
-    { id: 'AT-004', title: 'Révoquer accès VPN', employee: 'Sarah Jenkins', department: 'IT', status: 'PENDING', dueDate: '2026-02-28', type: 'OFFBOARDING' },
-    { id: 'AT-005', title: 'Entretien de départ', employee: 'Sarah Jenkins', department: 'HR', status: 'PENDING', dueDate: '2026-02-27', type: 'OFFBOARDING' },
-    { id: 'AT-006', title: 'Délivrer badge de sécurité', employee: 'Michael Chang', department: 'Facilities', status: 'PENDING', dueDate: '2026-03-04', type: 'ONBOARDING' }
-];
+import { donneesDemo, DEMO } from '../data/demoData';
 
 const COLUMNS = [
     { id: 'PENDING', label: 'À Faire', icon: Circle, color: 'text-slate-400' },
@@ -26,7 +18,7 @@ const COLUMNS = [
 
 export function TaskBoard() {
     const { user } = useAuth();
-    const [tasks, setTasks] = useState(MOCK_ASSIGNED_TASKS);
+    const [tasks, setTasks] = useState(donneesDemo(DEMO.taches, []));
     const [deptFilter, setDeptFilter] = useState('Tous');
     const [searchQuery, setSearchQuery] = useState('');
 

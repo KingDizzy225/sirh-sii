@@ -9,25 +9,11 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
-
-const MOCK_SURVEYS = [
-    {
-        id: 'sur-1',
-        title: 'Baromètre Climat Social Q3 2026',
-        description: 'Évaluation de la qualité de vie au travail et de l\'équilibre vie pro/perso.',
-        status: 'ACTIVE',
-        enpsScore: 42,
-        responses: [
-            { id: 'r-1', score: 9, feedback: 'Très bonne ambiance et super initiative de télétravail !', department: 'Technologie' },
-            { id: 'r-2', score: 8, feedback: 'Bonne dynamique d\'équipe, besoin de plus de clarté sur la GPEC.', department: 'Ressources Humaines' },
-            { id: 'r-3', score: 10, feedback: 'La nouvelle plateforme de mentorat est excellente.', department: 'Finance' }
-        ]
-    }
-];
+import { donneesDemo, DEMO } from '../data/demoData';
 
 export function ClimateSurveys() {
-    const [surveys, setSurveys] = useState(MOCK_SURVEYS);
-    const [selectedSurvey, setSelectedSurvey] = useState(MOCK_SURVEYS[0]);
+    const [surveys, setSurveys] = useState(donneesDemo(DEMO.enquetes, []));
+    const [selectedSurvey, setSelectedSurvey] = useState(donneesDemo(DEMO.enquetes[0], null));
     const [score, setScore] = useState(9);
     const [feedback, setFeedback] = useState('');
     const [aiAnalysis, setAiAnalysis] = useState(null);

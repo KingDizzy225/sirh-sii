@@ -12,13 +12,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Papa from 'papaparse';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api.js';
+import { donneesDemo, DEMO } from '../data/demoData';
 
 export function Learning() {
     const { user } = useAuth();
     const isAdminOrHR = user?.role === 'ADMIN' || user?.role === 'HR' || user?.role === 'Administrator';
 
     const [activeTab, setActiveTab] = useState('catalog'); // 'catalog', 'history', 'progress', 'builder', 'player'
-    const [courses, setCourses] = useState([]);
+    // En démonstration, un catalogue vide ne montrerait rien de ce que le
+    // module sait faire ; hors de ce mode, l'écran reste honnêtement vide.
+    const [courses, setCourses] = useState(donneesDemo(DEMO.formations, []));
     const [employees, setEmployees] = useState([]);
     const [employeeProgress, setEmployeeProgress] = useState([]);
     const [skillDefinitions, setSkillDefinitions] = useState([]);
