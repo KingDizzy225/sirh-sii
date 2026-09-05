@@ -38,6 +38,16 @@ app.use(cors(corsOptions)); // Allow cross-origin requests from the React fronte
 app.use(express.json({ limit: '50mb' })); // Parse JSON bodies with higher limit for base64 images
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Express 5 laisse req.body à undefined lorsqu'aucun corps n'a été transmis ou
+// que le type de contenu ne correspond à aucun analyseur. Les contrôleurs
+// déstructurent tous req.body : une requête malformée provoquait alors une
+// erreur serveur là où un 400 était attendu — y compris sur les routes
+// publiques, exposées à n'importe quel appel.
+app.use((req, res, next) => {
+    if (req.body === undefined) req.body = {};
+    next();
+});
+
 // Health Check Route
 app.get('/api/health', async (req, res) => {
     // Indicateur d'exploitation : savoir si des comptes ont été provisionnés
