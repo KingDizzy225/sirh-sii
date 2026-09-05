@@ -4,6 +4,7 @@ const employeeController = require('../controllers/employeeController');
 const orgChartController = require('../controllers/orgChartController');
 const verifyToken = require('../middleware/authMiddleware');
 const requireRole = require('../middleware/roleMiddleware');
+const registerController = require('../controllers/registerController');
 
 // Apply auth to all methods
 router.use(verifyToken);
@@ -22,6 +23,10 @@ router.post('/bulk', requireRole(...HR_ROLES), employeeController.importBulkEmpl
 router.get('/profile', employeeController.getProfile);
 router.post('/', requireRole(...HR_ROLES), employeeController.createEmployee);
 router.delete('/bulk', requireRole(...HR_ROLES), employeeController.deleteMultipleEmployees);
+// Registre unique du personnel : placé avant les routes paramétrées,
+// qu'une future route /:id/... ne doit pas pouvoir capter.
+router.get('/register/pdf', requireRole(...HR_ROLES), registerController.generateStaffRegister);
+
 router.get('/:id', employeeController.getEmployeeById);
 router.put('/:id', requireRole(...HR_ROLES), employeeController.updateEmployee);
 router.delete('/:id', requireRole(...HR_ROLES), employeeController.deleteEmployee);

@@ -128,6 +128,18 @@ export function Employees() {
         }
     };
 
+    /**
+     * Registre unique du personnel, généré côté serveur en PDF.
+     * Le jeton passe en paramètre d'URL car le téléchargement est déclenché par
+     * le navigateur, qui n'ajoute pas d'en-tête d'authentification — la
+     * vérification du jeton accepte les deux formes.
+     */
+    const telechargerRegistre = () => {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const token = localStorage.getItem('sirh_token');
+        window.open(`${API_URL}/api/employees/register/pdf?token=${encodeURIComponent(token || '')}`, '_blank');
+    };
+
     const handleExport = () => {
         if (employees.length === 0) {
             showNotification('Aucune donnée à exporter.');
@@ -541,6 +553,7 @@ export function Employees() {
                     )}
                     <Button variant="outline" onClick={triggerImport}>Importer CSV</Button>
                     <Button variant="outline" onClick={handleExport}>Exporter CSV</Button>
+                    <Button variant="outline" onClick={telechargerRegistre}>Registre du personnel</Button>
                     <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" onClick={() => setIsAddModalOpen(true)}>
                         <Plus size={16} /> Ajouter un Employé
                     </Button>
