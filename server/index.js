@@ -200,6 +200,12 @@ app.use('/api/jobs', jobRoutes);
 const disciplinaryRoutes = require('./routes/disciplinaryRoutes');
 app.use('/api/disciplinary', disciplinaryRoutes);
 
+// Tableau des tâches : réunit intégrations et départs, jusqu'ici consultables
+// une fiche employé à la fois pendant que le tableau affichait des cartes
+// écrites en dur dans la page.
+const taskBoardRoutes = require('./routes/taskBoardRoutes');
+app.use('/api/tasks', taskBoardRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

@@ -88,6 +88,18 @@ async function main() {
     const emp2 = await employe('Kouassi', 'IT');
     const user = { id: emp.id, email: emp.email, role: 'ADMIN', name: 'Essai RH' };
 
+    // Tâches alimentant le tableau. Créées ici plutôt que par l'embauche : le
+    // but est d'éprouver le tableau, pas de refaire le parcours de recrutement.
+    await prisma.onboardingTask.createMany({
+        data: [
+            { employeeId: emp.id, taskName: 'Création des accès', assignedTo: 'IT Support', status: 'Pending', dueDate: new Date('2026-10-01') },
+            { employeeId: emp.id, taskName: 'Signature du contrat', assignedTo: 'Ressources Humaines', status: 'In Progress' }
+        ]
+    });
+    await prisma.offboardingTask.create({
+        data: { employeeId: emp2.id, taskName: 'Restitution du matériel', assignedTo: 'IT Support', status: 'Pending' }
+    });
+
     console.log('\n=== Créations ===');
 
     await attendu('congé', 201, r => ctrl('leaveController').createLeave(
@@ -126,6 +138,36 @@ async function main() {
 
     await attendu('dossier disciplinaire', 201, r => ctrl('disciplinaryController').addRecord(
         { params: { employeeId: emp.id }, body: { date: '2026-09-01', type: 'Warning', reason: 'essai', sanction: 'Avertissement' }, user }, r));
+
+    console.log('\n=== Tableau des tâches ===');
+    // L'embauche a créé des tâches d'intégration : le tableau doit les voir.
+    const board = faireRes();
+    await ctrl('taskBoardController').getBoard({ user: { role: 'ADMIN', email: user.email } }, board);
+    const taches = board.corps?.taches || [];
+    await attendu('le tableau répond', 200, async r => { r.statut = board.statut; r.corps = board.corps; });
+    console.log(`  ${taches.length > 0 ? '✅' : '❌'} tâches d'intégration listées  → ${taches.length}`);
+    if (taches.length === 0) echecs++;
+
+    // Chaque colonne est exercée. Une version antérieure n'acceptait que deux
+    // des trois valeurs : `IN_PROGRESS` était rejeté parce que la mise en
+    // minuscules donnait « in_progress » là où la table attendait « in progress ».
+    // L'essai ne couvrait alors que PENDING et DONE, et laissait passer le défaut.
+    const cible = taches.find(t => t.source === 'ONBOARDING');
+    for (const statut of ['IN_PROGRESS', 'DONE', 'PENDING']) {
+        await attendu(`déplacement vers ${statut}`, 200, async r => {
+            await ctrl('taskBoardController').updateStatus(
+                { params: { source: cible.source, id: cible.id }, body: { statut }, user: { role: 'ADMIN' } }, r);
+            if (r.statut === null) r.statut = 200;
+        });
+    }
+
+    await attendu('statut inconnu refusé', 400, r => ctrl('taskBoardController').updateStatus(
+        { params: { source: 'ONBOARDING', id: cible.id }, body: { statut: 'BIDON' }, user: { role: 'ADMIN' } }, r));
+    await attendu('nature de tâche inconnue refusée', 400, r => ctrl('taskBoardController').updateStatus(
+        { params: { source: 'AUTRE', id: cible.id }, body: { statut: 'DONE' }, user: { role: 'ADMIN' } }, r));
+    await attendu('tâche inexistante en 404', 404, r => ctrl('taskBoardController').updateStatus(
+        { params: { source: 'ONBOARDING', id: '00000000-0000-0000-0000-000000000000' },
+          body: { statut: 'DONE' }, user: { role: 'ADMIN' } }, r));
 
     console.log('\n=== Requêtes incomplètes : 400 attendu, pas 500 ===');
     // Une requête malformée relève de l'appelant. Répondre 500 fait porter la
