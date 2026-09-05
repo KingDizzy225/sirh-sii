@@ -36,7 +36,10 @@ export function VerifyDocument() {
         });
     };
 
-    const TYPE_LABELS = { ATTESTATION_TRAVAIL: 'Attestation de travail' };
+    const TYPE_LABELS = {
+        ATTESTATION_TRAVAIL: 'Attestation de travail',
+        BULLETIN_PAIE: 'Bulletin de paie'
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">

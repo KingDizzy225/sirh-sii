@@ -418,8 +418,12 @@ model EmployeeDocument {
 model IssuedDocument {
   id            String    @id @default(uuid())
   token         String    @unique // aléatoire et non devinable, encodé dans le QR
-  type          String // 'ATTESTATION_TRAVAIL'
+  type          String // 'ATTESTATION_TRAVAIL', 'BULLETIN_PAIE'
   employeeId    String    @map("employee_id")
+  // Enregistrement d'origine (ex. identifiant de la fiche de paie). Permet de
+  // retrouver le jeton existant plutôt que d'en créer un à chaque régénération
+  // du PDF, ce qui invaliderait les QR déjà remis.
+  sourceId      String?   @map("source_id")
   issuedAt      DateTime  @default(now()) @map("issued_at")
   issuedByEmail String?   @map("issued_by_email")
   revokedAt     DateTime? @map("revoked_at")

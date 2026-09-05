@@ -4,6 +4,9 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const { hasRole } = require('../middleware/roleMiddleware');
+const crypto = require('crypto');
+const QRCode = require('qrcode');
+const { getPublicAppUrl } = require('../lib/publicUrl');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -34,7 +37,46 @@ const formatFCFA = (amount) => {
 };
 
 // Helper function to generate PDF
+/**
+ * Jeton de vérification du bulletin, réutilisé s'il existe déjà : régénérer le
+ * PDF ne doit pas invalider les QR codes des bulletins déjà remis.
+ */
+const getOrCreatePayslipToken = async (payroll, employee) => {
+    const existant = await prisma.issuedDocument.findFirst({
+        where: { type: 'BULLETIN_PAIE', sourceId: payroll.id }
+    });
+    if (existant) return existant.token;
+
+    const cree = await prisma.issuedDocument.create({
+        data: {
+            token: crypto.randomBytes(24).toString('hex'),
+            type: 'BULLETIN_PAIE',
+            employeeId: employee.id,
+            sourceId: payroll.id,
+            employeeName: `${employee.firstName} ${employee.lastName}`,
+            positionTitle: employee.positionTitle || null,
+            department: employee.department || null,
+            hireDate: employee.hireDate || null
+        }
+    });
+    return cree.token;
+};
+
 const generatePayslipPDF = async (payroll, employee) => {
+    // Le QR est préparé avant le rendu : le corps du PDF est synchrone.
+    let qrBuffer = null;
+    let reference = null;
+    try {
+        const token = await getOrCreatePayslipToken(payroll, employee);
+        reference = token.slice(0, 12).toUpperCase();
+        const url = `${getPublicAppUrl()}/verify/${token}`;
+        const dataUrl = await QRCode.toDataURL(url, { margin: 1, width: 200 });
+        qrBuffer = Buffer.from(dataUrl.split(',')[1], 'base64');
+    } catch (err) {
+        // Un bulletin doit pouvoir être produit même si la vérification échoue
+        console.error('[PAIE] QR de vérification non généré :', err.message);
+    }
+
     return new Promise((resolve, reject) => {
         try {
             const fileName = `payslip_${payroll.id}.pdf`;
@@ -158,6 +200,20 @@ const generatePayslipPDF = async (payroll, employee) => {
                        .text('Signé Électroniquement', 350, y + 20);
                 } catch (e) {
                     console.error("Failed to render signature image:", e);
+                }
+            }
+
+            // QR de vérification : permet à une banque ou un bailleur de
+            // confirmer que ce bulletin a bien été émis par l'employeur, sans
+            // qu'aucun montant ne soit exposé par la page de vérification.
+            if (qrBuffer) {
+                try {
+                    doc.image(qrBuffer, 50, 700, { width: 70, height: 70 });
+                    doc.fillColor('#64748b').font('Helvetica').fontSize(6)
+                       .text('Scannez pour vérifier', 50, 774, { width: 70, align: 'center' })
+                       .text(`Réf. ${reference}`, 50, 782, { width: 70, align: 'center' });
+                } catch (e) {
+                    console.error('[PAIE] QR non inséré dans le PDF :', e.message);
                 }
             }
 
