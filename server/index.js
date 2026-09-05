@@ -185,6 +185,11 @@ app.use('/api/worksites', verifyToken, workSiteRoutes);
 const jobRoutes = require('./routes/jobRoutes');
 app.use('/api/jobs', jobRoutes);
 
+// Dossiers disciplinaires — le fichier de routes existait mais n'était monté
+// nulle part : la fiche employé appelait une API absente.
+const disciplinaryRoutes = require('./routes/disciplinaryRoutes');
+app.use('/api/disciplinary', disciplinaryRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

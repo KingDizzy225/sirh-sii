@@ -96,7 +96,7 @@ export function Performance() {
 
     const handleUpdateGoal = async (id) => {
         try {
-            const { data } = await api.patch ? await api.patch(`/performance/goals/${id}/progress`, {}) : await api.put(`/performance/goals/${id}/progress`, {}); // api.js might not have patch, so use put or get. Wait, api.js doesn't have patch. I'll use put! Wait, let me add patch or just use fetch for this if api is limited. I'll use put and let the backend handle, or just add patch to api.js? Let me use put.
+            const { data } = await api.patch(`/performance/goals/${id}/progress`, {});
             if (data) {
                 setGoals(prev => prev.map(goal => goal.id === id ? data : goal));
                 showNotification(`Progression mise à jour : ${data.progress}%`);

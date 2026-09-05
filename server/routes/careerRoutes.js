@@ -9,4 +9,8 @@ router.get('/catalog', careerController.getCatalog);
 router.get('/path/:employeeId', verifyToken, careerController.getCareerPath);
 router.get('/timeline/:employeeId', verifyToken, careerController.getTimeline);
 
+// Ajout d'un événement de carrière : réservé aux profils RH/administration
+const requireRole = require('../middleware/roleMiddleware');
+router.post('/:employeeId', verifyToken, requireRole(['ADMIN', 'HR']), careerController.addCareerEvent);
+
 module.exports = router;

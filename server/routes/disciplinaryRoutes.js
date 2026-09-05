@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const disciplinaryController = require('../controllers/disciplinaryController');
-const { protect } = require('../middleware/authMiddleware');
-const { requireRole } = require('../middleware/roleMiddleware');
+// authMiddleware exporte la fonction directement : l'ancien `{ protect }`
+// valait undefined et aurait fait échouer le montage des routes.
+const verifyToken = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/roleMiddleware');
 
-router.get('/:employeeId', protect, disciplinaryController.getEmployeeRecords);
-router.post('/:employeeId', protect, requireRole(['HR', 'ADMIN']), disciplinaryController.addRecord);
+// Données disciplinaires : sensibles, réservées à la RH et à l'administration
+router.get('/:employeeId', verifyToken, requireRole(['ADMIN', 'HR']), disciplinaryController.getEmployeeRecords);
+router.post('/:employeeId', verifyToken, requireRole(['ADMIN', 'HR']), disciplinaryController.addRecord);
 
 module.exports = router;

@@ -75,7 +75,7 @@ export function Expenses() {
         formData.append('receipt', file);
 
         try {
-            const { data } = await api.post('/expenses/scan', formData);
+            const { data } = await api.post('/expenses/ocr', formData);
             if (data) {
                 setScanResult(data);
                 setForm({
@@ -124,7 +124,7 @@ export function Expenses() {
 
     const handleStatusUpdate = async (id, status, reason = '') => {
         try {
-            await api.patch(`/expenses/${id}/status`, { status, rejectionReason: reason });
+            await api.put(`/expenses/${id}/status`, { status, rejectionReason: reason });
             fetchExpenses();
         } catch (error) {
             console.error("Error updating status", error);

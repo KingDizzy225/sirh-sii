@@ -112,6 +112,41 @@ exports.getCatalog = async (req, res) => {
     }
 };
 
+/**
+ * Ajout d'un événement au parcours d'un salarié (promotion, changement de
+ * poste, évolution salariale…). La fiche employé proposait déjà ce formulaire,
+ * mais aucune route ne le recevait : l'enregistrement échouait en silence.
+ */
+exports.addCareerEvent = async (req, res) => {
+    try {
+        const { employeeId } = req.params;
+        const { eventDate, type, previousValue, newValue, comment } = req.body;
+
+        if (!type || !newValue) {
+            return res.status(400).json({ error: "Le type d'événement et la nouvelle valeur sont requis." });
+        }
+
+        const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
+        if (!employee) return res.status(404).json({ error: 'Employé introuvable.' });
+
+        const event = await prisma.careerHistory.create({
+            data: {
+                employeeId,
+                eventDate: eventDate ? new Date(eventDate) : new Date(),
+                type,
+                previousValue: previousValue || null,
+                newValue,
+                comment: comment || null
+            }
+        });
+
+        res.status(201).json(event);
+    } catch (error) {
+        console.error('Error adding career event:', error);
+        res.status(500).json({ error: "Erreur lors de l'ajout de l'événement de carrière." });
+    }
+};
+
 exports.getTimeline = async (req, res) => {
     try {
         const { employeeId } = req.params;

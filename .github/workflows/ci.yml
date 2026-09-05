@@ -34,6 +34,9 @@ jobs:
           DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
         run: npx prisma validate
 
+      - name: Cohérence des routes frontend / serveur
+        run: node scripts/check-routes.cjs
+
   frontend:
     name: Frontend — build Vite
     runs-on: ubuntu-latest

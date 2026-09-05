@@ -23,6 +23,19 @@ const handleUnauthorized = () => {
 };
 
 const handleResponse = async (res) => {
+    // Un 404 sur une API interne signale presque toujours un désaccord entre le
+    // frontend et le serveur : nom de route ou méthode HTTP divergents. Beaucoup
+    // d'appels sont écrits `.catch(() => ({ data: null }))`, ce qui transforme
+    // l'échec en liste vide et rend le défaut invisible. On le signale ici,
+    // avant que le repli de l'appelant ne l'efface.
+    if (res.status === 404) {
+        console.error(
+            `[API] Endpoint introuvable : ${res.url}\n` +
+            "→ La route n'existe pas côté serveur, ou la méthode HTTP ne correspond pas. " +
+            'Vérifier server/routes/ ; `npm run check-routes` compare les deux.'
+        );
+    }
+
     if (res.status === 401 || res.status === 403) {
         // En mode démo le jeton est fictif : le serveur le rejette forcément.
         // Rediriger ici enfermerait l'application dans une boucle de connexion.

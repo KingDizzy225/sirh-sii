@@ -107,7 +107,7 @@ export function Referrals() {
         try {
             const [refRes, jobsRes, statsRes] = await Promise.all([
                 api.get('/referrals').catch(() => ({ data: null })),
-                api.get('/recruitment/job-offers').catch(() => ({ data: null })),
+                api.get('/recruitment/jobs').catch(() => ({ data: null })),
                 api.get('/referrals/stats').catch(() => ({ data: null }))
             ]);
 
