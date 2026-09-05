@@ -25,6 +25,11 @@ export function Settings() {
     const [isAddingSite, setIsAddingSite] = useState(false);
     const [siteForm, setSiteForm] = useState({ name: '', latitude: '', longitude: '', radiusMeters: '200' });
 
+    // Traitements RH automatiques (acquisition des congés, alertes d'échéances)
+    const [jobStatus, setJobStatus] = useState(null);
+    const [isFetchingJobs, setIsFetchingJobs] = useState(false);
+    const [isRunningJobs, setIsRunningJobs] = useState(false);
+
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
@@ -65,6 +70,45 @@ export function Settings() {
             console.error(error);
         } finally {
             setIsFetchingWebhooks(false);
+        }
+    };
+
+    const fetchJobStatus = async () => {
+        setIsFetchingJobs(true);
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/jobs/status`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+            });
+            if (res.ok) setJobStatus(await res.json());
+            else setJobStatus(null);
+        } catch (error) {
+            console.error(error);
+            setJobStatus(null);
+        } finally {
+            setIsFetchingJobs(false);
+        }
+    };
+
+    const runJobsNow = async () => {
+        setIsRunningJobs(true);
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const res = await fetch(`${API_URL}/api/jobs/run`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+            });
+            if (res.ok) {
+                showNotification('Traitements exécutés. Les périodes déjà traitées sont ignorées.');
+                fetchJobStatus();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                showNotification(data.error || "Exécution impossible.");
+            }
+        } catch (err) {
+            showNotification('Erreur serveur');
+        } finally {
+            setIsRunningJobs(false);
         }
     };
 
@@ -165,6 +209,9 @@ export function Settings() {
         if (activeTab === 'Work Sites') {
             fetchWorkSites();
         }
+        if (activeTab === 'Scheduled Jobs') {
+            fetchJobStatus();
+        }
     }, [activeTab]);
 
     const tabNames = {
@@ -174,6 +221,7 @@ export function Settings() {
         'Access Management': 'Comptes et Rôles',
         'Integrations': 'Intégrations',
         'Work Sites': 'Sites de pointage',
+        'Scheduled Jobs': 'Traitements RH automatiques',
         'Notifications': 'Notifications',
         'Billing': 'Facturation'
     };
@@ -238,6 +286,7 @@ export function Settings() {
                     {user?.role === 'ADMIN' && renderTabButton('Access Management')}
                     {renderTabButton('Integrations', 'settings:manage')}
                     {['ADMIN', 'Administrator', 'HR'].includes(user?.role) && renderTabButton('Work Sites')}
+                    {['ADMIN', 'Administrator', 'HR'].includes(user?.role) && renderTabButton('Scheduled Jobs')}
                     {renderTabButton('Notifications')}
                     {renderTabButton('Billing', 'settings:manage')}
                 </div>
@@ -542,6 +591,93 @@ export function Settings() {
                                             </Button>
                                         </div>
                                     </form>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'Scheduled Jobs' && ['ADMIN', 'Administrator', 'HR'].includes(user?.role) && (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <CardTitle>Traitements RH automatiques</CardTitle>
+                                            <CardDescription>
+                                                L'acquisition mensuelle des congés et les alertes d'échéances
+                                                (fins de CDD, périodes d'essai, visites médicales) s'exécutent
+                                                sans intervention. Cet historique permet de vérifier qu'elles
+                                                ont bien tourné.
+                                            </CardDescription>
+                                        </div>
+                                        {['ADMIN', 'Administrator'].includes(user?.role) && (
+                                            <Button size="sm" onClick={runJobsNow} disabled={isRunningJobs} className="bg-indigo-600 text-white hover:bg-indigo-700 shrink-0">
+                                                {isRunningJobs ? 'Exécution…' : 'Exécuter maintenant'}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {isFetchingJobs ? (
+                                        <p className="text-sm text-slate-500 py-6 text-center">Chargement…</p>
+                                    ) : !jobStatus ? (
+                                        <p className="text-sm text-slate-500 py-6 text-center">
+                                            Suivi indisponible. Vérifiez que vous êtes connecté avec un compte RH ou administrateur.
+                                        </p>
+                                    ) : (
+                                        <>
+                                            <div className="grid gap-4 md:grid-cols-2">
+                                                <div className="border rounded-lg p-4">
+                                                    <p className="text-xs font-medium text-slate-500 mb-1">Planification</p>
+                                                    <p className="font-semibold">
+                                                        {jobStatus.planificationActive
+                                                            ? <span className="text-emerald-600">Active</span>
+                                                            : <span className="text-amber-600">Désactivée</span>}
+                                                    </p>
+                                                </div>
+                                                <div className="border rounded-lg p-4">
+                                                    <p className="text-xs font-medium text-slate-500 mb-1">Acquisition mensuelle</p>
+                                                    <p className="font-semibold">{jobStatus.acquisitionParMois} jour(s) par salarié</p>
+                                                </div>
+                                            </div>
+
+                                            {(!jobStatus.executions || jobStatus.executions.length === 0) ? (
+                                                <p className="text-sm text-slate-500 py-6 text-center">
+                                                    Aucune exécution enregistrée pour l'instant. Les traitements se
+                                                    lancent au démarrage du serveur et à leur échéance.
+                                                </p>
+                                            ) : (
+                                                <div className="border rounded-lg overflow-hidden">
+                                                    <table className="w-full text-sm text-left">
+                                                        <thead className="bg-slate-50 border-b">
+                                                            <tr>
+                                                                <th className="px-4 py-3 font-medium text-slate-500">Traitement</th>
+                                                                <th className="px-4 py-3 font-medium text-slate-500">Période</th>
+                                                                <th className="px-4 py-3 font-medium text-slate-500">Exécuté le</th>
+                                                                <th className="px-4 py-3 font-medium text-slate-500">Résultat</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y">
+                                                            {jobStatus.executions.map(run => (
+                                                                <tr key={run.id}>
+                                                                    <td className="px-4 py-3 font-medium">
+                                                                        {run.jobName === 'LEAVE_ACCRUAL' ? 'Acquisition des congés'
+                                                                            : run.jobName === 'DEADLINE_ALERTS' ? "Alertes d'échéances"
+                                                                            : run.jobName}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{run.period}</td>
+                                                                    <td className="px-4 py-3 text-slate-500">
+                                                                        {new Date(run.runAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-slate-600">{run.details || '—'}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
                                 </CardContent>
                             </Card>
                         </motion.div>

@@ -28,7 +28,8 @@ import {
     Gavel,
     TrendingDown,
     Plus,
-    CheckCircle2
+    CheckCircle2,
+    ShieldCheck
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -54,8 +55,48 @@ export function EmployeeProfile() {
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [historyForm, setHistoryForm] = useState({ eventDate: new Date().toISOString().split('T')[0], type: 'PROMOTION', previousValue: '', newValue: '', comment: '' });
     
+    const [issuedDocs, setIssuedDocs] = useState([]);
+
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const token = localStorage.getItem('sirh_token');
+    const isHrOrAdmin = ['HR', 'ADMIN', 'Administrator'].includes(user?.role);
+
+    // Registre des attestations émises pour ce collaborateur
+    const fetchIssuedDocs = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/documents/issued/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) setIssuedDocs(await res.json());
+        } catch (err) {
+            console.error('Erreur chargement attestations émises', err);
+        }
+    };
+
+    const handleRevokeDocument = async (doc) => {
+        const reason = window.prompt(
+            "Motif de la révocation (visible lors d'une vérification) :",
+            'Attestation émise par erreur'
+        );
+        if (reason === null) return;
+        try {
+            const res = await fetch(`${API_URL}/api/documents/issued/${doc.id}/revoke`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ reason })
+            });
+            if (res.ok) fetchIssuedDocs();
+            else {
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || 'Révocation impossible.');
+            }
+        } catch (err) {
+            alert('Erreur serveur lors de la révocation.');
+        }
+    };
 
     useEffect(() => {
         const fetchEmployee = async () => {
@@ -88,6 +129,9 @@ export function EmployeeProfile() {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (discRes.ok) setDisciplinaryRecords(await discRes.json());
+
+                // Attestations émises (RH/administration uniquement)
+                fetchIssuedDocs();
             } catch (err) {
                 console.error(err);
                 setError(err.message);
@@ -497,6 +541,64 @@ export function EmployeeProfile() {
                                     )}
                                 </CardContent>
                             </Card>
+
+                            {/* Attestations émises : chacune porte un QR vérifiable
+                                publiquement. Révoquer une attestation la signale
+                                comme invalide à tout scan ultérieur. */}
+                            {isHrOrAdmin && (
+                                <Card className="border-slate-100 shadow-sm overflow-hidden">
+                                    <CardHeader className="border-b border-slate-100">
+                                        <CardTitle className="flex items-center gap-2 text-base">
+                                            <ShieldCheck size={18} className="text-emerald-600" />
+                                            Attestations émises
+                                        </CardTitle>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Chaque attestation porte un QR code permettant à un tiers de vérifier
+                                            son authenticité. Une attestation révoquée est signalée comme invalide.
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent className="p-0">
+                                        {issuedDocs.length === 0 ? (
+                                            <div className="text-center py-10 text-slate-500">
+                                                <p className="text-sm">Aucune attestation émise pour ce collaborateur.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-100">
+                                                {issuedDocs.map(doc => (
+                                                    <div key={doc.id} className="flex items-center gap-4 px-6 py-4">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-semibold text-slate-800 text-sm">
+                                                                {doc.type === 'ATTESTATION_TRAVAIL' ? 'Attestation de travail' : doc.type}
+                                                                {doc.revokedAt && (
+                                                                    <span className="ml-2 text-xs font-bold text-rose-600">RÉVOQUÉE</span>
+                                                                )}
+                                                            </p>
+                                                            <p className="text-xs text-slate-500">
+                                                                Émise le {new Date(doc.issuedAt).toLocaleDateString('fr-FR')}
+                                                                {doc.issuedByEmail ? ` par ${doc.issuedByEmail}` : ''}
+                                                                {' • Réf. '}
+                                                                <span className="font-mono">{doc.token.slice(0, 12).toUpperCase()}</span>
+                                                            </p>
+                                                            {doc.revokedAt && doc.revokedReason && (
+                                                                <p className="text-xs text-rose-500 mt-1">Motif : {doc.revokedReason}</p>
+                                                            )}
+                                                        </div>
+                                                        {!doc.revokedAt && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRevokeDocument(doc)}
+                                                                className="flex-shrink-0 text-sm font-medium text-rose-600 hover:text-rose-700 px-3 py-1.5 rounded-lg hover:bg-rose-50 transition-colors"
+                                                            >
+                                                                Révoquer
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
                     )}
 
