@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, DEMO_MODE } from '../context/AuthContext';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
 import { AIDocumentModal } from '../components/ui/AIDocumentModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,7 +43,10 @@ export function Documents() {
 
                     setPersonalDocs(pDocs);
                     setCompanyDocs(cDocs);
-                } else if (res.status === 401 || res.status === 403) {
+                } else if ((res.status === 401 || res.status === 403) && !DEMO_MODE) {
+                    // En démonstration le jeton est fictif et le serveur le rejette
+                    // toujours : déconnecter ici éjectait l'utilisateur de
+                    // l'application dès l'ouverture de cette page.
                     logout();
                 }
             } catch (err) {
@@ -163,8 +166,10 @@ export function Documents() {
                 return newDoc;
             } else {
                 if (res.status === 401 || res.status === 403) {
-                    logout();
-                    showNotification("Session expirée. Veuillez vous reconnecter.");
+                    if (!DEMO_MODE) logout();
+                    showNotification(DEMO_MODE
+                        ? "Action indisponible en mode démonstration."
+                        : "Session expirée. Veuillez vous reconnecter.");
                     return null;
                 }
                 let errorMsg = `Code ${res.status}`;
