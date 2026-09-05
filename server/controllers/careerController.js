@@ -1,9 +1,12 @@
 const prisma = require('../prismaClient');
 const { ROLES, BRIDGES } = require('../data/careerCatalog');
+const { ecartCompetences } = require('../lib/skillMatch');
 
 // Construit la constellation (nœuds + liens) autour d'un poste de départ.
 // Partagé par le parcours personnalisé et le catalogue public.
-const buildConstellation = (startingRoleTitle, fallbackDepartment = 'Tech / IT') => {
+// `employeeSkills` — compétences déclarées du salarié : fournies pour le
+// parcours personnalisé, absentes pour le catalogue public consulté hors session.
+const buildConstellation = (startingRoleTitle, fallbackDepartment = 'Tech / IT', employeeSkills = null) => {
         const currentRole = ROLES.find(r => r.title.toLowerCase() === String(startingRoleTitle).toLowerCase()) ||
                             { title: startingRoleTitle, level: 2, department: fallbackDepartment, skills: [] };
 
@@ -26,12 +29,22 @@ const buildConstellation = (startingRoleTitle, fallbackDepartment = 'Tech / IT')
 
         const includedTitles = new Set(filteredRoles.map(r => r.title));
 
-        const nodes = filteredRoles.map(role => ({
-            ...role,
-            isCurrent: role.title === currentRole.title,
-            isPossible: role.level >= currentRole.level &&
-                (role.department === currentRole.department || bridgeTitles.has(role.title))
-        }));
+        const nodes = filteredRoles.map(role => {
+            const node = {
+                ...role,
+                isCurrent: role.title === currentRole.title,
+                isPossible: role.level >= currentRole.level &&
+                    (role.department === currentRole.department || bridgeTitles.has(role.title))
+            };
+
+            // Écart de compétences : ce qui sépare réellement le salarié du poste.
+            // C'est ce rapprochement qui transforme le référentiel en outil de
+            // décision plutôt qu'en simple carte des métiers.
+            if (employeeSkills) {
+                node.ecart = ecartCompetences(role.skills, employeeSkills);
+            }
+            return node;
+        });
 
         // Links : progression verticale au sein d'une famille (vers le niveau supérieur
         // le plus proche réellement présent) + passerelles inter-familles du référentiel
@@ -93,7 +106,13 @@ exports.getCareerPath = async (req, res) => {
         }
 
         const startingRoleTitle = startRole || employee.positionTitle;
-        res.status(200).json(buildConstellation(startingRoleTitle, employee.department || 'Tech / IT'));
+        res.status(200).json(
+            buildConstellation(
+                startingRoleTitle,
+                employee.department || 'Tech / IT',
+                employee.skills || []
+            )
+        );
     } catch (error) {
         console.error("Error fetching career path:", error);
         res.status(500).json({ error: "Erreur lors de la récupération du plan de carrière" });

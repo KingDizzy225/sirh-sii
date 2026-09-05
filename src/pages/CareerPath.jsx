@@ -303,12 +303,27 @@ export function CareerPath() {
                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Niveau</p>
                                         <p className="text-xl font-black">L{selectedRole.level}</p>
                                     </div>
-                                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Débouchés</p>
-                                        <p className="text-xl font-black text-emerald-400">
-                                            {careerData?.links.filter(l => l.source === selectedRole.title).length || 0}
-                                        </p>
-                                    </div>
+                                    {selectedRole.ecart && selectedRole.ecart.tauxCouverture !== null ? (
+                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
+                                                {selectedRole.isCurrent ? 'Vos compétences' : 'Prêt à'}
+                                            </p>
+                                            <p className={`text-xl font-black ${
+                                                selectedRole.ecart.tauxCouverture >= 70 ? 'text-emerald-400'
+                                                    : selectedRole.ecart.tauxCouverture >= 40 ? 'text-amber-400'
+                                                    : 'text-rose-400'
+                                            }`}>
+                                                {selectedRole.ecart.tauxCouverture} %
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Débouchés</p>
+                                            <p className="text-xl font-black text-emerald-400">
+                                                {careerData?.links.filter(l => l.source === selectedRole.title).length || 0}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-4">
@@ -316,18 +331,42 @@ export function CareerPath() {
                                         <BrainCircuit size={14} className="text-blue-400" />
                                         Compétences Requises
                                     </h4>
-                                    <div className="space-y-3">
-                                        {(selectedRole.skills?.length ? selectedRole.skills : ['Compétences métier', 'Communication', 'Autonomie']).map((skill, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
-                                                <span className="text-sm font-medium">{skill}</span>
-                                                <div className="flex gap-1">
-                                                    {[1, 2, 3, 4, 5].map(s => (
-                                                        <div key={s} className={`h-1 w-3 rounded-full ${s <= Math.min(selectedRole.level + 1, 5) ? 'bg-blue-500' : 'bg-slate-700'}`}></div>
-                                                    ))}
+                                    {/* Quand le profil du salarié est connu, chaque compétence
+                                        est confrontée à ce qu'il a déclaré : la liste devient
+                                        un écart à combler plutôt qu'un simple descriptif. */}
+                                    {selectedRole.ecart ? (
+                                        <div className="space-y-3">
+                                            {selectedRole.ecart.acquises.map((item, idx) => (
+                                                <div key={`a${idx}`} className="flex items-center justify-between gap-3 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium truncate">{item.attendue}</p>
+                                                        {item.correspondance !== 'exacte' && (
+                                                            <p className="text-[10px] text-emerald-300/70 truncate">
+                                                                reconnue via « {item.declaree} »
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 shrink-0">
+                                                        {item.niveau || 'Acquise'}
+                                                    </span>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ))}
+                                            {selectedRole.ecart.manquantes.map((skill, idx) => (
+                                                <div key={`m${idx}`} className="flex items-center justify-between gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                                                    <span className="text-sm font-medium text-slate-300 truncate">{skill}</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 shrink-0">À acquérir</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {(selectedRole.skills?.length ? selectedRole.skills : ['Compétences métier', 'Communication', 'Autonomie']).map((skill, idx) => (
+                                                <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                                                    <span className="text-sm font-medium">{skill}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {careerData?.links.some(l => l.source === selectedRole.title) && (
