@@ -482,6 +482,12 @@ model Expense {
   date            DateTime
   status          String   @default("En attente") // 'En attente', 'Approuvé', 'Rejeté'
   rejectionReason String?  @map("rejection_reason")
+  // Justificatif téléversé. Le contrôleur l'écrivait déjà alors que le champ
+  // n'existait pas : Prisma rejetant les champs inconnus, toute création de
+  // note de frais échouait.
+  receiptPath     String?  @map("receipt_path")
+  // Signalé au valideur quand le montant dépasse le plafond de sa catégorie
+  exceedsPolicy   Boolean  @default(false) @map("exceeds_policy")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 

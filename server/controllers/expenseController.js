@@ -2,6 +2,7 @@ const prisma = require('../prismaClient');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { evaluerDepense, PLAFONDS } = require('../data/expensePolicy');
 
 const receiptDir = path.join(__dirname, '../uploads/receipts');
 if (!fs.existsSync(receiptDir)) fs.mkdirSync(receiptDir, { recursive: true });
@@ -49,7 +50,9 @@ exports.getExpenses = async (req, res) => {
             merchant: exp.merchant || '-',
             date: new Date(exp.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
             status: exp.status,
-            rejectionReason: exp.rejectionReason
+            rejectionReason: exp.rejectionReason,
+            receiptPath: exp.receiptPath,
+            exceedsPolicy: exp.exceedsPolicy
         }));
 
         res.json(formattedExpenses);
@@ -82,6 +85,15 @@ exports.createExpense = async (req, res) => {
             return res.status(400).json({ error: "Cette dépense semble déjà avoir été enregistrée (doublon détecté)." });
         }
 
+        // Contrôle des plafonds. Une justification manquante est bloquante — la
+        // demander maintenant évite un aller-retour avec le valideur. Un
+        // dépassement de plafond ne l'est pas : la dépense peut être légitime,
+        // elle est enregistrée et signalée pour que le valideur l'examine.
+        const controle = evaluerDepense(category, amount, req.body.justification || merchant);
+        if (controle.justificationRequise) {
+            return res.status(400).json({ error: controle.message });
+        }
+
         const newExpense = await prisma.expense.create({
             data: {
                 employeeId: employee.id,
@@ -91,11 +103,12 @@ exports.createExpense = async (req, res) => {
                 merchant,
                 date: date ? new Date(date) : new Date(),
                 status: 'En attente',
-                receiptPath: req.file ? `/uploads/receipts/${req.file.filename}` : null
+                receiptPath: req.file ? `/uploads/receipts/${req.file.filename}` : null,
+                exceedsPolicy: controle.depassement
             }
         });
 
-        res.status(201).json(newExpense);
+        res.status(201).json({ ...newExpense, controlePolitique: controle });
     } catch (error) {
         console.error("Error creating expense:", error);
         res.status(500).json({ error: "Erreur serveur" });
@@ -140,7 +153,7 @@ exports.scanReceipt = async (req, res) => {
   "amount": "Le montant total TTC (uniquement des chiffres ou décimales, pas de devise)",
   "merchant": "Le nom du commerçant ou restaurant",
   "date": "La date du reçu au format YYYY-MM-DD",
-  "category": "Choisis l'une de ces catégories : 'Repas', 'Transport', 'Hébergement', 'Fournitures', 'Autre'"
+  "category": "Choisis l'une de ces catégories : 'Repas', 'Déplacement', 'Hébergement', 'Équipement', 'Autre'"
 }
 Ne renvoie QUE le JSON, pas de texte autour ni de blocs \`\`\`json.`;
 
@@ -176,4 +189,16 @@ Ne renvoie QUE le JSON, pas de texte autour ni de blocs \`\`\`json.`;
         console.error("Error scanning receipt with AI:", error);
         res.status(500).json({ error: "Erreur lors de l'analyse OCR" });
     }
+};
+
+/** Plafonds en vigueur, pour affichage dans le formulaire de saisie. */
+exports.getExpensePolicy = async (req, res) => {
+    res.json({
+        devise: 'FCFA',
+        categories: Object.entries(PLAFONDS).map(([categorie, regle]) => ({
+            categorie,
+            plafond: regle.plafond,
+            justificationAuDela: regle.justificationAuDela
+        }))
+    });
 };

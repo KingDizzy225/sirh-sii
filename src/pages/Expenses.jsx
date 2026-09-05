@@ -243,6 +243,11 @@ export function Expenses() {
                                             </td>
                                             <td className="px-6 py-4 text-sm text-slate-500">{exp.date}</td>
                                             <td className="px-6 py-4">
+                                                {/* Dépassement de plafond : le valideur ne regarde
+                                                    plus que ce qui sort du cadre. */}
+                                                {exp.exceedsPolicy && (
+                                                    <Badge variant="destructive" className="mr-2">Hors plafond</Badge>
+                                                )}
                                                 <Badge variant={(exp.status === 'Approuvé' || exp.status === 'APPROVED') ? 'success' : (exp.status === 'Rejeté' || exp.status === 'REJECTED') ? 'destructive' : 'secondary'}>
                                                     {exp.status === 'APPROVED' ? 'Approuvé' : exp.status === 'REJECTED' ? 'Rejeté' : exp.status === 'PENDING' ? 'En attente' : exp.status}
                                                 </Badge>
