@@ -40,9 +40,33 @@ const haversineMeters = (lat1, lon1, lat2, lon2) => {
 // Log a time entry (Clock In or Clock Out)
 exports.logTime = async (req, res) => {
     try {
-        const { type, latitude, longitude, accuracy } = req.body; // 'CLOCK_IN' or 'CLOCK_OUT'
+        const { type, latitude, longitude, accuracy, horodatageLocal } = req.body; // 'CLOCK_IN' or 'CLOCK_OUT'
         if (!['CLOCK_IN', 'CLOCK_OUT'].includes(type)) {
             return res.status(400).json({ error: "Type de pointage invalide" });
+        }
+
+        /**
+         * Pointage différé : hors connexion, l'appareil conserve l'heure réelle
+         * et la transmet au retour du réseau. C'est cette heure qui fait foi.
+         *
+         * Une heure fournie par le client étant falsifiable, elle est bornée :
+         * jamais dans le futur, jamais au-delà de sept jours en arrière. Un
+         * horodatage hors de ces bornes est ignoré au profit de l'heure serveur,
+         * plutôt que rejeté — perdre le pointage pénaliserait le salarié.
+         */
+        let timestamp = undefined;
+        if (horodatageLocal) {
+            const propose = new Date(horodatageLocal);
+            const maintenant = new Date();
+            const septJours = 7 * 24 * 3600 * 1000;
+            const valide = !isNaN(propose.getTime()) &&
+                propose <= maintenant &&
+                (maintenant - propose) <= septJours;
+            if (valide) {
+                timestamp = propose;
+            } else {
+                console.warn('[POINTAGE] Horodatage différé hors bornes, heure serveur retenue :', horodatageLocal);
+            }
         }
 
         const email = req.user.email;
@@ -86,6 +110,7 @@ exports.logTime = async (req, res) => {
             data: {
                 employeeId: employee.id,
                 type: type,
+                ...(timestamp ? { timestamp } : {}),
                 ...geoData
             },
             include: { workSite: { select: { name: true } } }

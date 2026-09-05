@@ -15,6 +15,7 @@ export function EmployeePortal() {
     const [isClocking, setIsClocking] = useState(false);
     const [clockNotice, setClockNotice] = useState(null); // { tone: 'success' | 'warning', text }
     const [accessTrace, setAccessTrace] = useState(null); // null = en cours de chargement
+    const [pointagesEnAttente, setPointagesEnAttente] = useState(0);
     const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
     const [absenceForm, setAbsenceForm] = useState({
         type: 'Absence injustifiée',
@@ -130,8 +131,65 @@ export function EmployeePortal() {
             fetchLogs();
             fetchMyAdvances();
             fetchAccessTrace();
+
+            // Rattrapage des pointages différés : au chargement, puis dès que
+            // le navigateur signale le retour de la connexion.
+            setPointagesEnAttente(lireFileAttente().length);
+            synchroniserPointages().then(fetchLogs);
+            window.addEventListener('online', synchroniserPointages);
+            return () => window.removeEventListener('online', synchroniserPointages);
         }
     }, [token]);
+
+    // File d'attente des pointages hors connexion, conservée sur l'appareil.
+    const CLE_FILE = 'sirh_pointages_en_attente';
+    const lireFileAttente = () => {
+        try {
+            const brut = localStorage.getItem(CLE_FILE);
+            const liste = brut ? JSON.parse(brut) : [];
+            return Array.isArray(liste) ? liste : [];
+        } catch {
+            return [];
+        }
+    };
+    const ecrireFileAttente = (liste) => {
+        try { localStorage.setItem(CLE_FILE, JSON.stringify(liste)); } catch { /* stockage indisponible */ }
+    };
+
+    /**
+     * Transmet les pointages différés. Chaque envoi conserve l'horodatage du
+     * moment où le salarié a réellement pointé : c'est cette heure qui fait foi,
+     * pas celle de la synchronisation.
+     */
+    const synchroniserPointages = async () => {
+        const attente = lireFileAttente();
+        if (attente.length === 0 || !token) return;
+
+        const restants = [];
+        for (const p of attente) {
+            try {
+                const res = await fetch(`${API_URL}/api/time-logs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(p)
+                });
+                if (!res.ok) restants.push(p);
+            } catch {
+                restants.push(p);
+            }
+        }
+
+        ecrireFileAttente(restants);
+        setPointagesEnAttente(restants.length);
+
+        const transmis = attente.length - restants.length;
+        if (transmis > 0) {
+            setClockNotice({
+                tone: 'success',
+                text: `${transmis} pointage(s) différé(s) transmis.`
+            });
+        }
+    };
 
     // Récupère la position GPS (résout null si refusée/indisponible : le pointage n'est jamais bloqué)
     const getPosition = () => new Promise((resolve) => {
@@ -160,6 +218,9 @@ export function EmployeePortal() {
                 },
                 body: JSON.stringify({ type, ...(coords || {}) })
             });
+            if (!res.ok && res.status >= 500) {
+                throw new Error('serveur indisponible');
+            }
             if (res.ok) {
                 const newLog = await res.json();
                 setLogs([...logs, newLog]);
@@ -181,7 +242,23 @@ export function EmployeePortal() {
                 }
             }
         } catch (err) {
-            console.error("Failed to clock", err);
+            // Réseau absent ou serveur injoignable : on conserve le pointage
+            // localement plutôt que de le perdre. Sur un chantier ou un site
+            // mal couvert, refuser le pointage revient à priver le salarié de
+            // la preuve de sa présence.
+            console.warn('Pointage différé, réseau indisponible', err);
+            const attente = lireFileAttente();
+            attente.push({
+                type,
+                horodatageLocal: new Date().toISOString(),
+                ...(await getPosition() || {})
+            });
+            ecrireFileAttente(attente);
+            setPointagesEnAttente(attente.length);
+            setClockNotice({
+                tone: 'warning',
+                text: `Réseau indisponible : pointage enregistré sur cet appareil et transmis dès le retour de la connexion (${attente.length} en attente).`
+            });
         } finally {
             setIsClocking(false);
         }
@@ -486,6 +563,16 @@ export function EmployeePortal() {
                                         </Button>
                                     )}
                                     
+                                    {pointagesEnAttente > 0 && (
+                                        <div className="flex items-start gap-2 text-xs font-medium rounded-xl p-3 bg-slate-100 text-slate-600 border border-slate-200">
+                                            <Clock size={14} className="mt-0.5 shrink-0" />
+                                            <span>
+                                                {pointagesEnAttente} pointage(s) en attente de transmission.
+                                                L'envoi se fera automatiquement au retour du réseau.
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {clockNotice && (
                                         <div className={`flex items-start gap-2 text-xs font-medium rounded-xl p-3 ${clockNotice.tone === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-100'}`}>
                                             {clockNotice.tone === 'success' ? <CheckCircle2 size={14} className="mt-0.5 shrink-0" /> : <AlertCircle size={14} className="mt-0.5 shrink-0" />}
