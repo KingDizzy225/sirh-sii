@@ -214,6 +214,11 @@ server.listen(PORT, async () => {
         await prisma.$connect();
         console.log("✅ Connexion à la base de données PostgreSQL établie avec succès.");
 
+        // Création éventuelle du premier administrateur depuis les variables
+        // d'environnement (sans effet si le compte existe déjà).
+        const { bootstrapAdminFromEnv } = require('./lib/bootstrapAdmin');
+        await bootstrapAdminFromEnv();
+
         // Traitements RH récurrents (acquisition des congés, alertes d'échéances).
         // Démarrés après la connexion : ils rattrapent les périodes manquées
         // pendant la mise en veille du service.

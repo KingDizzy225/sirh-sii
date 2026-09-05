@@ -69,6 +69,7 @@ import { TeamHealth } from './pages/TeamHealth';
 import { FeedbackWidget } from './components/FeedbackWidget';
 import { PublicPortal } from './pages/PublicPortal';
 import { VerifyDocument } from './pages/VerifyDocument';
+import { BottomNav } from './components/layout/BottomNav';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -439,6 +440,9 @@ const AppContent = () => {
         </main>
       </div>
       
+      {/* Navigation inférieure : mobile uniquement */}
+      <BottomNav onMenuClick={() => setIsMobileMenuOpen(true)} />
+
       {/* Chatbot Flottant - Accessible depuis toutes les pages */}
       <FloatingChat />
       <FeedbackWidget />

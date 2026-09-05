@@ -91,3 +91,43 @@
   .mobile-only { display: block !important; }
   .desktop-only { display: none !important; }
 }
+
+/* ------------------------------------------------------------------
+   Adaptation mobile transversale.
+
+   Les en-têtes de page suivent partout le même motif — un titre et des
+   boutons d'action sur une seule ligne. Sur un écran étroit, les boutons
+   sortaient du cadre et devenaient inatteignables. Plutôt que de retoucher
+   la quarantaine de pages concernées, on autorise ici le retour à la ligne :
+   la règle ne s'applique que lorsque le contenu ne tient pas, et laisse donc
+   l'affichage large inchangé.
+   ------------------------------------------------------------------ */
+@media (max-width: 767px) {
+  .flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+
+  /* Récupérer la largeur perdue en marges : sur 375 px, 48 px de padding
+     représentent 13 % de l'écran. */
+  main.flex-1 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Les grands titres de page sont calibrés pour le bureau */
+  h1, .text-4xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+  h2, .text-3xl { font-size: 1.375rem !important; line-height: 1.875rem !important; }
+
+  /* Les tableaux larges défilent horizontalement dans leur propre cadre,
+     sans jamais faire déborder la page entière. */
+  table { min-width: 34rem; }
+
+  /* Espace réservé sous le contenu pour la barre de navigation inférieure */
+  main.flex-1 { padding-bottom: 5.5rem !important; }
+}
+
+/* Zone sûre iOS (encoche et barre gestuelle) */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
