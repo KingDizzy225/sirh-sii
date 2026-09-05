@@ -231,6 +231,47 @@ async function main() {
         if (r.statut === null) r.statut = 200;
     });
 
+    console.log('\n=== Équité salariale ===');
+    // Garde-fou contre un retour en arrière : le genre était tiré de
+    // `emp.id.charCodeAt(0) % 2`, donc à pile ou face, alors que le champ
+    // existait sur la fiche. Les écarts H/F et les recommandations
+    // d'augmentation nominatives qui en découlaient ne mesuraient rien.
+    const hFemme = await prisma.employee.create({
+        data: {
+            firstName: 'Awa', lastName: 'Equite', email: `awa.eq.${marque}@essai.test`,
+            role: 'Employee', department: 'Équité', status: 'ACTIVE',
+            hireDate: new Date('2023-01-01'), positionTitle: 'Analyste', gender: 'Femme'
+        }
+    });
+    const hHomme = await prisma.employee.create({
+        data: {
+            firstName: 'Yao', lastName: 'Equite', email: `yao.eq.${marque}@essai.test`,
+            role: 'Employee', department: 'Équité', status: 'ACTIVE',
+            hireDate: new Date('2023-01-01'), positionTitle: 'Analyste', gender: 'Homme'
+        }
+    });
+    await prisma.payroll.createMany({
+        data: [
+            { employeeId: hFemme.id, period: new Date('2026-08-01'), baseSalary: 400000, netSalary: 320000 },
+            { employeeId: hHomme.id, period: new Date('2026-08-01'), baseSalary: 500000, netSalary: 400000 }
+        ]
+    });
+
+    const eq = faireRes();
+    await ctrl('equityController').getPayEquityData({ user }, eq);
+    const service = (eq.corps?.departments || []).find(d => d.department === 'Équité');
+    const genreLu = service && service.countWomen === 1 && service.countMen === 1;
+    console.log(`  ${genreLu ? '✅' : '❌'} genre lu sur la fiche, non deviné  → ${service?.countWomen} F / ${service?.countMen} H`);
+    if (!genreLu) echecs++;
+
+    const ecartJuste = service && Math.abs(service.payGap - 20) < 0.5;
+    console.log(`  ${ecartJuste ? '✅' : '❌'} écart conforme aux salaires réels  → ${service?.payGap?.toFixed(1)} %`);
+    if (!ecartJuste) echecs++;
+
+    const couvertureDite = !!eq.corps?.couverture;
+    console.log(`  ${couvertureDite ? '✅' : '❌'} portée de l'analyse rapportée`);
+    if (!couvertureDite) echecs++;
+
     console.log('\n=== Requêtes incomplètes : 400 attendu, pas 500 ===');
     // Une requête malformée relève de l'appelant. Répondre 500 fait porter la
     // faute au serveur et masque la vraie cause à qui intègre l'API.

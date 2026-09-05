@@ -19,6 +19,9 @@ export function PayEquityScanner() {
                 const res = await fetch(`${API_URL}/api/equity`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                // Sans ce contrôle, un corps d'erreur `{ error }` devenait l'état
+                // et l'analyse s'affichait vide comme si tout allait bien.
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const json = await res.json();
                 setData(json);
             } catch (err) {
@@ -36,6 +39,13 @@ export function PayEquityScanner() {
 
     const safeDepartments = data?.departments || [];
     const safeOutliers = data?.outliers || [];
+    const couverture = data?.couverture || null;
+
+    // Un service n'est comparable que si les deux groupes y sont représentés.
+    const comparables = safeDepartments.filter(d => d.payGap !== null && d.payGap !== undefined);
+    const ecartGlobal = comparables.length > 0
+        ? comparables.reduce((s, d) => s + d.payGap, 0) / comparables.length
+        : null;
 
     const filteredDepartments = selectedDept === 'All' ? safeDepartments : safeDepartments.filter(d => d.department === selectedDept);
     
@@ -99,6 +109,22 @@ export function PayEquityScanner() {
                 </div>
             </div>
 
+            {/* Ce qui est exclu de l'analyse doit être visible avant ses résultats.
+                Un genre non renseigné n'est plus deviné — il l'était auparavant à
+                partir d'un hachage de l'identifiant — donc la population comparée
+                peut être bien plus étroite que l'effectif. */}
+            {couverture && (couverture.sansGenre > 0 || couverture.sansSalaire > 0) && (
+                <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                    <Info size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-amber-900">
+                        Analyse portant sur {couverture.actifs - couverture.sansSalaire} salarié(s) sur {couverture.actifs}.
+                        {couverture.sansSalaire > 0 && ` ${couverture.sansSalaire} sans bulletin de paie.`}
+                        {couverture.sansGenre > 0 && ` ${couverture.sansGenre} sans genre renseigné, exclus des comparaisons H/F —
+                            renseigner ce champ sur la fiche employé fiabilisera le diagnostic.`}
+                    </p>
+                </div>
+            )}
+
             <div className="grid gap-6 md:grid-cols-4">
                 {/* KPI Cards */}
                 <Card className="shadow-sm">
@@ -107,11 +133,19 @@ export function PayEquityScanner() {
                             <p className="text-sm font-medium text-slate-500">Écart Salarial F/H Global</p>
                             <TrendingDown className="h-4 w-4 text-emerald-500" />
                         </div>
+                        {/* Seuls les services où les deux groupes sont représentés
+                            entrent dans la moyenne. Traiter un écart non mesurable
+                            comme un zéro — ce que faisait `payGap || 0` — tirait
+                            l'indicateur vers la parité et donnait à une absence de
+                            données l'apparence d'un bon résultat. */}
                         <div className="text-2xl font-bold text-slate-900">
-                            {safeDepartments.reduce((sum, d) => sum + (d.payGap || 0), 0) / (safeDepartments.length || 1) > 0 ? '+' : ''}
-                            {(safeDepartments.reduce((sum, d) => sum + (d.payGap || 0), 0) / (safeDepartments.length || 1)).toFixed(1)}%
+                            {ecartGlobal === null ? '—' : `${ecartGlobal > 0 ? '+' : ''}${ecartGlobal.toFixed(1)}%`}
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">En faveur des hommes (moyenne)</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                            {ecartGlobal === null
+                                ? 'Aucun service ne compte les deux groupes'
+                                : `En faveur des hommes · ${comparables.length} service(s) comparable(s) sur ${safeDepartments.length}`}
+                        </p>
                     </CardContent>
                 </Card>
                 
