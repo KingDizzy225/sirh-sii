@@ -7,6 +7,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const requireRole = require('../middleware/roleMiddleware');
+const { traceAccess, cibles } = require('../middleware/accessTrace');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads/documents');
@@ -35,7 +36,7 @@ router.get('/generate-attestation/:employeeId', verifyToken, documentController.
 router.delete('/:id', verifyToken, requireRole(['HR', 'ADMIN']), documentController.deleteDocument);
 
 // Dossier Personnel
-router.get('/employee/:employeeId', verifyToken, documentController.getEmployeeDocuments);
+router.get('/employee/:employeeId', verifyToken, traceAccess('DOCUMENTS', cibles.parParam()), documentController.getEmployeeDocuments);
 
 // Registre des documents officiels émis (attestations) et révocation
 const verificationController = require('../controllers/verificationController');

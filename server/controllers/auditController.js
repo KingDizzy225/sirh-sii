@@ -29,3 +29,44 @@ exports.getAuditLogs = async (req, res) => {
         res.status(500).json({ error: "Erreur lors de la récupération des logs d'audit" });
     }
 };
+
+/**
+ * Consultations du dossier du salarié connecté : qui l'a ouvert, et quand.
+ *
+ * Détenir les salaires et les données de santé de quelqu'un crée une
+ * obligation de transparence envers lui. Cet écran la rend effective : le
+ * salarié voit lui-même les accès à son dossier, sans passer par la RH.
+ */
+exports.getMyAccessTrace = async (req, res) => {
+    try {
+        const employee = await prisma.employee.findUnique({
+            where: { email: req.user.email },
+            select: { id: true }
+        });
+        if (!employee) return res.json([]);
+
+        const acces = await prisma.auditLog.findMany({
+            where: { action: 'CONSULT', recordId: employee.id },
+            orderBy: { createdAt: 'desc' },
+            take: 50
+        });
+
+        // On expose qui a consulté et quoi, jamais l'adresse IP du consultant :
+        // la transparence attendue porte sur l'accès, pas sur la localisation
+        // d'un collègue.
+        res.json(acces.map((a) => {
+            let details = {};
+            try { details = JSON.parse(a.newData || '{}'); } catch (e) { details = {}; }
+            return {
+                id: a.id,
+                date: a.createdAt,
+                ressource: a.tableName,
+                consultePar: details.consultePar || 'Utilisateur inconnu',
+                role: details.role || null
+            };
+        }));
+    } catch (error) {
+        console.error('Error fetching access trace:', error);
+        res.status(500).json({ error: "Erreur lors de la lecture des consultations." });
+    }
+};

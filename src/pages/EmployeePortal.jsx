@@ -14,6 +14,7 @@ export function EmployeePortal() {
     const [logs, setLogs] = useState([]);
     const [isClocking, setIsClocking] = useState(false);
     const [clockNotice, setClockNotice] = useState(null); // { tone: 'success' | 'warning', text }
+    const [accessTrace, setAccessTrace] = useState(null); // null = en cours de chargement
     const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
     const [absenceForm, setAbsenceForm] = useState({
         type: 'Absence injustifiée',
@@ -113,10 +114,22 @@ export function EmployeePortal() {
             }
         };
 
+        const fetchAccessTrace = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/audit/my-access`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setAccessTrace(res.ok ? await res.json() : []);
+            } catch (err) {
+                setAccessTrace([]);
+            }
+        };
+
         if (token) {
             fetchProfile();
             fetchLogs();
             fetchMyAdvances();
+            fetchAccessTrace();
         }
     }, [token]);
 
@@ -490,6 +503,52 @@ export function EmployeePortal() {
                         </Card>
                     </motion.div>
                 </div>
+
+                {/* Transparence : accès à son propre dossier.
+                    Détenir salaires et données de santé crée une obligation
+                    d'information envers l'intéressé ; il la consulte ici
+                    directement, sans avoir à la demander à la RH. */}
+                <motion.div variants={itemVariants}>
+                    <Card className="border-slate-100 shadow-sm">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <ShieldCheck size={17} className="text-slate-500" />
+                                Accès à mon dossier
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                                Les consultations de votre dossier par un tiers apparaissent ici.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {accessTrace === null ? (
+                                <p className="text-xs text-slate-400">Chargement…</p>
+                            ) : accessTrace.length === 0 ? (
+                                <p className="text-sm text-slate-500">
+                                    Personne n'a consulté votre dossier récemment.
+                                </p>
+                            ) : (
+                                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                    {accessTrace.map(a => (
+                                        <div key={a.id} className="flex items-center justify-between gap-3 text-sm border-b border-slate-50 pb-2 last:border-0">
+                                            <div className="min-w-0">
+                                                <p className="font-medium text-slate-800 truncate">{a.consultePar}</p>
+                                                <p className="text-xs text-slate-500">
+                                                    {a.ressource === 'PAIE' ? 'Bulletin de paie'
+                                                        : a.ressource === 'DOCUMENTS' ? 'Documents personnels'
+                                                        : a.ressource === 'DISCIPLINAIRE' ? 'Dossier disciplinaire'
+                                                        : a.ressource}
+                                                </p>
+                                            </div>
+                                            <span className="text-xs text-slate-400 shrink-0">
+                                                {new Date(a.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </motion.div>
 
                 {/* Quick Actions Dock (Guichet Unique RH) */}
                 <motion.div variants={itemVariants}>
