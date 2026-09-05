@@ -48,11 +48,13 @@ let echecs = 0;
 
 /**
  * @param {number|number[]} codes Statut attendu, ou statuts acceptables.
- *   Plusieurs valeurs servent là où le code exact relève du style et non du
- *   bon fonctionnement : `sendKudo` répond par `res.json()`, donc 200, quand
- *   les autres créations répondent 201. Le frontend teste `res.ok` et
- *   fonctionne dans les deux cas ; figer 201 ici imposerait une modification
- *   d'API sans nécessité.
+ *
+ * Toute création répond 201. Deux points de l'API s'en écartaient — `sendKudo`
+ * et le pointage par QR — et sont désormais alignés ; les contrôles ci-dessous
+ * figent ce choix. Restent volontairement en 200 les routes dont l'objet est
+ * une mise à jour qui crée un enregistrement annexe (changement de statut d'une
+ * candidature, d'un parrainage, d'un mentorat, avancement de formation) et les
+ * points d'action comme le chatbot : leur ressource principale existait déjà.
  */
 const attendu = async (libelle, codes, fn) => {
     const acceptes = Array.isArray(codes) ? codes : [codes];
@@ -112,8 +114,11 @@ async function main() {
             { body: { jobOfferId: offre.id, firstName: 'A', lastName: 'K', email: `cand.${marque}@essai.test`, phone: '0102030405', resumeUrl: '/cv.pdf', experience: '5 ans' }, user }, r));
     }
 
-    await attendu('kudo', [200, 201], r => ctrl('kudoController').sendKudo(
+    await attendu('kudo', 201, r => ctrl('kudoController').sendKudo(
         { body: { senderId: emp.id, receiverId: emp2.id, message: 'bravo', category: 'Entraide' }, user }, r));
+
+    await attendu('pointage QR', 201, r => ctrl('qrController').clockIn(
+        { body: { employeeId: emp.id, type: 'START' }, user }, r));
 
     const etiquette = `ESS-${marque}`;
     await attendu('actif', 201, r => ctrl('assetController').createAsset(

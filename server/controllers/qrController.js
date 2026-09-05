@@ -67,9 +67,12 @@ exports.clockIn = async (req, res) => {
             }
         });
 
-        res.status(200).json({ 
+        // 201 : un pointage crée bien un enregistrement. `publicClockIn`, qui
+        // fait la même chose depuis le portail public, répondait déjà 201 —
+        // les deux voies du même geste divergeaient.
+        res.status(201).json({
             message: `Pointage enregistré pour ${employee.firstName}`,
-            timeLog 
+            timeLog
         });
     } catch (error) {
         console.error('Error scanning QR code:', error);

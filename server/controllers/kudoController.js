@@ -55,7 +55,10 @@ exports.sendKudo = async (req, res) => {
             return newKudo;
         });
 
-        res.json(kudo);
+        // 201 comme toutes les autres créations de l'API : la ressource vient
+        // d'être créée. Le 200 était le seul écart parmi une soixantaine de
+        // points de création.
+        res.status(201).json(kudo);
     } catch (error) {
         console.error("Error sending kudo:", error);
         res.status(500).json({ error: "Erreur serveur" });
