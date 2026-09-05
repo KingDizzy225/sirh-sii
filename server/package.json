@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "npx prisma db push --accept-data-loss || true && node index.js",
+    "start": "npx prisma migrate deploy || npx prisma db push --accept-data-loss || true; node index.js",
     "dev": "nodemon index.js",
     "build": "npx prisma generate",
     "postinstall": "npx prisma generate",
     "create-admin": "node scripts/createAdmin.js",
     "run-jobs": "node scripts/runJobs.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate:status": "npx prisma migrate status",
+    "preflight": "node scripts/preflight.js"
   },
   "keywords": [],
   "author": "",
