@@ -49,6 +49,48 @@ function lireModeles() {
     return modeles;
 }
 
+/**
+ * Neutralise les commentaires en conservant longueur et retours à la ligne.
+ *
+ * Indispensable avant toute analyse par balayage : l'apostrophe est traitée
+ * comme une ouverture de chaîne, si bien qu'un commentaire français — « le
+ * modèle n'a pas de createdAt » — ouvrait une chaîne fictive qui se refermait
+ * sur le premier guillemet du code suivant. Tout ce qui se trouvait entre les
+ * deux devenait invisible : le contrôle passait au vert sur des défauts bien
+ * réels. Les offsets sont préservés pour que les numéros de ligne restent justes.
+ */
+function sansCommentaires(src) {
+    let out = '';
+    let i = 0;
+    let dansTexte = null;
+    while (i < src.length) {
+        const c = src[i];
+        if (dansTexte) {
+            out += c;
+            if (c === '\\') { out += src[i + 1] || ''; i += 2; continue; }
+            if (c === dansTexte) dansTexte = null;
+            i++;
+            continue;
+        }
+        if (c === '"' || c === "'" || c === '`') { dansTexte = c; out += c; i++; continue; }
+        if (c === '/' && src[i + 1] === '/') {
+            while (i < src.length && src[i] !== '\n') { out += ' '; i++; }
+            continue;
+        }
+        if (c === '/' && src[i + 1] === '*') {
+            while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) {
+                out += src[i] === '\n' ? '\n' : ' ';
+                i++;
+            }
+            out += '  '; i += 2;
+            continue;
+        }
+        out += c;
+        i++;
+    }
+    return out;
+}
+
 // --- 2. Écritures repérées dans les contrôleurs -----------------------------
 /** Extrait le contenu équilibré d'un bloc { ... } à partir de son accolade. */
 function blocEquilibre(src, debut) {
@@ -63,11 +105,34 @@ function blocEquilibre(src, debut) {
     return null;
 }
 
-/** Clés de premier niveau d'un littéral objet. */
-function clesPremierNiveau(bloc) {
-    const cles = [];
+/**
+ * Nom de propriété porté par un segment de littéral objet.
+ *
+ * Reconnaît les deux écritures : `champ: valeur` et la forme abrégée `champ`.
+ * Cette seconde forme était ignorée, ce qui rendait le contrôle aveugle sur la
+ * majorité des blocs `data:` — `prisma.applicant.create({ data: { jobOfferId,
+ * firstName, experience, status: 'NEW' } })` ne faisait examiner que `status`,
+ * et le champ `experience`, absent du modèle, passait inaperçu.
+ */
+function nomDePropriete(segment) {
+    const nu = segment
+        .replace(/\/\/[^\n]*/g, '')      // commentaires de ligne
+        .replace(/\/\*[\s\S]*?\*\//g, '') // commentaires de bloc
+        .trim();
+    if (!nu || nu.startsWith('...')) return null; // opérateur de décomposition
+    const m = nu.match(/^(\w+)\s*(:|$)/);
+    return m ? m[1] : null;
+}
+
+/** Segments de premier niveau d'un littéral objet : [{ cle, texte }]. */
+function segmentsPremierNiveau(bloc) {
+    const segments = [];
     let profondeur = 0, dansTexte = null;
-    let debutLigne = 0;
+    let debutSegment = 0;
+    const ajouter = (texte) => {
+        const cle = nomDePropriete(texte);
+        if (cle) segments.push({ cle, texte });
+    };
     for (let i = 0; i < bloc.length; i++) {
         const c = bloc[i];
         if (dansTexte) {
@@ -78,15 +143,36 @@ function clesPremierNiveau(bloc) {
         if ('{[('.includes(c)) profondeur++;
         else if ('}])'.includes(c)) profondeur--;
         else if (c === ',' && profondeur === 0) {
-            const segment = bloc.slice(debutLigne, i);
-            const cle = segment.match(/(?:^|\n)\s*(\w+)\s*:/);
-            if (cle) cles.push(cle[1]);
-            debutLigne = i + 1;
+            ajouter(bloc.slice(debutSegment, i));
+            debutSegment = i + 1;
         }
     }
-    const dernier = bloc.slice(debutLigne).match(/(?:^|\n)\s*(\w+)\s*:/);
-    if (dernier) cles.push(dernier[1]);
-    return cles;
+    ajouter(bloc.slice(debutSegment));
+    return segments;
+}
+
+/** Clés de premier niveau d'un littéral objet. */
+function clesPremierNiveau(bloc) {
+    return segmentsPremierNiveau(bloc).map(s => s.cle);
+}
+
+/**
+ * Contenu du littéral objet associé à une clé **de premier niveau**.
+ *
+ * Cette restriction est essentielle : chercher `orderBy` n'importe où dans les
+ * arguments attribuait au modèle principal des tris imbriqués sous `include`,
+ * qui portent en réalité sur le modèle de la relation. `include: { timeLogs:
+ * { orderBy: { timestamp: 'desc' } } }` était ainsi signalé comme un tri de
+ * `Employee` sur un champ inexistant, alors qu'il trie `TimeLog` correctement.
+ */
+function blocDeCle(args, cleCherchee) {
+    for (const segment of segmentsPremierNiveau(args)) {
+        if (segment.cle !== cleCherchee) continue;
+        const ouvrant = segment.texte.indexOf('{');
+        if (ouvrant === -1) return null;
+        return blocEquilibre(segment.texte, ouvrant);
+    }
+    return null;
 }
 
 const modeles = lireModeles();
@@ -115,7 +201,7 @@ function fichiersServeur() {
 }
 
 for (const chemin of fichiersServeur()) {
-    const src = fs.readFileSync(chemin, 'utf8');
+    const src = sansCommentaires(fs.readFileSync(chemin, 'utf8'));
     const fichier = path.relative(path.join(ROOT, 'server'), chemin);
 
     // --- a. Filtres `not: null` sur des champs obligatoires -----------------
@@ -133,19 +219,41 @@ for (const chemin of fichiersServeur()) {
         const args = blocEquilibre(src, apres);
         if (!args) continue;
 
-        const posWhere = args.search(/\bwhere\s*:\s*\{/);
-        if (posWhere === -1) continue;
-        const ouvrant = args.indexOf('{', posWhere);
-        const bloc = blocEquilibre(args, ouvrant);
-        if (!bloc) continue;
+        const ligne = src.slice(0, m.index).split('\n').length;
 
-        for (const f of bloc.matchAll(/(\w+)\s*:\s*\{\s*not\s*:\s*null\s*\}/g)) {
-            if (entree.obligatoires.has(f[1])) {
-                const ligne = src.slice(0, m.index).split('\n').length;
-                anomalies.push({
-                    fichier, ligne, modele, champ: f[1], operation: m[2],
-                    genre: 'not-null'
-                });
+        // L'absence de `where` ne doit pas interrompre l'examen : un `continue`
+        // placé ici sautait au motif suivant sans jamais atteindre le contrôle
+        // du tri, et `prisma.applicant.findMany({ include, orderBy })` — sans
+        // `where` — échappait entièrement à la vérification.
+        const bloc = blocDeCle(args, 'where');
+        if (bloc) {
+            for (const f of bloc.matchAll(/(\w+)\s*:\s*\{\s*not\s*:\s*null\s*\}/g)) {
+                if (entree.obligatoires.has(f[1])) {
+                    anomalies.push({
+                        fichier, ligne, modele, champ: f[1], operation: m[2],
+                        genre: 'not-null'
+                    });
+                }
+            }
+        }
+
+        // --- Champs de tri inexistants -------------------------------------
+        // `orderBy: { createdAt: 'desc' }` sur un modèle dont la date s'appelle
+        // `appliedDate` : Prisma rejette la requête à l'exécution. La liste des
+        // candidatures répondait ainsi 500 à chaque consultation.
+        // Clés d'agrégat de Prisma : légitimes dans un `orderBy`, sans jamais
+        // correspondre à un champ du modèle (`orderBy: { _count: 'desc' }`).
+        const AGREGATS = new Set(['_count', '_avg', '_sum', '_min', '_max', '_relevance']);
+
+        const blocTri = blocDeCle(args, 'orderBy');
+        if (blocTri) {
+            for (const cle of clesPremierNiveau(blocTri)) {
+                if (!AGREGATS.has(cle) && !entree.champs.has(cle)) {
+                    anomalies.push({
+                        fichier, ligne, modele, champ: cle, operation: m[2],
+                        genre: 'order-by'
+                    });
+                }
             }
         }
     }
@@ -193,8 +301,9 @@ if (anomalies.length === 0) {
     process.exit(0);
 }
 
-const inconnus = anomalies.filter(a => a.genre !== 'not-null');
+const inconnus = anomalies.filter(a => !a.genre);
 const notNull = anomalies.filter(a => a.genre === 'not-null');
+const tris = anomalies.filter(a => a.genre === 'order-by');
 
 if (inconnus.length > 0) {
     console.log(`\n❌ ${inconnus.length} champ(s) écrit(s) sans exister dans le schéma :\n`);
@@ -211,5 +320,14 @@ if (notNull.length > 0) {
     }
     console.log('\nPrisma refuse « not: null » sur un champ non nullable : la requête');
     console.log('échoue à l\'exécution. Le filtre est de toute façon sans objet.');
+}
+
+if (tris.length > 0) {
+    console.log(`\n❌ ${tris.length} tri(s) sur un champ absent du modèle :\n`);
+    for (const a of tris) {
+        console.log(`   ${a.fichier}:${a.ligne} — prisma.${a.modele}.${a.operation}() trie sur « ${a.champ} »`);
+    }
+    console.log('\nPrisma rejette un `orderBy` portant sur un champ inconnu :');
+    console.log('la route répond 500 à chaque appel.');
 }
 process.exit(1);

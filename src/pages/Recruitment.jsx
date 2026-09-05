@@ -304,7 +304,7 @@ export function Recruitment() {
                                     <div className="flex items-center gap-4">
                                         <div className="text-center">
                                             <p className="text-[10px] font-black text-slate-400 uppercase">Expérience</p>
-                                            <p className="text-xs font-bold text-slate-700">{job.experience}</p>
+                                            <p className="text-xs font-bold text-slate-700">{job.experienceMode}</p>
                                         </div>
                                     </div>
                                     <Button className="bg-slate-900 hover:bg-black text-white font-black rounded-xl gap-2 shadow-lg">

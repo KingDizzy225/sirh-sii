@@ -46,7 +46,10 @@ exports.createJobOffer = async (req, res) => {
                 department,
                 location,
                 type,
-                experience,
+                // Le niveau d'expérience s'appelle `experienceMode` au schéma.
+                // Écrit sous le nom `experience`, il faisait rejeter la
+                // création entière par Prisma.
+                experienceMode: experience || 'Junior',
                 description,
                 requirements,
                 status: 'PUBLISHED'
@@ -83,7 +86,10 @@ exports.getAllApplicants = async (req, res) => {
     try {
         const applicants = await prisma.applicant.findMany({
             include: { jobOffer: true },
-            orderBy: { createdAt: 'desc' }
+            // Le modèle Applicant n'a pas de `createdAt` : sa date s'appelle
+            // `appliedDate`. Prisma rejetait le tri, et la liste des
+            // candidatures répondait 500 à chaque consultation.
+            orderBy: { appliedDate: 'desc' }
         });
         res.status(200).json(applicants);
     } catch (error) {

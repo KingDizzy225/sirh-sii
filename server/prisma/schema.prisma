@@ -259,6 +259,10 @@ model JobOffer {
   status         String // 'Active', 'Closed', 'Draft'
   experienceMode String   @default("Junior") @map("experience_mode")
   description    String?
+  // Profil recherché. Le formulaire de création le collectait et le contrôleur
+  // l'écrivait, mais la colonne n'existait pas : Prisma rejetait l'appel et
+  // aucune offre ne pouvait être publiée depuis l'application.
+  requirements   String?
   createdAt      DateTime @default(now()) @map("created_at")
 
   applicants Applicant[]
@@ -288,6 +292,9 @@ model Applicant {
   // Chemin du CV téléversé. Le contrôleur l'écrivait déjà alors que le champ
   // n'existait pas : toute candidature depuis le site carrière échouait.
   resumeUrl   String?  @map("resume_url")
+  // Expérience déclarée par le candidat, transmise par le formulaire de
+  // candidature et écrite par le contrôleur alors que la colonne manquait.
+  experience  String?
   appliedDate DateTime @default(now()) @map("applied_date")
 
   jobOffer JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
