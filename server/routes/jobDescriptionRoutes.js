@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const jobDescriptionController = require('../controllers/jobDescriptionController');
-const requireRole = require('../middleware/roleMiddleware');
 const verifyToken = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/roleMiddleware');
 
 router.use(verifyToken);
 

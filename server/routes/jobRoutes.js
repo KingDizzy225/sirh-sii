@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
 const verifyToken = require('../middleware/authMiddleware');
-const requireRole = require('../middleware/roleMiddleware');
 const { runAllDue } = require('../jobs');
+const requireRole = require('../middleware/roleMiddleware');
 
 /**
  * Suivi des traitements RH récurrents.

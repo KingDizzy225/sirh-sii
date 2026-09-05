@@ -9,7 +9,7 @@ router.use(verifyToken);
 router.use(requireRole(['Administrator', 'HR']));
 
 router.get('/', subcontractorController.getSubcontractors);
-router.post('/', subcontractorController.createSubcontractor);
-router.put('/:id', subcontractorController.updateSubcontractor);
+router.post('/', requireRole(['ADMIN', 'HR']), subcontractorController.createSubcontractor);
+router.put('/:id', requireRole(['ADMIN', 'HR']), subcontractorController.updateSubcontractor);
 
 module.exports = router;

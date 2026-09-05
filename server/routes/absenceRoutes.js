@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const absenceController = require('../controllers/absenceController');
 const verifyToken = require('../middleware/authMiddleware');
-const requireRole = require('../middleware/roleMiddleware');
 
 const upload = require('../middleware/uploadMiddleware');
+const requireRole = require('../middleware/roleMiddleware');
 
 // Route Publique (Libre-service sans connexion)
 router.post('/public', upload.single('justificatif'), absenceController.createPublicAbsence);

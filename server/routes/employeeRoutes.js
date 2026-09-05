@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const employeeController = require('../controllers/employeeController');
 const orgChartController = require('../controllers/orgChartController');
-const requireRole = require('../middleware/roleMiddleware');
 const verifyToken = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/roleMiddleware');
 
 // Apply auth to all methods
 router.use(verifyToken);

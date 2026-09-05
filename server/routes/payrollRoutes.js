@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/authMiddleware');
-const requireRole = require('../middleware/roleMiddleware');
 const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, exportSage } = require('../controllers/payrollController');
+const requireRole = require('../middleware/roleMiddleware');
 
 // Accès administrateur / RH : la masse salariale de toute l'entreprise
 router.get('/', verifyToken, requireRole(['ADMIN', 'HR']), getPayrolls);

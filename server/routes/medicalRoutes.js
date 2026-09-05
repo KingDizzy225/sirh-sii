@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const medicalController = require('../controllers/medicalController');
 const verifyToken = require('../middleware/authMiddleware');
-
 const requireRole = require('../middleware/roleMiddleware');
+
 
 // Lecture : filtrée dans le contrôleur (dossier personnel pour un employé,
 // suivi complet pour la RH, l'administration et le service social)

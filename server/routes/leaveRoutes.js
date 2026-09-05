@@ -4,6 +4,7 @@ const leaveController = require('../controllers/leaveController');
 const auditTrail = require('../middleware/auditTrail');
 const upload = require('../middleware/uploadMiddleware');
 const verifyToken = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/roleMiddleware');
 
 // Apply Audit Trail
 router.use(auditTrail);
@@ -14,6 +15,6 @@ router.post('/public', upload.single('attachment'), leaveController.createPublic
 // Leave Routes (Protected)
 router.get('/', verifyToken, leaveController.getAllLeaves);
 router.post('/', verifyToken, upload.single('attachment'), leaveController.createLeave);
-router.put('/:id/status', verifyToken, leaveController.updateLeaveStatus);
+router.put('/:id/status', verifyToken, requireRole(['ADMIN', 'HR', 'MANAGER']),  leaveController.updateLeaveStatus);
 
 module.exports = router;

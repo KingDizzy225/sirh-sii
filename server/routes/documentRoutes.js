@@ -3,10 +3,10 @@ const router = express.Router();
 const documentController = require('../controllers/documentController');
 const aiDocumentController = require('../controllers/aiDocumentController');
 const verifyToken = require('../middleware/authMiddleware');
-const requireRole = require('../middleware/roleMiddleware');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const requireRole = require('../middleware/roleMiddleware');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads/documents');

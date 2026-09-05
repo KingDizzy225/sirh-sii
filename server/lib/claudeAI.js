@@ -77,6 +77,12 @@ function getGenerativeModel(options = {}) {
         options.generationConfig &&
         options.generationConfig.responseMimeType === 'application/json';
 
+    // Consignes stables du module, séparées du contenu de la requête.
+    // Deux bénéfices : le texte saisi par un utilisateur n'atteint jamais le
+    // niveau des instructions, et ce préfixe devient éligible à la mise en
+    // cache dès qu'il est assez volumineux.
+    const systemInstruction = options.systemInstruction || null;
+
     return {
         /**
          * Accepte une chaîne, ou un tableau mêlant texte et pièces jointes,
@@ -103,8 +109,18 @@ function getGenerativeModel(options = {}) {
                 fallbacks: 'default'
             };
 
-            if (wantsJson) {
-                request.system = JSON_INSTRUCTION;
+            const consignes = [systemInstruction, wantsJson ? JSON_INSTRUCTION : null]
+                .filter(Boolean)
+                .join('\n\n');
+
+            if (consignes) {
+                request.system = [{
+                    type: 'text',
+                    text: consignes,
+                    // Sans effet tant que le préfixe reste sous le seuil minimal
+                    // de mise en cache ; utile dès qu'il s'étoffe.
+                    cache_control: { type: 'ephemeral' }
+                }];
             }
 
             const response = await getClient().beta.messages.create(request);

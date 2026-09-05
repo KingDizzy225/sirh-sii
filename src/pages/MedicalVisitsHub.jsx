@@ -10,33 +10,12 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
 
-const MOCK_RECORDS = [
-    {
-        id: 'med-1',
-        employeeId: 'emp-1',
-        employee: { firstName: 'Jean', lastName: 'Kouassi', department: 'Technologie', positionTitle: 'Ingénieur DevOps' },
-        visitType: 'ANNUAL',
-        visitDate: '2026-05-10',
-        doctorName: 'Dr. Kouamé (Médecine du Travail Abidjan)',
-        aptitudeStatus: 'FIT',
-        nextCheckupDate: '2027-05-10',
-        notes: 'Aptitude complète validée sans réserve.'
-    },
-    {
-        id: 'med-2',
-        employeeId: 'emp-2',
-        employee: { firstName: 'Awa', lastName: 'Traoré', department: 'Ressources Humaines', positionTitle: 'Chef de Projet RH' },
-        visitType: 'RECRUITMENT',
-        visitDate: '2026-08-01',
-        doctorName: 'Dr. Bakayoko (Centre Médical Cocody)',
-        aptitudeStatus: 'FIT_WITH_RESTRICTION',
-        nextCheckupDate: '2026-09-15',
-        notes: 'Aptitude validée avec recommandation de siège ergonomique.'
-    }
-];
 
 export function MedicalVisitsHub() {
-    const [records, setRecords] = useState(MOCK_RECORDS);
+    // Aucune donnée par défaut : afficher des dossiers médicaux fictifs en cas
+    // de panne de l'API les rendrait indiscernables de vrais dossiers de santé.
+    const [records, setRecords] = useState([]);
+    const [loadError, setLoadError] = useState(false);
     const [employees, setEmployees] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [notification, setNotification] = useState(null);
@@ -63,12 +42,30 @@ export function MedicalVisitsHub() {
 
     const fetchRecords = async () => {
         try {
-            const res = await api.get('/medical').catch(() => ({ data: null }));
-            if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+            const res = await api.get('/medical');
+            if (res?.data && Array.isArray(res.data)) {
                 setRecords(res.data);
+                setLoadError(false);
+            } else {
+                setRecords([]);
+                setLoadError(true);
             }
-        } catch (e) {}
+        } catch (e) {
+            // Un échec doit se voir : mieux vaut un registre vide signalé
+            // qu'un registre plausible mais faux sur des données de santé.
+            setRecords([]);
+            setLoadError(true);
+        }
     };
+
+    // Visites dont le prochain contrôle tombe dans les 30 jours
+    const aRenouveler = records.filter(r => {
+        if (!r.nextCheckupDate) return false;
+        const echeance = new Date(r.nextCheckupDate);
+        if (isNaN(echeance.getTime())) return false;
+        const jours = (echeance - new Date()) / 86400000;
+        return jours >= 0 && jours <= 30;
+    }).length;
 
     const showNotification = (msg) => {
         setNotification(msg);
@@ -169,7 +166,7 @@ export function MedicalVisitsHub() {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-500 uppercase">À Renouveler (&lt; 30j)</p>
-                            <p className="text-2xl font-bold text-slate-900">1</p>
+                            <p className="text-2xl font-bold text-slate-900">{aRenouveler}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -182,6 +179,21 @@ export function MedicalVisitsHub() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y divide-slate-100">
+                        {loadError && (
+                            <div className="p-8 text-center">
+                                <AlertTriangle size={32} className="mx-auto text-amber-500 mb-3" />
+                                <p className="font-semibold text-slate-800">Registre indisponible</p>
+                                <p className="text-sm text-slate-500 mt-1">
+                                    Les dossiers médicaux n'ont pas pu être chargés. Rien n'est affiché
+                                    tant que les données réelles ne sont pas disponibles.
+                                </p>
+                            </div>
+                        )}
+                        {!loadError && records.length === 0 && (
+                            <div className="p-8 text-center text-slate-500">
+                                <p className="text-sm">Aucune visite médicale enregistrée.</p>
+                            </div>
+                        )}
                         {records.map(rec => (
                             <div key={rec.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
                                 <div className="flex items-start gap-4">
