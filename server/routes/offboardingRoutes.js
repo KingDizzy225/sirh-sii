@@ -13,4 +13,10 @@ router.put('/tasks/:id', requireRole(['Administrator', 'HR']), offboardingContro
 // Projet de décompte final : réservé à la RH et à l'administration
 router.get('/settlement/:employeeId', requireRole(['Administrator', 'HR', 'ADMIN']), offboardingController.getFinalSettlement);
 
+// Entretien de sortie : recueil et synthèse des motifs de départ
+const RH = ['Administrator', 'HR', 'ADMIN'];
+router.get('/exit-interview/options', requireRole(RH), offboardingController.getExitInterviewOptions);
+router.get('/exit-insights', requireRole(RH), offboardingController.getExitInsights);
+router.post('/exit-interview/:employeeId', requireRole(RH), offboardingController.saveExitInterview);
+
 module.exports = router;

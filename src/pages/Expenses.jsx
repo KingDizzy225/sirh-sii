@@ -133,6 +133,17 @@ export function Expenses() {
 
     const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
 
+    /**
+     * Export comptable des frais validés. Le téléchargement étant déclenché par
+     * le navigateur, le jeton passe en paramètre d'URL — la vérification côté
+     * serveur accepte les deux formes.
+     */
+    const exporterComptabilite = () => {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const token = localStorage.getItem('sirh_token');
+        window.open(`${API_URL}/api/expenses/export/accounting?token=${encodeURIComponent(token || '')}`, '_blank');
+    };
+
     return (
         <div className="flex-1 space-y-8 p-8 pt-6 bg-slate-50/50 min-h-screen overflow-y-auto">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -198,7 +209,11 @@ export function Expenses() {
                         <CardTitle className="text-lg font-bold">Liste des demandes</CardTitle>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" className="h-8 gap-2"><Filter size={14}/> Filtrer</Button>
-                            <Button variant="outline" size="sm" className="h-8 gap-2"><Download size={14}/> Export</Button>
+                            {isAdmin && (
+                                <Button variant="outline" size="sm" className="h-8 gap-2" onClick={exporterComptabilite}>
+                                    <Download size={14}/> Export comptable
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </CardHeader>

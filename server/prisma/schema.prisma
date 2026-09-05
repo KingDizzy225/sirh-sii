@@ -77,6 +77,7 @@ model Employee {
   menteeRelations      MentorshipRelation[]    @relation("MenteeEmployee")
   medicalRecords       MedicalRecord[]
   issuedDocuments      IssuedDocument[]
+  exitInterview        ExitInterview?
 }
 
 // ... (existing code)
@@ -438,6 +439,29 @@ model IssuedDocument {
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@map("issued_document")
+}
+
+// Entretien de sortie.
+//
+// Seule occasion d'apprendre pourquoi les gens partent, et matière première du
+// module anti-turnover, qui prédisait jusqu'ici le risque sans jamais
+// confronter ses hypothèses aux motifs réels.
+model ExitInterview {
+  id             String   @id @default(uuid())
+  employeeId     String   @unique @map("employee_id")
+  conductedAt    DateTime @default(now()) @map("conducted_at")
+  conductedBy    String?  @map("conducted_by")
+  departureType  String   @map("departure_type") // 'Démission', 'Licenciement', 'Fin de CDD', 'Rupture période essai', 'Retraite', 'Autre'
+  primaryReason  String   @map("primary_reason") // 'Rémunération', 'Évolution', 'Management', 'Charge de travail', 'Projet personnel', 'Mobilité géographique', 'Autre'
+  wouldRecommend Boolean? @map("would_recommend")
+  satisfaction   Int?     // 1 à 5
+  whatWorked     String?  @map("what_worked")
+  whatToImprove  String?  @map("what_to_improve")
+  comments       String?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("exit_interview")
 }
 
 // Journal des tâches planifiées.

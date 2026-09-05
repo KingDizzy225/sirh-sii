@@ -224,3 +224,101 @@ exports.sendFeedback = async (req, res) => {
         res.status(500).json({ error: "Erreur serveur lors de l'envoi du feedback." });
     }
 };
+
+/**
+ * Campagnes d'entretiens annuels.
+ *
+ * Les entretiens se créaient un par un, alors que la réalité du métier est une
+ * campagne : on lance la revue pour tout l'effectif à une date donnée, on suit
+ * l'avancement, on relance les retardataires. Le champ `cycle` du modèle
+ * anticipait ce fonctionnement sans que rien ne l'exploite.
+ */
+exports.launchCampaign = async (req, res) => {
+    try {
+        const { cycle } = req.body;
+        if (!cycle || !String(cycle).trim()) {
+            return res.status(400).json({ error: "Le libellé du cycle est requis (ex. « Annuel 2026 »)." });
+        }
+
+        const salaries = await prisma.employee.findMany({
+            where: { status: { not: 'TERMINATED' } },
+            select: { id: true, firstName: true, lastName: true, managerId: true }
+        });
+        if (salaries.length === 0) {
+            return res.status(400).json({ error: 'Aucun salarié actif : campagne sans objet.' });
+        }
+
+        // Managers, pour renseigner l'évaluateur attendu
+        const managers = await prisma.employee.findMany({
+            where: { id: { in: salaries.map(s => s.managerId).filter(Boolean) } },
+            select: { id: true, firstName: true, lastName: true }
+        });
+        const nomManager = Object.fromEntries(
+            managers.map(m => [m.id, `${m.firstName} ${m.lastName}`])
+        );
+
+        // Relancer une campagne existante ne doit pas dupliquer les entretiens
+        // ni écraser ceux déjà remplis : on ne crée que ce qui manque.
+        const existants = await prisma.performanceReview.findMany({
+            where: { cycle },
+            select: { employeeId: true }
+        });
+        const dejaCouverts = new Set(existants.map(r => r.employeeId));
+        const aCreer = salaries.filter(s => !dejaCouverts.has(s.id));
+
+        if (aCreer.length > 0) {
+            await prisma.performanceReview.createMany({
+                data: aCreer.map(s => ({
+                    employeeId: s.id,
+                    cycle,
+                    reviewerName: nomManager[s.managerId] || 'À désigner',
+                    rating: 'En attente',
+                    status: 'Brouillon'
+                }))
+            });
+        }
+
+        res.status(201).json({
+            cycle,
+            crees: aCreer.length,
+            dejaPresents: dejaCouverts.size,
+            effectif: salaries.length,
+            message: aCreer.length > 0
+                ? `${aCreer.length} entretien(s) ouvert(s) pour le cycle « ${cycle} ».`
+                : `Tous les entretiens du cycle « ${cycle} » existaient déjà.`
+        });
+    } catch (error) {
+        console.error('Error launching review campaign:', error);
+        res.status(500).json({ error: "Erreur lors du lancement de la campagne." });
+    }
+};
+
+/** Avancement des campagnes, cycle par cycle. */
+exports.getCampaigns = async (req, res) => {
+    try {
+        const reviews = await prisma.performanceReview.findMany({
+            select: { cycle: true, status: true, reviewerName: true }
+        });
+
+        const parCycle = new Map();
+        for (const r of reviews) {
+            if (!parCycle.has(r.cycle)) {
+                parCycle.set(r.cycle, { cycle: r.cycle, total: 0, finalises: 0, enAttente: 0, sansEvaluateur: 0 });
+            }
+            const c = parCycle.get(r.cycle);
+            c.total++;
+            if (r.status === 'Finalisé') c.finalises++;
+            else c.enAttente++;
+            if (!r.reviewerName || r.reviewerName === 'À désigner') c.sansEvaluateur++;
+        }
+
+        const campagnes = [...parCycle.values()]
+            .map(c => ({ ...c, avancement: c.total ? Math.round((c.finalises / c.total) * 100) : 0 }))
+            .sort((a, b) => b.cycle.localeCompare(a.cycle));
+
+        res.json(campagnes);
+    } catch (error) {
+        console.error('Error fetching campaigns:', error);
+        res.status(500).json({ error: "Erreur lors de la lecture des campagnes." });
+    }
+};
