@@ -16,6 +16,7 @@ export function EmployeePortal() {
     const [clockNotice, setClockNotice] = useState(null); // { tone: 'success' | 'warning', text }
     const [accessTrace, setAccessTrace] = useState(null); // null = en cours de chargement
     const [pointagesEnAttente, setPointagesEnAttente] = useState(0);
+    const [salaireDisponible, setSalaireDisponible] = useState(null);
     const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
     const [absenceForm, setAbsenceForm] = useState({
         type: 'Absence injustifiée',
@@ -115,6 +116,17 @@ export function EmployeePortal() {
             }
         };
 
+        const fetchSalaireDisponible = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/advances/earned`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setSalaireDisponible(res.ok ? await res.json() : null);
+            } catch (err) {
+                setSalaireDisponible(null);
+            }
+        };
+
         const fetchAccessTrace = async () => {
             try {
                 const res = await fetch(`${API_URL}/api/audit/my-access`, {
@@ -131,6 +143,7 @@ export function EmployeePortal() {
             fetchLogs();
             fetchMyAdvances();
             fetchAccessTrace();
+            fetchSalaireDisponible();
 
             // Rattrapage des pointages différés : au chargement, puis dès que
             // le navigateur signale le retour de la connexion.
@@ -923,6 +936,37 @@ export function EmployeePortal() {
                                 </button>
                             </div>
                             <form onSubmit={handleAdvanceSubmit} className="p-8 space-y-6 bg-slate-50/50">
+                                {/* Salaire déjà gagné : rattache la demande à ce qui est
+                                    réellement acquis, plutôt qu'à un montant arbitraire. */}
+                                {salaireDisponible && (
+                                    <div className={`rounded-2xl p-4 border ${
+                                        salaireDisponible.eligible
+                                            ? 'bg-emerald-50 border-emerald-100'
+                                            : 'bg-slate-100 border-slate-200'
+                                    }`}>
+                                        {salaireDisponible.eligible ? (
+                                            <>
+                                                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                                                    Déjà gagné et mobilisable
+                                                </p>
+                                                <p className="text-2xl font-black text-emerald-800 mt-1">
+                                                    {salaireDisponible.disponible.toLocaleString('fr-FR')} FCFA
+                                                </p>
+                                                <p className="text-[11px] text-emerald-700/80 mt-1">
+                                                    {salaireDisponible.detail.joursEcoules} jour(s) travaillé(s) sur{' '}
+                                                    {salaireDisponible.detail.joursDansMois}, soit{' '}
+                                                    {salaireDisponible.detail.acquisCeMois.toLocaleString('fr-FR')} FCFA acquis —
+                                                    {' '}{salaireDisponible.detail.partDisponible} % mobilisable
+                                                    {salaireDisponible.detail.dejaEngage > 0 &&
+                                                        `, moins ${salaireDisponible.detail.dejaEngage.toLocaleString('fr-FR')} FCFA déjà engagés`}.
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <p className="text-xs text-slate-600">{salaireDisponible.motif}</p>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-slate-700">Montant demandé (FCFA) *</label>
                                     <div className="relative">

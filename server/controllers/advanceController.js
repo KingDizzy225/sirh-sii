@@ -101,3 +101,80 @@ exports.createPublicAdvance = async (req, res) => {
         res.status(500).json({ error: 'Erreur lors de la soumission.' });
     }
 };
+
+/**
+ * Salaire déjà gagné et disponible à la demande.
+ *
+ * Le module d'avances acceptait n'importe quel montant sans le rapporter à ce
+ * que le salarié avait effectivement gagné. Or les données nécessaires
+ * existent : le salaire de base du dernier bulletin, et les jours écoulés dans
+ * le mois en cours.
+ *
+ * Le calcul est volontairement prudent — il repose sur les jours calendaires
+ * écoulés, plafonnés à une part du salaire, et déduit les avances déjà en
+ * cours. Mieux vaut proposer moins que le montant réellement acquis que
+ * l'inverse : un salarié ne doit pas se retrouver débiteur en fin de mois.
+ */
+const PART_DISPONIBLE = parseFloat(process.env.EARNED_WAGE_SHARE || '0.5');
+
+exports.getEarnedWage = async (req, res) => {
+    try {
+        const employee = await prisma.employee.findUnique({ where: { email: req.user.email } });
+        if (!employee) return res.status(404).json({ error: 'Employé introuvable' });
+
+        const dernierBulletin = await prisma.payroll.findFirst({
+            where: { employeeId: employee.id },
+            orderBy: { period: 'desc' }
+        });
+
+        if (!dernierBulletin || !dernierBulletin.baseSalary) {
+            return res.json({
+                disponible: 0,
+                eligible: false,
+                motif: "Aucun bulletin de paie de référence : le salaire ne peut pas être établi."
+            });
+        }
+
+        const salaireMensuel = dernierBulletin.baseSalary;
+        const maintenant = new Date();
+        const joursDansMois = new Date(maintenant.getFullYear(), maintenant.getMonth() + 1, 0).getDate();
+        const joursEcoules = maintenant.getDate();
+
+        const acquisCeMois = Math.round(salaireMensuel * (joursEcoules / joursDansMois));
+        const plafond = Math.round(acquisCeMois * PART_DISPONIBLE);
+
+        // Avances déjà accordées et non encore déduites d'une paie
+        const enCours = await prisma.salaryAdvance.findMany({
+            where: {
+                employeeId: employee.id,
+                status: { in: ['En attente', 'Approuvé'] },
+                deductedOnPayrollId: null
+            },
+            select: { amount: true }
+        });
+        const dejaEngage = enCours.reduce((s, a) => s + (a.amount || 0), 0);
+        const disponible = Math.max(plafond - dejaEngage, 0);
+
+        res.json({
+            eligible: disponible > 0,
+            disponible,
+            detail: {
+                salaireMensuelReference: Math.round(salaireMensuel),
+                joursEcoules,
+                joursDansMois,
+                acquisCeMois,
+                partDisponible: Math.round(PART_DISPONIBLE * 100),
+                plafond,
+                dejaEngage
+            },
+            motif: disponible > 0
+                ? null
+                : dejaEngage >= plafond
+                    ? 'Le montant disponible est déjà engagé par une ou plusieurs avances en cours.'
+                    : "Aucun montant disponible à ce stade du mois."
+        });
+    } catch (error) {
+        console.error('Error computing earned wage:', error);
+        res.status(500).json({ error: 'Erreur lors du calcul du salaire disponible.' });
+    }
+};
