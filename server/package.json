@@ -11,7 +11,8 @@
     "run-jobs": "node scripts/runJobs.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate:status": "npx prisma migrate status",
-    "preflight": "node scripts/preflight.js"
+    "preflight": "node scripts/preflight.js",
+    "purge-demo": "node scripts/purgeDemoAccounts.js"
   },
   "keywords": [],
   "author": "",
