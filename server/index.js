@@ -214,8 +214,14 @@ server.listen(PORT, async () => {
         await prisma.$connect();
         console.log("✅ Connexion à la base de données PostgreSQL établie avec succès.");
 
-        // Création éventuelle du premier administrateur depuis les variables
-        // d'environnement (sans effet si le compte existe déjà).
+        // Comptes de démonstration annoncés sur l'écran de connexion.
+        // N'écrase jamais un compte existant ; désactivable avec
+        // DISABLE_TEST_ACCOUNTS=true avant une ouverture à de vrais salariés.
+        const { bootstrapTestAccounts } = require('./lib/bootstrapTestAccounts');
+        await bootstrapTestAccounts();
+
+        // Création éventuelle d'un administrateur nominatif depuis les
+        // variables d'environnement (sans effet si le compte existe déjà).
         const { bootstrapAdminFromEnv } = require('./lib/bootstrapAdmin');
         await bootstrapAdminFromEnv();
 
