@@ -1,5 +1,6 @@
 const prisma = require('../prismaClient');
 const { runOnce, dayPeriod } = require('./runOnce');
+const { notifierSalarie } = require('../lib/notify');
 
 /**
  * Célébrations du jour : anniversaires et jubilés d'ancienneté.
@@ -22,12 +23,6 @@ const memeJourEtMois = (date, reference) =>
 async function creerAnnonce(titre, corps) {
     await prisma.announcement.create({
         data: { title: titre, body: corps, category: 'Félicitations', author: 'Équipe RH' }
-    });
-}
-
-async function notifier(employeeId, message) {
-    await prisma.notification.create({
-        data: { employeeId, message, type: 'Succès', link: '/kudos' }
     });
 }
 
@@ -60,7 +55,13 @@ async function celebrerLeJour(referenceDate = new Date()) {
                     `Toute l'équipe souhaite un très bel anniversaire à ${nom}` +
                     (s.positionTitle ? `, ${s.positionTitle}` : '') + '. 🎉'
                 );
-                await notifier(s.id, `Toute l'équipe vous souhaite un joyeux anniversaire, ${s.firstName} ! 🎂`);
+                await notifierSalarie({
+                    employeeId: s.id,
+                    titre: 'Joyeux anniversaire !',
+                    message: `Toute l'équipe vous souhaite un joyeux anniversaire, ${s.firstName} ! 🎂`,
+                    type: 'Succès',
+                    link: '/kudos'
+                });
                 anniversaires++;
             }
 
@@ -77,11 +78,14 @@ async function celebrerLeJour(referenceDate = new Date()) {
                             `l'entreprise. Merci pour ces années d'engagement. 🙌`
                         );
                         await attribuerPoints(s.id, points, 'Ancienneté');
-                        await notifier(
-                            s.id,
-                            `Félicitations pour vos ${annees} ${annees > 1 ? 'ans' : 'an'} dans l'entreprise ! ` +
-                            `+${points} points vous sont attribués. 🎉`
-                        );
+                        await notifierSalarie({
+                            employeeId: s.id,
+                            titre: `Félicitations pour vos ${annees} ${annees > 1 ? 'ans' : 'an'} !`,
+                            message: `Félicitations pour vos ${annees} ${annees > 1 ? 'ans' : 'an'} dans l'entreprise ! ` +
+                                     `+${points} points vous sont attribués. 🎉`,
+                            type: 'Succès',
+                            link: '/kudos'
+                        });
                         jubiles++;
                     }
                 }

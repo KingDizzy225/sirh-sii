@@ -1,31 +1,8 @@
 const prisma = require('../prismaClient');
 const { runOnce, dayPeriod } = require('./runOnce');
+const { notifierRH } = require('../lib/notify');
 
 const DAYS_AHEAD = parseInt(process.env.ALERT_DAYS_AHEAD || '30', 10);
-
-/** Notifie la RH et l'administration (une notification par destinataire). */
-async function notifyHR(message, type, link) {
-    const recipients = await prisma.employee.findMany({
-        where: {
-            status: { not: 'TERMINATED' },
-            role: { in: ['HR', 'Administrator'] }
-        },
-        select: { id: true }
-    });
-
-    for (const recipient of recipients) {
-        // Ne pas réémettre une alerte identique déjà non lue
-        const existing = await prisma.notification.findFirst({
-            where: { employeeId: recipient.id, message, isRead: false }
-        });
-        if (existing) continue;
-
-        await prisma.notification.create({
-            data: { employeeId: recipient.id, message, type, link }
-        });
-    }
-    return recipients.length;
-}
 
 const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR');
 

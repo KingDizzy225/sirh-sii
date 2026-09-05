@@ -1,24 +1,8 @@
 const prisma = require('../prismaClient');
 const { runOnce, dayPeriod } = require('./runOnce');
+const { notifierRH } = require('../lib/notify');
 
 const JOURS_ATTENTE = parseInt(process.env.REMINDER_DAYS || '3', 10);
-
-/** Notifie la RH et l'administration, sans doublon d'alerte non lue. */
-async function notifierRH(message, type, lien) {
-    const destinataires = await prisma.employee.findMany({
-        where: { status: { not: 'TERMINATED' }, role: { in: ['HR', 'Administrator'] } },
-        select: { id: true }
-    });
-    for (const d of destinataires) {
-        const existe = await prisma.notification.findFirst({
-            where: { employeeId: d.id, message, isRead: false }
-        });
-        if (existe) continue;
-        await prisma.notification.create({
-            data: { employeeId: d.id, message, type, link: lien }
-        });
-    }
-}
 
 /**
  * Relance les demandes laissées sans réponse.
@@ -74,4 +58,4 @@ async function relancerDemandesEnAttente(referenceDate = new Date()) {
     });
 }
 
-module.exports = { relancerDemandesEnAttente, notifierRH };
+module.exports = { relancerDemandesEnAttente };

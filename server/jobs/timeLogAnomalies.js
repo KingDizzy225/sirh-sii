@@ -1,6 +1,6 @@
 const prisma = require('../prismaClient');
 const { runOnce, dayPeriod } = require('./runOnce');
-const { notifierRH } = require('./pendingReminders');
+const { notifierRH } = require('../lib/notify');
 
 /**
  * Anomalies de pointage de la veille.
