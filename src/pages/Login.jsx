@@ -209,7 +209,7 @@ export function Login() {
                                     <Input
                                         type="email"
                                         required
-                                        placeholder="admin@sirh.com"
+                                        placeholder="votre.email@entreprise.com"
                                         className="pl-10 bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-600"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -238,11 +238,6 @@ export function Login() {
                                 {isSubmitting ? <><Loader2 size={18} className="mr-2 animate-spin" /> Connexion...</> : 'Se Connecter'}
                             </Button>
                         </form>
-
-                        <div className="text-center text-xs text-slate-600 border-t border-slate-800 pt-4 space-y-1">
-                            <p>Comptes test : <span className="text-slate-400 font-mono">admin@</span>, <span className="text-slate-400 font-mono">drh@</span>, <span className="text-slate-400 font-mono">rh1@sirh.com</span></p>
-                            <p>Mot de passe : <span className="text-slate-400 font-mono">SIIRH</span></p>
-                        </div>
 
                         {demoMode && (
                             <button

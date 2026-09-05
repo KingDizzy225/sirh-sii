@@ -12,7 +12,7 @@ const getDomainsForRole = (role) => {
 };
 
 export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
-    const { user, logout, token, isDemoSession } = useAuth();
+    const { user, logout, token } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
@@ -57,12 +57,6 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
     const roleDomains = getDomainsForRole(user.role);
 
     return (
-        <>
-        {isDemoSession && (
-            <div className="w-full bg-amber-500 text-amber-950 text-center text-xs font-bold py-1.5 tracking-wide">
-                MODE DÉMONSTRATION — session sans authentification, les données affichées ne sont pas réelles
-            </div>
-        )}
         <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between bg-slate-900 border-b border-slate-800 px-4 md:px-6 shadow-md text-white">
             <div className="flex items-center gap-6 h-full">
                 <button onClick={onMenuClick} className="md:hidden text-slate-300 hover:text-white p-1">
@@ -206,6 +200,5 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
                 </div>
             </div>
         </header>
-        </>
     );
 }
