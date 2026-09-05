@@ -33,7 +33,13 @@ const getClient = () => {
                 "Définissez-la dans les variables d'environnement du serveur."
             );
         }
-        client = new Anthropic();
+        // Une clé d'organisation non rattachée à un espace de travail est
+        // refusée par l'API tant que l'espace n'est pas précisé. Renseigner
+        // ANTHROPIC_WORKSPACE_ID évite d'avoir à régénérer une clé.
+        const workspace = (process.env.ANTHROPIC_WORKSPACE_ID || '').trim();
+        client = new Anthropic(
+            workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {}
+        );
     }
     return client;
 };
@@ -79,6 +85,11 @@ function motifLisible(erreur) {
     const statut = erreur?.status;
     if (statut === 401) return "Clé Anthropic refusée : ANTHROPIC_API_KEY est absente, expirée ou révoquée.";
     if (statut === 403) return "Clé Anthropic sans droit d'accès à ce modèle.";
+    if (/anthropic-workspace-id|not scoped to a workspace/i.test(erreur?.message || '')) {
+        return "Clé Anthropic non rattachée à un espace de travail. Renseigner " +
+               "ANTHROPIC_WORKSPACE_ID sur le serveur, ou utiliser une clé créée " +
+               "dans un espace de travail.";
+    }
     if (statut === 400 && /model/i.test(erreur.message || '')) {
         return `Modèle « ${MODEL} » refusé par l'API. Vérifier la variable ANTHROPIC_MODEL.`;
     }

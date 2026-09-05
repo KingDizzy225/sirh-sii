@@ -39,7 +39,17 @@ async function verifier() {
 
     if (!process.env.ANTHROPIC_API_KEY) {
         avertir('ANTHROPIC_API_KEY', 'Absente : les fonctions IA renverront une erreur explicite.');
-    } else ok('ANTHROPIC_API_KEY', 'Définie.');
+    } else {
+        ok('ANTHROPIC_API_KEY', 'Définie.');
+        // Une clé d'organisation sans espace de travail est acceptée à la
+        // configuration mais refusée à chaque appel : le contrôle ne peut pas
+        // le deviner, il rappelle donc la variable qui règle le cas.
+        if (!process.env.ANTHROPIC_WORKSPACE_ID) {
+            avertir('ANTHROPIC_WORKSPACE_ID',
+                "Non définie. Nécessaire si la clé n'est pas rattachée à un espace de travail — " +
+                'vérifier avec GET /api/jobs/ia.');
+        } else ok('ANTHROPIC_WORKSPACE_ID', 'Définie.');
+    }
 
     if (process.env.SMTP_HOST) ok('SMTP', `Configuré (${process.env.SMTP_HOST}).`);
     else avertir('SMTP', "Non configuré : les emails partent vers une boîte de test, pas vers les salariés.");
