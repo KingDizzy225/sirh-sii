@@ -14,7 +14,8 @@
     "preflight": "node scripts/preflight.js",
     "purge-demo": "node scripts/purgeDemoAccounts.js",
     "repair-payrolls": "node scripts/repairPayrolls.js",
-    "test:paie": "node tests/paie.test.js"
+    "test:paie": "node tests/paie.test.js",
+    "test:ecritures": "node tests/ecritures.test.js"
   },
   "keywords": [],
   "author": "",
