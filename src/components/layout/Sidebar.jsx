@@ -53,6 +53,7 @@ const getAllNavItems = (t) => [
     { name: 'Talents & GPEC', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Automatisations', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: "Parcours d'intégration", path: '/workflow-builder', icon: Workflow, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Règles internes', path: '/policy-rules', icon: BookOpen, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
     
     // ANALYTIQUE -> INTELLIGENCE RH

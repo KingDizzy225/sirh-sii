@@ -216,6 +216,11 @@ app.use('/api/hse', hseRoutes);
 const taskTemplateRoutes = require('./routes/taskTemplateRoutes');
 app.use('/api/task-templates', taskTemplateRoutes);
 
+// Règles internes de l'entreprise : elles fondent les réponses de l'assistant
+// RH, dont le contexte était jusqu'ici écrit en dur dans son prompt.
+const policyRoutes = require('./routes/policyRoutes');
+app.use('/api/policies', policyRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

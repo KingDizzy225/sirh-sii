@@ -1033,6 +1033,32 @@ model WhatsappLog {
 // 34. HUB SANTÉ ET VISITES MÉDICALES (OPTION B)
 // ----------------------------------------------------
 
+/// Règles internes de l'entreprise, sur lesquelles l'assistant RH s'appuie.
+///
+/// L'assistant portait jusqu'ici ces règles en dur dans son prompt — « 8h-17h,
+/// 30 jours de congés, mutuelle 80 % » — et répondait donc la même chose à
+/// toutes les entreprises, quelles que soient leurs propres textes. Une réponse
+/// plausible mais fausse sur un droit à congés est pire qu'une absence de
+/// réponse : le salarié l'applique.
+///
+/// Chaque règle porte sa source pour que l'assistant puisse la citer, et que
+/// quiconque lit une réponse puisse remonter au texte qui la fonde.
+model PolicyRule {
+  id        String   @id @default(uuid())
+  title     String
+  /// 'Congés', 'Horaires', 'Rémunération', 'Discipline', 'Santé', 'Autre'
+  category  String   @default("Autre")
+  content   String   @db.Text
+  /// Référence du texte d'origine — « Règlement intérieur, art. 12 ».
+  source    String?
+  active    Boolean  @default(true)
+  updatedBy String?  @map("updated_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([active, category])
+}
+
 /// Modèle de parcours d'intégration ou de départ, éditable par la RH.
 ///
 /// Ces parcours vivaient jusqu'ici dans `data/onboardingTemplates.js` : les

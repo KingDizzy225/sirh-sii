@@ -321,6 +321,56 @@ async function main() {
 
     await prisma.taskTemplate.deleteMany({ where: { name: { in: ['Parcours court', 'X'] } } });
 
+    console.log('\n=== Règles internes ===');
+    const polCtrl = ctrl('policyController');
+
+    // L'assistant RH portait ses règles en dur — « 30 jours de congés » — et
+    // les servait à toute entreprise. Ce qu'on vérifie ici, c'est qu'il tire
+    // désormais sa matière de la base, et rien d'autre.
+    const sansRegle = await polCtrl.reglesPourAssistant();
+    const videAuDepart = Array.isArray(sansRegle) && sansRegle.length === 0;
+    console.log(`  ${videAuDepart ? '✅' : '❌'} sans règle enregistrée, l'assistant est sans source`);
+    if (!videAuDepart) echecs++;
+
+    let regle = null;
+    await attendu('création d\'une règle', 201, async r => {
+        await polCtrl.createPolicy({
+            body: {
+                titre: 'Droit à congés annuels', categorie: 'Congés',
+                contenu: 'Tout salarié acquiert 2,2 jours ouvrables par mois de service effectif.',
+                source: 'Convention collective, art. 25.1'
+            }, user
+        }, r);
+        regle = r.corps;
+    });
+
+    const avecRegle = await polCtrl.reglesPourAssistant();
+    const alimente = avecRegle.length === 1 && avecRegle[0].source.includes('25.1');
+    console.log(`  ${alimente ? '✅' : '❌'} la règle alimente l'assistant avec sa source`);
+    if (!alimente) echecs++;
+
+    await attendu('désactivation', 200, async r => {
+        await polCtrl.updatePolicy({ params: { id: regle.id }, body: { active: false }, user }, r);
+        if (r.statut === null) r.statut = 200;
+    });
+    const apresDesactivation = await polCtrl.reglesPourAssistant();
+    const retiree = apresDesactivation.length === 0;
+    console.log(`  ${retiree ? '✅' : '❌'} une règle inactive n'alimente plus l'assistant`);
+    if (!retiree) echecs++;
+
+    await attendu('règle sans titre refusée', 400, r => polCtrl.createPolicy(
+        { body: { titre: '', contenu: 'x' }, user }, r));
+    await attendu('règle sans contenu refusée', 400, r => polCtrl.createPolicy(
+        { body: { titre: 'X', contenu: '' }, user }, r));
+    await attendu('catégorie inconnue refusée', 400, r => polCtrl.createPolicy(
+        { body: { titre: 'X', contenu: 'y', categorie: 'Bidon' }, user }, r));
+    await attendu('règle inexistante en 404', 404, r => polCtrl.updatePolicy(
+        { params: { id: '00000000-0000-0000-0000-000000000000' }, body: {}, user }, r));
+    await attendu('import sans contenu refusé', 400, r => polCtrl.proposerDepuisDocument(
+        { body: {}, user }, r));
+
+    await prisma.policyRule.deleteMany({});
+
     console.log('\n=== Requêtes incomplètes : 400 attendu, pas 500 ===');
     // Une requête malformée relève de l'appelant. Répondre 500 fait porter la
     // faute au serveur et masque la vraie cause à qui intègre l'API.
