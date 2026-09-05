@@ -137,24 +137,76 @@ export function PayslipViewer() {
                                     <th className="py-3 text-right font-bold text-slate-600">Montant</th>
                                 </tr>
                             </thead>
+                            {/* Le détail est affiché ligne à ligne : la version
+                                précédente n'indiquait qu'un total de cotisations,
+                                et le net affiché ne correspondait pas à la
+                                soustraction que le lecteur pouvait faire lui-même. */}
                             <tbody className="divide-y divide-slate-100">
                                 <tr>
-                                    <td className="py-4 font-medium text-slate-900">Salaire Brut de Base</td>
-                                    <td className="py-4 text-right text-slate-500">-</td>
-                                    <td className="py-4 text-right font-medium">{formatMoney(payslip.baseSalary)}</td>
+                                    <td className="py-3 font-medium text-slate-900">Salaire de base</td>
+                                    <td className="py-3 text-right text-slate-500">-</td>
+                                    <td className="py-3 text-right font-medium">{formatMoney(payslip.baseSalary)}</td>
                                 </tr>
-                                {payslip.bonus > 0 && (
+                                {payslip.overtimeAmount > 0 && (
                                     <tr>
-                                        <td className="py-4 font-medium text-emerald-600">Prime & Bonus</td>
-                                        <td className="py-4 text-right text-slate-500">-</td>
-                                        <td className="py-4 text-right text-emerald-600">+{formatMoney(payslip.bonus)}</td>
+                                        <td className="py-3 font-medium text-emerald-600">Heures supplémentaires</td>
+                                        <td className="py-3 text-right text-slate-500">{payslip.overtimeHours} h</td>
+                                        <td className="py-3 text-right text-emerald-600">+{formatMoney(payslip.overtimeAmount)}</td>
                                     </tr>
                                 )}
-                                <tr>
-                                    <td className="py-4 font-medium text-rose-600">Cotisations Salariales (CNPS/CMU/ITS)</td>
-                                    <td className="py-4 text-right text-slate-500">-</td>
-                                    <td className="py-4 text-right text-rose-600">-{formatMoney(payslip.employeeContributions)}</td>
-                                </tr>
+                                {payslip.bonus > 0 && (
+                                    <tr>
+                                        <td className="py-3 font-medium text-emerald-600">Prime &amp; Bonus</td>
+                                        <td className="py-3 text-right text-slate-500">-</td>
+                                        <td className="py-3 text-right text-emerald-600">+{formatMoney(payslip.bonus)}</td>
+                                    </tr>
+                                )}
+                                {payslip.leaveDeduction > 0 && (
+                                    <tr>
+                                        <td className="py-3 font-medium text-rose-600">Absences non rémunérées</td>
+                                        <td className="py-3 text-right text-slate-500">{payslip.leaveDays} j</td>
+                                        <td className="py-3 text-right text-rose-600">-{formatMoney(payslip.leaveDeduction)}</td>
+                                    </tr>
+                                )}
+                                {payslip.grossSalary != null && (
+                                    <tr className="bg-slate-50">
+                                        <td className="py-3 font-bold text-slate-900">Salaire brut</td>
+                                        <td className="py-3 text-right text-slate-500">-</td>
+                                        <td className="py-3 text-right font-bold">{formatMoney(payslip.grossSalary)}</td>
+                                    </tr>
+                                )}
+                                {payslip.cnpsEmployee != null ? (
+                                    <>
+                                        <tr>
+                                            <td className="py-3 font-medium text-rose-600">CNPS — Retraite (part salariale)</td>
+                                            <td className="py-3 text-right text-slate-500">{formatMoney(payslip.grossSalary)}</td>
+                                            <td className="py-3 text-right text-rose-600">-{formatMoney(payslip.cnpsEmployee)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="py-3 font-medium text-rose-600">CMU — Couverture Maladie</td>
+                                            <td className="py-3 text-right text-slate-500">Forfait</td>
+                                            <td className="py-3 text-right text-rose-600">-{formatMoney(payslip.cmu)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="py-3 font-medium text-rose-600">ITS — Impôt sur Traitement et Salaires</td>
+                                            <td className="py-3 text-right text-slate-500">{formatMoney(payslip.taxableIncome)}</td>
+                                            <td className="py-3 text-right text-rose-600">-{formatMoney(payslip.its)}</td>
+                                        </tr>
+                                    </>
+                                ) : (
+                                    <tr>
+                                        <td className="py-3 font-medium text-rose-600">Cotisations salariales (CNPS/CMU/ITS)</td>
+                                        <td className="py-3 text-right text-slate-500">-</td>
+                                        <td className="py-3 text-right text-rose-600">-{formatMoney(payslip.employeeContributions)}</td>
+                                    </tr>
+                                )}
+                                {payslip.deductions > 0 && (
+                                    <tr>
+                                        <td className="py-3 font-medium text-rose-600">Autres retenues</td>
+                                        <td className="py-3 text-right text-slate-500">-</td>
+                                        <td className="py-3 text-right text-rose-600">-{formatMoney(payslip.deductions)}</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
 

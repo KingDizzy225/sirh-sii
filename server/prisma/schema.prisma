@@ -114,6 +114,18 @@ model Payroll {
   employerContributions Float     @default(0) @map("employer_contributions")
   employeeContributions Float     @default(0) @map("employee_contributions")
   netSalary             Float     @default(0) @map("net_salary")
+
+  // Décomposition du bulletin. Ces montants étaient recalculés à la volée par
+  // chaque consommateur, avec des formules divergentes ; les enregistrer fige
+  // le bulletin tel qu'il a été remis au salarié et rend les déclarations
+  // sociales vérifiables. Nuls sur les fiches antérieures à leur ajout.
+  grossSalary    Float? @map("gross_salary")
+  overtimeAmount Float? @map("overtime_amount")
+  leaveDeduction Float? @map("leave_deduction")
+  cnpsEmployee   Float? @map("cnps_employee")
+  cmu            Float?
+  taxableIncome  Float? @map("taxable_income")
+  its            Float?
   pdfPath               String?   @map("pdf_path")
   signature             String? // Base64 signature
   signedAt              DateTime? @map("signed_at")

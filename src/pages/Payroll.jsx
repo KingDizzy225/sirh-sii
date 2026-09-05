@@ -248,19 +248,29 @@ export function Payroll() {
         }
         
         let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "ID Employé;Nom;Prénom;Période;Base(FCFA);Heures Sup;Primes;Retenues;Net Versé(FCFA)\n";
-        
+        csvContent += "ID Employé;Nom;Prénom;Période;Base(FCFA);Heures Sup(h);Montant H.Sup(FCFA);Primes;Absences(FCFA);Brut(FCFA);CNPS Salarié;CMU;ITS;Retenues diverses;Net Versé(FCFA);Charge Patronale(FCFA);Coût Employeur(FCFA)\n";
+
         allPayrolls.forEach((pay) => {
+            const brut = pay.grossSalary ?? 0;
+            const patronal = pay.employerContributions ?? 0;
             const row = [
                 pay.employeeId || '',
                 pay.employee?.lastName || '',
                 pay.employee?.firstName || '',
                 pay.period,
-                pay.baseSalary || 0,
+                Math.round(pay.baseSalary || 0),
                 pay.overtimeHours || 0,
-                pay.bonus || 0,
-                pay.deductions || 0,
-                pay.netSalary || 0
+                Math.round(pay.overtimeAmount ?? 0),
+                Math.round(pay.bonus || 0),
+                Math.round(pay.leaveDeduction ?? 0),
+                Math.round(brut),
+                Math.round(pay.cnpsEmployee ?? 0),
+                Math.round(pay.cmu ?? 0),
+                Math.round(pay.its ?? 0),
+                Math.round(pay.deductions || 0),
+                Math.round(pay.netSalary || 0),
+                Math.round(patronal),
+                Math.round(brut + patronal)
             ].join(";");
             csvContent += row + "\n";
         });
@@ -300,12 +310,16 @@ export function Payroll() {
             return;
         }
         
+        // Les montants déclarés sont ceux du bulletin enregistré, pas un
+        // recalcul local : cet export appliquait 5,1 % et 10,9 % au salaire de
+        // base quand le serveur retenait 6,3 % sur le brut, si bien que la
+        // déclaration ne correspondait à aucun bulletin remis.
+        const incompletes = allPayrolls.filter(p => p.grossSalary == null).length;
+
         let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Num. CNPS (ou ID);Nom;Prénom;Date Embauche;Base Mensuelle(FCFA);Jours Travaillés;Retenue CNPS(FCFA);Part Patronale(FCFA)\n";
-        
+        csvContent += "Num. CNPS (ou ID);Nom;Prénom;Date Embauche;Brut Mensuel(FCFA);Retenue CNPS(FCFA);Part Patronale(FCFA);Assiette ITS(FCFA);ITS(FCFA)\n";
+
         allPayrolls.forEach((pay) => {
-            const cnpsEmploye = Math.round((pay.baseSalary || 0) * 0.051);
-            const cnpsPatron = Math.round((pay.baseSalary || 0) * 0.109);
             const hireDate = pay.employee?.hireDate ? new Date(pay.employee.hireDate).toLocaleDateString('fr-FR') : 'N/A';
 
             const row = [
@@ -313,10 +327,11 @@ export function Payroll() {
                 pay.employee?.lastName || '',
                 pay.employee?.firstName || '',
                 hireDate,
-                pay.baseSalary || 0,
-                30,
-                cnpsEmploye,
-                cnpsPatron
+                Math.round(pay.grossSalary ?? pay.baseSalary ?? 0),
+                Math.round(pay.cnpsEmployee ?? 0),
+                Math.round(pay.employerContributions ?? 0),
+                Math.round(pay.taxableIncome ?? 0),
+                Math.round(pay.its ?? 0)
             ].join(";");
             csvContent += row + "\n";
         });
@@ -328,7 +343,13 @@ export function Payroll() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showNotification("Export Légal DISA (CNPS) Réussi !");
+        // Une déclaration incomplète est pire qu'une déclaration absente : elle
+        // part chez l'organisme sans que personne ne sache qu'il y manque des
+        // lignes. Les fiches antérieures au détail des cotisations sortent avec
+        // des montants à zéro, il faut le dire.
+        showNotification(incompletes > 0
+            ? `Export DISA généré — ${incompletes} fiche(s) sans détail des cotisations, à relancer avant dépôt.`
+            : "Export Légal DISA (CNPS) Réussi !");
     };
 
     // Campaign Handlers
@@ -442,7 +463,7 @@ export function Payroll() {
                                 <TableHeader>
                                     <TableRow className="bg-slate-50/30">
                                         <TableHead>Période</TableHead>
-                                        <TableHead>Salaire Base (Brut)</TableHead>
+                                        <TableHead>Salaire Brut</TableHead>
                                         <TableHead>Net Versé</TableHead>
                                         <TableHead>Statut</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
@@ -452,7 +473,7 @@ export function Payroll() {
                                     {myPayslips.map(pay => (
                                         <TableRow key={pay.id} className="hover:bg-slate-50/30 font-semibold">
                                             <td className="p-4 capitalize text-slate-900 font-bold">{getMonthName(pay.period)}</td>
-                                            <td className="p-4 text-slate-500">{formatCurrency(pay.baseSalary)}</td>
+                                            <td className="p-4 text-slate-500">{formatCurrency(pay.grossSalary ?? pay.baseSalary)}</td>
                                             <td className="p-4 text-slate-900 font-black">{formatCurrency(pay.netSalary)}</td>
                                             <td className="p-4">
                                                 <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold">Disponible</Badge>
@@ -613,7 +634,7 @@ export function Payroll() {
                                             <TableRow key={pay.id} className="hover:bg-slate-50/30 font-semibold">
                                                 <td className="p-4 font-bold text-slate-900">{pay.employee?.firstName} {pay.employee?.lastName}</td>
                                                 <td className="p-4 capitalize text-slate-500">{getMonthName(pay.period)}</td>
-                                                <td className="p-4 text-slate-700">{formatCurrency(pay.baseSalary + pay.bonus)}</td>
+                                                <td className="p-4 text-slate-700">{formatCurrency(pay.grossSalary ?? (pay.baseSalary + pay.bonus))}</td>
                                                 <td className="p-4 text-slate-900 font-black">{formatCurrency(pay.netSalary)}</td>
                                                 <td className="p-4 text-right">
                                                     <Button 

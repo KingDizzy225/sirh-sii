@@ -7,6 +7,7 @@ const { hasRole } = require('../middleware/roleMiddleware');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
+const { calculerPaie, decomposer, intervalleMois, TAUX } = require('../lib/paie');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -23,14 +24,9 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Helper: Calcul de l'ITS (Impôt sur Traitement et Salaires) Côte d'Ivoire
-// Barème simplifié sur le salaire net imposable (après déduction CNPS, CMU)
-const calculateITS = (netImposable) => {
-    if (netImposable <= 75000) return 0;
-    if (netImposable <= 240000) return (netImposable - 75000) * 0.16;
-    if (netImposable <= 800000) return 26400 + (netImposable - 240000) * 0.21;
-    return 144000 + (netImposable - 800000) * 0.24;
-};
+// Le barème ITS et les taux de cotisation vivent désormais dans lib/paie.js :
+// ils étaient dupliqués ici, dans l'export comptable et dans le frontend, avec
+// des valeurs qui avaient fini par diverger.
 
 const formatFCFA = (amount) => {
     return new Intl.NumberFormat('fr-CI').format(Math.round(amount)) + ' FCFA';
@@ -62,7 +58,13 @@ const getOrCreatePayslipToken = async (payroll, employee) => {
     return cree.token;
 };
 
-const generatePayslipPDF = async (payroll, employee) => {
+// `signatureOverride` est un paramètre explicite. Il était auparavant lu dans
+// `arguments[2]`, ce qui ne pouvait pas fonctionner : une fonction fléchée n'a
+// pas de `arguments` propre et remontait à celui du module CommonJS, dont le
+// troisième élément est l'objet `module`. Toujours défini, jamais une chaîne :
+// la branche de signature s'exécutait sur chaque bulletin et échouait à chaque
+// fois, si bien qu'aucun bulletin signé n'a jamais porté sa signature.
+const generatePayslipPDF = async (payroll, employee, signatureOverride) => {
     // Le QR est préparé avant le rendu : le corps du PDF est synchrone.
     let qrBuffer = null;
     let reference = null;
@@ -86,15 +88,17 @@ const generatePayslipPDF = async (payroll, employee) => {
             const writeStream = fs.createWriteStream(filePath);
             doc.pipe(writeStream);
 
-            const gross = payroll.grossSalary || payroll.baseSalary;
-
-            // --- Cotisations Ivoiriennes ---
-            const cnps = gross * 0.063;          // CNPS Retraite salarié : 6.3%
-            const cmu = 1000;                     // CMU : forfait 1000 FCFA/mois
-            const netImposable = gross - cnps - cmu;
-            const its = calculateITS(netImposable); // ITS : barème progressif CI
-            const totalDeductions = cnps + cmu + its + (payroll.deductions || 0);
-            const net = gross - totalDeductions;
+            // Le bulletin est lu, non recalculé : régénérer le PDF d'une fiche
+            // ancienne ne doit pas produire des montants différents de ceux du
+            // document déjà remis au salarié.
+            const b = decomposer(payroll);
+            const gross = b.grossSalary;
+            const cnps = b.cnpsEmployee;
+            const cmu = b.cmu;
+            const netImposable = b.taxableIncome;
+            const its = b.its;
+            const totalDeductions = b.employeeContributions + (b.deductions || 0);
+            const net = b.netSalary;
 
             // ---- LOGO ----
             const logoPath = path.join(__dirname, '../../public/logo.png');
@@ -162,18 +166,31 @@ const generatePayslipPDF = async (payroll, employee) => {
 
             // Gains
             doc.fillColor('#15803d').font('Helvetica-Bold').fontSize(8).text('▸ GAINS', 50, y); y += 14;
-            addRow('Salaire Brut de Base', '-', '-', formatFCFA(payroll.baseSalary));
-            if ((payroll.bonus || 0) > 0) addRow('Prime / Bonus', '-', '-', formatFCFA(payroll.bonus));
+            addRow('Salaire Brut de Base', '-', '-', formatFCFA(b.baseSalary));
+            // Les heures supplémentaires et les absences composaient le brut
+            // sans jamais apparaître : le total ne se vérifiait pas à l'œil.
+            if ((b.overtimeAmount || 0) > 0) {
+                addRow('Heures supplémentaires', `${b.overtimeHours} h`,
+                       `+ ${Math.round((TAUX.majorationHeureSup - 1) * 100)} %`,
+                       formatFCFA(b.overtimeAmount));
+            }
+            if ((b.bonus || 0) > 0) addRow('Prime / Bonus', '-', '-', formatFCFA(b.bonus));
+            if ((b.leaveDeduction || 0) > 0) {
+                addRow('Absences non rémunérées', `${b.leaveDays} j`, '-',
+                       '- ' + formatFCFA(b.leaveDeduction));
+            }
             doc.moveTo(50, y).lineTo(545, y).strokeColor('#d1d5db').stroke(); y += 8;
             addRow('SALAIRE BRUT', '-', '-', formatFCFA(gross), true);
             y += 6;
 
             // Retenues
             doc.fillColor('#b91c1c').font('Helvetica-Bold').fontSize(8).text('▸ COTISATIONS ET RETENUES SALARIALES', 50, y); y += 14;
-            addRow('CNPS – Retraite (Salarié)', formatFCFA(gross), '6,30 %', '- ' + formatFCFA(cnps));
+            addRow('CNPS – Retraite (Salarié)', formatFCFA(gross),
+                   (TAUX.cnpsSalarie * 100).toFixed(2).replace('.', ',') + ' %',
+                   '- ' + formatFCFA(cnps));
             addRow('CMU – Couverture Maladie', 'Forfait', '—', '- ' + formatFCFA(cmu));
             addRow('ITS – Impôt sur Traitement et Salaire', formatFCFA(netImposable), 'Barème CI', '- ' + formatFCFA(its));
-            if ((payroll.deductions || 0) > 0) addRow('Autres Retenues', '-', '-', '- ' + formatFCFA(payroll.deductions));
+            if ((b.deductions || 0) > 0) addRow('Autres Retenues', '-', '-', '- ' + formatFCFA(b.deductions));
             
             doc.moveTo(50, y).lineTo(545, y).strokeColor('#d1d5db').stroke(); y += 8;
 
@@ -190,8 +207,8 @@ const generatePayslipPDF = async (payroll, employee) => {
                .text('Ce bulletin de paie doit être conservé sans limitation de durée.', { align: 'center' });
             
             // Render Signature
-            const signatureData = arguments[2] || payroll.signature;
-            if (signatureData) {
+            const signatureData = signatureOverride || payroll.signature;
+            if (typeof signatureData === 'string' && signatureData.length > 0) {
                 try {
                     const base64Data = signatureData.replace(/^data:image\/(png|jpeg);base64,/, "");
                     const sigBuffer = Buffer.from(base64Data, 'base64');
@@ -269,26 +286,19 @@ const runPayroll = async (req, res) => {
             const employee = employeeMap[p.employeeId];
             if (!employee) continue;
 
-            const base = parseFloat(p.baseSalary) || 0;
-            const overtime = parseFloat(p.overtimeHours) || 0;
-            const leaves = parseFloat(p.leaveDays) || 0;
-            const bonus = parseFloat(p.bonus) || 0;
-            const additionalDeductions = parseFloat(p.deductions) || 0;
+            // Un seul calcul, partagé avec le bulletin PDF, l'export comptable
+            // et les déclarations sociales. Le net retranchait auparavant la
+            // part patronale au lieu des retenues du salarié : sur un brut de
+            // 500 000 FCFA, la base enregistrait 425 000 quand le bulletin
+            // remis au salarié affichait 393 325.
+            const bulletin = calculerPaie({
+                baseSalary: p.baseSalary,
+                bonus: p.bonus,
+                overtimeHours: p.overtimeHours,
+                leaveDays: p.leaveDays,
+                deductions: p.deductions
+            });
 
-            // Calculs ivoiriens
-            const overtimeVal = (base / 173.33) * 1.15 * overtime;  // 173.33h/mois standard CI
-            const leaveDeduction = (base / 26) * leaves;             // 26j ouvrés en CI
-            const gross = base + overtimeVal - leaveDeduction + bonus;
-
-            // Cotisations salariales CI
-            const cnps = gross * 0.063;                              // CNPS Retraite : 6.3%
-            const cmu = 1000;                                        // CMU : forfait CI
-            const netImposable = gross - cnps - cmu;
-            const its = calculateITS(netImposable);                  // ITS Barème progressif
-            const empContrib = cnps + cmu + its;
-            const employerContrib = gross * 0.15;                    // Part patronale CNPS ~15%
-            const net = gross - empContrib - additionalDeductions;
-            
             // Supprimer l'ancienne paie pour cette période (éviter les doublons et les conflits de mémorisation)
             await prisma.payroll.deleteMany({
                 where: {
@@ -301,28 +311,26 @@ const runPayroll = async (req, res) => {
                 data: {
                     employeeId: employee.id,
                     period: new Date(p.period),
-                    baseSalary: base,
-                    bonus,
-                    deductions: additionalDeductions,
-                    overtimeHours: overtime,
-                    leaveDays: leaves,
-                    employerContributions: employerContrib,
-                    employeeContributions: empContrib,
-                    netSalary: net,
+                    baseSalary: bulletin.baseSalary,
+                    bonus: bulletin.bonus,
+                    deductions: bulletin.deductions,
+                    overtimeHours: bulletin.overtimeHours,
+                    leaveDays: bulletin.leaveDays,
+                    overtimeAmount: bulletin.overtimeAmount,
+                    leaveDeduction: bulletin.leaveDeduction,
+                    grossSalary: bulletin.grossSalary,
+                    cnpsEmployee: bulletin.cnpsEmployee,
+                    cmu: bulletin.cmu,
+                    taxableIncome: bulletin.taxableIncome,
+                    its: bulletin.its,
+                    employerContributions: bulletin.employerContributions,
+                    employeeContributions: bulletin.employeeContributions,
+                    netSalary: bulletin.netSalary,
                     status: 'APPROVED'
                 }
             });
 
-            const pdfPath = await generatePayslipPDF({ 
-                ...pr, 
-                grossSalary: gross,
-                bonus, 
-                deductions: additionalDeductions, 
-                overtimeHours: overtime, 
-                leaveDays: leaves, 
-                netSalary: net,
-                baseSalary: base
-            }, employee);
+            const pdfPath = await generatePayslipPDF({ ...pr }, employee);
             
             pr = await prisma.payroll.update({ where: { id: pr.id }, data: { pdfPath } });
             results.push(pr);
@@ -389,11 +397,10 @@ const signPayroll = async (req, res) => {
             }
         });
 
-        // Régénérer le PDF avec la signature
-        const newPath = await generatePayslipPDF({
-            ...updatedPayroll,
-            grossSalary: updatedPayroll.baseSalary + updatedPayroll.overtimeHours + updatedPayroll.bonus, // Simplification pour le payload
-        }, payroll.employee, signature);
+        // Régénérer le PDF avec la signature. Le brut n'est plus reconstitué
+        // ici : la « simplification » additionnait un nombre d'heures à des
+        // francs et produisait un bulletin signé différent de l'original.
+        const newPath = await generatePayslipPDF(updatedPayroll, payroll.employee, signature);
         
         await prisma.payroll.update({ where: { id }, data: { pdfPath: newPath } });
 
@@ -406,17 +413,16 @@ const signPayroll = async (req, res) => {
 const exportSage = async (req, res) => {
     try {
         const { period } = req.query; // ex: 2026-05
-        
-        // Find all payrolls for the given period
+        const mois = intervalleMois(period);
+
         const payrolls = await prisma.payroll.findMany({
-            where: {
-                period: period || { startsWith: new Date().toISOString().substring(0, 7) }
-            },
-            include: { employee: true }
+            where: { period: { gte: mois.gte, lt: mois.lt } },
+            include: { employee: true },
+            orderBy: { employee: { lastName: 'asc' } }
         });
 
         if (payrolls.length === 0) {
-            return res.status(404).json({ error: "Aucune fiche de paie trouvée pour cette période." });
+            return res.status(404).json({ error: `Aucune fiche de paie trouvée pour ${mois.libelle}.` });
         }
 
         // Generate PNM format for Sage (Format paramétrable: Matricule;Nom;Rubrique;Montant)
@@ -425,31 +431,28 @@ const exportSage = async (req, res) => {
         
         payrolls.forEach(p => {
             const emp = p.employee;
-            const gross = p.baseSalary + (p.overtimeHours || 0) + (p.bonus || 0);
-            
-            // Salaire de base (Rubrique 1000)
-            csvContent += `${emp.id};${emp.lastName};${emp.firstName};1000;${p.baseSalary}\n`;
-            
-            // Primes (Rubrique 2000)
-            if (p.bonus > 0) {
-                csvContent += `${emp.id};${emp.lastName};${emp.firstName};2000;${p.bonus}\n`;
-            }
+            // Les montants proviennent de la fiche enregistrée. L'assiette était
+            // auparavant reconstituée ici par `baseSalary + overtimeHours + bonus`,
+            // qui additionnait un nombre d'heures à des francs : dix heures
+            // supplémentaires ajoutaient dix FCFA à l'assiette CNPS.
+            const b = decomposer(p);
+            const ligne = (rubrique, montant) => {
+                csvContent += `${emp.id};${emp.lastName};${emp.firstName};${rubrique};${Math.round(montant)}\n`;
+            };
 
-            // Heures supp (Rubrique 3000)
-            if (p.overtimeHours > 0) {
-                csvContent += `${emp.id};${emp.lastName};${emp.firstName};3000;${p.overtimeHours}\n`;
-            }
-
-            // CNPS (Rubrique 4000)
-            const cnps = gross * 0.063;
-            csvContent += `${emp.id};${emp.lastName};${emp.firstName};4000;${Math.round(cnps)}\n`;
-
-            // CMU (Rubrique 4010)
-            csvContent += `${emp.id};${emp.lastName};${emp.firstName};4010;1000\n`;
+            ligne(1000, b.baseSalary);                               // Salaire de base
+            if (b.bonus > 0) ligne(2000, b.bonus);                   // Primes
+            if (b.overtimeAmount > 0) ligne(3000, b.overtimeAmount); // Heures supp (en montant)
+            if (b.leaveDeduction > 0) ligne(3500, -b.leaveDeduction);// Absences non rémunérées
+            ligne(4000, b.cnpsEmployee);                             // CNPS part salariale
+            ligne(4010, b.cmu);                                      // CMU
+            ligne(4020, b.its);                                      // ITS
+            ligne(4100, b.employerContributions);                    // CNPS part patronale
+            ligne(5000, b.netSalary);                                // Net à payer
         });
 
         res.header('Content-Type', 'text/csv');
-        res.attachment(`export_sage_${period || 'current'}.csv`);
+        res.attachment(`export_sage_${mois.libelle}.csv`);
         res.send(csvContent);
 
     } catch (error) {

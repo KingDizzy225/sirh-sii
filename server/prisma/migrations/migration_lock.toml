@@ -1,0 +1,2 @@
+# Ce fichier est géré par Prisma et doit être suivi en gestion de version.
+provider = "postgresql"

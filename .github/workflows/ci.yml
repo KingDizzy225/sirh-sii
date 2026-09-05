@@ -10,6 +10,26 @@ jobs:
   backend:
     name: Backend — syntaxe, dépendances & schéma Prisma
     runs-on: ubuntu-latest
+
+    # Base jetable pour l'essai d'intégration de la paie. Les contrôles
+    # statiques ne pouvaient pas voir que le net retranchait la part patronale
+    # ni que l'export comptable échouait à chaque appel : les deux étaient
+    # syntaxiquement corrects.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: sirh_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +59,18 @@ jobs:
 
       - name: Cohérence des champs écrits et du schéma Prisma
         run: node scripts/check-schema-usage.cjs
+
+      - name: Application des migrations sur une base vierge
+        working-directory: server
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/sirh_test"
+        run: npx prisma migrate deploy
+
+      - name: Essai d'intégration de la paie
+        working-directory: server
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/sirh_test"
+        run: npm run test:paie
 
   frontend:
     name: Frontend — build Vite
