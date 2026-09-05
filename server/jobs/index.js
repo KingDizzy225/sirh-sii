@@ -1,6 +1,8 @@
 const cron = require('node-cron');
 const { accrueMonthlyLeave } = require('./leaveAccrual');
 const { scanDeadlines } = require('./deadlineAlerts');
+const { relancerDemandesEnAttente } = require('./pendingReminders');
+const { detecterAnomaliesPointage } = require('./timeLogAnomalies');
 
 /**
  * Ordonnanceur des traitements RH récurrents.
@@ -28,6 +30,8 @@ const safely = async (label, work) => {
 const runAllDue = async () => {
     await safely('acquisition des congés', () => accrueMonthlyLeave());
     await safely('alertes d\'échéances', () => scanDeadlines());
+    await safely('relance des demandes en attente', () => relancerDemandesEnAttente());
+    await safely('anomalies de pointage', () => detecterAnomaliesPointage());
 };
 
 function startScheduledJobs() {
@@ -49,6 +53,16 @@ function startScheduledJobs() {
     // Alertes d'échéances : chaque jour à 07h00
     cron.schedule('0 7 * * *', () => {
         safely('alertes d\'échéances', () => scanDeadlines());
+    }, { timezone: TIMEZONE });
+
+    // Relance des demandes sans réponse : chaque jour à 08h00, à l'arrivée
+    cron.schedule('0 8 * * *', () => {
+        safely('relance des demandes en attente', () => relancerDemandesEnAttente());
+    }, { timezone: TIMEZONE });
+
+    // Anomalies de pointage : chaque jour à 06h00, la veille étant close
+    cron.schedule('0 6 * * *', () => {
+        safely('anomalies de pointage', () => detecterAnomaliesPointage());
     }, { timezone: TIMEZONE });
 
     console.log(`[JOB] Traitements planifiés actifs (fuseau ${TIMEZONE}).`);
