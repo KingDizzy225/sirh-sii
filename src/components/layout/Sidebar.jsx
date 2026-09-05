@@ -45,7 +45,6 @@ const getAllNavItems = (t) => [
     { name: 'Flex-Workforce', path: '/subcontractors', icon: Building, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Qualité de vie (QVT)', path: '/engagement', icon: HeartPulse, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Santé & Sécurité', path: '/hse', icon: Shield, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Médecine du Travail', path: '/medical', icon: Stethoscope, domain: 'Employés', permission: 'employees:edit' },
 
     // GESTION RH -> PILOTAGE RH
     { name: 'Temps, Absences & Demandes', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },

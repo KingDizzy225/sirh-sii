@@ -39,7 +39,6 @@ import { Assets } from './pages/Assets';
 import { Analytics } from './pages/Analytics';
 import { Announcements } from './pages/Announcements';
 import { SalaryAdvances } from './pages/SalaryAdvances';
-import { MedicalVisits } from './pages/MedicalVisits';
 import { Rewards } from './pages/Rewards';
 import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
@@ -382,11 +381,10 @@ const AppContent = () => {
                 <SalaryAdvances />
               </ProtectedRoute>
             } />
-            <Route path="/medical" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <MedicalVisits />
-              </ProtectedRoute>
-            } />
+            {/* L'ancienne page /medical faisait doublon avec le Hub, en saisissant
+                moins de champs (ni statut d'aptitude, ni date de prochain contrôle,
+                pourtant nécessaire aux alertes de replanification). */}
+            <Route path="/medical" element={<Navigate to="/medical-hub" replace />} />
             <Route path="/rewards" element={<Rewards />} />
             <Route path="/gpec" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>

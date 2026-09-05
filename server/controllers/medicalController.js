@@ -26,6 +26,21 @@ exports.getMedicalRecords = async (req, res) => {
     }
 };
 
+/** Suppression d'une visite saisie par erreur. */
+exports.deleteMedicalRecord = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = await prisma.medicalRecord.findUnique({ where: { id } });
+        if (!record) return res.status(404).json({ error: 'Visite médicale introuvable.' });
+
+        await prisma.medicalRecord.delete({ where: { id } });
+        res.json({ message: 'Visite médicale supprimée.' });
+    } catch (error) {
+        console.error('Error deleting medical record:', error);
+        res.status(500).json({ error: 'Erreur lors de la suppression de la visite.' });
+    }
+};
+
 exports.createMedicalRecord = async (req, res) => {
     try {
         const { employeeId, visitType, visitDate, doctorName, aptitudeStatus, nextCheckupDate, notes } = req.body;

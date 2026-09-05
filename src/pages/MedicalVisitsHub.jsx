@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { 
     HeartPulse, Shield, Calendar, Clock, CheckCircle2, AlertTriangle, 
-    Plus, Search, UserCheck, Stethoscope, FileText, X
+    Plus, Search, UserCheck, Stethoscope, FileText, X, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
@@ -73,6 +73,18 @@ export function MedicalVisitsHub() {
     const showNotification = (msg) => {
         setNotification(msg);
         setTimeout(() => setNotification(null), 3000);
+    };
+
+    const handleDelete = async (record) => {
+        const nom = `${record.employee?.firstName || ''} ${record.employee?.lastName || ''}`.trim();
+        if (!window.confirm(`Supprimer définitivement la visite médicale${nom ? ` de ${nom}` : ''} ?`)) return;
+        try {
+            await api.delete(`/medical/${record.id}`);
+            showNotification('Visite médicale supprimée.');
+            fetchRecords();
+        } catch (err) {
+            showNotification("Suppression impossible : " + (err.message || 'erreur serveur'));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -194,6 +206,14 @@ export function MedicalVisitsHub() {
                                     <span className="text-xs text-slate-400 font-medium">
                                         Prochain examen : {rec.nextCheckupDate ? new Date(rec.nextCheckupDate).toLocaleDateString('fr-FR') : 'N/A'}
                                     </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDelete(rec)}
+                                        title="Supprimer cette visite"
+                                        className="text-slate-300 hover:text-rose-600 transition-colors p-1"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </div>
                         ))}
