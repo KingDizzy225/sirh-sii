@@ -112,6 +112,14 @@ attendu, identique à aujourd'hui.
 Ce qui doit **arrêter** le déroulé : toute autre erreur de migration, ou un
 serveur qui redémarre en boucle.
 
+> Les deux chemins ont été éprouvés sur des bases PostgreSQL jetables avant
+> d'être livrés. Sur base vierge : migration appliquée, 60 tables et 51 clés
+> étrangères créées, `migrate status` conforme. Sur une base montée par
+> `db push` : P3005, repli, 60 tables inchangées, serveur démarré. Le
+> point-virgule devant `node index.js` garantit que le serveur démarre même si
+> les deux commandes échouent — l'application peut être dégradée, jamais
+> absente.
+
 ### Étape 4 — État de la base
 
 Depuis votre poste, avec l'URL **externe** :
@@ -122,6 +130,29 @@ DATABASE_URL="<url-externe>" npm run migrate:status
 ```
 
 Attendu sur base neuve : `Database schema is up to date!`
+
+### Étape 4 bis — Rattacher la base conservée aux migrations *(facultatif)*
+
+À faire uniquement si vous conservez la base actuelle, et seulement après une
+sauvegarde.
+
+Une base construite par `db push` n'a pas de table `_prisma_migrations` : c'est
+la raison du P3005. Elle restera donc sur `db push` à chaque démarrage, avec le
+`--accept-data-loss` que cela suppose. La déclarer conforme à la migration
+initiale la fait basculer sur le régime normal :
+
+```bash
+cd server
+DATABASE_URL="<url-externe>" \
+  npx prisma migrate resolve --applied 20260905000000_initial
+DATABASE_URL="<url-externe>" npm run migrate:status   # doit dire : up to date
+```
+
+Cette commande n'exécute aucun SQL : elle inscrit la migration comme déjà
+appliquée. Elle n'est légitime que parce que la migration a été engendrée à
+partir du schéma qui a lui-même produit cette base — les deux décrivent la même
+structure. Au prochain démarrage, `migrate deploy` réussira et `db push` ne sera
+plus jamais atteint.
 
 ### Étape 5 — Connexion nominative
 
