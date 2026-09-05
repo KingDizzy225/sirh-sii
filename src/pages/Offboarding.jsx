@@ -22,6 +22,33 @@ export function Offboarding() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
 
+    // Projet de solde de tout compte
+    const [employesSortants, setEmployesSortants] = useState([]);
+    const [salarieSolde, setSalarieSolde] = useState('');
+    const [solde, setSolde] = useState(null);
+    const [soldeEnCours, setSoldeEnCours] = useState(false);
+
+    useEffect(() => {
+        api.get('/employees')
+            .then(res => {
+                if (Array.isArray(res?.data)) setEmployesSortants(res.data);
+            })
+            .catch(() => {});
+    }, []);
+
+    const calculerSolde = async () => {
+        if (!salarieSolde) return;
+        setSoldeEnCours(true);
+        try {
+            const res = await api.get(`/offboarding/settlement/${salarieSolde}`);
+            setSolde(res?.data || null);
+        } catch (err) {
+            setSolde(null);
+        } finally {
+            setSoldeEnCours(false);
+        }
+    };
+
     useEffect(() => {
         loadTasks();
     }, []);
@@ -200,17 +227,69 @@ export function Offboarding() {
                         </CardContent>
                     </Card>
 
+                    {/* Décompte final : le calcul le plus délicat d'un départ,
+                        jusqu'ici fait à la main hors de l'application. */}
                     <Card className="border-none shadow-sm">
                         <CardHeader>
-                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-400">Documentation de sortie</CardTitle>
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                                Projet de solde de tout compte
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                                Calculé à partir du solde de congés, du dernier salaire et des avances en cours.
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            {['Certificat de travail', 'Attestation Pôle Emploi', 'Solde de tout compte', 'Bilan de sortie'].map((doc, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group">
-                                    <span className="text-sm font-bold text-slate-700">{doc}</span>
-                                    <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                            <select
+                                value={salarieSolde}
+                                onChange={(e) => { setSalarieSolde(e.target.value); setSolde(null); }}
+                                className="w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                            >
+                                <option value="">Choisir un collaborateur…</option>
+                                {employesSortants.map(e => (
+                                    <option key={e.id} value={e.id}>
+                                        {e.firstName} {e.lastName}{e.positionTitle ? ` — ${e.positionTitle}` : ''}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <Button
+                                onClick={calculerSolde}
+                                disabled={!salarieSolde || soldeEnCours}
+                                className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm"
+                            >
+                                {soldeEnCours ? 'Calcul…' : 'Calculer le décompte'}
+                            </Button>
+
+                            {solde && (
+                                <div className="space-y-3 pt-2 border-t border-slate-100">
+                                    <p className="text-xs text-slate-500">
+                                        {solde.base.sourceReference} · {solde.salarie.ancienneteAnnees} an(s) d'ancienneté
+                                    </p>
+
+                                    {solde.lignes.map((l, i) => (
+                                        <div key={i} className="flex justify-between items-start gap-3 text-sm">
+                                            <div className="min-w-0">
+                                                <p className="font-medium text-slate-800">{l.libelle}</p>
+                                                <p className="text-xs text-slate-500">{l.detail}</p>
+                                            </div>
+                                            <span className={`font-mono font-bold shrink-0 ${l.sens === 'debit' ? 'text-rose-600' : 'text-emerald-700'}`}>
+                                                {l.sens === 'debit' ? '−' : '+'}{l.montant.toLocaleString('fr-FR')}
+                                            </span>
+                                        </div>
+                                    ))}
+
+                                    <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                                        <span className="font-bold text-slate-900">Net estimé</span>
+                                        <span className="font-mono font-black text-lg text-slate-900">
+                                            {solde.netEstime.toLocaleString('fr-FR')} FCFA
+                                        </span>
+                                    </div>
+
+                                    <ul className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-1 list-disc list-inside">
+                                        {solde.avertissements.map((a, i) => <li key={i}>{a}</li>)}
+                                    </ul>
                                 </div>
-                            ))}
+                            )}
                         </CardContent>
                     </Card>
                 </div>

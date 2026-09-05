@@ -10,4 +10,7 @@ router.get('/tasks', offboardingController.getOffboardingTasks);
 router.post('/tasks', requireRole(['Administrator', 'HR']), offboardingController.createOffboardingTask);
 router.put('/tasks/:id', requireRole(['Administrator', 'HR']), offboardingController.updateOffboardingTask);
 
+// Projet de décompte final : réservé à la RH et à l'administration
+router.get('/settlement/:employeeId', requireRole(['Administrator', 'HR', 'ADMIN']), offboardingController.getFinalSettlement);
+
 module.exports = router;
