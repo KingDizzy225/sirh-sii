@@ -169,6 +169,68 @@ async function main() {
         { params: { source: 'ONBOARDING', id: '00000000-0000-0000-0000-000000000000' },
           body: { statut: 'DONE' }, user: { role: 'ADMIN' } }, r));
 
+    console.log('\n=== Santé et sécurité ===');
+    const hier = new Date(Date.now() - 86400000).toISOString();
+    const ancien = new Date(Date.now() - 10 * 86400000).toISOString();
+    let accidentRecent = null;
+
+    await attendu("accident du travail consigné", 201, async r => {
+        await ctrl('hseController').createAccident({
+            body: {
+                employeeId: emp.id, occurredAt: hier, location: 'Entrepôt A',
+                type: 'Accident du travail', severity: 'Majeur',
+                description: 'Chute de plain-pied', daysOff: 5
+            }, user
+        }, r);
+        accidentRecent = r.corps;
+    });
+
+    // La bascule du délai de déclaration se vérifie des deux côtés : un contrôle
+    // qui ne teste qu'un sens laisse passer un seuil inversé.
+    console.log(`  ${accidentRecent?.declarationEnRetard === false ? '✅' : '❌'} dans le délai : aucun retard signalé`);
+    if (accidentRecent?.declarationEnRetard !== false) echecs++;
+
+    let accidentAncien = null;
+    await attendu('accident ancien consigné', 201, async r => {
+        await ctrl('hseController').createAccident({
+            body: {
+                employeeId: emp2.id, occurredAt: ancien, location: 'Quai',
+                type: 'Accident du travail', severity: 'Grave',
+                description: 'Écrasement du pied', daysOff: 30
+            }, user
+        }, r);
+        accidentAncien = r.corps;
+    });
+    console.log(`  ${accidentAncien?.declarationEnRetard === true ? '✅' : '❌'} délai dépassé : retard signalé`);
+    if (accidentAncien?.declarationEnRetard !== true) echecs++;
+
+    await attendu('accident sans lieu refusé', 400, r => ctrl('hseController').createAccident(
+        { body: { employeeId: emp.id, occurredAt: hier, type: 'Accident du travail', severity: 'Mineur', description: 'x' }, user }, r));
+    await attendu('type inconnu refusé', 400, r => ctrl('hseController').createAccident(
+        { body: { employeeId: emp.id, occurredAt: hier, location: 'X', type: 'Bidon', severity: 'Mineur', description: 'x' }, user }, r));
+    await attendu('date future refusée', 400, r => ctrl('hseController').createAccident(
+        { body: { employeeId: emp.id, occurredAt: new Date(Date.now() + 86400000).toISOString(), location: 'X', type: 'Accident du travail', severity: 'Mineur', description: 'x' }, user }, r));
+    await attendu('salarié inexistant refusé', 404, r => ctrl('hseController').createAccident(
+        { body: { employeeId: '00000000-0000-0000-0000-000000000000', occurredAt: hier, location: 'X', type: 'Accident du travail', severity: 'Mineur', description: 'x' }, user }, r));
+
+    await attendu('déclaration CNPS enregistrée', 200, async r => {
+        await ctrl('hseController').updateAccident(
+            { params: { id: accidentAncien.id }, body: { declaredToCnps: true }, user }, r);
+        if (r.statut === null) r.statut = 200;
+    });
+    await attendu('statut de suivi inconnu refusé', 400, r => ctrl('hseController').updateAccident(
+        { params: { id: accidentAncien.id }, body: { status: 'Bidon' }, user }, r));
+
+    await attendu('registre et indicateurs', 200, async r => {
+        await ctrl('hseController').getAccidents({ query: {}, user }, r);
+        if (r.statut === null) r.statut = 200;
+    });
+
+    await attendu('suivi des visites médicales', 200, async r => {
+        await ctrl('hseController').getSuiviVisites({ query: {}, user }, r);
+        if (r.statut === null) r.statut = 200;
+    });
+
     console.log('\n=== Requêtes incomplètes : 400 attendu, pas 500 ===');
     // Une requête malformée relève de l'appelant. Répondre 500 fait porter la
     // faute au serveur et masque la vraie cause à qui intègre l'API.
@@ -188,6 +250,9 @@ async function main() {
     await prisma.employee.deleteMany({ where: { email: { endsWith: '@essai.test' } } });
     await prisma.asset.deleteMany({ where: { assetTag: { startsWith: 'ESS-' } } });
     await prisma.announcement.deleteMany({ where: { title: 'Essai' } });
+    // Les accidents partent avec leur salarié (onDelete: Cascade) ;
+    // la suppression explicite couvre le cas d'un essai interrompu.
+    await prisma.workAccident.deleteMany({ where: { location: { in: ['Entrepôt A', 'Quai'] } } });
     if (offre && offre.id) await prisma.jobOffer.deleteMany({ where: { id: offre.id } });
     console.log("  données d'essai supprimées");
 }

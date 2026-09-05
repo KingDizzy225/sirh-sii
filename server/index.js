@@ -206,6 +206,11 @@ app.use('/api/disciplinary', disciplinaryRoutes);
 const taskBoardRoutes = require('./routes/taskBoardRoutes');
 app.use('/api/tasks', taskBoardRoutes);
 
+// Santé et sécurité : registre des accidents du travail et conformité des
+// visites médicales. La page tenait les deux dans des tableaux en dur.
+const hseRoutes = require('./routes/hseRoutes');
+app.use('/api/hse', hseRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

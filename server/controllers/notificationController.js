@@ -35,9 +35,14 @@ exports.getCriticalAlerts = async (req, res) => {
         });
 
         // 3. Visites médicales à venir
-        const medicalVisits = await prisma.medicalVisit.findMany({
+        // La requête portait sur `medicalVisit`, une table qu'aucun contrôleur
+        // n'écrit : le module de médecine du travail enregistre des
+        // `medicalRecord`. L'alerte ne pouvait donc jamais se déclencher.
+        // L'échéance pertinente est `nextCheckupDate`, la prochaine visite due,
+        // et non la date de la visite déjà passée.
+        const medicalVisits = await prisma.medicalRecord.findMany({
             where: {
-                visitDate: {
+                nextCheckupDate: {
                     gte: today,
                     lte: fifteenDaysFromNow
                 }
@@ -66,7 +71,9 @@ exports.getCriticalAlerts = async (req, res) => {
                 id: `medical-${v.id}`,
                 type: 'MEDICAL_VISIT',
                 title: 'Visite médicale prévue',
-                message: `Visite pour ${v.employee.firstName} ${v.employee.lastName} le ${new Date(v.visitDate).toLocaleDateString('fr-FR')}`,
+                // `nextCheckupDate` et non `visitDate` : c'est l'échéance à
+                // venir qui est annoncée, pas la visite déjà effectuée.
+                message: `Visite à prévoir pour ${v.employee.firstName} ${v.employee.lastName} avant le ${new Date(v.nextCheckupDate).toLocaleDateString('fr-FR')}`,
                 severity: 'low',
                 link: '/medical'
             }))

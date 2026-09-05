@@ -76,6 +76,7 @@ model Employee {
   mentorRelations      MentorshipRelation[]    @relation("MentorEmployee")
   menteeRelations      MentorshipRelation[]    @relation("MenteeEmployee")
   medicalRecords       MedicalRecord[]
+  workAccidents        WorkAccident[]
   issuedDocuments      IssuedDocument[]
   exitInterview        ExitInterview?
 }
@@ -1031,6 +1032,42 @@ model WhatsappLog {
 // ----------------------------------------------------
 // 34. HUB SANTÉ ET VISITES MÉDICALES (OPTION B)
 // ----------------------------------------------------
+
+/// Registre des accidents du travail, de trajet et des presque-accidents.
+///
+/// La page HSE tenait ce registre dans un tableau écrit en dur : rien de ce qui
+/// y était consigné ne survivait au rechargement. Or c'est un document que
+/// l'inspection du travail peut demander, et un accident du travail se déclare
+/// à la CNPS dans un délai contraint.
+model WorkAccident {
+  id          String   @id @default(uuid())
+  employeeId  String   @map("employee_id")
+  reference   String   @unique // AT-2026-001
+  occurredAt  DateTime @map("occurred_at")
+  location    String
+  // 'Accident du travail', 'Accident de trajet', 'Presque-accident',
+  // 'Maladie professionnelle'
+  type        String
+  severity    String // 'Mineur', 'Majeur', 'Grave'
+  description String
+
+  // Arrêt de travail prescrit, en jours. Détermine le taux de gravité et
+  // conditionne la déclaration.
+  daysOff     Int      @default(0) @map("days_off")
+
+  declaredToCnps   Boolean   @default(false) @map("declared_to_cnps")
+  declaredAt       DateTime? @map("declared_at")
+  correctiveAction String?   @map("corrective_action")
+  status           String    @default("Déclaré") // 'Déclaré', 'Enquête en cours', 'Clos'
+
+  reportedBy String?  @map("reported_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([occurredAt])
+}
 
 model MedicalRecord {
   id              String    @id @default(uuid())
