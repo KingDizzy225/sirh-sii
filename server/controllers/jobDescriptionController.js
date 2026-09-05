@@ -1,8 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { getGenerativeModel, MODEL } = require("../lib/claudeAI");
 const prisma = require('../prismaClient');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const aiModel = getGenerativeModel();
 
 exports.getJobDescriptions = async (req, res) => {
     try {
@@ -60,7 +58,7 @@ Réponds UNIQUEMENT par le code HTML généré. Aucun autre texte.`;
 
         let htmlContent = "";
         try {
-            console.log(`[AI-GEN] Request for ${title} in ${department} using gemini-2.5-flash`);
+            console.log(`[AI-GEN] Request for ${title} in ${department} using ${MODEL}`);
             const result = await aiModel.generateContent(systemPrompt);
             const response = await result.response;
             htmlContent = response.text().trim();

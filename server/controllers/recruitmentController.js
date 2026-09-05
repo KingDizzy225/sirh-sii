@@ -1,8 +1,7 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const { getGenerativeModel } = require("../lib/claudeAI");
+const aiModel = getGenerativeModel();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -281,7 +280,7 @@ Génère une réponse stricte au format JSON (sans Markdown) :
         const response = await result.response;
         
         let aiText = response.text().trim();
-        // Nettoyage au cas où Gemini renvoie du Markdown
+        // Nettoyage au cas où le modèle renvoie du Markdown
 
         const parsed = JSON.parse(aiText.replace(/```json/g, '').replace(/```/g, '').trim());
 

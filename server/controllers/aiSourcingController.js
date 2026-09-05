@@ -1,11 +1,11 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { getGenerativeModel } = require("../lib/claudeAI");
 const prisma = require('../prismaClient');
 
 exports.analyzeCandidates = async (req, res) => {
     try {
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = process.env.ANTHROPIC_API_KEY;
         if (!apiKey) {
-             return res.status(500).json({ error: 'La clé d\'API GEMINI_API_KEY n\'est pas configurée dans le backend.' });
+             return res.status(500).json({ error: 'La clé ANTHROPIC_API_KEY n\'est pas configurée sur le serveur.' });
         }
         
         const { jobDescription, candidates } = req.body; // candidates is an array of { name, resumeText }
@@ -13,9 +13,7 @@ exports.analyzeCandidates = async (req, res) => {
         if (!jobDescription || !candidates || candidates.length === 0) {
             return res.status(400).json({ error: "Description de poste et candidats requis." });
         }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = getGenerativeModel();
 
         const prompt = `
             Tu es un expert en recrutement RH. 

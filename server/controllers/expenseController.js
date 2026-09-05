@@ -120,9 +120,8 @@ exports.updateExpenseStatus = async (req, res) => {
     }
 };
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const { getGenerativeModel } = require("../lib/claudeAI");
+const aiModel = getGenerativeModel();
 
 exports.scanReceipt = async (req, res) => {
     try {
@@ -160,7 +159,7 @@ Ne renvoie QUE le JSON, pas de texte autour ni de blocs \`\`\`json.`;
         try {
             parsed = JSON.parse(textRes);
         } catch(e) {
-            console.error("Failed to parse Gemini response as JSON", textRes);
+            console.error("Réponse IA non analysable en JSON", textRes);
             return res.status(500).json({ error: "L'IA n'a pas pu extraire les informations proprement." });
         }
 

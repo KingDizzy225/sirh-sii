@@ -1,8 +1,6 @@
 const prisma = require('../prismaClient');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const { getGenerativeModel } = require("../lib/claudeAI");
+const aiModel = getGenerativeModel();
 
 // Récupérer toutes les sessions de formation (Cahier de formation)
 exports.getAllTrainings = async (req, res) => {
@@ -346,7 +344,7 @@ exports.generateAITraining = async (req, res) => {
             data: {
                 title: courseData.title,
                 description: courseData.description,
-                trainerName: 'IA (Gemini)',
+                trainerName: 'IA (Claude)',
                 date: new Date(),
                 durationHours: parseFloat(courseData.durationHours) || 2.0,
                 status: 'Active',

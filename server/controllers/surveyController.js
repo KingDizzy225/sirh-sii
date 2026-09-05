@@ -1,7 +1,5 @@
 const prisma = require('../prismaClient');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy_key');
+const { getGenerativeModel } = require("../lib/claudeAI");
 
 exports.getSurveys = async (req, res) => {
     try {
@@ -84,7 +82,7 @@ exports.analyzeSentimentWithAi = async (req, res) => {
         }
 
         try {
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = getGenerativeModel();
             const prompt = `Voici des commentaires anonymes de collaborateurs lors d'une enquête sur le climat social d'une entreprise :\n${comments.join('\n')}\nSynthétise le climat global et propose 3 initiatives RH concrètes et bienveillantes sous format JSON : { "summary": "...", "initiatives": ["...", "...", "..."] }`;
             const result = await model.generateContent(prompt);
             const text = result.response.text();
@@ -93,7 +91,7 @@ exports.analyzeSentimentWithAi = async (req, res) => {
 
             return res.json(parsed);
         } catch (aiErr) {
-            console.warn("Gemini AI offline fallback:", aiErr.message);
+            console.warn("Repli hors-ligne de l’IA :", aiErr.message);
             return res.json({
                 summary: "Le climat global reflète un fort engagement sur la collaboration avec des attentes sur la flexibilité.",
                 initiatives: [

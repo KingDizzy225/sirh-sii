@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0",
     "@google/generative-ai": "^0.21.0",
     "@prisma/client": "5.22.0",
     "bcrypt": "^6.0.0",

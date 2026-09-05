@@ -1,5 +1,5 @@
 const prisma = require('../prismaClient');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { getGenerativeModel } = require("../lib/claudeAI");
 
 // Helper heuristic fallback algorithm to build a logical hierarchy programmatically
 const generateHeuristicOrgChart = async (employees) => {
@@ -87,9 +87,9 @@ exports.generateOrgChartWithAI = async (req, res) => {
             return res.status(400).json({ error: 'Aucun employé trouvé pour générer l\'organigramme.' });
         }
 
-        // Check if Gemini API key is configured
-        if (!process.env.GEMINI_API_KEY) {
-            console.warn("GEMINI_API_KEY not configured. Falling back to heuristic generation.");
+        // Clé IA configurée ?
+        if (!process.env.ANTHROPIC_API_KEY) {
+            console.warn("ANTHROPIC_API_KEY non configurée : repli sur la génération heuristique.");
             const updateCount = await generateHeuristicOrgChart(employees);
             return res.status(200).json({ 
                 message: "Organigramme généré (via algorithme de secours - clé API manquante)", 
@@ -98,15 +98,13 @@ exports.generateOrgChartWithAI = async (req, res) => {
         }
 
         try {
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-            const aiModel = genAI.getGenerativeModel({ 
-                model: "gemini-2.5-flash",
+            const aiModel = getGenerativeModel({
                 generationConfig: {
                     responseMimeType: "application/json",
                 }
             });
 
-            // Prepare the payload for Gemini
+            // Prepare the payload for the model
             const employeeData = employees.map(e => ({
                 id: e.id,
                 name: `${e.firstName} ${e.lastName}`,
@@ -135,7 +133,7 @@ exports.generateOrgChartWithAI = async (req, res) => {
             ${JSON.stringify(employeeData, null, 2)}
             `;
 
-            console.log("Calling Gemini API to generate Org Chart based on roles...");
+            console.log("Génération de l’organigramme par l’IA...");
 
             const result = await aiModel.generateContent(prompt);
             const response = await result.response;
@@ -149,7 +147,7 @@ exports.generateOrgChartWithAI = async (req, res) => {
             const generatedData = JSON.parse(text);
 
             if (!Array.isArray(generatedData)) {
-                throw new Error("Invalid format received from Gemini (not an array).");
+                throw new Error("Format inattendu renvoyé par l’IA (tableau attendu).");
             }
 
             // Apply to database
@@ -173,7 +171,7 @@ exports.generateOrgChartWithAI = async (req, res) => {
             }
 
             res.status(200).json({ 
-                message: "Organigramme généré et appliqué avec succès via IA Gemini", 
+                message: "Organigramme généré et appliqué avec succès par l’IA", 
                 updated: updateCount 
             });
 

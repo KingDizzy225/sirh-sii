@@ -1,8 +1,6 @@
 const prisma = require('../prismaClient');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const { getGenerativeModel } = require("../lib/claudeAI");
+const aiModel = getGenerativeModel();
 
 const getRatingScore = (rating) => {
     if (!rating) return 3.0;
@@ -380,8 +378,8 @@ ${JSON.stringify(promptData)}
 
 exports.calculateFlightRisk = async (req, res) => {
     try {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) return res.status(500).json({ error: 'La clé d\'API GEMINI_API_KEY n\'est pas configurée dans le backend.' });
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) return res.status(500).json({ error: 'La clé ANTHROPIC_API_KEY n\'est pas configurée sur le serveur.' });
         
         const { id } = req.params;
         const emp = await prisma.employee.findUnique({
@@ -410,9 +408,7 @@ exports.calculateFlightRisk = async (req, res) => {
             avgScore,
             recentTimeLogs: emp.timeLogs.map(t => t.type)
         };
-
-        const localGenAI = new GoogleGenerativeAI(apiKey);
-        const localModel = localGenAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const localModel = getGenerativeModel();
 
         const systemPrompt = `Tu es un expert RH en analytique prédictive.
         Analyse les données de cet employé et retourne un score de risque de démission (Flight Risk) entre 0 et 100, et une raison détaillée de max 2 phrases.

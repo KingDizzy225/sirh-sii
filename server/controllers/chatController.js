@@ -1,8 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { getGenerativeModel } = require("../lib/claudeAI");
 const prisma = require('../prismaClient');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const aiModel = getGenerativeModel();
 
 exports.askChatbot = async (req, res) => {
     try {

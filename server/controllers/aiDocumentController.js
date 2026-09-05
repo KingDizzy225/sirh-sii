@@ -2,15 +2,14 @@ const prisma = require('../prismaClient');
 const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { getGenerativeModel } = require("../lib/claudeAI");
 
 exports.generateAIDocument = async (req, res) => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-         return res.status(500).json({ error: 'La clé d\'API GEMINI_API_KEY n\'est pas configurée dans le backend (.env).' });
+         return res.status(500).json({ error: 'La clé ANTHROPIC_API_KEY n\'est pas configurée sur le serveur.' });
     }
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const aiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const aiModel = getGenerativeModel();
 
     try {
         console.log("=> [AI GENERATE] Called by:", req.user?.email);
@@ -22,7 +21,7 @@ exports.generateAIDocument = async (req, res) => {
             return res.status(404).json({ error: 'Employé introuvable' });
         }
 
-        // 1. Build the prompt for Gemini
+        // 1. Build the prompt
         const nom = formData?.nom || employee.lastName;
         const prenoms = formData?.prenoms || employee.firstName;
         const nationalite = formData?.nationalite || employee.nationality || "Ivoirienne";
@@ -38,7 +37,7 @@ exports.generateAIDocument = async (req, res) => {
         }
         prompt += `\nAssure-toi que le ton soit très formel, juridique et sans fioritures (pas de bla-bla d'introduction). Le corps du texte uniquement sans objet ni destinataire ni signatures (qui seront générés dynamiquement en bas de document).`;
 
-        // 2. Call Gemini
+        // 2. Call the model
         const result = await aiModel.generateContent(prompt);
         const response = await result.response;
         const generatedText = response.text();
