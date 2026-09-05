@@ -1,7 +1,7 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
 const { triggerWebhook } = require('./webhookController');
-const { buildOnboardingTasks } = require('../data/onboardingTemplates');
+const { construireTachesIntegration } = require('../data/onboardingTemplates');
 
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
@@ -81,7 +81,7 @@ exports.createEmployee = async (req, res) => {
 
         // Automatisation : Création des tâches d'Onboarding Zéro-Papier
         await prisma.onboardingTask.createMany({
-            data: buildOnboardingTasks(newEmployee)
+            data: await construireTachesIntegration(newEmployee, prisma)
         });
 
         // Trigger Webhook
@@ -335,7 +335,7 @@ exports.importBulkEmployees = async (req, res) => {
 
                 // Automatisation : Création des tâches d'Onboarding Zéro-Papier pour chaque nouvel employé importé
                 await prisma.onboardingTask.createMany({
-            data: buildOnboardingTasks(newEmp)
+            data: await construireTachesIntegration(newEmp, prisma)
         });
 
                 created++;
@@ -444,7 +444,7 @@ exports.initOnboardingTasks = async (req, res) => {
 
         // Create standard tasks
         await prisma.onboardingTask.createMany({
-            data: buildOnboardingTasks({ id: id, department: employee?.department })
+            data: await construireTachesIntegration({ id: id, department: employee?.department }, prisma)
         });
 
         // Retrieve created tasks

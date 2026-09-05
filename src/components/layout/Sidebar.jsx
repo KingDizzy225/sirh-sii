@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +51,8 @@ const getAllNavItems = (t) => [
     { name: 'Paie & Rémunérations', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: t('sidebar.learning', 'Espace Formation (LMS)'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
     { name: 'Talents & GPEC', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
-    { name: 'Générateur Workflows', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Automatisations', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: "Parcours d'intégration", path: '/workflow-builder', icon: Workflow, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Documents GED', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
     
     // ANALYTIQUE -> INTELLIGENCE RH

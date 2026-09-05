@@ -268,7 +268,7 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/workflows" element={
+            <Route path="/workflow-builder" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <WorkflowBuilder />
               </ProtectedRoute>

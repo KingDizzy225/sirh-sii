@@ -1033,6 +1033,51 @@ model WhatsappLog {
 // 34. HUB SANTÉ ET VISITES MÉDICALES (OPTION B)
 // ----------------------------------------------------
 
+/// Modèle de parcours d'intégration ou de départ, éditable par la RH.
+///
+/// Ces parcours vivaient jusqu'ici dans `data/onboardingTemplates.js` : les
+/// modifier supposait un développeur et un déploiement, alors que la liste des
+/// formalités d'arrivée est précisément ce qu'une entreprise ajuste. Le
+/// constructeur de workflows en proposait l'édition, mais tenait ses modèles
+/// dans un tableau écrit en dur et ne les enregistrait nulle part.
+///
+/// Sans modèle actif en base, l'application retombe sur le fichier de code :
+/// le comportement reste celui d'aujourd'hui tant que rien n'a été personnalisé.
+model TaskTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  type        String // 'ONBOARDING' | 'OFFBOARDING'
+  /// Famille de métier ciblée, reprise du référentiel de carrière.
+  /// Vide : le modèle s'applique à toute arrivée ou tout départ.
+  family      String?
+  description String?
+  active      Boolean  @default(true)
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  items TaskTemplateItem[]
+
+  @@index([type, active])
+}
+
+model TaskTemplateItem {
+  id          String  @id @default(uuid())
+  templateId  String  @map("template_id")
+  title       String
+  /// Équipe responsable : c'est elle qui structure le tableau des tâches.
+  assignedTo  String
+  /// Décalage en jours par rapport à la date d'arrivée ou de départ.
+  /// Négatif pour ce qui doit être fait avant.
+  relativeDays Int    @default(0) @map("relative_days")
+  description String?
+  position    Int     @default(0)
+
+  template TaskTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+}
+
 /// Registre des accidents du travail, de trajet et des presque-accidents.
 ///
 /// La page HSE tenait ce registre dans un tableau écrit en dur : rien de ce qui

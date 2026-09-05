@@ -272,6 +272,55 @@ async function main() {
     console.log(`  ${couvertureDite ? '✅' : '❌'} portée de l'analyse rapportée`);
     if (!couvertureDite) echecs++;
 
+    console.log('\n=== Parcours d\'intégration ===');
+    const tplCtrl = ctrl('taskTemplateController');
+    const { construireTachesIntegration } = require(path.join(racine, 'data/onboardingTemplates'));
+
+    const sansModele = faireRes();
+    await tplCtrl.getTemplates({ user }, sansModele);
+    const surCode = sansModele.corps?.sourceAppliquee === 'FICHIER_DE_CODE';
+    console.log(`  ${surCode ? '✅' : '❌'} sans modèle actif : le socle livré s'applique`);
+    if (!surCode) echecs++;
+
+    // Le repli sur le fichier de code est ce qui garantit qu'une base vide ne
+    // prive jamais une arrivée de ses formalités.
+    const tachesSocle = await construireTachesIntegration({ id: emp.id, department: 'Tech / IT' }, prisma);
+    const socleNonVide = tachesSocle.length > 0;
+    console.log(`  ${socleNonVide ? '✅' : '❌'} le socle produit des tâches  → ${tachesSocle.length}`);
+    if (!socleNonVide) echecs++;
+
+    let modele = null;
+    await attendu('création d\'un modèle', 201, async r => {
+        await tplCtrl.createTemplate({
+            body: {
+                nom: 'Parcours court', type: 'ONBOARDING',
+                taches: [{ titre: 'Signer le contrat', equipe: 'Ressources Humaines', jours: 0 }]
+            }, user
+        }, r);
+        modele = r.corps;
+    });
+
+    await attendu('activation du modèle', 200, async r => {
+        await tplCtrl.updateTemplate({ params: { id: modele.id }, body: { actif: true }, user }, r);
+        if (r.statut === null) r.statut = 200;
+    });
+
+    const tachesModele = await construireTachesIntegration({ id: emp.id, department: 'Commercial' }, prisma);
+    const modelePrime = tachesModele.length === 1 && tachesModele[0].taskName === 'Signer le contrat';
+    console.log(`  ${modelePrime ? '✅' : '❌'} un modèle actif pilote l'embauche  → ${tachesModele.length} tâche(s)`);
+    if (!modelePrime) echecs++;
+
+    await attendu('modèle sans nom refusé', 400, r => tplCtrl.createTemplate(
+        { body: { nom: '', type: 'ONBOARDING' }, user }, r));
+    await attendu('type de parcours inconnu refusé', 400, r => tplCtrl.createTemplate(
+        { body: { nom: 'X', type: 'BIDON' }, user }, r));
+    await attendu('tâche sans libellé refusée', 400, r => tplCtrl.createTemplate(
+        { body: { nom: 'X', type: 'ONBOARDING', taches: [{ titre: '', equipe: 'RH' }] }, user }, r));
+    await attendu('modèle inexistant en 404', 404, r => tplCtrl.updateTemplate(
+        { params: { id: '00000000-0000-0000-0000-000000000000' }, body: {}, user }, r));
+
+    await prisma.taskTemplate.deleteMany({ where: { name: { in: ['Parcours court', 'X'] } } });
+
     console.log('\n=== Requêtes incomplètes : 400 attendu, pas 500 ===');
     // Une requête malformée relève de l'appelant. Répondre 500 fait porter la
     // faute au serveur et masque la vraie cause à qui intègre l'API.

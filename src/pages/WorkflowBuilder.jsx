@@ -1,315 +1,340 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { RequirePermission } from '../components/auth/ProtectedRoute';
-import { Plus, Settings, Trash2, Edit2, ListChecks, ArrowRight, UserPlus, UserMinus, PlusCircle, CheckCircle2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Workflow, Plus, Trash2, Save, RefreshCw, AlertTriangle,
+    Info, Download, Power, ArrowUp, ArrowDown
+} from 'lucide-react';
+import { api, listeSure } from '../lib/api';
+import { cn } from '@/lib/utils';
 
-const INITIAL_TEMPLATES = [
-    {
-        id: 'TPL-001',
-        name: 'Intégration Standard',
-        type: 'ONBOARDING',
-        description: 'Parcours d\'intégration par défaut pour tous les nouveaux employés.',
-        tasks: [
-            { id: 'TSK-001', title: 'Créer une adresse e-mail', department: 'IT', relativeDays: -3, description: 'Configuration Google Workspace' },
-            { id: 'TSK-002', title: 'Préparer le matériel', department: 'IT', relativeDays: -2, description: 'Installation du PC et de l\'écran au bureau' },
-            { id: 'TSK-003', title: 'Signer le contrat de travail', department: 'HR', relativeDays: 0, description: 'Signature requise via Docusign' },
-            { id: 'TSK-004', title: 'Visite des locaux & Badge', department: 'Facilities', relativeDays: 1, description: 'Délivrer le badge de sécurité' }
-        ]
-    },
-    {
-        id: 'TPL-002',
-        name: 'Départ Standard',
-        type: 'OFFBOARDING',
-        description: 'Procédure standard lorsqu\'un employé quitte l\'entreprise.',
-        tasks: [
-            { id: 'TSK-005', title: 'Révoquer l\'accès au système', department: 'IT', relativeDays: 0, description: 'Bloquer l\'e-mail, VPN, outils internes' },
-            { id: 'TSK-006', title: 'Récupérer le matériel', department: 'IT', relativeDays: 0, description: 'PC, téléphone, badges d\'accès' },
-            { id: 'TSK-007', title: 'Entretien de départ', department: 'HR', relativeDays: -1, description: 'Recueillir les retours' }
-        ]
-    }
+const TYPES = [
+    { id: 'ONBOARDING', libelle: 'Intégration' },
+    { id: 'OFFBOARDING', libelle: 'Départ' }
 ];
 
+const jourLisible = (n) => {
+    if (n === 0) return 'le jour J';
+    if (n < 0) return `J−${Math.abs(n)}`;
+    return `J+${n}`;
+};
+
 export function WorkflowBuilder() {
-    const [templates, setTemplates] = useState(INITIAL_TEMPLATES);
-    const [activeTemplate, setActiveTemplate] = useState(INITIAL_TEMPLATES[0]);
-    const [isEditingTask, setIsEditingTask] = useState(null);
-    const [newTaskForm, setNewTaskForm] = useState(false);
+    const [modeles, setModeles] = useState([]);
+    const [reference, setReference] = useState(null);
+    const [source, setSource] = useState(null);
+    const [selection, setSelection] = useState(null);
+    const [brouillon, setBrouillon] = useState(null);
+    const [chargement, setChargement] = useState(true);
+    const [enregistrement, setEnregistrement] = useState(false);
+    const [erreur, setErreur] = useState(null);
+    const [message, setMessage] = useState(null);
 
-    // Form inputs state
-    const [taskTitle, setTaskTitle] = useState('');
-    const [taskDept, setTaskDept] = useState('IT');
-    const [taskDays, setTaskDays] = useState(0);
+    const annoncer = (t) => { setMessage(t); setTimeout(() => setMessage(null), 4000); };
 
-    const [notification, setNotification] = useState(null);
-
-    const showNotification = (message) => {
-        setNotification(message);
-        setTimeout(() => setNotification(null), 3000);
-    };
-
-    const handleSelectTemplate = (template) => {
-        setActiveTemplate(template);
-        setNewTaskForm(false);
-        setIsEditingTask(null);
-    };
-
-    const handleDeleteTask = (taskId) => {
-        const updatedTasks = activeTemplate.tasks.filter(t => t.id !== taskId);
-        updateActiveTemplateTasks(updatedTasks);
-    };
-
-    const updateActiveTemplateTasks = (updatedTasks) => {
-        const updatedTemplate = { ...activeTemplate, tasks: updatedTasks };
-        setActiveTemplate(updatedTemplate);
-        setTemplates(templates.map(t => t.id === updatedTemplate.id ? updatedTemplate : t));
-    };
-
-    const handleSaveNewTask = () => {
-        if (!taskTitle) return;
-        
-        if (isEditingTask) {
-            const updatedTasks = activeTemplate.tasks.map(t => 
-                t.id === isEditingTask 
-                ? { ...t, title: taskTitle, department: taskDept, relativeDays: parseInt(taskDays, 10) || 0 } 
-                : t
-            ).sort((a, b) => a.relativeDays - b.relativeDays);
-            
-            updateActiveTemplateTasks(updatedTasks);
-            setIsEditingTask(null);
-        } else {
-            const newTask = {
-                id: `TSK-NEW-${Math.floor(Math.random() * 10000)}`,
-                title: taskTitle,
-                department: taskDept,
-                relativeDays: parseInt(taskDays, 10) || 0,
-                description: ''
-            };
-            const updatedTasks = [...activeTemplate.tasks, newTask].sort((a, b) => a.relativeDays - b.relativeDays);
-            updateActiveTemplateTasks(updatedTasks);
+    const charger = async (idASelectionner) => {
+        setChargement(true);
+        setErreur(null);
+        try {
+            const { data } = await api.get('/task-templates');
+            const liste = listeSure(data?.modeles, 'modèles de parcours');
+            setModeles(liste);
+            setReference(data?.referenceCode || null);
+            setSource(data?.sourceAppliquee || null);
+            const cible = liste.find(m => m.id === (idASelectionner || selection?.id)) || liste[0] || null;
+            setSelection(cible);
+            setBrouillon(cible ? JSON.parse(JSON.stringify(cible)) : null);
+        } catch (e) {
+            setErreur(e.message || 'Chargement impossible.');
+        } finally {
+            setChargement(false);
         }
-        
-        setNewTaskForm(false);
-        setTaskTitle('');
-        setTaskDays(0);
     };
 
-    const handleNewTemplate = () => {
-        const name = window.prompt("Nom du nouveau modèle ?");
-        if (!name) return;
-        const typeResponse = window.prompt("Type (ONBOARDING ou OFFBOARDING) ?");
-        const type = typeResponse?.toUpperCase() === 'OFFBOARDING' ? 'OFFBOARDING' : 'ONBOARDING';
-        
-        const newTemplate = {
-            id: `TPL-NEW-${Math.floor(Math.random() * 1000)}`,
-            name,
-            type,
-            description: 'Nouveau modèle personnalisé',
-            tasks: []
-        };
-        setTemplates([...templates, newTemplate]);
-        setActiveTemplate(newTemplate);
-        showNotification("Modèle créé !");
+    useEffect(() => { charger(); }, []);
+
+    const choisir = (m) => {
+        setSelection(m);
+        setBrouillon(JSON.parse(JSON.stringify(m)));
+        setErreur(null);
     };
 
-    const handleEditDetails = () => {
-        const newName = window.prompt("Nouveau nom du modèle ?", activeTemplate.name);
-        if (!newName) return;
-        const newDesc = window.prompt("Nouvelle description ?", activeTemplate.description);
-        
-        const updated = { ...activeTemplate, name: newName, description: newDesc || activeTemplate.description };
-        setActiveTemplate(updated);
-        setTemplates(templates.map(t => t.id === updated.id ? updated : t));
+    const modifierTache = (i, champ, valeur) => {
+        setBrouillon(b => {
+            const t = [...b.taches];
+            t[i] = { ...t[i], [champ]: champ === 'jours' ? (parseInt(valeur, 10) || 0) : valeur };
+            return { ...b, taches: t };
+        });
     };
 
-    const getDayLabel = (relativeDays, type) => {
-        const target = type === 'ONBOARDING' ? 'Date de Début' : 'Date de Fin';
-        if (relativeDays === 0) return `Le jour J (Jour 0)`;
-        if (relativeDays < 0) return `${Math.abs(relativeDays)} Jours Avant`;
-        return `${relativeDays} Jours Après`;
+    const deplacerTache = (i, sens) => {
+        setBrouillon(b => {
+            const t = [...b.taches];
+            const j = i + sens;
+            if (j < 0 || j >= t.length) return b;
+            [t[i], t[j]] = [t[j], t[i]];
+            return { ...b, taches: t };
+        });
     };
 
-    const getDeptColor = (dept) => {
-        const colors = {
-            'IT': 'bg-blue-100 text-blue-800',
-            'HR': 'bg-purple-100 text-purple-800',
-            'Facilities': 'bg-amber-100 text-amber-800',
-            'Manager': 'bg-emerald-100 text-emerald-800'
-        };
-        return colors[dept] || 'bg-slate-100 text-slate-800';
+    const ajouterTache = () => setBrouillon(b => ({
+        ...b,
+        taches: [...b.taches, { titre: '', equipe: 'Ressources Humaines', jours: 0, description: '' }]
+    }));
+
+    const retirerTache = (i) => setBrouillon(b => ({
+        ...b, taches: b.taches.filter((_, k) => k !== i)
+    }));
+
+    const enregistrer = async () => {
+        setEnregistrement(true);
+        setErreur(null);
+        try {
+            const { data } = await api.put(`/task-templates/${brouillon.id}`, {
+                nom: brouillon.nom,
+                famille: brouillon.famille,
+                description: brouillon.description,
+                actif: brouillon.actif,
+                taches: brouillon.taches
+            });
+            annoncer(`Modèle « ${data.nom} » enregistré.`);
+            charger(data.id);
+        } catch (e) {
+            setErreur(e.message || "Le modèle n'a pas pu être enregistré.");
+        } finally {
+            setEnregistrement(false);
+        }
+    };
+
+    const creer = async (type) => {
+        try {
+            const { data } = await api.post('/task-templates', {
+                nom: type === 'ONBOARDING' ? 'Nouveau parcours d\'intégration' : 'Nouveau parcours de départ',
+                type,
+                taches: []
+            });
+            annoncer('Modèle créé.');
+            charger(data.id);
+        } catch (e) {
+            setErreur(e.message || 'Création impossible.');
+        }
+    };
+
+    const importerSocle = async () => {
+        try {
+            const { data } = await api.post('/task-templates/importer-socle', {});
+            annoncer(`« ${data.nom} » importé, inactif : activez-le quand il vous convient.`);
+            charger(data.id);
+        } catch (e) {
+            setErreur(e.message || 'Import impossible.');
+        }
+    };
+
+    const supprimer = async () => {
+        if (!window.confirm(`Supprimer le modèle « ${brouillon.nom} » ?`)) return;
+        try {
+            await api.delete(`/task-templates/${brouillon.id}`);
+            annoncer('Modèle supprimé.');
+            setSelection(null); setBrouillon(null);
+            charger();
+        } catch (e) {
+            setErreur(e.message || 'Suppression impossible.');
+        }
     };
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-screen relative">
-            <AnimatePresence>
-                {notification && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600 text-white px-6 py-3 rounded-md shadow-lg flex items-center gap-3 font-medium"
-                    >
-                        <CheckCircle2 size={20} />
-                        {notification}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+        <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-[calc(100vh-4rem)]">
+            {message && (
+                <div className="fixed top-20 right-8 z-50 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg">
+                    {message}
+                </div>
+            )}
 
-            <div className="flex items-center justify-between space-y-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                        <Settings className="text-blue-600 h-8 w-8" />
-                        Créateur de Workflow
+                        <Workflow className="h-8 w-8 text-violet-600" />
+                        Parcours d'intégration et de départ
                     </h2>
-                    <p className="text-slate-500 mt-1">Concevez des modèles de tâches automatisés d'intégration et de départ.</p>
+                    <p className="text-slate-500 mt-1">
+                        Les tâches créées automatiquement à chaque arrivée et à chaque départ.
+                    </p>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="icon" onClick={() => charger()} title="Actualiser">
+                        <RefreshCw size={16} className={chargement ? 'animate-spin' : ''} />
+                    </Button>
+                    <Button variant="outline" onClick={importerSocle}>
+                        <Download size={16} className="mr-1.5" /> Importer le socle livré
+                    </Button>
+                    {TYPES.map(t => (
+                        <Button key={t.id} onClick={() => creer(t.id)} variant={t.id === 'ONBOARDING' ? 'default' : 'outline'}>
+                            <Plus size={16} className="mr-1.5" /> {t.libelle}
+                        </Button>
+                    ))}
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-6">
-                {/* Templates List Sidebar */}
-                <div className="md:col-span-1 space-y-4">
-                    <Card>
-                        <CardHeader className="pb-3 border-b">
-                            <CardTitle className="text-sm font-semibold text-slate-800">Modèles Disponibles</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {templates.map(t => (
-                                <div
-                                    key={t.id}
-                                    onClick={() => handleSelectTemplate(t)}
-                                    className={`p-4 border-b cursor-pointer transition-colors flex items-center justify-between hover:bg-slate-50 ${activeTemplate?.id === t.id ? 'bg-blue-50 border-blue-200 border-l-4 border-l-blue-600' : 'border-l-4 border-l-transparent'}`}
-                                >
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            {t.type === 'ONBOARDING' ? <UserPlus size={14} className="text-emerald-600" /> : <UserMinus size={14} className="text-amber-600" />}
-                                            <span className="font-medium text-sm text-slate-800">{t.name}</span>
-                                        </div>
-                                        <div className="text-xs text-slate-500">{t.tasks.length} tâches standards</div>
-                                    </div>
-                                    <ArrowRight size={16} className={`text-slate-400 ${activeTemplate?.id === t.id ? 'text-blue-600' : ''}`} />
+            {erreur && (
+                <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3">
+                    <AlertTriangle size={16} className="text-rose-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-rose-800">{erreur}</p>
+                </div>
+            )}
+
+            {/* Dire lequel des deux mondes s'applique évite la question que posait
+                l'ancienne version : on y composait des parcours sans jamais savoir
+                s'ils changeaient quoi que ce soit — ils ne changeaient rien. */}
+            <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                <Info size={16} className="text-slate-400 mt-0.5 shrink-0" />
+                <p className="text-xs text-slate-600">
+                    {source === 'MODELES_ENREGISTRES' ? (
+                        <>Les prochaines arrivées suivront <strong>les modèles actifs ci-dessous</strong>.
+                            Un modèle ciblant la famille de métier du salarié l'emporte sur le modèle général.</>
+                    ) : (
+                        <>Aucun modèle d'intégration actif : les arrivées suivent
+                            <strong> le socle livré avec l'application</strong>
+                            {reference ? ` (${reference.socle.length} formalités)` : ''}.
+                            Importez-le pour le personnaliser, puis activez votre version.</>
+                    )}
+                </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+                <Card className="shadow-sm border-slate-200 h-fit">
+                    <CardHeader>
+                        <CardTitle className="text-sm font-bold">Modèles enregistrés</CardTitle>
+                        <CardDescription>{modeles.length} modèle(s)</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        {chargement ? (
+                            <p className="py-6 text-center text-sm text-slate-400">Chargement…</p>
+                        ) : modeles.length === 0 ? (
+                            <p className="py-6 text-center text-xs text-slate-500">
+                                Aucun modèle. Importez le socle livré pour partir d'une base.
+                            </p>
+                        ) : modeles.map(m => (
+                            <button key={m.id} onClick={() => choisir(m)}
+                                className={cn('w-full text-left rounded-lg border p-3 transition-colors',
+                                    selection?.id === m.id ? 'border-violet-400 bg-violet-50' : 'border-slate-200 hover:bg-slate-50')}>
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="font-semibold text-sm text-slate-800 truncate">{m.nom}</span>
+                                    <Badge variant="outline" className={cn('text-[10px] shrink-0',
+                                        m.actif ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                                            : 'border-slate-200 text-slate-500')}>
+                                        {m.actif ? 'Actif' : 'Inactif'}
+                                    </Badge>
                                 </div>
-                            ))}
-                            <div className="p-4 bg-slate-50 text-center">
-                                <Button variant="outline" size="sm" className="w-full border-dashed" onClick={handleNewTemplate}>
-                                    <Plus size={14} className="mr-1" /> Nouveau Modèle
+                                <p className="text-[11px] text-slate-500 mt-1">
+                                    {TYPES.find(t => t.id === m.type)?.libelle} · {m.taches.length} tâche(s)
+                                    {m.famille && ` · ${m.famille}`}
+                                </p>
+                            </button>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                {brouillon ? (
+                    <Card className="shadow-sm border-slate-200">
+                        <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                            <div className="flex-1 space-y-2">
+                                <Input value={brouillon.nom}
+                                    onChange={(e) => setBrouillon(b => ({ ...b, nom: e.target.value }))}
+                                    className="text-base font-bold" />
+                                <Input value={brouillon.description || ''}
+                                    placeholder="Description (facultative)"
+                                    onChange={(e) => setBrouillon(b => ({ ...b, description: e.target.value }))}
+                                    className="text-xs" />
+                                <Input value={brouillon.famille || ''}
+                                    placeholder="Famille de métier ciblée — vide : s'applique à tous"
+                                    onChange={(e) => setBrouillon(b => ({ ...b, famille: e.target.value }))}
+                                    className="text-xs" />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant={brouillon.actif ? 'default' : 'outline'}
+                                    onClick={() => setBrouillon(b => ({ ...b, actif: !b.actif }))}
+                                    className={brouillon.actif ? 'bg-emerald-600 hover:bg-emerald-700' : ''}>
+                                    <Power size={15} className="mr-1.5" /> {brouillon.actif ? 'Actif' : 'Inactif'}
+                                </Button>
+                                <Button variant="outline" onClick={supprimer} title="Supprimer">
+                                    <Trash2 size={15} className="text-rose-600" />
                                 </Button>
                             </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {brouillon.taches.length === 0 && (
+                                <p className="py-6 text-center text-sm text-slate-400 border-2 border-dashed rounded-lg">
+                                    Aucune tâche. Un modèle actif sans tâche est ignoré au profit du socle.
+                                </p>
+                            )}
+
+                            {brouillon.taches.map((t, i) => (
+                                <div key={i} className="rounded-lg border border-slate-200 p-3 space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-slate-400 w-6">{i + 1}</span>
+                                        <Input value={t.titre} placeholder="Libellé de la tâche"
+                                            onChange={(e) => modifierTache(i, 'titre', e.target.value)}
+                                            className="flex-1 text-sm" />
+                                        <Button size="icon" variant="ghost" className="h-8 w-8"
+                                            onClick={() => deplacerTache(i, -1)} disabled={i === 0} title="Monter">
+                                            <ArrowUp size={14} />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="h-8 w-8"
+                                            onClick={() => deplacerTache(i, 1)}
+                                            disabled={i === brouillon.taches.length - 1} title="Descendre">
+                                            <ArrowDown size={14} />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="h-8 w-8"
+                                            onClick={() => retirerTache(i)} title="Retirer">
+                                            <Trash2 size={14} className="text-rose-500" />
+                                        </Button>
+                                    </div>
+                                    <div className="grid gap-2 md:grid-cols-3 pl-8">
+                                        <label className="text-[11px] font-semibold text-slate-600">
+                                            Équipe responsable
+                                            <Input value={t.equipe} className="mt-1 text-xs"
+                                                onChange={(e) => modifierTache(i, 'equipe', e.target.value)} />
+                                        </label>
+                                        <label className="text-[11px] font-semibold text-slate-600">
+                                            Échéance ({jourLisible(t.jours)})
+                                            <Input type="number" value={t.jours} className="mt-1 text-xs"
+                                                onChange={(e) => modifierTache(i, 'jours', e.target.value)} />
+                                        </label>
+                                        <label className="text-[11px] font-semibold text-slate-600">
+                                            Précision
+                                            <Input value={t.description || ''} className="mt-1 text-xs"
+                                                onChange={(e) => modifierTache(i, 'description', e.target.value)} />
+                                        </label>
+                                    </div>
+                                </div>
+                            ))}
+
+                            <div className="flex justify-between pt-2">
+                                <Button variant="outline" onClick={ajouterTache}>
+                                    <Plus size={15} className="mr-1.5" /> Ajouter une tâche
+                                </Button>
+                                <Button onClick={enregistrer} disabled={enregistrement}
+                                    className="bg-violet-600 hover:bg-violet-700">
+                                    <Save size={15} className="mr-1.5" />
+                                    {enregistrement ? 'Enregistrement…' : 'Enregistrer le modèle'}
+                                </Button>
+                            </div>
+
+                            <p className="text-[11px] text-slate-400 pt-1">
+                                L'échéance se compte à partir de la date d'arrivée ou de départ :
+                                −3 pour trois jours avant, +7 pour une semaine après.
+                            </p>
                         </CardContent>
                     </Card>
-                </div>
-
-                {/* Workflow Editor */}
-                <div className="md:col-span-3">
-                    {activeTemplate && (
-                        <Card className="min-h-[500px]">
-                            <CardHeader className="flex flex-row items-start justify-between bg-slate-50/50 border-b pb-6">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Badge variant="outline" className={activeTemplate.type === 'ONBOARDING' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}>
-                                            {activeTemplate.type}
-                                        </Badge>
-                                        <h3 className="text-xl font-bold text-slate-900">{activeTemplate.name}</h3>
-                                    </div>
-                                    <CardDescription>{activeTemplate.description}</CardDescription>
-                                </div>
-                                <Button variant="outline" size="sm" onClick={handleEditDetails}>
-                                    <Edit2 size={14} className="mr-2" /> Modifier les Détails
-                                </Button>
-                            </CardHeader>
-
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h4 className="font-semibold text-slate-800 flex items-center gap-2">
-                                        <ListChecks size={18} className="text-slate-400" />
-                                        Séquence de Tâches ({activeTemplate.tasks.length})
-                                    </h4>
-                                    <Button size="sm" onClick={() => setNewTaskForm(true)} className="bg-slate-900 text-white hover:bg-slate-800">
-                                        <PlusCircle size={16} className="mr-2" /> Ajouter une Tâche
-                                    </Button>
-                                </div>
-
-                                <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                                    {activeTemplate.tasks.map((task, index) => (
-                                        <div key={task.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                            {/* Timeline dot */}
-                                            <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-slate-200 text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-colors group-hover:bg-blue-500 group-hover:text-white">
-                                                <span className="text-xs font-bold font-mono">{task.relativeDays > 0 ? `+${task.relativeDays}` : task.relativeDays}</span>
-                                            </div>
-
-                                            {/* Task Card */}
-                                            <Card className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] hover:shadow-md transition-all group-hover:border-blue-200">
-                                                <CardContent className="p-4 flex flex-col gap-2">
-                                                    <div className="flex justify-between items-start">
-                                                        <Badge variant="secondary" className={getDeptColor(task.department)}>{task.department}</Badge>
-                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button 
-                                                                onClick={() => {
-                                                                    setTaskTitle(task.title);
-                                                                    setTaskDept(task.department);
-                                                                    setTaskDays(task.relativeDays);
-                                                                    setIsEditingTask(task.id);
-                                                                    setNewTaskForm(true);
-                                                                }} 
-                                                                className="text-slate-400 hover:text-blue-600 p-1"
-                                                            >
-                                                                <Edit2 size={14} />
-                                                            </button>
-                                                            <button onClick={() => handleDeleteTask(task.id)} className="text-slate-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
-                                                        </div>
-                                                    </div>
-                                                    <h5 className="font-bold text-sm text-slate-900">{task.title}</h5>
-                                                    <p className="text-xs text-slate-500 line-clamp-2">{task.description}</p>
-                                                    <div className="text-xs font-medium text-slate-400 mt-2">
-                                                        {getDayLabel(task.relativeDays, activeTemplate.type)}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
-                                    ))}
-
-                                    {/* New Task Inline Form */}
-                                    {newTaskForm && (
-                                        <div className="relative flex items-center justify-center p-6 border-2 border-dashed border-blue-300 bg-blue-50 rounded-xl mt-8">
-                                            <div className="w-full max-w-2xl space-y-4">
-                                                <h5 className="font-semibold text-blue-900 pb-2 border-b border-blue-200">Créer une Nouvelle Tâche</h5>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="space-y-2 col-span-2">
-                                                        <label className="text-xs font-medium text-blue-800">Titre de la Tâche</label>
-                                                        <Input placeholder="ex., Créer un compte VPN" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} className="bg-white" />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-medium text-blue-800">Département Assigné</label>
-                                                        <select
-                                                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                            value={taskDept}
-                                                            onChange={e => setTaskDept(e.target.value)}
-                                                        >
-                                                            <option>IT</option>
-                                                            <option>HR</option>
-                                                            <option>Facilities</option>
-                                                            <option>Manager</option>
-                                                        </select>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-xs font-medium text-blue-800">Délai (Jours Relatifs)</label>
-                                                        <Input type="number" placeholder="0" value={taskDays} onChange={e => setTaskDays(e.target.value)} className="bg-white" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-end gap-2 pt-2">
-                                                    <Button variant="ghost" className="hover:bg-blue-100 text-blue-700" onClick={() => setNewTaskForm(false)}>Annuler</Button>
-                                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSaveNewTask}>Enregistrer au Modèle</Button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
+                ) : (
+                    <Card className="shadow-sm border-slate-200">
+                        <CardContent className="p-12 text-center text-sm text-slate-500">
+                            {chargement ? 'Chargement…' : 'Sélectionnez un modèle, ou importez le socle livré pour commencer.'}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );

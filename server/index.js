@@ -211,6 +211,11 @@ app.use('/api/tasks', taskBoardRoutes);
 const hseRoutes = require('./routes/hseRoutes');
 app.use('/api/hse', hseRoutes);
 
+// Modèles de parcours d'intégration et de départ. Ils pilotent les tâches
+// créées à l'embauche, jusqu'ici figées dans un fichier de code.
+const taskTemplateRoutes = require('./routes/taskTemplateRoutes');
+app.use('/api/task-templates', taskTemplateRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

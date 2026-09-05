@@ -97,4 +97,47 @@ function buildOnboardingTasks(employee) {
     }));
 }
 
-module.exports = { buildOnboardingTasks, SOCLE, PAR_FAMILLE };
+/**
+ * Tâches d'intégration en tenant compte des modèles enregistrés par la RH.
+ *
+ * Les modèles actifs de la base prennent le pas sur le socle codé ci-dessus :
+ * un modèle ciblant la famille du salarié s'applique en priorité, à défaut le
+ * modèle général. Sans aucun modèle actif, on retombe sur `buildOnboardingTasks`
+ * — le comportement reste donc celui d'avant tant que rien n'a été personnalisé,
+ * et une base vide ne prive jamais une arrivée de ses formalités.
+ *
+ * @param {{id: string, department?: string}} employee
+ * @param {object} prisma Client Prisma, passé pour garder ce fichier sans
+ *   dépendance à la base — il reste ainsi utilisable hors contexte serveur.
+ */
+async function construireTachesIntegration(employee, prisma) {
+    try {
+        const modeles = await prisma.taskTemplate.findMany({
+            where: { type: 'ONBOARDING', active: true },
+            include: { items: true }
+        });
+        if (modeles.length === 0) return buildOnboardingTasks(employee);
+
+        const famille = employee.department || '';
+        const cible = modeles.find(m => m.family && m.family === famille)
+            || modeles.find(m => !m.family);
+        if (!cible || cible.items.length === 0) return buildOnboardingTasks(employee);
+
+        return cible.items
+            .slice()
+            .sort((a, b) => a.position - b.position)
+            .map(i => ({
+                employeeId: employee.id,
+                taskName: i.title,
+                assignedTo: i.assignedTo,
+                dueDate: dansNJours(i.relativeDays)
+            }));
+    } catch (error) {
+        // Une embauche ne doit pas échouer parce que les modèles sont
+        // illisibles : on retombe sur le socle et on le signale.
+        console.error('[INTÉGRATION] Modèles enregistrés illisibles, socle appliqué :', error.message);
+        return buildOnboardingTasks(employee);
+    }
+}
+
+module.exports = { buildOnboardingTasks, construireTachesIntegration, SOCLE, PAR_FAMILLE };
