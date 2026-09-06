@@ -1,0 +1,4 @@
+anthropic>=0.92.0
+SQLAlchemy>=2.0
+python-dotenv>=1.0
+typer>=0.12
