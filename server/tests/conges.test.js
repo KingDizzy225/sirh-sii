@@ -212,15 +212,18 @@ async function main() {
     console.log('\n▸ Export déclaratif\n');
 
     const { exportSage } = require(path.join(racine, 'controllers', 'payrollController'));
+    // Période distincte de celles des autres essais (2026-08) : ces contrôles
+    // portent sur le refus d'un export incomplet, et un bulletin laissé par un
+    // essai précédent y ferait entrer un salarié qui n'est pas le nôtre.
     await prisma.payroll.create({
         data: {
-            employeeId: yao.id, period: new Date('2026-08-01'),
+            employeeId: yao.id, period: new Date('2026-11-01'),
             baseSalary: 300000, netSalary: 250000, status: 'APPROVED'
         }
     });
 
     res = faireRes();
-    await exportSage({ query: { period: '2026-08' }, user: { email: 'rh@essai.local' } }, res);
+    await exportSage({ query: { period: '2026-11' }, user: { email: 'rh@essai.local' } }, res);
     egal('L\'export refuse un fichier que la CNPS rejetterait', res.statut, 409);
     verifier('...en nommant les salariés à compléter',
         res.corps && Array.isArray(res.corps.salaries) && res.corps.salaries.length > 0);
@@ -230,7 +233,7 @@ async function main() {
         data: { matricule: `${marque}-020`, cnpsNumber: '5544332211' }
     });
     res = faireRes();
-    await exportSage({ query: { period: '2026-08' }, user: { email: 'rh@essai.local' } }, res);
+    await exportSage({ query: { period: '2026-11' }, user: { email: 'rh@essai.local' } }, res);
     verifier('Une fois le dossier complet, l\'export produit le fichier',
         typeof res.corps === 'string' && res.corps.includes('MATRICULE'));
     verifier('...avec le vrai matricule, non l\'identifiant technique',

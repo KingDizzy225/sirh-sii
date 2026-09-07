@@ -55,7 +55,13 @@ async function main() {
         data: {
             firstName: 'Awa', lastName: 'Koné', email: `awa.${Date.now()}@essai.test`,
             role: 'Employee', department: 'Opérations', status: 'ACTIVE',
-            hireDate: new Date('2023-01-15'), positionTitle: 'Chargée de clientèle'
+            hireDate: new Date('2023-01-15'), positionTitle: 'Chargée de clientèle',
+            // Matricule et numéro CNPS : l'export déclaratif refuse désormais de
+            // produire un fichier pour un salarié qui en manque, la CNPS le
+            // rejetterait. Ce refus est éprouvé dans conges.test.js ; ici, c'est
+            // le calcul de la paie qui est en cause, et le dossier doit être
+            // complet pour que l'export puisse être examiné.
+            matricule: `PAIE-${Date.now()}`, cnpsNumber: '1234567890'
         }
     });
 
