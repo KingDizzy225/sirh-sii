@@ -230,6 +230,9 @@ app.use('/api/policies', policyRoutes);
 const procedureRoutes = require('./routes/procedureRoutes');
 app.use('/api/procedures', procedureRoutes);
 
+const budgetRoutes = require('./routes/budgetRoutes');
+app.use('/api/budget', budgetRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

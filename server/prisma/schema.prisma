@@ -1357,3 +1357,36 @@ model ProcedureEtape {
   @@index([procedureId, ordre])
   @@map("procedure_etapes")
 }
+
+// ----------------------------------------------------
+// BUDGET D'EFFECTIF ET DE MASSE SALARIALE
+// ----------------------------------------------------
+
+/// Budget annuel d'un service : postes ouverts et masse salariale prévue.
+///
+/// L'application savait dire ce qui avait été payé, jamais ce qui avait été
+/// prévu. Le mot « budget » n'apparaissait nulle part dans le modèle. Cette
+/// table donne le point de comparaison sans lequel un écart ne se voit pas.
+///
+/// La masse budgétée s'entend en coût employeur — brut plus charges patronales
+/// — sur l'année : c'est ce que l'entreprise décaisse, et la seule grandeur
+/// comparable au réalisé.
+model BudgetEffectif {
+  id          String @id @default(uuid())
+  annee       Int
+  departement String
+
+  /// Postes budgétés, pourvus ou non.
+  effectifBudgete        Int   @default(0) @map("effectif_budgete")
+  /// Coût employeur annuel prévu, en FCFA.
+  masseSalarialeBudgetee Float @default(0) @map("masse_salariale_budgetee")
+
+  commentaire String?  @db.Text
+  majPar      String?  @map("maj_par")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([annee, departement])
+  @@index([annee])
+  @@map("budgets_effectif")
+}
