@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const requireRole = require('../middleware/roleMiddleware');
 const { traceAccess, cibles } = require('../middleware/accessTrace');
+const signatureController = require('../controllers/signatureController');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads/documents');
@@ -31,7 +32,13 @@ router.get('/', verifyToken, documentController.getDocuments);
 router.post('/upload', verifyToken, requireRole(['HR', 'ADMIN']), upload.single('file'), documentController.uploadDocument);
 // router.post('/generate', verifyToken, documentController.generateAndSignDocument); // Disabled
 router.post('/ai-generate', verifyToken, aiDocumentController.generateAIDocument);
-router.post('/:id/sign', verifyToken, aiDocumentController.signDocument);
+// Signature depuis l'application, par le salarié lui-même.
+router.post('/:id/sign', verifyToken, signatureController.signerConnecte);
+// Demande de signature : c'est la RH qui décide qu'un document doit être signé,
+// et le lien produit vaut autorisation de signer.
+router.post('/:id/demande-signature', verifyToken, requireRole(['HR', 'ADMIN']), signatureController.demanderSignature);
+router.get('/:id/certificat', verifyToken, signatureController.telechargerCertificat);
+router.get('/:id/integrite', verifyToken, signatureController.verifierIntegrite);
 router.get('/generate-attestation/:employeeId', verifyToken, documentController.generateAttestation);
 router.delete('/:id', verifyToken, requireRole(['HR', 'ADMIN']), documentController.deleteDocument);
 
@@ -44,8 +51,20 @@ router.get('/issued/:employeeId', verifyToken, requireRole(['HR', 'ADMIN']), ver
 router.post('/issued/:id/revoke', verifyToken, requireRole(['HR', 'ADMIN']), verificationController.revokeDocument);
 router.post('/employee/:employeeId/upload', verifyToken, requireRole('HR', 'ADMIN'), upload.single('file'), documentController.uploadEmployeeDocument);
 
-// Public Signature Routes
-router.get('/public/:id', aiDocumentController.getPublicDocument);
-router.post('/public/:id/sign', aiDocumentController.signPublicDocument);
+/**
+ * Signature publique, par lien à usage unique.
+ *
+ * Les routes précédentes s'ouvraient sur l'identifiant du document et ne
+ * vérifiaient rien : `GET /public/:id` rendait le dossier entier — nom du
+ * salarié, chemin du fichier — à qui connaissait cet identifiant, et
+ * `POST /public/:id/sign` signait en son nom. Le certificat produit annonçait
+ * pourtant un « lien magique unique » que le code n'implémentait pas.
+ *
+ * L'adresse porte désormais un jeton aléatoire de 32 octets, à usage unique et
+ * daté, et ne rend que ce que le signataire doit voir.
+ */
+router.get('/signature/:token', signatureController.getDocumentParJeton);
+router.get('/signature/:token/fichier', signatureController.getFichierParJeton);
+router.post('/signature/:token', signatureController.signerParJeton);
 
 module.exports = router;

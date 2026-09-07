@@ -15,7 +15,17 @@ const verifyToken = (req, res, next) => {
     }
 
     if (!token) {
-        return res.status(403).json({ error: 'Token non fourni ou manquant' });
+        /**
+         * 401, et non 403 : l'absence de jeton est un défaut d'authentification
+         * — « je ne sais pas qui vous êtes » — et non un refus de droits.
+         *
+         * La distinction n'est pas théorique. Le client déconnecte sur 401 et
+         * seulement sur 401 : confondre les deux faisait qu'un simple refus de
+         * droits — un manager ouvrant le bulletin d'un subordonné, un salarié
+         * touchant un écran réservé à la RH — effaçait la session et renvoyait
+         * l'utilisateur à l'écran de connexion.
+         */
+        return res.status(401).json({ error: 'Token non fourni ou manquant' });
     }
 
     try {

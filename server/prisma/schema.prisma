@@ -444,6 +444,33 @@ model EmployeeDocument {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  // --- Signature ---
+  //
+  // La page publique de signature s'ouvrait sur l'identifiant du document, et
+  // la route de signature ne vérifiait rien : quiconque disposait de cet
+  // identifiant pouvait signer au nom du salarié. Le certificat produit
+  // annonçait pourtant « Lien Magique Unique (Jeton cryptographique) », un
+  // mécanisme qui n'existait pas.
+  //
+  // Le jeton ci-dessous est ce mécanisme : aléatoire, à usage unique, daté.
+  signatureToken   String?   @unique @map("signature_token")
+  tokenExpiresAt   DateTime? @map("token_expires_at")
+  signatureRequestedBy String? @map("signature_requested_by")
+
+  signedAt   DateTime? @map("signed_at")
+  signedBy   String?   @map("signed_by")
+  signedIp   String?   @map("signed_ip")
+
+  /// Empreinte SHA-256 du document au moment de la signature. Sans elle, rien
+  /// ne relie la signature au contenu signé : une image apposée sur un PDF neuf
+  /// ne prouve rien de ce qui a été accepté.
+  signatureHash String? @map("signature_hash")
+
+  /// Le certificat est un fichier distinct. La signature écrasait auparavant le
+  /// document par une page de certificat seule : après signature, le contrat
+  /// n'était plus attaché au dossier.
+  certificatePath String? @map("certificate_path")
+
   employee Employee @relation("EmployeeDocs", fields: [employeeId], references: [id], onDelete: Cascade)
 }
 

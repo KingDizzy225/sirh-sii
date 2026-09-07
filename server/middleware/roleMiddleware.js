@@ -36,7 +36,9 @@ const requireRole = (...rolesArg) => {
 
     return (req, res, next) => {
         if (!req.user || !req.user.role) {
-            return res.status(403).json({ error: 'Accès refusé. Rôle manquant.' });
+            // Aucun utilisateur attaché : le jeton n'a pas été validé en amont.
+            // C'est un défaut d'authentification, pas un refus de droits.
+            return res.status(401).json({ error: 'Authentification requise.' });
         }
 
         if (!hasRole(req.user, roles)) {

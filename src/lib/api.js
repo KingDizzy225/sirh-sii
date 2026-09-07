@@ -67,13 +67,28 @@ const handleResponse = async (res) => {
         );
     }
 
-    if (res.status === 401 || res.status === 403) {
+    /**
+     * Un refus de droits n'est pas une session expirée.
+     *
+     * Le 403 déconnectait au même titre que le 401 : ouvrir un écran réservé à
+     * la RH, consulter le bulletin d'un collègue, signer une fiche qui n'est
+     * pas la sienne — chacun de ces refus, parfaitement normaux, effaçait la
+     * session et renvoyait l'utilisateur à l'écran de connexion. Le message
+     * affiché parlait de session expirée alors que la session était valide,
+     * ce qui rendait le comportement incompréhensible pour l'utilisateur comme
+     * pour celui qui devait le diagnostiquer.
+     *
+     * Seul le 401 — « je ne sais pas qui vous êtes » — met fin à la session.
+     */
+    if (res.status === 403) {
+        const detail = await res.json().catch(() => ({}));
+        throw new Error(detail.error || "Vous n'avez pas les droits nécessaires pour cette action.");
+    }
+
+    if (res.status === 401) {
         // Seule la session de repli hors ligne porte un jeton que le serveur ne
         // peut pas accepter ; rediriger dans ce cas enfermerait l'application
-        // dans une boucle de connexion. La condition portait auparavant sur le
-        // mode démo tout entier, si bien qu'une session réellement expirée n'y
-        // déclenchait aucune déconnexion : l'utilisateur restait « connecté »
-        // devant des modules vides ou en erreur, sans rien pour l'en informer.
+        // dans une boucle de connexion.
         if (localStorage.getItem('sirh_token') === DEMO_TOKEN) {
             throw new Error('Non autorisé (session de démonstration hors ligne)');
         }

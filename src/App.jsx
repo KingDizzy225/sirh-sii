@@ -113,7 +113,7 @@ const AppContent = () => {
         <Route path="/ethics" element={<Ethics />} />
         <Route path="/login" element={<Login />} />
         <Route path="/careers" element={<PublicCareers />} />
-        <Route path="/sign/:id" element={<PublicSignature />} />
+        <Route path="/sign/:token" element={<PublicSignature />} />
         <Route path="/portal" element={<PublicPortal />} />
         <Route path="/verify/:token" element={<VerifyDocument />} />
         <Route path="*" element={<Login />} />

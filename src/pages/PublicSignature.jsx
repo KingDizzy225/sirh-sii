@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function PublicSignature() {
-    const { id } = useParams();
+    const { token } = useParams();
     const [document, setDocument] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -21,7 +21,7 @@ export function PublicSignature() {
     useEffect(() => {
         const fetchDocument = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/documents/public/${id}`);
+                const res = await fetch(`${API_URL}/api/documents/signature/${token}`);
                 if (res.ok) {
                     setDocument(await res.json());
                 } else {
@@ -36,7 +36,7 @@ export function PublicSignature() {
         };
 
         fetchDocument();
-    }, [id]);
+    }, [token]);
 
     const clearSignature = () => {
         setSignatureDataUrl(null);
@@ -51,7 +51,7 @@ export function PublicSignature() {
         setIsSubmitting(true);
 
         try {
-            const res = await fetch(`${API_URL}/api/documents/public/${id}/sign`, {
+            const res = await fetch(`${API_URL}/api/documents/signature/${token}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ signatureDataUrl })
@@ -60,7 +60,10 @@ export function PublicSignature() {
             if (res.ok) {
                 setSuccess(true);
             } else {
-                alert("Erreur lors de l'enregistrement de la signature.");
+                // Le motif exact importe ici : un lien périmé, un document déjà
+                // signé et une panne appellent des suites différentes.
+                const detail = await res.json().catch(() => ({}));
+                alert(detail.error || "Erreur lors de l'enregistrement de la signature.");
             }
         } catch (error) {
             console.error("Signature error", error);
@@ -144,7 +147,7 @@ export function PublicSignature() {
                         <CardHeader className="bg-slate-100 border-b border-slate-200">
                             <CardTitle className="text-lg flex items-center gap-2">
                                 <FileText size={20} className="text-indigo-600" /> 
-                                {document.title}
+                                {document.titre}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0 bg-slate-200/50 flex flex-col items-center justify-center min-h-[400px]">
@@ -154,7 +157,7 @@ export function PublicSignature() {
                                     <p className="text-sm font-medium text-slate-500">Aperçu non disponible</p>
                                 </div>
                                 <a 
-                                    href={`${API_URL}${document.filePath}`} 
+                                    href={`${API_URL}/api/documents/signature/${token}/fichier`} 
                                     target="_blank" 
                                     rel="noreferrer"
                                     className="text-indigo-600 hover:text-indigo-700 hover:underline font-medium text-sm flex items-center justify-center gap-1"
@@ -177,7 +180,7 @@ export function PublicSignature() {
                             
                             <div className="space-y-1">
                                 <p className="text-sm font-medium text-slate-700">Signataire :</p>
-                                <p className="text-lg font-bold text-slate-900">{document.employee?.firstName} {document.employee?.lastName}</p>
+                                <p className="text-lg font-bold text-slate-900">{document.signataire || '—'}</p>
                             </div>
 
                             <div className="space-y-2">
@@ -192,7 +195,7 @@ export function PublicSignature() {
                                     <SignaturePad onSign={setSignatureDataUrl} />
                                 </div>
                                 <p className="text-xs text-slate-400">
-                                    En signant, vous acceptez les termes du document. Cette signature a une valeur légale.
+                                    En signant, vous acceptez les termes du document. Un certificat sera établi, portant la date, votre adresse IP et l'empreinte du document signé — c'est elle qui permettra de vérifier qu'il n'a pas été modifié depuis.
                                 </p>
                             </div>
 
