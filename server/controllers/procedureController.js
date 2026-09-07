@@ -94,6 +94,13 @@ function decrire(procedure) {
     };
 }
 
+/**
+ * Vue d'une procédure, exportée pour le balayage quotidien des échéances.
+ * Une seule définition du retard : deux calculs finiraient par diverger, et
+ * l'écran cesserait de dire la même chose que l'alerte.
+ */
+exports.decrire = decrire;
+
 const inclusion = {
     etapes: true,
     employee: { select: { id: true, firstName: true, lastName: true, positionTitle: true, department: true } }

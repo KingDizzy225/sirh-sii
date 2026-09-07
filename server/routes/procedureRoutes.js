@@ -3,6 +3,7 @@ const router = express.Router();
 const procedureController = require('../controllers/procedureController');
 const verifyToken = require('../middleware/authMiddleware');
 const requireRole = require('../middleware/roleMiddleware');
+const { traceAccess, cibles } = require('../middleware/accessTrace');
 
 // Procédures disciplinaires et de rupture : données sensibles, réservées à la
 // RH et à l'administration, comme le dossier disciplinaire dont elles relèvent.
@@ -13,9 +14,12 @@ router.use(verifyToken);
 // Route nommée avant `/:id`, que « modeles » ne doit pas être pris pour un identifiant.
 router.get('/modeles', requireRole(RH), procedureController.getModeles);
 
-router.get('/', requireRole(RH), procedureController.lister);
+// Une procédure de licenciement est au moins aussi sensible que le dossier
+// disciplinaire qu'elle alimente, lequel est tracé depuis l'origine. Les
+// consultations le sont donc aussi, dossier par dossier et registre entier.
+router.get('/', requireRole(RH), traceAccess('PROCEDURE', cibles.registre(RH)), procedureController.lister);
 router.post('/', requireRole(RH), procedureController.ouvrir);
-router.get('/:id', requireRole(RH), procedureController.detail);
+router.get('/:id', requireRole(RH), traceAccess('PROCEDURE', cibles.parProcedure), procedureController.detail);
 router.post('/:id/etapes/:etapeId', requireRole(RH), procedureController.franchir);
 router.post('/:id/cloturer', requireRole(RH), procedureController.cloturer);
 

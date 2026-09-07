@@ -41,6 +41,45 @@ async function reglesPourAssistant() {
     }));
 }
 
+/**
+ * GET /api/policies/consultation
+ *
+ * Les règles telles qu'un salarié peut les lire. Elles n'étaient accessibles
+ * qu'à la RH : un collaborateur ne pouvait connaître le règlement de son
+ * entreprise qu'en interrogeant l'assistant, une question à la fois. Or ces
+ * textes sont écrits pour être lus.
+ *
+ * Seules les règles actives sont rendues, et sans la trace de qui les a
+ * modifiées ni quand — ce sont des informations d'administration, sans intérêt
+ * pour le lecteur et sans raison de circuler.
+ */
+exports.getPoliciesPubliques = async (req, res) => {
+    try {
+        const regles = await prisma.policyRule.findMany({
+            where: { active: true },
+            orderBy: [{ category: 'asc' }, { title: 'asc' }]
+        });
+        res.json({
+            regles: regles.map(r => ({
+                id: r.id,
+                titre: r.title,
+                categorie: r.category,
+                contenu: r.content,
+                source: r.source
+            })),
+            categories: CATEGORIES,
+            // Aucune règle enregistrée : le dire plutôt que rendre une liste
+            // vide, que le lecteur prendrait pour une absence de règles.
+            message: regles.length === 0
+                ? "Aucune règle n'a encore été publiée par les ressources humaines."
+                : null
+        });
+    } catch (error) {
+        console.error('Erreur lecture des règles publiées :', error);
+        res.status(500).json({ error: 'Erreur lors du chargement des règles internes.' });
+    }
+};
+
 /** GET /api/policies */
 exports.getPolicies = async (req, res) => {
     try {

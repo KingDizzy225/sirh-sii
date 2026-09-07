@@ -8,6 +8,11 @@ const ctrl = require('../controllers/policyController');
 // leur édition est réservée à la RH et à l'administration.
 const ROLES = ['ADMIN', 'HR'];
 
+// Lecture ouverte à tout collaborateur connecté : ces règles fondent ses
+// droits, il doit pouvoir les lire sans passer par l'assistant. Seules les
+// règles actives sont rendues, et l'édition reste réservée.
+router.get('/consultation', verifyToken, ctrl.getPoliciesPubliques);
+
 router.get('/', verifyToken, requireRole(ROLES), ctrl.getPolicies);
 router.post('/', verifyToken, requireRole(ROLES), ctrl.createPolicy);
 router.post('/proposer', verifyToken, requireRole(ROLES), ctrl.proposerDepuisDocument);

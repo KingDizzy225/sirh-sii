@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User, CheckCircle2, Award, Sparkles, X, MessageCircle, Send, Bot, Banknote, TrendingUp, AlertCircle, Check } from 'lucide-react';
+import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User, CheckCircle2, Award, Sparkles, X, MessageCircle, Send, Bot, Banknote, TrendingUp, AlertCircle, Check, BookOpen, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,8 @@ export function EmployeePortal() {
     const [isClocking, setIsClocking] = useState(false);
     const [clockNotice, setClockNotice] = useState(null); // { tone: 'success' | 'warning', text }
     const [accessTrace, setAccessTrace] = useState(null); // null = en cours de chargement
+    const [regles, setRegles] = useState(null); // null = en cours de chargement
+    const [regleOuverte, setRegleOuverte] = useState(null);
     const [pointagesEnAttente, setPointagesEnAttente] = useState(0);
     const [salaireDisponible, setSalaireDisponible] = useState(null);
     const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
@@ -127,6 +129,30 @@ export function EmployeePortal() {
             }
         };
 
+        /**
+         * Règles internes de l'entreprise.
+         *
+         * Elles n'étaient lisibles que par la RH : un collaborateur ne pouvait
+         * connaître le règlement qui fonde ses droits qu'en interrogeant
+         * l'assistant, une question à la fois.
+         */
+        const fetchRegles = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/policies/consultation`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setRegles(Array.isArray(data.regles) ? data.regles : []);
+                } else {
+                    setRegles([]);
+                }
+            } catch (err) {
+                console.error('Règles internes indisponibles', err);
+                setRegles([]);
+            }
+        };
+
         const fetchAccessTrace = async () => {
             try {
                 const res = await fetch(`${API_URL}/api/audit/my-access`, {
@@ -143,6 +169,7 @@ export function EmployeePortal() {
             fetchLogs();
             fetchMyAdvances();
             fetchAccessTrace();
+            fetchRegles();
             fetchSalaireDisponible();
 
             // Rattrapage des pointages différés : au chargement, puis dès que
@@ -673,6 +700,61 @@ export function EmployeePortal() {
                         </Card>
                     </motion.div>
                 </div>
+
+                {/* Règles internes : le texte qui fonde ses droits, lisible
+                    directement. L'assistant peut les citer, mais il faut savoir
+                    quoi lui demander — et une réponse ne remplace pas la
+                    lecture du texte. */}
+                <motion.div variants={itemVariants}>
+                    <Card className="border-slate-100 shadow-sm">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <BookOpen size={17} className="text-slate-500" />
+                                Règles internes
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                                Congés, horaires, avantages : les règles de l'entreprise, telles qu'elles s'appliquent.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {regles === null ? (
+                                <p className="text-xs text-slate-400">Chargement…</p>
+                            ) : regles.length === 0 ? (
+                                <p className="text-sm text-slate-500">
+                                    Aucune règle n'a encore été publiée par les ressources humaines.
+                                </p>
+                            ) : (
+                                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                    {regles.map((r) => (
+                                        <div key={r.id} className="border border-slate-100 rounded-lg">
+                                            <button
+                                                onClick={() => setRegleOuverte(regleOuverte === r.id ? null : r.id)}
+                                                className="w-full text-left px-3 py-2 flex items-center justify-between gap-2 bg-transparent border-0 cursor-pointer hover:bg-slate-50 rounded-lg"
+                                            >
+                                                <span className="min-w-0">
+                                                    <span className="block text-sm font-semibold text-slate-800 truncate">{r.titre}</span>
+                                                    <span className="block text-[11px] text-slate-400">{r.categorie}</span>
+                                                </span>
+                                                <ChevronDown
+                                                    size={15}
+                                                    className={`text-slate-400 shrink-0 transition-transform ${regleOuverte === r.id ? 'rotate-180' : ''}`}
+                                                />
+                                            </button>
+                                            {regleOuverte === r.id && (
+                                                <div className="px-3 pb-3 pt-1 border-t border-slate-100">
+                                                    <p className="text-sm text-slate-700 whitespace-pre-line">{r.contenu}</p>
+                                                    {r.source && (
+                                                        <p className="text-[11px] text-slate-400 mt-2">Source : {r.source}</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </motion.div>
 
                 {/* Transparence : accès à son propre dossier.
                     Détenir salaires et données de santé crée une obligation

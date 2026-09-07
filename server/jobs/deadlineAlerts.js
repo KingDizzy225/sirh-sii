@@ -2,6 +2,7 @@ const prisma = require('../prismaClient');
 const { runOnce, dayPeriod } = require('./runOnce');
 const { notifierRH } = require('../lib/notify');
 const { PAR_CODE: PIECES_PAR_CODE } = require('../lib/sousTraitance');
+const { decrire: decrireProcedure } = require('../controllers/procedureController');
 
 const DAYS_AHEAD = parseInt(process.env.ALERT_DAYS_AHEAD || '30', 10);
 
@@ -105,6 +106,36 @@ async function scanDeadlines(referenceDate = new Date()) {
             );
         }
         summary.push(`${attestations.length} attestation(s) de prestataire dont ${expirees} expirée(s)`);
+
+        // 5. Procédures dont une étape a dépassé son délai
+        //
+        // Le retard était calculé et affiché en rouge sur l'écran, mais rien
+        // n'en avertissait : il fallait ouvrir la page pour l'apprendre. Une
+        // sanction qui devient contestable par simple écoulement du temps
+        // mérite mieux qu'un badge que personne ne regarde.
+        const enCours = await prisma.procedure.findMany({
+            where: { statut: 'EN_COURS' },
+            include: {
+                etapes: true,
+                employee: { select: { id: true, firstName: true, lastName: true, positionTitle: true, department: true } }
+            }
+        });
+
+        let retards = 0;
+        for (const procedure of enCours) {
+            const vue = decrireProcedure(procedure);
+            if (!vue.enRetard) continue;
+            const etape = vue.etapes.find((e) => e.enRetard);
+            retards++;
+            await notifyHR(
+                `Procédure ${vue.libelle.toLowerCase()} — ${vue.salarie?.nom} : ` +
+                `« ${etape.libelle} » devait être consignée avant le ${formatDate(etape.limiteLe)}. ` +
+                'Passé ce délai, le lien entre les faits et la décision se discute.',
+                'Alerte',
+                '/procedures'
+            );
+        }
+        summary.push(`${enCours.length} procédure(s) en cours dont ${retards} en retard`);
 
         return summary.join(', ') + ` (horizon ${DAYS_AHEAD} jours)`;
     });

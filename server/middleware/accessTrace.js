@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const { hasRole } = require('./roleMiddleware');
 
 /**
  * Traçabilité des consultations de données sensibles.
@@ -79,7 +80,33 @@ const cibles = {
             select: { employeeId: true }
         });
         return paie ? paie.employeeId : null;
-    }
+    },
+
+    /** Procédure disciplinaire ou de rupture : le salarié se déduit du dossier. */
+    parProcedure: async (req) => {
+        const id = req.params.id;
+        if (!id) return null;
+        const procedure = await prisma.procedure.findUnique({
+            where: { id },
+            select: { employeeId: true }
+        });
+        return procedure ? procedure.employeeId : null;
+    },
+
+    /**
+     * Consultation d'un registre entier, et non du dossier d'une personne.
+     *
+     * Les listes de données sensibles — suivi médical, procédures en cours —
+     * ne visent aucun salarié en particulier, et échappaient donc à une
+     * traçabilité conçue pour les dossiers individuels. Or ouvrir le registre
+     * médical de l'entreprise est un accès aussi réel que d'ouvrir un dossier.
+     *
+     * Seuls les profils qui voient l'ensemble laissent une trace : un salarié
+     * dont la liste est filtrée sur son propre dossier ne consulte rien
+     * d'autre que lui-même.
+     */
+    registre: (rolesPrivilegies) => (req) =>
+        hasRole(req.user, rolesPrivilegies) ? 'REGISTRE' : null
 };
 
 module.exports = { traceAccess, cibles };
