@@ -2,6 +2,9 @@ const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
 const { triggerWebhook } = require('./webhookController');
 const { construireTachesIntegration } = require('../data/onboardingTemplates');
+const { soldeOuverture } = require('../lib/conges');
+const dossier = require('../lib/dossier');
+const corbeille = require('../lib/corbeille');
 
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
@@ -45,7 +48,25 @@ exports.getProfile = async (req, res) => {
 // Create a new employee and auto-provision their User account for Self-Service
 exports.createEmployee = async (req, res) => {
     try {
-        const { firstName, lastName, email, role, department, positionTitle, hireDate, status, birthDate, gender, phone, address, nationality } = req.body;
+        const {
+            firstName, lastName, email, role, department, positionTitle, hireDate,
+            status, birthDate, gender, phone, address, nationality,
+            matricule, cnpsNumber, bankName, bankAccount, childrenCount,
+            // Solde reconnu par le système précédent, s'il y en a un.
+            soldeRepris, annualLeaveBalance
+        } = req.body;
+
+        const dateEmbauche = hireDate ? new Date(hireDate) : new Date();
+
+        // Le solde de congés n'est plus le forfait de 30 jours du schéma, qui
+        // créditait une année entière à un salarié arrivé la veille. Il est
+        // repris s'il est fourni, calculé sinon.
+        const ouverture = soldeOuverture({
+            hireDate: dateEmbauche,
+            gender,
+            childrenCount,
+            soldeRepris: soldeRepris ?? annualLeaveBalance ?? null
+        });
 
         // Execute sequentially to ensure both are created
         const newEmployee = await prisma.employee.create({
@@ -56,13 +77,21 @@ exports.createEmployee = async (req, res) => {
                 role: role || 'Employee',
                 department,
                 positionTitle,
-                hireDate: hireDate ? new Date(hireDate) : new Date(),
+                hireDate: dateEmbauche,
                 status: status || 'ACTIVE',
                 birthDate: birthDate ? new Date(birthDate) : null,
                 gender: gender || 'Non spécifié',
                 phone,
                 address,
-                nationality
+                nationality,
+                matricule: matricule || null,
+                cnpsNumber: cnpsNumber || null,
+                bankName: bankName || null,
+                bankAccount: bankAccount || null,
+                childrenCount: Number(childrenCount) || 0,
+                annualLeaveBalance: ouverture.solde,
+                leaveBalanceSource: ouverture.source,
+                leaveBalanceSetAt: new Date()
             }
         });
 
@@ -91,7 +120,15 @@ exports.createEmployee = async (req, res) => {
     } catch (error) {
         console.error('Error creating employee:', error);
         if (error.code === 'P2002') {
-            return res.status(400).json({ error: 'Email already exists' });
+            // Deux contraintes d'unicité désormais : dire laquelle, sans quoi
+            // un matricule en double s'affiche comme un email en double.
+            const champs = (error.meta && error.meta.target) || [];
+            const surMatricule = String(champs).includes('matricule');
+            return res.status(400).json({
+                error: surMatricule
+                    ? 'Ce matricule est déjà attribué à un autre salarié.'
+                    : 'Cette adresse email est déjà utilisée.'
+            });
         }
         res.status(500).json({ error: 'Failed to create employee' });
     }
@@ -115,6 +152,28 @@ exports.updateEmployee = async (req, res) => {
             data.hireDate = null;
         }
 
+        if (data.childrenCount !== undefined) {
+            data.childrenCount = Number(data.childrenCount) || 0;
+        }
+        // Le matricule porte une contrainte d'unicité : une chaîne vide est une
+        // valeur comme une autre pour Postgres, et le deuxième salarié « sans
+        // matricule » serait rejeté. L'absence se dit avec null.
+        for (const champ of ['matricule', 'cnpsNumber', 'bankName', 'bankAccount']) {
+            if (data[champ] !== undefined && String(data[champ]).trim() === '') {
+                data[champ] = null;
+            }
+        }
+        // Un solde saisi à la main fait foi : c'est une décision de la RH, pas
+        // un calcul. On l'enregistre comme tel, et la reprise automatique
+        // (repair-leave-balances) s'interdira d'y revenir.
+        if (data.annualLeaveBalance !== undefined && data.annualLeaveBalance !== '') {
+            data.annualLeaveBalance = Number(data.annualLeaveBalance) || 0;
+            data.leaveBalanceSource = 'REPRISE';
+            data.leaveBalanceSetAt = new Date();
+        } else {
+            delete data.annualLeaveBalance;
+        }
+
         const updatedEmployee = await prisma.employee.update({
             where: { id },
             data
@@ -128,7 +187,27 @@ exports.updateEmployee = async (req, res) => {
 };
 
 // Helper: supprime toutes les données liées à un employé, puis l'employé lui-même
-const deleteEmployeeWithRelations = async (id) => {
+const deleteEmployeeWithRelations = async (id, auteur = null) => {
+    // Copie du dossier avant toute suppression. Elle est prise en premier :
+    // une fois la cascade partie, il n'y a plus rien à copier.
+    const instantane = await corbeille.capturer(prisma, id);
+    if (instantane) {
+        const e = instantane.employee;
+        await prisma.deletedEmployee.create({
+            data: {
+                employeeId: e.id,
+                firstName: e.firstName,
+                lastName: e.lastName,
+                email: e.email,
+                department: e.department,
+                positionTitle: e.positionTitle,
+                snapshot: instantane,
+                relatedCount: instantane.lignes,
+                deletedBy: auteur
+            }
+        });
+    }
+
     // Supprimer dans l'ordre pour respecter les contraintes de clé étrangère
     await prisma.kudo.deleteMany({ where: { OR: [{ senderId: id }, { receiverId: id }] } });
     await prisma.payroll.deleteMany({ where: { employeeId: id } });
@@ -169,7 +248,7 @@ const deleteEmployeeWithRelations = async (id) => {
 exports.deleteEmployee = async (req, res) => {
     try {
         const { id } = req.params;
-        await deleteEmployeeWithRelations(id);
+        await deleteEmployeeWithRelations(id, req.user && req.user.email);
         res.status(204).send();
     } catch (error) {
         console.error('Error deleting employee:', error);
@@ -187,7 +266,7 @@ exports.deleteMultipleEmployees = async (req, res) => {
         }
 
         for (const id of ids) {
-            await deleteEmployeeWithRelations(id);
+            await deleteEmployeeWithRelations(id, req.user && req.user.email);
         }
 
         res.status(200).json({ message: `Successfully deleted ${ids.length} employees`, count: ids.length });
@@ -285,6 +364,34 @@ exports.importBulkEmployees = async (req, res) => {
                     }
                 }
 
+                // Dossier administratif. Ces colonnes sont facultatives dans le
+                // fichier : absentes, le dossier reste incomplet et le rapport
+                // de conformité le signalera, plutôt que d'inventer une valeur.
+                const matricule = getVal(['matricule', 'Matricule', 'matricule interne']);
+                const cnpsNumber = getVal(['cnpsNumber', 'cnps', 'CNPS', 'numero cnps', 'numéro cnps', 'n° cnps']);
+                const bankName = getVal(['bankName', 'banque', 'Banque']);
+                const bankAccount = getVal(['bankAccount', 'rib', 'RIB', 'compte', 'numero de compte', 'numéro de compte', 'iban']);
+                const childrenCount = parseInt(getVal(['childrenCount', 'enfants', 'Enfants', 'enfants a charge', 'enfants à charge']), 10);
+
+                // Reprise des compteurs de congés. `soldeRepris` fait foi quand
+                // il est fourni : c'est le solde que le système précédent ou le
+                // registre papier reconnaissait au salarié, et il l'engage.
+                const soldeReprisVal = getVal(['soldeRepris', 'solde conges', 'solde congés', 'solde', 'leaveBalance', 'annualLeaveBalance']);
+                const joursPrisVal = getVal(['joursPris', 'conges pris', 'congés pris', 'jours pris']);
+                const nombre = (v) => {
+                    if (v === null || v === undefined || v === '') return null;
+                    const n = parseFloat(String(v).replace(',', '.'));
+                    return Number.isFinite(n) ? n : null;
+                };
+
+                const ouverture = soldeOuverture({
+                    hireDate,
+                    gender: getVal(['gender', 'genre', 'sexe', 'Sexe']),
+                    childrenCount: Number.isFinite(childrenCount) ? childrenCount : 0,
+                    joursPris: nombre(joursPrisVal) || 0,
+                    soldeRepris: nombre(soldeReprisVal)
+                });
+
                 // Standardize email creation by cleaning up special characters and accents
                 const safeFirst = (firstName || 'info').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9.-]/g, "");
                 const safeLast = (lastName || 'collab').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9.-]/g, "");
@@ -298,7 +405,15 @@ exports.importBulkEmployees = async (req, res) => {
                     department,
                     positionTitle,
                     status,
-                    hireDate
+                    hireDate,
+                    matricule: matricule || null,
+                    cnpsNumber: cnpsNumber || null,
+                    bankName: bankName || null,
+                    bankAccount: bankAccount || null,
+                    childrenCount: Number.isFinite(childrenCount) ? childrenCount : 0,
+                    annualLeaveBalance: ouverture.solde,
+                    leaveBalanceSource: ouverture.source,
+                    leaveBalanceSetAt: new Date()
                 };
             })
             .filter(Boolean); // Filter out null/invalid mapping results
@@ -310,6 +425,7 @@ exports.importBulkEmployees = async (req, res) => {
         // Prisma SQLite doesn't support createMany skipDuplicates — use upsert loop
         let created = 0;
         let skipped = 0;
+        let soldesRepris = 0;
         const defaultPassword = 'Welcome2026!';
         const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
@@ -339,15 +455,27 @@ exports.importBulkEmployees = async (req, res) => {
         });
 
                 created++;
+                if (emp.leaveBalanceSource === 'REPRISE') soldesRepris++;
             } catch (err) {
                 console.error(`Skipping ${emp.email}:`, err.message);
                 skipped++;
             }
         }
 
+        // Le détail des soldes est remonté explicitement : un import silencieux
+        // laisserait croire que les compteurs de congés ont été repris alors
+        // qu'ils ont pu être calculés faute de colonne dans le fichier.
+        const calcules = created - soldesRepris;
         res.status(201).json({
             message: `${created} employé(s) importé(s) avec succès${skipped > 0 ? `, ${skipped} ignoré(s) (doublons ou erreurs)` : ''}.`,
-            count: created
+            count: created,
+            soldes: {
+                repris: soldesRepris,
+                calcules,
+                message: calcules > 0
+                    ? `${calcules} solde(s) de congés calculé(s) depuis la date d'embauche, faute de colonne « solde congés » dans le fichier. À vérifier avant la première demande de congé.`
+                    : 'Tous les soldes de congés ont été repris du fichier.'
+            }
         });
 
     } catch (error) {
@@ -462,3 +590,129 @@ exports.initOnboardingTasks = async (req, res) => {
         res.status(500).json({ error: 'Failed to initialize onboarding tasks' });
     }
 };
+
+
+/**
+ * État du dossier administratif de l'effectif.
+ *
+ * Le registre unique du personnel s'imprimait jusqu'ici sans matricule ni
+ * numéro CNPS — deux mentions que la base ne connaissait pas. Il était donc
+ * produit, mais pas opposable, et rien ne le signalait. Cet écran dit ce qui
+ * manque, à qui, et ce que l'absence empêche.
+ */
+exports.getConformite = async (req, res) => {
+    try {
+        // Les salariés sortis restent au registre mais ne sont plus déclarés :
+        // leur dossier ne peut plus être complété et n'a pas à être compté
+        // comme un manquement en cours.
+        const salaries = await prisma.employee.findMany({
+            where: { status: { not: 'TERMINATED' } },
+            select: dossier.selection(),
+            orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }]
+        });
+
+        res.json(dossier.synthese(salaries));
+    } catch (error) {
+        console.error('Erreur conformité des dossiers :', error);
+        res.status(500).json({ error: 'Erreur lors du contrôle des dossiers.' });
+    }
+};
+
+// ----------------------------------------------------
+// Corbeille
+// ----------------------------------------------------
+
+// Durée pendant laquelle un dossier supprimé reste restaurable. Au-delà, il est
+// purgé : conserver indéfiniment le dossier complet d'une personne qui a quitté
+// l'entreprise n'est ni utile ni légitime.
+const RETENTION_JOURS = parseInt(process.env.DELETED_EMPLOYEE_RETENTION_DAYS, 10) || 30;
+
+/** Dossiers supprimés encore restaurables. */
+exports.getCorbeille = async (req, res) => {
+    try {
+        const limite = new Date(Date.now() - RETENTION_JOURS * 86400000);
+
+        const dossiers = await prisma.deletedEmployee.findMany({
+            where: { restoredAt: null, deletedAt: { gte: limite } },
+            orderBy: { deletedAt: 'desc' },
+            // L'instantané complet peut peser lourd : la liste n'en a pas
+            // besoin, seule la restauration le lit.
+            select: {
+                id: true, employeeId: true, firstName: true, lastName: true,
+                email: true, department: true, positionTitle: true,
+                relatedCount: true, deletedAt: true, deletedBy: true
+            }
+        });
+
+        res.json({
+            retentionJours: RETENTION_JOURS,
+            dossiers: dossiers.map((d) => ({
+                ...d,
+                // Jours restants avant purge définitive, arrondis au jour près.
+                joursRestants: Math.max(
+                    0,
+                    RETENTION_JOURS - Math.floor((Date.now() - new Date(d.deletedAt)) / 86400000)
+                )
+            }))
+        });
+    } catch (error) {
+        console.error('Erreur lecture corbeille :', error);
+        res.status(500).json({ error: 'Erreur lors de la lecture de la corbeille.' });
+    }
+};
+
+/** Reconstitue un dossier supprimé. */
+exports.restoreEmployee = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const entree = await prisma.deletedEmployee.findUnique({ where: { id } });
+        if (!entree) {
+            return res.status(404).json({ error: 'Ce dossier ne figure pas dans la corbeille.' });
+        }
+        if (entree.restoredAt) {
+            return res.status(409).json({ error: 'Ce dossier a déjà été restauré.' });
+        }
+
+        const resultat = await corbeille.restaurer(prisma, entree.snapshot);
+
+        await prisma.deletedEmployee.update({
+            where: { id },
+            data: { restoredAt: new Date(), restoredBy: req.user && req.user.email }
+        });
+
+        res.json({
+            message: `${entree.firstName} ${entree.lastName} restauré(e).`,
+            lignesRestaurees: resultat.restaurees,
+            rattachements: resultat.rattaches,
+            avertissements: resultat.avertissements,
+            // Ce qui n'a pas pu revenir est dit, pas tu : une restauration
+            // silencieusement partielle serait pire qu'un échec.
+            echecs: resultat.echecs
+        });
+    } catch (error) {
+        if (error.code === 'DEJA_PRESENT' || error.code === 'EMAIL_REPRIS') {
+            return res.status(409).json({ error: error.message });
+        }
+        console.error('Erreur restauration :', error);
+        res.status(500).json({ error: 'Erreur lors de la restauration du dossier.' });
+    }
+};
+
+/** Purge définitive d'un dossier, avant l'échéance de rétention. */
+exports.purgerCorbeille = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const entree = await prisma.deletedEmployee.findUnique({ where: { id } });
+        if (!entree) {
+            return res.status(404).json({ error: 'Ce dossier ne figure pas dans la corbeille.' });
+        }
+        await prisma.deletedEmployee.delete({ where: { id } });
+        res.json({ message: `Dossier de ${entree.firstName} ${entree.lastName} définitivement supprimé.` });
+    } catch (error) {
+        console.error('Erreur purge corbeille :', error);
+        res.status(500).json({ error: 'Erreur lors de la purge.' });
+    }
+};
+
+exports.RETENTION_JOURS = RETENTION_JOURS;

@@ -5,6 +5,7 @@ const { relancerDemandesEnAttente } = require('./pendingReminders');
 const { detecterAnomaliesPointage } = require('./timeLogAnomalies');
 const { celebrerLeJour } = require('./celebrations');
 const { envoyerRecapHebdomadaire } = require('./weeklyDigest');
+const { purgerCorbeille } = require('./purgeCorbeille');
 
 /**
  * Ordonnanceur des traitements RH récurrents.
@@ -36,6 +37,7 @@ const runAllDue = async () => {
     await safely('anomalies de pointage', () => detecterAnomaliesPointage());
     await safely('célébrations du jour', () => celebrerLeJour());
     await safely('récapitulatif hebdomadaire', () => envoyerRecapHebdomadaire());
+    await safely('purge de la corbeille', () => purgerCorbeille());
 };
 
 function startScheduledJobs() {
@@ -77,6 +79,11 @@ function startScheduledJobs() {
     // Récapitulatif hebdomadaire : lundi 08h00, pour ouvrir la semaine
     cron.schedule('0 8 * * 1', () => {
         safely('récapitulatif hebdomadaire', () => envoyerRecapHebdomadaire());
+    }, { timezone: TIMEZONE });
+
+    // Purge des dossiers supprimés : chaque jour à 03h00, hors heures d'usage
+    cron.schedule('0 3 * * *', () => {
+        safely('purge de la corbeille', () => purgerCorbeille());
     }, { timezone: TIMEZONE });
 
     console.log(`[JOB] Traitements planifiés actifs (fuseau ${TIMEZONE}).`);

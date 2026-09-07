@@ -30,9 +30,26 @@ model Employee {
   address     String?
   nationality String?
 
+  // Dossier administratif. Ces mentions sont exigées par la déclaration CNPS et
+  // par le registre unique du personnel : sans elles, le registre s'imprime
+  // mais n'est pas recevable, et la déclaration est rejetée après dépôt.
+  matricule     String?  @unique // matricule interne, unique dans l'entreprise
+  cnpsNumber    String?  @map("cnps_number")
+  bankName      String?  @map("bank_name")
+  bankAccount   String?  @map("bank_account")
+  // Nombre d'enfants à charge de moins de 14 ans : entre dans le calcul du
+  // congé supplémentaire (voir lib/conges.js), pas dans la paie.
+  childrenCount Int      @default(0) @map("children_count")
+
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
-  annualLeaveBalance Float     @default(30) @map("annual_leave_balance")
+  // Le solde n'est plus forfaitaire : 30 jours par défaut créditaient une année
+  // entière de congés à tout salarié dès sa création, y compris à un import en
+  // masse. Il est désormais calculé à la création (lib/conges.js) ou repris du
+  // système précédent, et `leaveBalanceSource` dit lequel des deux.
+  annualLeaveBalance Float     @default(0) @map("annual_leave_balance")
+  leaveBalanceSource String?   @map("leave_balance_source") // 'CALCUL' | 'REPRISE'
+  leaveBalanceSetAt  DateTime? @map("leave_balance_set_at")
   exitDate           DateTime? @map("exit_date")
   offboardingStatus  String?   @default("N/A") @map("offboarding_status")
   contractType       String?   @default("CDI") @map("contract_type")
@@ -1027,6 +1044,19 @@ model WhatsappLog {
   response    String   @db.Text
   status      String   @default("SUCCESS") // 'SUCCESS', 'ERROR'
   createdAt   DateTime @default(now()) @map("created_at")
+
+  // Identifiant du message chez l'opérateur. WhatsApp réémet un message tant
+  // qu'il n'a pas reçu d'accusé : sans cette clé unique, une demande de congé
+  // serait enregistrée plusieurs fois.
+  messageId   String?  @unique @map("message_id")
+  // 'ENTRANT' (message du salarié) ou 'SIMULATION' (essai depuis l'écran RH) :
+  // un essai ne doit pas se lire comme un message réellement reçu.
+  direction   String   @default("ENTRANT")
+  // Vrai si la réponse est effectivement partie chez l'opérateur. Une réponse
+  // calculée mais non remise laisse le salarié sans nouvelle.
+  delivered   Boolean  @default(false)
+
+  @@index([createdAt])
 }
 
 // ----------------------------------------------------
@@ -1183,3 +1213,38 @@ model SurveyResponse {
 
 
 
+
+// ----------------------------------------------------
+// CORBEILLE — RESTAURATION DES SUPPRESSIONS
+// ----------------------------------------------------
+
+/// Copie intégrale d'un dossier salarié prise juste avant sa suppression.
+///
+/// Supprimer un salarié efface en cascade une trentaine de tables — paies,
+/// congés, dossier médical, accidents du travail. Ce n'est pas une panne de la
+/// base : la sauvegarde quotidienne de l'hébergeur ne peut pas défaire ce seul
+/// geste sans annuler tout le reste de la journée. L'instantané est donc pris
+/// côté application, et permet de reconstituer le dossier.
+model DeletedEmployee {
+  id            String    @id @default(uuid())
+  employeeId    String    @map("employee_id")
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  email         String
+  department    String
+  positionTitle String    @map("position_title")
+
+  /// Dossier complet : l'enregistrement Employee et toutes ses lignes liées,
+  /// table par table. Sert de source unique à la restauration.
+  snapshot      Json
+  /// Nombre de lignes liées capturées, affiché avant restauration.
+  relatedCount  Int       @default(0) @map("related_count")
+
+  deletedAt     DateTime  @default(now()) @map("deleted_at")
+  deletedBy     String?   @map("deleted_by")
+  restoredAt    DateTime? @map("restored_at")
+  restoredBy    String?   @map("restored_by")
+
+  @@index([deletedAt])
+  @@map("deleted_employees")
+}

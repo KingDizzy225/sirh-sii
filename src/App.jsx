@@ -29,6 +29,7 @@ import { SupportDashboard } from './pages/SupportDashboard';
 import { Documents } from './pages/Documents';
 import { WorkflowBuilder } from './pages/WorkflowBuilder';
 import { PolicyRules } from './pages/PolicyRules';
+import { Conformite } from './pages/Conformite';
 import { TaskBoard } from './pages/TaskBoard';
 import { SkillsMatrix } from './pages/SkillsMatrix';
 import { Timesheet } from './pages/Timesheet';
@@ -266,6 +267,12 @@ const AppContent = () => {
             <Route path="/documents" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Social Worker']}>
                 <Documents />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/conformite" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Conformite />
               </ProtectedRoute>
             } />
 

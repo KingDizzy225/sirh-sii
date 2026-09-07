@@ -30,4 +30,23 @@ function getPublicAppUrl() {
     return DEFAULT_APP_URL;
 }
 
-module.exports = { getPublicAppUrl, DEFAULT_APP_URL };
+/**
+ * Adresse publique de l'API elle-même — celle que des services extérieurs
+ * doivent appeler (webhook WhatsApp, notamment).
+ *
+ * Ce n'est pas l'adresse du frontend : un webhook pointé sur Vercel n'atteint
+ * aucune route de l'API. Render publie l'adresse du service dans
+ * RENDER_EXTERNAL_URL ; ailleurs, il faut la déclarer. On ne devine rien :
+ * une valeur absente est rendue telle quelle, à charge pour l'écran de le dire.
+ *
+ * @returns {string|null}
+ */
+function getPublicApiUrl() {
+    const configured = process.env.PUBLIC_API_URL || process.env.RENDER_EXTERNAL_URL;
+    if (configured && /^https?:\/\//i.test(configured)) {
+        return configured.replace(/\/$/, '');
+    }
+    return null;
+}
+
+module.exports = { getPublicAppUrl, getPublicApiUrl, DEFAULT_APP_URL };

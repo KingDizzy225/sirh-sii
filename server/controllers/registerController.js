@@ -33,16 +33,21 @@ exports.generateStaffRegister = async (req, res) => {
 
         // Le registre est chronologique : l'ordre d'embauche est ce que
         // l'inspection vérifie en premier.
+        // Le matricule et le numéro CNPS sont des mentions attendues du
+        // registre. Ils manquaient : le document s'imprimait, mais un contrôle
+        // ne pouvait rattacher aucune ligne à une déclaration.
         const colonnes = [
             { titre: 'N°', largeur: 26 },
-            { titre: 'Nom et prénoms', largeur: 130 },
-            { titre: 'Emploi occupé', largeur: 120 },
-            { titre: 'Nationalité', largeur: 70 },
+            { titre: 'Matricule', largeur: 58 },
+            { titre: 'Nom et prénoms', largeur: 118 },
+            { titre: 'N° CNPS', largeur: 72 },
+            { titre: 'Emploi occupé', largeur: 104 },
+            { titre: 'Nationalité', largeur: 58 },
             { titre: 'Naissance', largeur: 62 },
             { titre: 'Embauche', largeur: 62 },
             { titre: 'Contrat', largeur: 52 },
             { titre: 'Sortie', largeur: 62 },
-            { titre: 'Statut', largeur: 70 }
+            { titre: 'Statut', largeur: 52 }
         ];
 
         const dateOuTiret = (v) => {
@@ -74,7 +79,9 @@ exports.generateStaffRegister = async (req, res) => {
 
             const valeurs = [
                 String(i + 1),
+                s.matricule || '—',
                 `${s.lastName} ${s.firstName}`,
+                s.cnpsNumber || '—',
                 s.positionTitle || '—',
                 s.nationality || '—',
                 dateOuTiret(s.birthDate),

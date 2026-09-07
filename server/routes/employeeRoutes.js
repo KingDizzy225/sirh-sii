@@ -26,6 +26,14 @@ router.delete('/bulk', requireRole(...HR_ROLES), employeeController.deleteMultip
 // Registre unique du personnel : placé avant les routes paramétrées,
 // qu'une future route /:id/... ne doit pas pouvoir capter.
 router.get('/register/pdf', requireRole(...HR_ROLES), registerController.generateStaffRegister);
+// Contrôle de complétude des dossiers, placé avec les routes nommées pour la
+// même raison : « conformite » ne doit pas être pris pour un identifiant.
+router.get('/conformite', requireRole(...HR_ROLES), employeeController.getConformite);
+
+// Corbeille. Routes nommées, elles aussi placées avant `/:id`.
+router.get('/corbeille', requireRole(...HR_ROLES), employeeController.getCorbeille);
+router.post('/corbeille/:id/restaurer', requireRole(...HR_ROLES), employeeController.restoreEmployee);
+router.delete('/corbeille/:id', requireRole(...HR_ROLES), employeeController.purgerCorbeille);
 
 router.get('/:id', employeeController.getEmployeeById);
 router.put('/:id', requireRole(...HR_ROLES), employeeController.updateEmployee);

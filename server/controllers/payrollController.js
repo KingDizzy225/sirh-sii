@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
 const { calculerPaie, decomposer, intervalleMois, TAUX } = require('../lib/paie');
+const dossier = require('../lib/dossier');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -425,6 +426,28 @@ const exportSage = async (req, res) => {
             return res.status(404).json({ error: `Aucune fiche de paie trouvée pour ${mois.libelle}.` });
         }
 
+        // Un export déclaratif sans matricule ni numéro CNPS est déposé, puis
+        // rejeté — et le rejet arrive après l'échéance. La colonne MATRICULE
+        // reprenait d'ailleurs l'identifiant technique du salarié, un UUID que
+        // ni Sage ni la CNPS ne reconnaissent. Mieux vaut refuser le fichier
+        // ici, en disant qui compléter.
+        const incomplets = payrolls
+            .map(p => p.employee)
+            .filter(emp => emp && !dossier.declarable(emp));
+
+        if (incomplets.length > 0) {
+            return res.status(409).json({
+                error: `${incomplets.length} salarié(s) sans matricule ou sans numéro CNPS : ` +
+                       "le fichier serait rejeté au dépôt.",
+                salaries: incomplets.map(emp => ({
+                    id: emp.id,
+                    nom: `${emp.lastName || ''} ${emp.firstName || ''}`.trim(),
+                    manquants: dossier.manquants(emp, 'declaration').map(m => m.libelle)
+                })),
+                remede: "Compléter les dossiers depuis Effectif › Conformité, puis relancer l'export."
+            });
+        }
+
         // Generate PNM format for Sage (Format paramétrable: Matricule;Nom;Rubrique;Montant)
         // Ceci est une simulation basique de l'export Sage Ligne 100
         let csvContent = "MATRICULE;NOM;PRENOM;CODE_RUBRIQUE;MONTANT\n";
@@ -437,7 +460,7 @@ const exportSage = async (req, res) => {
             // supplémentaires ajoutaient dix FCFA à l'assiette CNPS.
             const b = decomposer(p);
             const ligne = (rubrique, montant) => {
-                csvContent += `${emp.id};${emp.lastName};${emp.firstName};${rubrique};${Math.round(montant)}\n`;
+                csvContent += `${emp.matricule};${emp.lastName};${emp.firstName};${rubrique};${Math.round(montant)}\n`;
             };
 
             ligne(1000, b.baseSalary);                               // Salaire de base
@@ -484,7 +507,8 @@ const getDeclaration = async (req, res) => {
                     employee: {
                         select: {
                             id: true, firstName: true, lastName: true,
-                            department: true, hireDate: true, status: true
+                            department: true, hireDate: true, status: true,
+                            matricule: true, cnpsNumber: true
                         }
                     }
                 },
@@ -516,6 +540,21 @@ const getDeclaration = async (req, res) => {
                 remede: 'Vérifier les entrées et sorties du mois avant dépôt.'
             });
         }
+        // Dossiers incomplets : la déclaration se calcule quand même — la RH
+        // doit voir les montants — mais elle ne pourra pas être déposée en
+        // l'état, et l'export refusera de produire le fichier.
+        const nonDeclarables = fiches
+            .map(f => f.employee)
+            .filter(emp => emp && !dossier.declarable(emp));
+        if (nonDeclarables.length > 0) {
+            anomalies.push({
+                gravite: 'bloquante',
+                libelle: `${nonDeclarables.length} salarié(s) sans matricule ou sans numéro CNPS`,
+                consequence: 'Le dépôt serait rejeté, et le rejet arriverait après l\'échéance.',
+                remede: 'Compléter les dossiers depuis Effectif › Conformité.'
+            });
+        }
+
         if (brouillons.length > 0) {
             anomalies.push({
                 gravite: 'avertissement',
@@ -555,6 +594,9 @@ const getDeclaration = async (req, res) => {
             lignes: fiches.map(f => ({
                 employeeId: f.employeeId,
                 nom: `${f.employee?.lastName || ''} ${f.employee?.firstName || ''}`.trim(),
+                matricule: f.employee?.matricule || null,
+                numeroCnps: f.employee?.cnpsNumber || null,
+                declarable: f.employee ? dossier.declarable(f.employee) : false,
                 departement: f.employee?.department || null,
                 dateEmbauche: f.employee?.hireDate || null,
                 brut: f.grossSalary,

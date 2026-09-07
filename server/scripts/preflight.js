@@ -93,6 +93,66 @@ async function verifier() {
         bloquer('Base de données', `Inaccessible : ${error.message}`);
     }
 
+    // --- Guichet WhatsApp ---
+    const { etatConfiguration } = require('../lib/whatsapp');
+    const wa = etatConfiguration();
+    if (!wa.receptionActive && !wa.envoiActif) {
+        avertir('Guichet WhatsApp',
+            'Non raccordé : la logique reste accessible en simulation, mais aucun salarié ne peut écrire au guichet.');
+    } else if (!wa.receptionActive || !wa.envoiActif) {
+        // Le pire des cas : le guichet reçoit sans pouvoir répondre, ou
+        // l'inverse. Personne ne s'en aperçoit avant qu'un salarié attende.
+        bloquer('Guichet WhatsApp',
+            `Raccordement incomplet (${wa.variablesManquantes.join(', ')}) : ` +
+            (wa.receptionActive ? 'les messages arrivent mais aucune réponse ne part.'
+                                : "les réponses peuvent partir mais aucun message n'est reçu."));
+    } else {
+        ok('Guichet WhatsApp', 'Réception et envoi configurés.');
+        if (!process.env.PUBLIC_API_URL && !process.env.RENDER_EXTERNAL_URL) {
+            avertir('PUBLIC_API_URL',
+                "Non définie : l'écran ne peut pas indiquer l'adresse de webhook à déclarer chez Meta.");
+        }
+    }
+
+    // --- Compteurs de congés ---
+    try {
+        const sansOrigine = await prisma.employee.count({
+            where: { status: { not: 'TERMINATED' }, leaveBalanceSource: null }
+        });
+        if (sansOrigine > 0) {
+            bloquer('Compteurs de congés',
+                `${sansOrigine} salarié(s) dont le solde n'a pas d'origine établie : il vient du forfait de 30 jours ` +
+                "du schéma, pas d'un calcul ni d'une reprise. Ce solde est payé au départ. " +
+                'Lancer npm run repair-leave-balances (simulation), puis -- --confirm.');
+        } else {
+            ok('Compteurs de congés', 'Tous les soldes ont une origine établie.');
+        }
+    } catch (error) {
+        avertir('Compteurs de congés', `Contrôle impossible : ${error.message}`);
+    }
+
+    // --- Dossiers administratifs ---
+    try {
+        const dossier = require('../lib/dossier');
+        const salaries = await prisma.employee.findMany({
+            where: { status: { not: 'TERMINATED' } },
+            select: dossier.selection()
+        });
+        const bilan = dossier.synthese(salaries);
+        if (bilan.nonDeclarables > 0) {
+            avertir('Dossiers administratifs',
+                `${bilan.nonDeclarables} salarié(s) sans matricule ou sans numéro CNPS : ` +
+                "l'export déclaratif refusera de produire un fichier tant qu'ils y figurent.");
+        } else if (bilan.incomplets > 0) {
+            avertir('Dossiers administratifs',
+                `${bilan.incomplets} dossier(s) incomplets (mentions du registre du personnel).`);
+        } else if (bilan.total > 0) {
+            ok('Dossiers administratifs', `${bilan.total} dossier(s) complets.`);
+        }
+    } catch (error) {
+        avertir('Dossiers administratifs', `Contrôle impossible : ${error.message}`);
+    }
+
     // --- Traitements planifiés ---
     if (process.env.DISABLE_SCHEDULED_JOBS === 'true') {
         avertir('Traitements planifiés',

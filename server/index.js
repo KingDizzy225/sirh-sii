@@ -35,7 +35,13 @@ const corsOptions = {
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions)); // Allow cross-origin requests from the React frontend
-app.use(express.json({ limit: '50mb' })); // Parse JSON bodies with higher limit for base64 images
+app.use(express.json({
+    limit: '50mb', // corps volumineux : pièces jointes en base64
+    // Le corps brut est conservé pour les appels dont l'authenticité se vérifie
+    // par signature (webhook WhatsApp) : la signature porte sur les octets
+    // reçus, qu'une réécriture en JSON ne reproduirait pas à l'identique.
+    verify: (req, res, buf) => { req.rawBody = buf; }
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Express 5 laisse req.body à undefined lorsqu'aucun corps n'a été transmis ou

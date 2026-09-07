@@ -50,6 +50,17 @@ export function Employees() {
                     birthDate: emp.birthDate ? emp.birthDate.split('T')[0] : '',
                     address: emp.address || '',
                     nationality: emp.nationality || '',
+                    // Le dossier administratif et le compteur de congés doivent
+                    // traverser cette projection : sans eux, le formulaire de
+                    // modification les rouvrirait vides et les effacerait à
+                    // l'enregistrement.
+                    matricule: emp.matricule || '',
+                    cnpsNumber: emp.cnpsNumber || '',
+                    bankName: emp.bankName || '',
+                    bankAccount: emp.bankAccount || '',
+                    childrenCount: emp.childrenCount ?? 0,
+                    annualLeaveBalance: emp.annualLeaveBalance ?? '',
+                    leaveBalanceSource: emp.leaveBalanceSource || null,
                     onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
                 }));
                 setEmployees(mapped);
@@ -69,7 +80,7 @@ export function Employees() {
     }, []);
 
     // Form state corresponding to user request
-    const [formData, setFormData] = useState({
+    const FORMULAIRE_VIDE = {
         firstName: '',
         lastName: '',
         phone: '',
@@ -77,12 +88,22 @@ export function Employees() {
         gender: 'Non spécifié',
         birthDate: '',
         address: '',
-        nationality: ''
-    });
+        nationality: '',
+        hireDate: '',
+        matricule: '',
+        cnpsNumber: '',
+        bankName: '',
+        bankAccount: '',
+        childrenCount: '',
+        soldeRepris: ''
+    };
+    const [formData, setFormData] = useState(FORMULAIRE_VIDE);
 
     const showNotification = (message) => {
         setNotification(message);
-        setTimeout(() => setNotification(null), 3000);
+        // Neuf secondes : le compte rendu d'import tient en plusieurs phrases
+        // (soldes repris, soldes calculés), illisibles en trois.
+        setTimeout(() => setNotification(null), 9000);
     };
 
     const handleInputChange = (e) => {
@@ -111,14 +132,25 @@ export function Employees() {
                 gender: formData.gender,
                 birthDate: formData.birthDate,
                 address: formData.address,
-                nationality: formData.nationality
+                nationality: formData.nationality,
+                hireDate: formData.hireDate || undefined,
+                matricule: formData.matricule,
+                cnpsNumber: formData.cnpsNumber,
+                bankName: formData.bankName,
+                bankAccount: formData.bankAccount,
+                childrenCount: formData.childrenCount,
+                // Vide pour une véritable embauche : le solde part de zéro et
+                // s'acquiert. Renseigné pour un salarié déjà en poste que l'on
+                // saisit dans l'application, où le compteur du système
+                // précédent fait foi.
+                soldeRepris: formData.soldeRepris === '' ? undefined : formData.soldeRepris
             });
 
             if (res.data) {
                 // Refresh list from server to get accurate IDs and defaults
                 loadEmployees();
                 setIsAddModalOpen(false);
-                setFormData({ firstName: '', lastName: '', phone: '', position: '', gender: 'Non spécifié', birthDate: '', address: '', nationality: '' });
+                setFormData(FORMULAIRE_VIDE);
                 showNotification(`Employé ajouté à la base de données globale.`);
             }
 
@@ -189,14 +221,18 @@ export function Employees() {
 
     const handleDeleteSelected = async () => {
         if (selectedEmployees.length === 0) return;
-        if (!confirm(`Toutes les données associées à ces ${selectedEmployees.length} employés seront définitivement effacées. Continuer ?`)) return;
+        if (!confirm(
+            `Supprimer ${selectedEmployees.length} salarié(s) ?\n\n` +
+            "Leurs paies, congés, pointages et dossiers médicaux partent avec eux à la " +
+            "corbeille, d'où ils pourront être restaurés pendant 30 jours."
+        )) return;
 
         try {
             await api.delete('/employees/bulk', { ids: selectedEmployees }); // api.delete ne prend pas de body natif dans notre wrapper, on fera autrement si besoin, mais pour le mock ça passera.
             const remainingEmployees = employees.filter(emp => !selectedEmployees.includes(emp.id));
             setEmployees(remainingEmployees);
             setSelectedEmployees([]);
-            showNotification(`${selectedEmployees.length} employé(s) supprimé(s) définitivement de la base de données.`);
+            showNotification(`${selectedEmployees.length} employé(s) supprimé(s). Restaurables depuis Dossiers & corbeille.`);
         } catch (error) {
             console.error("Delete Error", error);
             showNotification("Erreur de connexion. Impossible de supprimer.");
@@ -218,7 +254,14 @@ export function Employees() {
                 try {
                     const res = await api.post('/employees/bulk', { employees: results.data });
                     if (res.data) {
-                        showNotification(res.data.message || "Importation réussie.");
+                        // Le sort réservé aux compteurs de congés est dit
+                        // explicitement : un import silencieux laisserait croire
+                        // que les soldes ont été repris du fichier alors qu'ils
+                        // ont pu être calculés faute de colonne.
+                        const soldes = res.data.soldes?.message;
+                        showNotification(
+                            [res.data.message || 'Importation réussie.', soldes].filter(Boolean).join(' ')
+                        );
                         loadEmployees();
                     }
                 } catch (error) {
@@ -251,6 +294,13 @@ export function Employees() {
             nationality: emp.nationality,
             positionTitle: emp.role,
             department: emp.department,
+            matricule: emp.matricule || '',
+            cnpsNumber: emp.cnpsNumber || '',
+            bankName: emp.bankName || '',
+            bankAccount: emp.bankAccount || '',
+            childrenCount: emp.childrenCount ?? 0,
+            annualLeaveBalance: emp.annualLeaveBalance ?? '',
+            leaveBalanceSource: emp.leaveBalanceSource || null,
             status: emp.status === 'Actif' ? 'ACTIVE' : emp.status === 'En congé' ? 'ON_LEAVE' : 'TERMINATED'
         });
         setEditModal(emp);
@@ -260,7 +310,14 @@ export function Employees() {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await api.put(`/employees/${editModal.id}`, editForm);
+            // Les champs laissés vides ne sont pas transmis : un `PUT` complet
+            // écraserait par une chaîne vide un matricule ou un numéro CNPS que
+            // l'utilisateur n'a fait qu'apercevoir.
+            const charge = Object.fromEntries(
+                Object.entries(editForm).filter(([, v]) => v !== '' && v !== null && v !== undefined)
+            );
+            delete charge.leaveBalanceSource; // information d'origine, non modifiable ici
+            const res = await api.put(`/employees/${editModal.id}`, charge);
             if (res) {
                 setEditModal(null);
                 loadEmployees();
@@ -273,7 +330,15 @@ export function Employees() {
 
     const handleDeleteOne = async (emp) => {
         closeContextMenu();
-        if (!confirm(`Supprimer définitivement ${emp.name} ?`)) return;
+        // La suppression n'est plus définitive : le dossier complet est copié
+        // dans la corbeille et reste restaurable. Le dire évite deux erreurs
+        // opposées — l'hésitation devant un geste réversible, et la fausse
+        // sécurité une fois le délai passé.
+        if (!confirm(
+            `Supprimer ${emp.name} ?\n\n` +
+            "Le dossier complet (paies, congés, dossier médical) part à la corbeille " +
+            "et pourra être restauré pendant 30 jours."
+        )) return;
         try {
             await api.delete(`/employees/${emp.id}`);
             loadEmployees();
@@ -425,6 +490,61 @@ export function Employees() {
                                             placeholder="ex. Cocody Riviera, Abidjan"
                                         />
                                     </div>
+
+                                    <div className="pt-4 mt-2 border-t border-slate-100">
+                                        <h3 className="text-sm font-semibold text-slate-900">Dossier administratif</h3>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Le matricule et le numéro CNPS figurent au registre du personnel et
+                                            conditionnent le dépôt de la déclaration sociale.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Matricule interne</label>
+                                            <Input name="matricule" value={formData.matricule} onChange={handleInputChange} placeholder="ex. MAT-0042" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Numéro CNPS</label>
+                                            <Input name="cnpsNumber" value={formData.cnpsNumber} onChange={handleInputChange} placeholder="ex. 1234567890" />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Banque</label>
+                                            <Input name="bankName" value={formData.bankName} onChange={handleInputChange} placeholder="ex. NSIA Banque" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Numéro de compte</label>
+                                            <Input name="bankAccount" value={formData.bankAccount} onChange={handleInputChange} placeholder="ex. CI00 1000 1..." />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 mt-2 border-t border-slate-100">
+                                        <h3 className="text-sm font-semibold text-slate-900">Congés</h3>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Sans solde repris, le compteur est calculé depuis la date d'embauche
+                                            (2,2 jours par mois, majorations comprises). Pour un salarié déjà en
+                                            poste, saisir le solde que reconnaissait le système précédent : c'est
+                                            lui qui engage l'entreprise.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Date d'embauche</label>
+                                            <Input type="date" name="hireDate" value={formData.hireDate} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Enfants à charge</label>
+                                            <Input type="number" min="0" name="childrenCount" value={formData.childrenCount} onChange={handleInputChange} placeholder="0" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-700">Solde repris (j)</label>
+                                            <Input type="number" step="0.5" min="0" name="soldeRepris" value={formData.soldeRepris} onChange={handleInputChange} placeholder="calculé" />
+                                        </div>
+                                    </div>
                                 </form>
                             </div>
 
@@ -511,6 +631,33 @@ export function Employees() {
                                 </div>
                                 <div><label className="text-sm font-medium text-slate-700 block mb-1">Adresse</label>
                                     <Input value={editForm.address || ''} onChange={e => setEditForm({...editForm, address: e.target.value})} /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Matricule interne</label>
+                                        <Input value={editForm.matricule || ''} onChange={e => setEditForm({...editForm, matricule: e.target.value})} placeholder="ex. MAT-0042" /></div>
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Numéro CNPS</label>
+                                        <Input value={editForm.cnpsNumber || ''} onChange={e => setEditForm({...editForm, cnpsNumber: e.target.value})} placeholder="ex. 1234567890" /></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Banque</label>
+                                        <Input value={editForm.bankName || ''} onChange={e => setEditForm({...editForm, bankName: e.target.value})} /></div>
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Numéro de compte</label>
+                                        <Input value={editForm.bankAccount || ''} onChange={e => setEditForm({...editForm, bankAccount: e.target.value})} /></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="text-sm font-medium text-slate-700 block mb-1">Enfants à charge (moins de 14 ans)</label>
+                                        <Input type="number" min="0" value={editForm.childrenCount ?? 0} onChange={e => setEditForm({...editForm, childrenCount: e.target.value})} /></div>
+                                    <div>
+                                        <label className="text-sm font-medium text-slate-700 block mb-1">Solde de congés (jours)</label>
+                                        <Input type="number" step="0.5" min="0" value={editForm.annualLeaveBalance ?? ''} onChange={e => setEditForm({...editForm, annualLeaveBalance: e.target.value})} />
+                                        <p className="text-[11px] text-slate-500 mt-1">
+                                            {editForm.leaveBalanceSource === 'REPRISE'
+                                                ? 'Solde repris : saisi par la RH, il fait foi.'
+                                                : editForm.leaveBalanceSource === 'CALCUL'
+                                                    ? "Solde calculé depuis la date d'embauche. Le modifier ici le fige comme repris."
+                                                    : "Origine non établie : ce solde vient de l'ancien forfait de 30 jours."}
+                                        </p>
+                                    </div>
+                                </div>
                                 <div><label className="text-sm font-medium text-slate-700 block mb-1">Statut</label>
                                     <select value={editForm.status || 'ACTIVE'} onChange={e => setEditForm({...editForm, status: e.target.value})}
                                         className="w-full border border-slate-200 rounded-lg p-2.5 text-sm">

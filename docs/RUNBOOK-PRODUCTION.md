@@ -92,6 +92,22 @@ Dans Render → service web → *Environment* :
 restent le filet de sécurité tant que la connexion nominative n'a pas été
 essayée pour de bon.
 
+#### Guichet WhatsApp *(facultatif)*
+
+Permet aux salariés sans poste ni adresse professionnelle d'interroger le SIRH
+depuis WhatsApp. Quatre variables, toutes issues de l'application Meta :
+`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`,
+`WHATSAPP_APP_SECRET`.
+
+Les poser **toutes les quatre ou aucune**. Un raccordement à moitié fait est le
+cas le plus trompeur : le guichet enregistre les demandes de congé sans jamais
+répondre, et le salarié attend une confirmation qui ne viendra pas. Le contrôle
+de préparation bloque sur cette situation.
+
+L'adresse à déclarer comme webhook chez Meta s'affiche sur la page
+**Guichet WhatsApp**, prête à copier. Elle vise l'API, non le site : sur Render
+elle est déduite de `RENDER_EXTERNAL_URL`, à défaut de `PUBLIC_API_URL`.
+
 ### Étape 3 — Déploiement
 
 Déclencher un déploiement manuel (*Manual Deploy → Deploy latest commit*).
@@ -171,6 +187,49 @@ Le recalcul rapproche la base des bulletins PDF déjà remis aux salariés : c'e
 le PDF qui portait le bon montant. Sans cette reprise, les déclarations
 sociales du mois sortiraient avec des cotisations à zéro sur ces fiches — le
 récapitulatif de l'onglet **Déclarations Sociales** le signale avant tout dépôt.
+
+### Étape 4 quater — Reprise des compteurs de congés *(obligatoire)*
+
+Le schéma posait `annualLeaveBalance` à 30 jours par défaut, et ni la création
+manuelle ni l'import en masse ne renseignaient ce champ : **tout salarié
+démarrait avec une année entière de congés acquis**, quelle que soit sa date
+d'embauche. Un salarié arrivé il y a trois mois affichait 30 jours là où il en
+avait acquis 6,6 ; un ancien de dix ans affichait 30 lui aussi, en perdant tout
+report.
+
+Ce compteur n'est pas d'affichage : il est valorisé en francs au départ du
+salarié (indemnité compensatrice de congés payés), et il est énoncé au salarié
+par l'assistant RH et par le guichet WhatsApp.
+
+```bash
+cd server
+DATABASE_URL="<url-externe>" npm run repair-leave-balances            # simulation
+DATABASE_URL="<url-externe>" npm run repair-leave-balances -- --confirm
+```
+
+La simulation affiche l'écart salarié par salarié, avec le détail du calcul
+(mois acquis, majoration d'ancienneté, congés déjà pris).
+
+**À faire avant, si vous disposez des compteurs de l'ancien système.** Un solde
+saisi sur la fiche du salarié — ou fourni à l'import dans une colonne
+« solde congés » — fait foi : il engage l'entreprise vis-à-vis du salarié, et un
+calcul, si juste soit-il, ne peut pas le contredire. Le script ne touche que les
+compteurs dont l'origine n'est pas encore établie ; il ne revient jamais sur un
+solde repris.
+
+Le contrôle de préparation (`npm run preflight`) bloque tant qu'il reste des
+compteurs sans origine établie.
+
+### Étape 4 quinquies — Dossiers administratifs
+
+Le registre unique du personnel s'imprimait sans matricule ni numéro CNPS :
+la base ne connaissait pas ces mentions. Elles existent désormais, et
+conditionnent l'export déclaratif, qui refuse de produire un fichier tant qu'un
+salarié en manque.
+
+Ouvrir **Employés › Dossiers & corbeille** et compléter ce qui est signalé en
+rouge. À l'import en masse, les colonnes reconnues sont `matricule`, `cnps`,
+`banque`, `compte`, `enfants`, `solde congés` et `congés pris`.
 
 ### Étape 5 — Connexion nominative
 
