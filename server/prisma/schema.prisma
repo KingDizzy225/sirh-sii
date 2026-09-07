@@ -764,6 +764,14 @@ model TimeLog {
   type       String // 'CLOCK_IN' or 'CLOCK_OUT'
   timestamp  DateTime @default(now())
 
+  // Référence produite par l'appareil au moment du pointage.
+  //
+  // Hors connexion, le pointage attend dans une file locale et repart au retour
+  // du réseau. Si la requête atteint le serveur mais que la réponse se perd —
+  // le cas ordinaire d'une liaison de chantier — l'appareil la croit échouée et
+  // la renvoie. Sans cette clé, la journée du salarié compterait deux entrées.
+  clientRef  String?  @unique @map("client_ref")
+
   // Géolocalisation du pointage (facultatif : null si le GPS n'était pas disponible)
   latitude        Float?
   longitude       Float?

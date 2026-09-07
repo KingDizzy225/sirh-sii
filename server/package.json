@@ -17,7 +17,8 @@
     "repair-leave-balances": "node scripts/repairLeaveBalances.js",
     "test:paie": "node tests/paie.test.js",
     "test:ecritures": "node tests/ecritures.test.js",
-    "test:conges": "node tests/conges.test.js"
+    "test:conges": "node tests/conges.test.js",
+    "test:exploitation": "node tests/exploitation.test.js"
   },
   "keywords": [],
   "author": "",

@@ -154,8 +154,16 @@ export function EmployeePortal() {
         }
     }, [token]);
 
-    // File d'attente des pointages hors connexion, conservée sur l'appareil.
-    const CLE_FILE = 'sirh_pointages_en_attente';
+    /**
+     * File d'attente des pointages hors connexion, conservée sur l'appareil.
+     *
+     * La clé porte l'identité du salarié. Elle était commune à l'appareil : sur
+     * un téléphone de chantier partagé, le pointage laissé en attente par l'un
+     * repartait avec le jeton du suivant, et le serveur — qui déduit le salarié
+     * du jeton — l'attribuait à ce dernier. Le premier perdait sa présence, le
+     * second en gagnait une qu'il n'avait pas.
+     */
+    const CLE_FILE = `sirh_pointages_en_attente_${user?.email || 'anonyme'}`;
     const lireFileAttente = () => {
         try {
             const brut = localStorage.getItem(CLE_FILE);
@@ -179,6 +187,7 @@ export function EmployeePortal() {
         if (attente.length === 0 || !token) return;
 
         const restants = [];
+        const refuses = [];
         for (const p of attente) {
             try {
                 const res = await fetch(`${API_URL}/api/time-logs`, {
@@ -186,7 +195,18 @@ export function EmployeePortal() {
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(p)
                 });
-                if (!res.ok) restants.push(p);
+                if (res.ok) continue;
+
+                // Un refus définitif ne s'améliorera pas à la prochaine
+                // tentative : le garder en file le ferait rejouer à chaque
+                // reconnexion, indéfiniment et en silence. On le sort, et on le
+                // dit. Restent en file les échecs qui peuvent encore passer :
+                // panne serveur, jeton expiré, débit dépassé.
+                if (res.status >= 400 && ![401, 403, 408, 429].includes(res.status)) {
+                    refuses.push(p);
+                } else {
+                    restants.push(p);
+                }
             } catch {
                 restants.push(p);
             }
@@ -195,8 +215,14 @@ export function EmployeePortal() {
         ecrireFileAttente(restants);
         setPointagesEnAttente(restants.length);
 
-        const transmis = attente.length - restants.length;
-        if (transmis > 0) {
+        const transmis = attente.length - restants.length - refuses.length;
+        if (refuses.length > 0) {
+            setClockNotice({
+                tone: 'warning',
+                text: `${refuses.length} pointage(s) différé(s) refusés par le serveur et retirés de la file. ` +
+                      'Signalez-le aux ressources humaines pour régularisation.'
+            });
+        } else if (transmis > 0) {
             setClockNotice({
                 tone: 'success',
                 text: `${transmis} pointage(s) différé(s) transmis.`
@@ -218,60 +244,104 @@ export function EmployeePortal() {
         );
     });
 
+    /**
+     * Référence unique du pointage, produite par l'appareil.
+     * Elle accompagne chaque envoi et chaque renvoi : c'est elle qui permet au
+     * serveur de reconnaître un pointage déjà enregistré dont la réponse s'est
+     * perdue, plutôt que d'en compter deux.
+     */
+    const nouvelleReference = () => {
+        try {
+            if (crypto?.randomUUID) return crypto.randomUUID();
+        } catch { /* API indisponible */ }
+        return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    };
+
+    const mettreEnAttente = (charge, texte) => {
+        const attente = lireFileAttente();
+        attente.push(charge);
+        ecrireFileAttente(attente);
+        setPointagesEnAttente(attente.length);
+        setClockNotice({ tone: 'warning', text: `${texte} (${attente.length} en attente).` });
+    };
+
     const handleClock = async (type) => {
         setIsClocking(true);
         setClockNotice(null);
+
+        const coords = await getPosition();
+        // L'heure du pointage est celle du geste, non celle de l'envoi : un
+        // pointage transmis le lendemain doit rester daté de la veille.
+        const charge = {
+            type,
+            clientRef: nouvelleReference(),
+            horodatageLocal: new Date().toISOString(),
+            ...(coords || {})
+        };
+
         try {
-            const coords = await getPosition();
             const res = await fetch(`${API_URL}/api/time-logs`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ type, ...(coords || {}) })
+                body: JSON.stringify(charge)
             });
-            if (!res.ok && res.status >= 500) {
-                throw new Error('serveur indisponible');
-            }
-            if (res.ok) {
-                const newLog = await res.json();
-                setLogs([...logs, newLog]);
-                if (newLog.locationStatus === 'OFF_SITE') {
+
+            if (!res.ok) {
+                /**
+                 * Un pointage refusé n'était ni enregistré, ni mis en attente,
+                 * ni signalé : seul un statut ≥ 500 levait une exception. Un
+                 * jeton expiré — le cas ordinaire après plusieurs jours hors
+                 * connexion — faisait donc disparaître le pointage en silence.
+                 *
+                 * Tout ce qui peut encore passer retourne en file ; ce qui est
+                 * définitivement refusé est dit au salarié, jamais tu.
+                 */
+                if ([401, 403, 408, 429].includes(res.status) || res.status >= 500) {
+                    mettreEnAttente(charge,
+                        'Serveur momentanément indisponible : pointage conservé sur cet appareil et transmis plus tard');
+                } else {
+                    const detail = await res.json().catch(() => ({}));
                     setClockNotice({
                         tone: 'warning',
-                        text: `Pointage enregistré hors zone (à ${newLog.distanceMeters} m du site ${newLog.workSite?.name || ''}).`
-                    });
-                } else if (newLog.locationStatus === 'NO_GPS') {
-                    setClockNotice({
-                        tone: 'warning',
-                        text: "Pointage enregistré sans position GPS. Autorisez la localisation pour valider votre présence sur site."
-                    });
-                } else if (newLog.locationStatus === 'ON_SITE') {
-                    setClockNotice({
-                        tone: 'success',
-                        text: `Pointage validé sur site${newLog.workSite?.name ? ` (${newLog.workSite.name})` : ''}.`
+                        text: `Pointage refusé : ${detail.error || `erreur ${res.status}`}. Prévenez les ressources humaines.`
                     });
                 }
+                return;
+            }
+
+            const newLog = await res.json();
+            setLogs((precedents) => [...precedents.filter((l) => l.id !== newLog.id), newLog]);
+
+            if (newLog.deja) {
+                setClockNotice({ tone: 'success', text: 'Pointage déjà enregistré, rien n\'a été compté deux fois.' });
+            } else if (newLog.locationStatus === 'OFF_SITE') {
+                setClockNotice({
+                    tone: 'warning',
+                    text: `Pointage enregistré hors zone (à ${newLog.distanceMeters} m du site ${newLog.workSite?.name || ''}).`
+                });
+            } else if (newLog.locationStatus === 'NO_GPS') {
+                setClockNotice({
+                    tone: 'warning',
+                    text: "Pointage enregistré sans position GPS. Autorisez la localisation pour valider votre présence sur site."
+                });
+            } else if (newLog.locationStatus === 'ON_SITE') {
+                setClockNotice({
+                    tone: 'success',
+                    text: `Pointage validé sur site${newLog.workSite?.name ? ` (${newLog.workSite.name})` : ''}.`
+                });
             }
         } catch (err) {
-            // Réseau absent ou serveur injoignable : on conserve le pointage
-            // localement plutôt que de le perdre. Sur un chantier ou un site
-            // mal couvert, refuser le pointage revient à priver le salarié de
-            // la preuve de sa présence.
+            // Réseau absent : on conserve le pointage plutôt que de le perdre.
+            // Sur un chantier mal couvert, refuser le pointage revient à priver
+            // le salarié de la preuve de sa présence. La position déjà relevée
+            // est réutilisée — la reprendre coûterait un second relevé GPS de
+            // plusieurs secondes, pour une position qui aurait pu changer.
             console.warn('Pointage différé, réseau indisponible', err);
-            const attente = lireFileAttente();
-            attente.push({
-                type,
-                horodatageLocal: new Date().toISOString(),
-                ...(await getPosition() || {})
-            });
-            ecrireFileAttente(attente);
-            setPointagesEnAttente(attente.length);
-            setClockNotice({
-                tone: 'warning',
-                text: `Réseau indisponible : pointage enregistré sur cet appareil et transmis dès le retour de la connexion (${attente.length} en attente).`
-            });
+            mettreEnAttente(charge,
+                'Réseau indisponible : pointage enregistré sur cet appareil et transmis dès le retour de la connexion');
         } finally {
             setIsClocking(false);
         }

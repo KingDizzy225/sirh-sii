@@ -40,7 +40,7 @@ const haversineMeters = (lat1, lon1, lat2, lon2) => {
 // Log a time entry (Clock In or Clock Out)
 exports.logTime = async (req, res) => {
     try {
-        const { type, latitude, longitude, accuracy, horodatageLocal } = req.body; // 'CLOCK_IN' or 'CLOCK_OUT'
+        const { type, latitude, longitude, accuracy, horodatageLocal, clientRef } = req.body; // 'CLOCK_IN' or 'CLOCK_OUT'
         if (!['CLOCK_IN', 'CLOCK_OUT'].includes(type)) {
             return res.status(400).json({ error: "Type de pointage invalide" });
         }
@@ -74,6 +74,34 @@ exports.logTime = async (req, res) => {
 
         if (!employee) return res.status(404).json({ error: "Employé introuvable" });
 
+        /**
+         * Renvoi d'un pointage déjà enregistré.
+         *
+         * L'appareil renvoie ce qu'il croit non transmis. Une réponse perdue en
+         * route — liaison de chantier — lui fait rejouer une requête que le
+         * serveur a pourtant traitée. On rend alors le pointage existant plutôt
+         * que d'en créer un second : c'est un doublon d'envoi, pas un doublon de
+         * présence.
+         *
+         * La référence est rattachée au salarié qui l'a produite : un appareil
+         * partagé ne doit pas pouvoir faire porter à l'un le pointage de
+         * l'autre en rejouant sa référence.
+         */
+        if (clientRef) {
+            const existant = await prisma.timeLog.findUnique({
+                where: { clientRef: String(clientRef) },
+                include: { workSite: { select: { name: true } } }
+            });
+            if (existant) {
+                if (existant.employeeId !== employee.id) {
+                    return res.status(409).json({
+                        error: "Cette référence de pointage appartient à un autre salarié."
+                    });
+                }
+                return res.status(200).json({ ...existant, deja: true, locationStatus: null });
+            }
+        }
+
         const hasCoords = typeof latitude === 'number' && typeof longitude === 'number';
 
         // Vérification du périmètre par rapport aux sites de travail actifs.
@@ -106,15 +134,30 @@ exports.logTime = async (req, res) => {
             locationStatus = 'NO_GPS'; // sites configurés mais position non transmise
         }
 
-        const newLog = await prisma.timeLog.create({
-            data: {
-                employeeId: employee.id,
-                type: type,
-                ...(timestamp ? { timestamp } : {}),
-                ...geoData
-            },
-            include: { workSite: { select: { name: true } } }
-        });
+        let newLog;
+        try {
+            newLog = await prisma.timeLog.create({
+                data: {
+                    employeeId: employee.id,
+                    type: type,
+                    ...(clientRef ? { clientRef: String(clientRef) } : {}),
+                    ...(timestamp ? { timestamp } : {}),
+                    ...geoData
+                },
+                include: { workSite: { select: { name: true } } }
+            });
+        } catch (erreur) {
+            // Deux envois simultanés de la même référence : le second perd la
+            // course à l'insertion. Il n'a rien à créer, seulement à retrouver.
+            if (erreur.code === 'P2002' && clientRef) {
+                const existant = await prisma.timeLog.findUnique({
+                    where: { clientRef: String(clientRef) },
+                    include: { workSite: { select: { name: true } } }
+                });
+                if (existant) return res.status(200).json({ ...existant, deja: true, locationStatus: null });
+            }
+            throw erreur;
+        }
 
         res.status(201).json({ ...newLog, locationStatus });
     } catch (error) {
