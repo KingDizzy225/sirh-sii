@@ -738,6 +738,43 @@ model Subcontractor {
   rate        Float? // Taux journalier ou mensuel
   department  String?
   createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Identifiants du prestataire. Ils permettent de rapprocher ses attestations
+  // de l'entité qui les a délivrées : une attestation CNPS ne vaut que si le
+  // numéro qu'elle porte est bien celui du prestataire engagé.
+  cnpsNumber   String? @map("cnps_number")
+  taxId        String? @map("tax_id") // numéro de compte contribuable
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+
+  documents SubcontractorDocument[]
+}
+
+/// Pièce justificative fournie par un prestataire.
+///
+/// Le donneur d'ordre répond financièrement des salariés qu'un sous-traitant
+/// n'a pas déclarés. L'application ne connaissait aucune pièce : l'exposition
+/// n'apparaissait qu'au contrôle, une fois la créance constituée.
+///
+/// Une attestation n'a de valeur qu'à sa date. Une pièce périmée vaut une pièce
+/// absente — et c'est celle-là que personne ne voit passer.
+model SubcontractorDocument {
+  id             String   @id @default(uuid())
+  subcontractorId String  @map("subcontractor_id")
+  /// CNPS | FISCAL | RCCM | ASSURANCE | PERSONNEL | AUTRE
+  type           String
+  reference      String?
+  issuedAt       DateTime? @map("issued_at")
+  expiresAt      DateTime? @map("expires_at")
+  filePath       String?   @map("file_path")
+  note           String?   @db.Text
+  createdBy      String?   @map("created_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  subcontractor Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+
+  @@index([subcontractorId, type])
+  @@map("subcontractor_documents")
 }
 
 // ----------------------------------------------------

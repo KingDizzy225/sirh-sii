@@ -1,6 +1,7 @@
 const prisma = require('../prismaClient');
 const { runOnce, dayPeriod } = require('./runOnce');
 const { notifierRH } = require('../lib/notify');
+const { PAR_CODE: PIECES_PAR_CODE } = require('../lib/sousTraitance');
 
 const DAYS_AHEAD = parseInt(process.env.ALERT_DAYS_AHEAD || '30', 10);
 
@@ -69,6 +70,41 @@ async function scanDeadlines(referenceDate = new Date()) {
             );
         }
         summary.push(`${dueCheckups.length} visite(s) médicale(s)`);
+
+        // 4. Attestations de sous-traitants expirées ou proches de l'échéance
+        //
+        // Une attestation périmée vaut une attestation absente : le donneur
+        // d'ordre répond des salariés que le prestataire n'a pas déclarés. La
+        // différence avec les autres échéances est qu'elle ne se voit nulle
+        // part — personne n'ouvre le dossier d'un prestataire en cours de
+        // mission.
+        const attestations = await prisma.subcontractorDocument.findMany({
+            where: {
+                expiresAt: { lte: horizon },
+                subcontractor: { status: { not: 'Terminated' } }
+            },
+            include: { subcontractor: { select: { companyName: true, status: true } } }
+        });
+
+        let expirees = 0;
+        for (const doc of attestations) {
+            const piece = PIECES_PAR_CODE[doc.type];
+            // Les pièces facultatives ne sont pas relancées : leur absence
+            // n'engage pas le donneur d'ordre.
+            if (!piece || !piece.exigee) continue;
+
+            const perimee = new Date(doc.expiresAt) < referenceDate;
+            if (perimee) expirees++;
+            await notifyHR(
+                perimee
+                    ? `${piece.libelle} expirée depuis le ${formatDate(doc.expiresAt)} — ${doc.subcontractor.companyName}. ` +
+                      "Le prestataire n'est plus couvert."
+                    : `${piece.libelle} à renouveler avant le ${formatDate(doc.expiresAt)} — ${doc.subcontractor.companyName}.`,
+                perimee ? 'Alerte' : 'Info',
+                '/subcontractors'
+            );
+        }
+        summary.push(`${attestations.length} attestation(s) de prestataire dont ${expirees} expirée(s)`);
 
         return summary.join(', ') + ` (horizon ${DAYS_AHEAD} jours)`;
     });
