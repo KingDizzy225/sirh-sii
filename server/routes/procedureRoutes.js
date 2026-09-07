@@ -20,6 +20,12 @@ router.get('/modeles', requireRole(RH), procedureController.getModeles);
 router.get('/', requireRole(RH), traceAccess('PROCEDURE', cibles.registre(RH)), procedureController.lister);
 router.post('/', requireRole(RH), procedureController.ouvrir);
 router.get('/:id', requireRole(RH), traceAccess('PROCEDURE', cibles.parProcedure), procedureController.detail);
+router.get('/:id/courriers', requireRole(RH), procedureController.getCourriers);
+// Le courrier reprend le motif du dossier : sa consultation est tracée comme
+// celle du dossier lui-même.
+router.get('/:id/courriers/:code', requireRole(RH),
+    traceAccess('PROCEDURE', cibles.parProcedure), procedureController.telechargerCourrier);
+
 router.post('/:id/etapes/:etapeId', requireRole(RH), procedureController.franchir);
 router.post('/:id/cloturer', requireRole(RH), procedureController.cloturer);
 

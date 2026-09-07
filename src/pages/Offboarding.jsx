@@ -266,6 +266,42 @@ export function Offboarding() {
                                         {solde.base.sourceReference} · {solde.salarie.ancienneteAnnees} an(s) d'ancienneté
                                     </p>
 
+                                    {/* Nature de la rupture : c'est elle qui conditionne l'indemnité
+                                        de licenciement, et elle vient de la procédure close, non d'une
+                                        saisie refaite pour l'occasion. */}
+                                    {solde.rupture ? (
+                                        <div className="text-xs bg-slate-50 border border-slate-200 rounded-lg p-3">
+                                            <p className="font-semibold text-slate-800">
+                                                Rupture : {solde.rupture.nature.toLowerCase().replace(/_/g, ' ')}
+                                            </p>
+                                            <p className="text-slate-600 mt-0.5">{solde.rupture.motif}</p>
+                                            {solde.indemniteLicenciement?.eligible && (
+                                                <div className="mt-2 pt-2 border-t border-slate-200">
+                                                    <p className="text-slate-700">
+                                                        Indemnité calculée sur un salaire moyen de{' '}
+                                                        <span className="font-mono">
+                                                            {solde.indemniteLicenciement.salaireMoyenReference.toLocaleString('fr-FR')} F
+                                                        </span>{' '}
+                                                        ({solde.indemniteLicenciement.moisRetenus} mois retenus) :
+                                                    </p>
+                                                    <ul className="mt-1 space-y-0.5 text-slate-600">
+                                                        {solde.indemniteLicenciement.tranches.map((t, i) => (
+                                                            <li key={i}>
+                                                                {t.de} à {t.a} ans — {t.annees} an(s) × {Math.round(t.taux * 100)}% ={' '}
+                                                                <span className="font-mono">{t.montant.toLocaleString('fr-FR')} F</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                                            Aucune procédure close pour ce salarié : la nature de la rupture est
+                                            inconnue, et l'indemnité de licenciement n'est donc pas calculée.
+                                        </p>
+                                    )}
+
                                     {solde.lignes.map((l, i) => (
                                         <div key={i} className="flex justify-between items-start gap-3 text-sm">
                                             <div className="min-w-0">

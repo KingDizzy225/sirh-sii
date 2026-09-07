@@ -4,9 +4,10 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
-    Scale, AlertTriangle, CheckCircle2, Lock, Clock, Plus, X, RefreshCw, ShieldAlert
+    Scale, AlertTriangle, CheckCircle2, Lock, Clock, Plus, X, RefreshCw, ShieldAlert, FileDown
 } from 'lucide-react';
 import { api, listeSure } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Procédures disciplinaires et de rupture.
@@ -37,6 +38,8 @@ export function Procedures() {
     const [message, setMessage] = useState(null);
     const [form, setForm] = useState({ employeeId: '', type: 'SANCTION', motif: '' });
     const [saisie, setSaisie] = useState({});
+    const [courriersDispo, setCourriersDispo] = useState([]);
+    const { token } = useAuth();
 
     const charger = useCallback(async () => {
         const [p, m, e] = await Promise.all([
@@ -76,6 +79,47 @@ export function Procedures() {
         const res = await api.get(`/procedures/${id}`).catch(() => ({ data: null }));
         if (res?.data?.id) setOuverte(res.data);
         charger();
+    };
+
+    // Courriers que la procédure ouverte permet de produire.
+    useEffect(() => {
+        if (!ouverte?.id) { setCourriersDispo([]); return; }
+        let vivant = true;
+        api.get(`/procedures/${ouverte.id}/courriers`)
+            .then((res) => { if (vivant) setCourriersDispo(listeSure(res?.data, 'courriers')); })
+            .catch(() => { if (vivant) setCourriersDispo([]); });
+        return () => { vivant = false; };
+    }, [ouverte?.id]);
+
+    /**
+     * Le courrier est produit par le serveur à partir du dossier : le motif y
+     * est repris sans modification, et c'est ce même texte qui devra être
+     * défendu s'il est contesté.
+     */
+    const telechargerCourrier = async (procedure, courrier) => {
+        try {
+            const base = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const racine = base.endsWith('/api') ? base.slice(0, -4) : base;
+            const res = await fetch(`${racine}/api/procedures/${procedure.id}/courriers/${courrier.code}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) {
+                const detail = await res.json().catch(() => ({}));
+                annoncer(detail.error || 'Courrier indisponible.', 'alerte');
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${courrier.code.toLowerCase()}_${(procedure.salarie?.nom || 'salarie').replace(/\s+/g, '_')}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            annoncer("Impossible de produire le courrier : " + (err.message || ''), 'alerte');
+        }
     };
 
     const franchir = async (procedure, etape) => {
@@ -294,6 +338,24 @@ export function Procedures() {
                                 )}
                             </CardHeader>
                             <CardContent className="p-0">
+                                {courriersDispo.length > 0 && (
+                                    <div className="p-4 border-b border-slate-100 bg-slate-50/40">
+                                        <p className="text-xs font-semibold text-slate-700 mb-2">Courriers</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {courriersDispo.map((c) => (
+                                                <Button key={c.code} variant="outline" size="sm" className="text-xs gap-1"
+                                                    onClick={() => telechargerCourrier(ouverte, c)}>
+                                                    <FileDown size={12} /> {c.titre}
+                                                    {c.dejaConsignee && <span className="text-slate-400">(étape consignée)</span>}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 mt-2">
+                                            Le motif y est repris mot pour mot depuis le dossier. Chaque lettre porte
+                                            un bloc de décharge : c'est la preuve de remise qui fait foi, pas l'envoi.
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="divide-y divide-slate-100">
                                     {ouverte.etapes.map((e) => (
                                         <div key={e.id} className="p-4">

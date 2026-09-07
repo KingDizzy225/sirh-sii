@@ -5,9 +5,10 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
     Building, Factory, Plus, ShieldCheck, ShieldAlert, AlertTriangle,
-    RefreshCw, X, Trash2, FileCheck
+    RefreshCw, X, Trash2, FileCheck, Paperclip, Download
 } from 'lucide-react';
 import { api, listeSure } from '../lib/api.js';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Personnel externe et conformité des prestataires.
@@ -38,6 +39,8 @@ export function Subcontractors() {
     const [ouvert, setOuvert] = useState(null);
     const [message, setMessage] = useState(null);
     const [form, setForm] = useState({ type: 'CNPS', reference: '', issuedAt: '', expiresAt: '' });
+    const [fichier, setFichier] = useState(null);
+    const { token } = useAuth();
 
     const charger = useCallback(async () => {
         const [c, p] = await Promise.all([
@@ -81,19 +84,51 @@ export function Subcontractors() {
         e.preventDefault();
         if (!ouvert) return;
         try {
-            const res = await api.post(`/subcontractors/${ouvert.id}/documents`, {
-                type: form.type,
-                reference: form.reference || undefined,
-                issuedAt: form.issuedAt || undefined,
-                expiresAt: form.expiresAt || undefined
-            });
+            // Envoi en multipart : la pièce elle-même accompagne ses dates.
+            // Une attestation dont on connaît la date mais pas le fichier est à
+            // moitié inutile le jour d'un contrôle.
+            const charge = new FormData();
+            charge.append('type', form.type);
+            if (form.reference) charge.append('reference', form.reference);
+            if (form.issuedAt) charge.append('issuedAt', form.issuedAt);
+            if (form.expiresAt) charge.append('expiresAt', form.expiresAt);
+            if (fichier) charge.append('fichier', fichier);
+
+            const res = await api.post(`/subcontractors/${ouvert.id}/documents`, charge);
             annoncer(res.data?.avertissement || 'Pièce versée au dossier.',
                 res.data?.avertissement ? 'alerte' : 'succes');
             setForm({ type: 'CNPS', reference: '', issuedAt: '', expiresAt: '' });
+            setFichier(null);
             ouvrirDossier(ouvert.id);
             charger();
         } catch (err) {
             annoncer(err.message || 'Enregistrement refusé.', 'alerte');
+        }
+    };
+
+    const telecharger = async (documentId) => {
+        try {
+            const base = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const racine = base.endsWith('/api') ? base.slice(0, -4) : base;
+            const res = await fetch(`${racine}/api/subcontractors/documents/${documentId}/fichier`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) {
+                const detail = await res.json().catch(() => ({}));
+                annoncer([detail.error, detail.remede].filter(Boolean).join(' '), 'alerte');
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'attestation';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            annoncer('Téléchargement impossible : ' + (err.message || ''), 'alerte');
         }
     };
 
@@ -249,6 +284,12 @@ export function Subcontractors() {
                                         <Badge className={`text-[10px] ${ETATS[p.etat]?.ton || ''}`}>
                                             {ETATS[p.etat]?.libelle || p.etat}
                                         </Badge>
+                                        {p.documentId && p.fichierJoint && (
+                                            <button onClick={() => telecharger(p.documentId)} title="Télécharger la pièce"
+                                                className="text-slate-400 hover:text-sky-700 bg-transparent border-0 cursor-pointer">
+                                                <Download size={14} />
+                                            </button>
+                                        )}
                                         {p.documentId && (
                                             <button onClick={() => retirer(p.documentId)}
                                                 className="text-slate-300 hover:text-red-600 bg-transparent border-0 cursor-pointer">
@@ -279,6 +320,18 @@ export function Subcontractors() {
                             <div>
                                 <label className="text-xs font-medium text-slate-700 block mb-1">Expire le</label>
                                 <Input type="date" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} className="text-sm" />
+                            </div>
+                            <div className="sm:col-span-5">
+                                <label className="text-xs font-medium text-slate-700 block mb-1">
+                                    <Paperclip size={12} className="inline mr-1" />
+                                    Fichier de la pièce (PDF ou image, 10 Mo maximum)
+                                </label>
+                                <input
+                                    type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
+                                    onChange={(e) => setFichier(e.target.files?.[0] || null)}
+                                    className="text-xs w-full border border-slate-200 rounded-lg p-2"
+                                />
                             </div>
                             <div className="sm:col-span-5">
                                 <Button type="submit" size="sm">Verser au dossier</Button>

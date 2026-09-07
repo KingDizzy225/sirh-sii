@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const rupture = require('../lib/rupture');
 
 exports.getOffboardingTasks = async (req, res) => {
     try {
@@ -111,7 +112,43 @@ exports.getFinalSettlement = async (req, res) => {
             0
         );
 
-        const net = indemniteConges - totalAvances;
+        /**
+         * Nature de la rupture. Elle conditionne l'indemnité de licenciement,
+         * et l'application l'ignorait : elle la lit désormais dans la procédure
+         * ouverte à l'égard du salarié, plutôt que de la demander à nouveau.
+         */
+        const procedure = await prisma.procedure.findFirst({
+            where: { employeeId, statut: 'CLOTUREE' },
+            orderBy: { clotureeLe: 'desc' },
+            select: { type: true, motif: true, issue: true, clotureeLe: true }
+        });
+
+        /**
+         * Salaire de référence de l'indemnité : moyenne des bulletins connus,
+         * dans la limite de douze mois. Retenir le seul dernier bulletin
+         * exposerait le calcul à un mois atypique — une prime exceptionnelle
+         * gonflerait l'indemnité, un mois d'absence la réduirait.
+         */
+        const douzeDerniers = await prisma.payroll.findMany({
+            where: { employeeId },
+            orderBy: { period: 'desc' },
+            take: 12,
+            select: { baseSalary: true, period: true }
+        });
+        const moisRetenus = douzeDerniers.filter((b) => (b.baseSalary || 0) > 0);
+        const salaireMoyen = moisRetenus.length > 0
+            ? moisRetenus.reduce((t, b) => t + (b.baseSalary || 0), 0) / moisRetenus.length
+            : 0;
+
+        const indemnisable = procedure
+            ? rupture.NATURES_INDEMNISABLES.includes(procedure.type)
+            : false;
+
+        const indemnite = indemnisable
+            ? rupture.calculerIndemnite(anneesAnciennete, salaireMoyen)
+            : { montant: 0, eligible: false, tranches: [], motifIneligibilite: null };
+
+        const net = indemniteConges + indemnite.montant - totalAvances;
 
         res.json({
             salarie: {
@@ -128,6 +165,19 @@ exports.getFinalSettlement = async (req, res) => {
                     : 'Aucun bulletin de paie enregistré',
                 salaireJournalier: Math.round(salaireJournalier)
             },
+            rupture: procedure ? {
+                nature: procedure.type,
+                motif: procedure.motif,
+                issue: procedure.issue,
+                clotureeLe: procedure.clotureeLe
+            } : null,
+            indemniteLicenciement: {
+                ...indemnite,
+                salaireMoyenReference: Math.round(salaireMoyen),
+                moisRetenus: moisRetenus.length,
+                bareme: rupture.decrireBareme(),
+                ancienneteMinimale: rupture.ANCIENNETE_MINIMALE
+            },
             lignes: [
                 {
                     libelle: 'Indemnité compensatrice de congés payés',
@@ -135,6 +185,14 @@ exports.getFinalSettlement = async (req, res) => {
                     montant: indemniteConges,
                     sens: 'credit'
                 },
+                ...(indemnisable && indemnite.eligible ? [{
+                    libelle: 'Indemnité de licenciement',
+                    detail: `${Math.round(anneesAnciennete * 10) / 10} an(s) d'ancienneté, ` +
+                            `salaire moyen de ${Math.round(salaireMoyen).toLocaleString('fr-FR')} F ` +
+                            `sur ${moisRetenus.length} mois`,
+                    montant: indemnite.montant,
+                    sens: 'credit'
+                }] : []),
                 {
                     libelle: 'Avances sur salaire non déduites',
                     detail: `${avances.length} avance(s) en cours`,
@@ -151,7 +209,21 @@ exports.getFinalSettlement = async (req, res) => {
                 !employee.exitDate
                     ? "La date de sortie n'est pas renseignée : l'ancienneté est calculée à ce jour."
                     : null,
-                "L'indemnité de licenciement n'est pas incluse : son éligibilité et son barème dépendent du motif de rupture, qui relève d'une décision RH.",
+                !procedure
+                    ? "Aucune procédure close n'a été trouvée pour ce salarié : la nature de la rupture est inconnue, et l'indemnité de licenciement n'est donc pas calculée."
+                    : null,
+                procedure && !indemnisable
+                    ? `Rupture de nature « ${procedure.type} » : elle n'ouvre pas droit à l'indemnité de licenciement.`
+                    : null,
+                indemnisable && !indemnite.eligible && indemnite.motifIneligibilite
+                    ? `Indemnité de licenciement non calculée. ${indemnite.motifIneligibilite}`
+                    : null,
+                indemnisable && indemnite.eligible
+                    ? "L'indemnité de licenciement est calculée d'après le barème paramétré. Elle reste soumise à l'appréciation de la RH : une faute lourde en prive le salarié, et cette qualification ne relève pas de l'application."
+                    : null,
+                moisRetenus.length > 0 && moisRetenus.length < 12
+                    ? `Salaire de référence établi sur ${moisRetenus.length} mois au lieu de douze : l'historique de paie est incomplet.`
+                    : null,
                 'Ce décompte est un projet à vérifier avant établissement du solde de tout compte définitif.'
             ].filter(Boolean)
         });

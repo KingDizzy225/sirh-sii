@@ -129,7 +129,10 @@ function bilan(sousTraitant, documents, reference = new Date()) {
             reference: doc?.reference || null,
             delivreeLe: doc?.issuedAt || null,
             expireLe: doc?.expiresAt || null,
-            documentId: doc?.id || null
+            documentId: doc?.id || null,
+            // Le fichier est ce qu'un contrôle demande à voir : une pièce
+            // enregistrée n'est pas encore une pièce produisible.
+            fichierJoint: Boolean(doc?.filePath)
         };
     });
 

@@ -1,5 +1,6 @@
 const prisma = require('../prismaClient');
 const { MODELES, TYPES } = require('../data/proceduresRupture');
+const courriers = require('../lib/courriers');
 
 /**
  * Procédures disciplinaires et de rupture.
@@ -344,5 +345,96 @@ exports.cloturer = async (req, res) => {
     } catch (error) {
         console.error('Erreur clôture de procédure :', error);
         res.status(500).json({ error: 'Erreur lors de la clôture.' });
+    }
+};
+
+// ----------------------------------------------------
+// Courriers
+// ----------------------------------------------------
+
+/** Courriers que cette procédure permet de produire. */
+exports.getCourriers = async (req, res) => {
+    try {
+        const procedure = await prisma.procedure.findUnique({
+            where: { id: req.params.id }, include: inclusion
+        });
+        if (!procedure) return res.status(404).json({ error: 'Procédure introuvable.' });
+
+        const disponibles = courriers.courriersDisponibles(procedure.type);
+        const etapes = [...procedure.etapes].sort((a, b) => a.ordre - b.ordre);
+
+        res.json(disponibles.map((c) => {
+            const etape = etapes.find((e) => e.code === c.code);
+            return {
+                ...c,
+                etapeId: etape ? etape.id : null,
+                etapeLibelle: etape ? etape.libelle : null,
+                dejaConsignee: Boolean(etape && etape.faiteLe)
+            };
+        }));
+    } catch (error) {
+        console.error('Erreur liste des courriers :', error);
+        res.status(500).json({ error: 'Erreur lors de la lecture des courriers.' });
+    }
+};
+
+/**
+ * Produit le courrier d'une étape, en PDF.
+ *
+ * Le motif est repris du dossier sans modification : c'est ce même texte qui
+ * devra être défendu s'il est contesté, et une lettre qui s'en écarterait
+ * fragiliserait la procédure qu'elle est censée servir.
+ */
+exports.telechargerCourrier = async (req, res) => {
+    try {
+        const { id, code } = req.params;
+
+        const procedure = await prisma.procedure.findUnique({
+            where: { id }, include: inclusion
+        });
+        if (!procedure) return res.status(404).json({ error: 'Procédure introuvable.' });
+
+        const vue = decrire(procedure);
+        const etapes = vue.etapes;
+        const etape = etapes.find((e) => e.code === code);
+
+        // Dates utiles au corps de la lettre, tirées du dossier plutôt que
+        // saisies à nouveau : une date recopiée à la main finit par différer.
+        const convocation = etapes.find((e) => e.code === 'CONVOCATION');
+        const entretien = etapes.find((e) => e.code === 'ENTRETIEN');
+        const explication = etapes.find((e) => e.code === 'EXPLICATION');
+        const reponse = etapes.find((e) => e.code === 'REPONSE');
+
+        const contexte = {
+            motif: procedure.motif,
+            sanction: procedure.issue,
+            salarie: vue.salarie,
+            lieu: process.env.ORGANISATION_VILLE || 'Abidjan',
+            entretienPossibleLe: entretien
+                ? (entretien.faiteLe || entretien.exigibleLe)
+                : null,
+            dateEntretien: entretien ? entretien.faiteLe : null,
+            reponseAttendueLe: reponse ? (reponse.faiteLe || reponse.exigibleLe) : null,
+            dateConvocation: convocation ? convocation.faiteLe : null
+        };
+
+        const produit = courriers.genererCourrier(procedure.type, code, contexte);
+        if (!produit) {
+            return res.status(404).json({
+                error: "Cette étape ne donne pas lieu à un courrier.",
+                disponibles: courriers.courriersDisponibles(procedure.type).map((c) => c.code)
+            });
+        }
+
+        const nom = `${code.toLowerCase()}_${(vue.salarie?.nom || 'salarie').replace(/\s+/g, '_')}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${nom}`);
+        produit.doc.pipe(res);
+        produit.doc.end();
+    } catch (error) {
+        console.error('Erreur génération de courrier :', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Erreur lors de la génération du courrier.' });
+        }
     }
 };

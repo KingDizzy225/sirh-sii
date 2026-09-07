@@ -124,7 +124,10 @@ exports.getDocuments = async (req, res) => {
 exports.addDocument = async (req, res) => {
     try {
         const { id } = req.params;
-        const { type, reference, issuedAt, expiresAt, note, filePath } = req.body;
+        const { type, reference, issuedAt, expiresAt, note } = req.body;
+        // Le chemin ne vient jamais du client : il est celui du fichier
+        // effectivement déposé, ou rien.
+        const filePath = req.file ? `sous-traitance/${req.file.filename}` : null;
 
         if (!sousTraitance.CODES.includes(type)) {
             return res.status(400).json({
@@ -176,6 +179,7 @@ exports.addDocument = async (req, res) => {
         res.status(201).json({
             ...document,
             etat: sousTraitance.etatPiece(document),
+            fichierJoint: Boolean(filePath),
             echeanceDeduite,
             // Une échéance déduite est une hypothèse, pas une lecture de la
             // pièce : le dire évite de la prendre pour une donnée constatée.
@@ -198,9 +202,71 @@ exports.deleteDocument = async (req, res) => {
         if (!document) return res.status(404).json({ error: 'Pièce introuvable.' });
 
         await prisma.subcontractorDocument.delete({ where: { id: document.id } });
+
+        // Le fichier suit la ligne : le laisser sur le disque ferait subsister
+        // une pièce que plus rien ne référence.
+        if (document.filePath) {
+            const fs = require('fs');
+            const path = require('path');
+            const chemin = path.join(__dirname, '..', 'uploads', document.filePath);
+            fs.unlink(chemin, (err) => {
+                if (err && err.code !== 'ENOENT') {
+                    console.error('Fichier de pièce non supprimé :', err.message);
+                }
+            });
+        }
+
         res.json({ message: 'Pièce retirée du dossier.' });
     } catch (error) {
         console.error('Erreur suppression de pièce :', error);
         res.status(500).json({ error: 'Erreur lors de la suppression.' });
+    }
+};
+
+/**
+ * Sert le fichier d'une pièce.
+ *
+ * Le chemin est reconstruit à partir de l'enregistrement, jamais de la requête :
+ * un chemin fourni par l'appelant permettrait de remonter l'arborescence et de
+ * lire n'importe quel fichier du serveur.
+ */
+exports.getDocumentFile = async (req, res) => {
+    try {
+        const path = require('path');
+        const fs = require('fs');
+
+        const document = await prisma.subcontractorDocument.findUnique({
+            where: { id: req.params.documentId },
+            include: { subcontractor: { select: { companyName: true } } }
+        });
+        if (!document) return res.status(404).json({ error: 'Pièce introuvable.' });
+        if (!document.filePath) {
+            return res.status(404).json({ error: "Aucun fichier n'est joint à cette pièce." });
+        }
+
+        // Le nom stocké ne doit contenir aucun segment de remontée : il est
+        // produit par le serveur, mais la vérification coûte moins cher que la
+        // confiance.
+        const relatif = path.normalize(document.filePath).replace(/^(\.\.[/\\])+/, '');
+        const racine = path.join(__dirname, '..', 'uploads');
+        const chemin = path.join(racine, relatif);
+        if (!chemin.startsWith(racine)) {
+            return res.status(400).json({ error: 'Chemin de fichier invalide.' });
+        }
+
+        if (!fs.existsSync(chemin)) {
+            // Sur un hébergement au disque éphémère, le fichier disparaît à
+            // chaque redéploiement alors que la ligne subsiste. Le dire, plutôt
+            // que de renvoyer une erreur muette.
+            return res.status(404).json({
+                error: "Le fichier n'est plus présent sur le serveur.",
+                remede: "Le redéposer, et vérifier qu'un disque persistant est bien attaché à l'hébergement."
+            });
+        }
+
+        res.download(chemin, `${document.type}_${document.subcontractor.companyName}${path.extname(chemin)}`);
+    } catch (error) {
+        console.error('Erreur lecture du fichier de pièce :', error);
+        if (!res.headersSent) res.status(500).json({ error: 'Erreur lors de la lecture du fichier.' });
     }
 };
