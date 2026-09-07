@@ -30,6 +30,7 @@ import { Documents } from './pages/Documents';
 import { WorkflowBuilder } from './pages/WorkflowBuilder';
 import { PolicyRules } from './pages/PolicyRules';
 import { Conformite } from './pages/Conformite';
+import { Procedures } from './pages/Procedures';
 import { TaskBoard } from './pages/TaskBoard';
 import { SkillsMatrix } from './pages/SkillsMatrix';
 import { Timesheet } from './pages/Timesheet';
@@ -267,6 +268,12 @@ const AppContent = () => {
             <Route path="/documents" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Social Worker']}>
                 <Documents />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/procedures" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Procedures />
               </ProtectedRoute>
             } />
 

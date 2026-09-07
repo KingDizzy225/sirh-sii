@@ -227,6 +227,9 @@ app.use('/api/task-templates', taskTemplateRoutes);
 const policyRoutes = require('./routes/policyRoutes');
 app.use('/api/policies', policyRoutes);
 
+const procedureRoutes = require('./routes/procedureRoutes');
+app.use('/api/procedures', procedureRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

@@ -96,6 +96,7 @@ model Employee {
   workAccidents        WorkAccident[]
   issuedDocuments      IssuedDocument[]
   exitInterview        ExitInterview?
+  procedures           Procedure[]
 }
 
 // ... (existing code)
@@ -1255,4 +1256,67 @@ model DeletedEmployee {
 
   @@index([deletedAt])
   @@map("deleted_employees")
+}
+
+// ----------------------------------------------------
+// PROCÉDURES DISCIPLINAIRES ET DE RUPTURE
+// ----------------------------------------------------
+
+/// Procédure ouverte à l'égard d'un salarié : sanction, licenciement,
+/// rupture d'essai, démission.
+///
+/// Le dossier disciplinaire enregistrait la décision — une date, un type, un
+/// motif — sans rien savoir du chemin qui y mène. Or c'est la forme qui se
+/// conteste : convocation non remise, entretien tenu le jour même, lettre sans
+/// motif. Cette procédure retient chaque étape, sa date, et sa preuve.
+model Procedure {
+  id         String    @id @default(uuid())
+  employeeId String    @map("employee_id")
+  type       String // LICENCIEMENT | SANCTION | RUPTURE_ESSAI | DEMISSION
+  motif      String    @db.Text
+  /// EN_COURS | CLOTUREE | ABANDONNEE
+  statut     String    @default("EN_COURS")
+  /// Issue consignée à la clôture : sanction retenue, rupture effective, abandon.
+  issue      String?   @db.Text
+
+  ouvertePar String    @map("ouverte_par")
+  ouverteLe  DateTime  @default(now()) @map("ouverte_le")
+  clotureeLe DateTime? @map("cloturee_le")
+  clotureePar String?  @map("cloturee_par")
+
+  employee Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  etapes   ProcedureEtape[]
+
+  @@index([statut, type])
+  @@map("procedures")
+}
+
+/// Étape d'une procédure, avec le délai qui la sépare de la précédente.
+model ProcedureEtape {
+  id          String    @id @default(uuid())
+  procedureId String    @map("procedure_id")
+  ordre       Int
+  code        String
+  libelle     String
+  attendu     String    @db.Text
+  obligatoire Boolean   @default(true)
+
+  /// Délai minimal, en jours, depuis l'étape précédente. Franchir une étape
+  /// avant ce délai est le vice de forme le plus fréquent : l'application le
+  /// refuse plutôt que de l'enregistrer.
+  delaiMinJours Float   @default(0) @map("delai_min_jours")
+  /// Délai au-delà duquel l'étape est en retard, s'il y a lieu.
+  delaiMaxJours Float?  @map("delai_max_jours")
+  motifDelai    String? @map("motif_delai") @db.Text
+
+  faiteLe   DateTime? @map("faite_le")
+  faitePar  String?   @map("faite_par")
+  note      String?   @db.Text
+  /// Preuve de remise : décharge signée, accusé de réception.
+  preuve    String?   @db.Text
+
+  procedure Procedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+
+  @@index([procedureId, ordre])
+  @@map("procedure_etapes")
 }

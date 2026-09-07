@@ -34,6 +34,7 @@ const getAllNavItems = (t) => [
     // EMPLOYÉS
     { name: t('sidebar.employees', 'Répertoire Employés'), path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
     { name: 'Dossiers & corbeille', path: '/conformite', icon: ShieldCheck, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Procédures & sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Générateur de Contrats', path: '/contracts', icon: FileText, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Simulateur Orga.', path: '/org-simulation', icon: Rocket, domain: 'Employés', permission: 'employees:edit' },
