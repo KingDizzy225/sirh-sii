@@ -192,3 +192,21 @@ exports.getAllTodayLogs = async (req, res) => {
         res.status(500).json({ error: "Erreur serveur" });
     }
 };
+
+/**
+ * Relevé mensuel des heures, à partir des pointages.
+ *
+ * La chaîne était coupée : les pointages d'un côté, les heures supplémentaires
+ * ressaisies à la main dans la paie de l'autre. Ce relevé les rapproche, et
+ * signale ce qu'il ne peut pas compter — une entrée sans sortie ne se devine
+ * pas, une journée de dix-huit heures est une sortie oubliée.
+ */
+exports.getReleveMensuel = async (req, res) => {
+    try {
+        const tempsTravail = require('../lib/tempsTravail');
+        res.json(await tempsTravail.releveMensuel(req.query.period));
+    } catch (error) {
+        console.error('Erreur relevé des heures :', error);
+        res.status(500).json({ error: 'Erreur lors du calcul du relevé.' });
+    }
+};

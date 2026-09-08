@@ -239,6 +239,9 @@ app.use('/api/signataires', signataireRoutes);
 const delegationRoutes = require('./routes/delegationRoutes');
 app.use('/api/delegations', delegationRoutes);
 
+const requeteurRoutes = require('./routes/requeteurRoutes');
+app.use('/api/requeteur', requeteurRoutes);
+
 // Global Error Logger for Express internals
 app.use((err, req, res, next) => {
     console.error("[GLOBAL EXPRESS ERROR]", err);

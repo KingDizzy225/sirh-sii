@@ -36,6 +36,8 @@ import { Signataires } from './pages/Signataires';
 import { Remuneration } from './pages/Remuneration';
 import { Delegations } from './pages/Delegations';
 import { FichesPoste } from './pages/FichesPoste';
+import { Requeteur } from './pages/Requeteur';
+import { ReleveHeures } from './pages/ReleveHeures';
 import { TaskBoard } from './pages/TaskBoard';
 import { SkillsMatrix } from './pages/SkillsMatrix';
 import { Timesheet } from './pages/Timesheet';
@@ -273,6 +275,18 @@ const AppContent = () => {
             <Route path="/documents" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Social Worker']}>
                 <Documents />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/requeteur" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Requeteur />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/releve-heures" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <ReleveHeures />
               </ProtectedRoute>
             } />
 

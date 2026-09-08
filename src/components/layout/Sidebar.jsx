@@ -52,6 +52,7 @@ const getAllNavItems = (t) => [
     // GESTION RH -> PILOTAGE RH
     { name: 'Temps, Absences & Demandes', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Paie & Rémunérations', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Relevé des heures', path: '/releve-heures', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Rémunérations', path: '/remunerations', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Budget & masse salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Délégations', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
@@ -65,6 +66,7 @@ const getAllNavItems = (t) => [
     
     // ANALYTIQUE -> INTELLIGENCE RH
     { name: t('sidebar.analytics', 'HR Analytics'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Listes et exports', path: '/requeteur', icon: Grid, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Équité Salariale', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Santé d\'Équipe', path: '/team-health', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Anti-Turnover', path: '/retention-center', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },
