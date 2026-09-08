@@ -112,6 +112,7 @@ model Employee {
   issuedDocuments      IssuedDocument[]
   exitInterview        ExitInterview?
   procedures           Procedure[]
+  jobDescriptions      JobDescription[]
 }
 
 // ... (existing code)
@@ -1071,10 +1072,49 @@ model JobDescription {
   id         String   @id @default(uuid())
   title      String
   department String
+  /// Texte libre produit par l'ancienne génération. Conservé pour les fiches
+  /// déjà enregistrées ; les nouvelles renseignent les rubriques ci-dessous.
   content    String   @db.Text
   status     String   @default("DRAFT")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // --- Trame de la fiche de poste ---
+  //
+  // L'application produisait un bloc de texte libre, sans structure, sans PDF et
+  // sans rattachement au salarié : les fiches continuaient d'être écrites dans
+  // un traitement de texte. Les rubriques ci-dessous reprennent exactement la
+  // trame en usage dans l'entreprise, rubrique pour rubrique.
+  employeeId             String?   @map("employee_id")
+  salarieNom             String?   @map("salarie_nom")
+  direction              String?
+  lieu                   String?
+  categorie              String?
+  superieurHierarchique  String?   @map("superieur_hierarchique")
+  dateDebut              DateTime? @map("date_debut")
+
+  mission                String?   @db.Text
+  /// Listes de la fiche : tâches, moyens, compétences, risques.
+  taches                 Json?
+  relationsInterne       String?   @map("relations_interne") @db.Text
+  relationsExterne       String?   @map("relations_externe") @db.Text
+  rapportsDestinataires  String?   @map("rapports_destinataires") @db.Text
+  rapportsFrequences     String?   @map("rapports_frequences") @db.Text
+  moyensTechniques       Json?     @map("moyens_techniques")
+  savoir                 Json?
+  savoirFaire            Json?     @map("savoir_faire")
+  savoirEtre             Json?     @map("savoir_etre")
+  formation              String?   @db.Text
+  risquesPoste           Json?     @map("risques_poste")
+  risquesMateriel        Json?     @map("risques_materiel")
+
+  /// Visas de la fiche : DE, DRH, AG. Chacun peut porter la signature d'un
+  /// signataire enregistré, ou rester vierge pour une signature manuscrite.
+  visas                  Json?
+
+  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  @@index([employeeId])
 }
 
 // ----------------------------------------------------

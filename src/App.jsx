@@ -35,6 +35,7 @@ import { Budget } from './pages/Budget';
 import { Signataires } from './pages/Signataires';
 import { Remuneration } from './pages/Remuneration';
 import { Delegations } from './pages/Delegations';
+import { FichesPoste } from './pages/FichesPoste';
 import { TaskBoard } from './pages/TaskBoard';
 import { SkillsMatrix } from './pages/SkillsMatrix';
 import { Timesheet } from './pages/Timesheet';
@@ -272,6 +273,12 @@ const AppContent = () => {
             <Route path="/documents" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Social Worker']}>
                 <Documents />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/fiches-poste" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <FichesPoste />
               </ProtectedRoute>
             } />
 
