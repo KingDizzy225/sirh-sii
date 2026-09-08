@@ -249,6 +249,48 @@ app.use((err, req, res, next) => {
 });
 
 const http = require('http');
+/**
+ * Service du frontend par l'application elle-même.
+ *
+ * Sur un hébergement en nuage, le frontend vit ailleurs — Vercel — et l'API ne
+ * sert que du JSON. Sur un serveur installé dans l'entreprise, faire cohabiter
+ * deux serveurs pour une seule application complique l'installation sans rien
+ * apporter : un seul processus, un seul port, et plus aucune question
+ * d'origines croisées.
+ *
+ * Désactivé par défaut. Poser SERVE_FRONTEND=true après avoir construit le
+ * frontend (npm run build à la racine du dépôt).
+ *
+ * Placé après toutes les routes de l'API : le repli ci-dessous répond à tout ce
+ * qui n'a pas été servi, et intercepterait sinon les appels applicatifs.
+ */
+if (process.env.SERVE_FRONTEND === 'true') {
+    const cheminFront = require('path');
+    const fsFront = require('fs');
+    const dossierFront = process.env.FRONTEND_DIST_DIR
+        ? cheminFront.resolve(process.env.FRONTEND_DIST_DIR)
+        : cheminFront.join(__dirname, '..', 'dist');
+
+    if (!fsFront.existsSync(dossierFront)) {
+        // Un frontend annoncé mais absent produirait des pages blanches sans
+        // que rien n'en dise la cause.
+        console.error(
+            `[FRONT] SERVE_FRONTEND=true mais ${dossierFront} est introuvable. ` +
+            'Construire le frontend (npm run build) ou corriger FRONTEND_DIST_DIR.'
+        );
+    } else {
+        app.use(express.static(dossierFront));
+
+        // Toute adresse hors /api rend l'application : les routes du navigateur
+        // (/employees, /verify/xxx) n'existent pas côté serveur, et un
+        // rechargement de page tomberait autrement sur une erreur 404.
+        app.get(/^(?!\/api\/).*/, (req, res) => {
+            res.sendFile(cheminFront.join(dossierFront, 'index.html'));
+        });
+        console.log(`[FRONT] Interface servie depuis ${dossierFront}.`);
+    }
+}
+
 const { Server } = require('socket.io');
 
 const server = http.createServer(app);

@@ -153,6 +153,78 @@ async function verifier() {
         avertir('Dossiers administratifs', `Contrôle impossible : ${error.message}`);
     }
 
+    // --- Hébergement ---
+    //
+    // Ces contrôles prennent leur sens sur un serveur installé dans
+    // l'entreprise, où ce que l'hébergeur assurait devient la charge de
+    // l'exploitant : le chiffrement, les sauvegardes, la persistance des
+    // fichiers.
+    const fs = require('fs');
+    const path = require('path');
+
+    const adressePublique = process.env.PUBLIC_APP_URL || process.env.FRONTEND_URL || '';
+    if (adressePublique && adressePublique.startsWith('http://')) {
+        bloquer('Chiffrement',
+            `L'adresse publique (${adressePublique}) est en clair. Mots de passe et jetons de session ` +
+            'circulent alors sans chiffrement sur le réseau. Placer un certificat devant le service.');
+    } else if (adressePublique) {
+        ok('Chiffrement', 'Adresse publique en HTTPS.');
+    }
+
+    const dossierFichiers = path.join(__dirname, '..', 'uploads');
+    try {
+        fs.mkdirSync(dossierFichiers, { recursive: true });
+        const temoin = path.join(dossierFichiers, '.preflight');
+        fs.writeFileSync(temoin, 'ok');
+        fs.unlinkSync(temoin);
+        ok('Dossier des fichiers', `Accessible en écriture (${dossierFichiers}).`);
+    } catch (error) {
+        bloquer('Dossier des fichiers',
+            `Écriture impossible dans ${dossierFichiers} : ${error.message}. ` +
+            'Les pièces jointes, attestations et certificats ne pourront pas être enregistrés.');
+    }
+
+    if (process.env.SERVE_FRONTEND === 'true') {
+        const dist = process.env.FRONTEND_DIST_DIR
+            ? path.resolve(process.env.FRONTEND_DIST_DIR)
+            : path.join(__dirname, '..', '..', 'dist');
+        if (fs.existsSync(path.join(dist, 'index.html'))) {
+            ok('Interface', `Servie par l'application depuis ${dist}.`);
+        } else {
+            bloquer('Interface',
+                `SERVE_FRONTEND=true mais aucun index.html dans ${dist}. ` +
+                'Construire le frontend avec npm run build.');
+        }
+    }
+
+    if (!process.env.SAUVEGARDE_DESTINATION) {
+        // Aucun moyen de vérifier qu'une sauvegarde tourne : on rappelle
+        // l'obligation plutôt que de laisser croire qu'elle est couverte.
+        avertir('Sauvegardes',
+            "Aucune destination déclarée (SAUVEGARDE_DESTINATION). Sur un serveur interne, " +
+            'personne ne sauvegarde à votre place : voir server/scripts/sauvegarde.ps1.');
+    } else if (fs.existsSync(process.env.SAUVEGARDE_DESTINATION)) {
+        const recentes = fs.readdirSync(process.env.SAUVEGARDE_DESTINATION)
+            .map((n) => {
+                try { return fs.statSync(path.join(process.env.SAUVEGARDE_DESTINATION, n)).mtime; }
+                catch { return null; }
+            })
+            .filter(Boolean)
+            .sort((a, b) => b - a);
+        const derniere = recentes[0];
+        const jours = derniere ? Math.floor((Date.now() - derniere) / 86400000) : null;
+        if (jours === null) {
+            bloquer('Sauvegardes', `Aucune sauvegarde dans ${process.env.SAUVEGARDE_DESTINATION}.`);
+        } else if (jours > 2) {
+            bloquer('Sauvegardes', `La dernière sauvegarde date de ${jours} jours.`);
+        } else {
+            ok('Sauvegardes', `Dernière sauvegarde il y a ${jours} jour(s).`);
+        }
+    } else {
+        bloquer('Sauvegardes',
+            `Destination déclarée mais introuvable : ${process.env.SAUVEGARDE_DESTINATION}.`);
+    }
+
     // --- Traitements planifiés ---
     if (process.env.DISABLE_SCHEDULED_JOBS === 'true') {
         avertir('Traitements planifiés',
