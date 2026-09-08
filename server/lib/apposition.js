@@ -54,35 +54,39 @@ function imageDepuisDataUrl(dataUrl) {
  * @param {object} options   signataire, registre (IssuedDocument), employé
  * @returns {Promise<{signataire:object|null, sceau:object|null}>}
  */
+async function scellerDocument(registre, { signataire, typeDocument } = {}) {
+    if (!registre) return null;
+
+    const manifeste = sceau.manifeste({
+        documentId: registre.id,
+        titre: typeDocument || registre.type,
+        empreinte: registre.token,
+        signataire: signataire ? `${signataire.nom} — ${signataire.fonction}` : null,
+        signataireId: signataire ? signataire.id : null,
+        horodatage: registre.issuedAt || new Date(),
+        ip: null,
+        methode: 'EMISSION_EMPLOYEUR'
+    });
+    const resultat = await sceau.sceller(manifeste);
+
+    await prisma.issuedDocument.update({
+        where: { id: registre.id },
+        data: {
+            signataireNom: signataire ? signataire.nom : null,
+            signataireFonction: signataire ? signataire.fonction : null,
+            manifeste,
+            sceau: resultat.sceau,
+            sceauKeyId: resultat.keyId
+        }
+    }).catch((e) => console.error('[SCEAU] Enregistrement du sceau :', e.message));
+
+    return { manifeste, ...resultat };
+}
+
 async function apposer(doc, { signataire, registre, employe, typeDocument }) {
-    let scelle = null;
-
-    // --- Sceau ---
-    if (registre) {
-        const manifeste = sceau.manifeste({
-            documentId: registre.id,
-            titre: typeDocument || registre.type,
-            empreinte: registre.token,
-            signataire: signataire ? `${signataire.nom} — ${signataire.fonction}` : null,
-            signataireId: signataire ? signataire.id : null,
-            horodatage: registre.issuedAt || new Date(),
-            ip: null,
-            methode: 'EMISSION_EMPLOYEUR'
-        });
-        const resultat = await sceau.sceller(manifeste);
-        scelle = { manifeste, ...resultat };
-
-        await prisma.issuedDocument.update({
-            where: { id: registre.id },
-            data: {
-                signataireNom: signataire ? signataire.nom : null,
-                signataireFonction: signataire ? signataire.fonction : null,
-                manifeste,
-                sceau: resultat.sceau,
-                sceauKeyId: resultat.keyId
-            }
-        }).catch((e) => console.error('[SCEAU] Enregistrement du sceau :', e.message));
-    }
+    // Le scellement est séparé du dessin : le bulletin de paie a sa propre mise
+    // en page et n'utilise que la première moitié.
+    const scelle = await scellerDocument(registre, { signataire, typeDocument });
 
     // --- Bloc visuel ---
     const hautDuBloc = Math.min(doc.y + 10, 600);
@@ -144,4 +148,4 @@ async function apposer(doc, { signataire, registre, employe, typeDocument }) {
     return { signataire: signataire || null, sceau: scelle };
 }
 
-module.exports = { choisirSignataire, apposer, imageDepuisDataUrl };
+module.exports = { choisirSignataire, apposer, scellerDocument, imageDepuisDataUrl };

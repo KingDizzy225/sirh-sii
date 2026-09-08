@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { donneesDemo, DEMO } from '../data/demoData';
 
 export function ContractStudio() {
@@ -20,6 +21,8 @@ export function ContractStudio() {
     const [includeNonCompete, setIncludeNonCompete] = useState(true);
     const [includeRemoteClause, setIncludeRemoteClause] = useState(true);
     const [notification, setNotification] = useState(null);
+    const [enCours, setEnCours] = useState(false);
+    const { token } = useAuth();
 
     useEffect(() => {
         api.get('/employees').then(res => {
@@ -37,9 +40,60 @@ export function ContractStudio() {
         setTimeout(() => setNotification(null), 3000);
     };
 
+    /**
+     * Télécharge le contrat signé par l'employeur.
+     *
+     * L'écran n'offrait que la boîte d'impression du navigateur : il fallait
+     * imprimer, faire signer à la main, puis rescanner. Le PDF vient désormais
+     * du serveur, avec la signature du signataire habilité, un sceau vérifiable
+     * et un emplacement pour la signature du collaborateur.
+     */
+    const telechargerSigne = async () => {
+        if (!selectedEmp?.id) {
+            showNotification("Choisissez d'abord un collaborateur.");
+            return;
+        }
+        setEnCours(true);
+        try {
+            const base = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const racine = base.endsWith('/api') ? base.slice(0, -4) : base;
+            const res = await fetch(`${racine}/api/contracts/pdf`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                    employeeId: selectedEmp.id,
+                    contractType,
+                    baseSalary,
+                    probationMonths,
+                    includeNonCompete,
+                    includeRemoteClause
+                })
+            });
+            if (!res.ok) {
+                const detail = await res.json().catch(() => ({}));
+                showNotification(detail.error || 'Le contrat n\'a pas pu être produit.');
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `contrat_${contractType}_${selectedEmp.lastName || 'collaborateur'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            showNotification('Contrat signé et scellé, prêt à être remis.');
+        } catch (err) {
+            showNotification('Erreur : ' + (err.message || 'production du contrat impossible.'));
+        } finally {
+            setEnCours(false);
+        }
+    };
+
     const handlePrintOrDownload = () => {
         window.print();
-        showNotification("Contrat généré prêt à l'impression / PDF.");
+        showNotification("Aperçu envoyé à l'impression. Pour un contrat signé, utiliser « Télécharger signé ».");
     };
 
     return (
@@ -55,9 +109,15 @@ export function ContractStudio() {
                     </p>
                 </div>
 
-                <Button onClick={handlePrintOrDownload} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md gap-2">
-                    <Printer size={16} /> Imprimer / Exporter PDF
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={handlePrintOrDownload} className="text-sm gap-2">
+                        <Printer size={16} /> Aperçu papier
+                    </Button>
+                    <Button onClick={telechargerSigne} disabled={enCours}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md gap-2">
+                        <Download size={16} /> {enCours ? 'Production…' : 'Télécharger signé'}
+                    </Button>
+                </div>
             </div>
 
             {/* Notification */}
@@ -229,6 +289,9 @@ export function ContractStudio() {
                                 <div>
                                     <p>Pour SII Côte d'Ivoire</p>
                                     <div className="h-16 border-b border-dashed border-slate-400 w-40 mt-2"></div>
+                                    <p className="font-normal text-[10px] text-slate-400 mt-1">
+                                        Signé automatiquement sur le PDF téléchargé
+                                    </p>
                                 </div>
                                 <div className="text-right">
                                     <p>Le Collaborateur (Lu et approuvé)</p>

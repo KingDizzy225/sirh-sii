@@ -9,6 +9,7 @@ const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
 const { calculerPaie, decomposer, intervalleMois, TAUX } = require('../lib/paie');
 const dossier = require('../lib/dossier');
+const apposition = require('../lib/apposition');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -42,7 +43,7 @@ const getOrCreatePayslipToken = async (payroll, employee) => {
     const existant = await prisma.issuedDocument.findFirst({
         where: { type: 'BULLETIN_PAIE', sourceId: payroll.id }
     });
-    if (existant) return existant.token;
+    if (existant) return existant;
 
     const cree = await prisma.issuedDocument.create({
         data: {
@@ -56,7 +57,7 @@ const getOrCreatePayslipToken = async (payroll, employee) => {
             hireDate: employee.hireDate || null
         }
     });
-    return cree.token;
+    return cree;
 };
 
 // `signatureOverride` est un paramètre explicite. Il était auparavant lu dans
@@ -66,18 +67,34 @@ const getOrCreatePayslipToken = async (payroll, employee) => {
 // la branche de signature s'exécutait sur chaque bulletin et échouait à chaque
 // fois, si bien qu'aucun bulletin signé n'a jamais porté sa signature.
 const generatePayslipPDF = async (payroll, employee, signatureOverride) => {
-    // Le QR est préparé avant le rendu : le corps du PDF est synchrone.
+    // Le QR, le signataire et le sceau sont préparés avant le rendu : le corps
+    // du PDF est synchrone.
     let qrBuffer = null;
+    let registre = null;
+    let signataire = null;
+    let scelle = null;
     let reference = null;
     try {
-        const token = await getOrCreatePayslipToken(payroll, employee);
-        reference = token.slice(0, 12).toUpperCase();
-        const url = `${getPublicAppUrl()}/verify/${token}`;
+        registre = await getOrCreatePayslipToken(payroll, employee);
+        reference = registre.token.slice(0, 12).toUpperCase();
+        const url = `${getPublicAppUrl()}/verify/${registre.token}`;
         const dataUrl = await QRCode.toDataURL(url, { margin: 1, width: 200 });
         qrBuffer = Buffer.from(dataUrl.split(',')[1], 'base64');
     } catch (err) {
         // Un bulletin doit pouvoir être produit même si la vérification échoue
         console.error('[PAIE] QR de vérification non généré :', err.message);
+    }
+
+    // Signature de l'employeur et sceau. Le bulletin portait déjà la signature
+    // du salarié — son accusé de réception — mais rien de l'employeur : il
+    // fallait l'imprimer, le signer et le rescanner avant remise.
+    try {
+        signataire = await apposition.choisirSignataire(null);
+        scelle = await apposition.scellerDocument(registre, {
+            signataire, typeDocument: 'Bulletin de paie'
+        });
+    } catch (err) {
+        console.error('[PAIE] Bulletin non scellé :', err.message);
     }
 
     return new Promise((resolve, reject) => {
@@ -207,18 +224,42 @@ const generatePayslipPDF = async (payroll, employee, signatureOverride) => {
                .text(`Fait à Abidjan, le ${new Date().toLocaleDateString('fr-FR')}`, 50, y)
                .text('Ce bulletin de paie doit être conservé sans limitation de durée.', { align: 'center' });
             
-            // Render Signature
+            // Signature du salarié : son accusé de réception, à droite.
             const signatureData = signatureOverride || payroll.signature;
             if (typeof signatureData === 'string' && signatureData.length > 0) {
                 try {
                     const base64Data = signatureData.replace(/^data:image\/(png|jpeg);base64,/, "");
                     const sigBuffer = Buffer.from(base64Data, 'base64');
-                    doc.image(sigBuffer, 350, y - 40, { width: 120, fit: [120, 60] });
-                    doc.fillColor('#15803d').font('Helvetica-Bold').fontSize(8)
-                       .text('Signé Électroniquement', 350, y + 20);
+                    doc.image(sigBuffer, 400, y - 40, { width: 110, fit: [110, 55] });
+                    doc.fillColor('#64748b').font('Helvetica').fontSize(7)
+                       .text('Le salarié, pour réception', 400, y + 18, { width: 110 });
                 } catch (e) {
                     console.error("Failed to render signature image:", e);
                 }
+            }
+
+            // Signature de l'employeur, à gauche : c'est elle qui évitait
+            // jusqu'ici l'impression, la signature manuscrite et le scan.
+            if (signataire) {
+                try {
+                    const trait = apposition.imageDepuisDataUrl(signataire.signatureImage);
+                    if (trait) doc.image(trait, 150, y - 40, { fit: [110, 55] });
+                    const cachet = apposition.imageDepuisDataUrl(signataire.cachetImage);
+                    if (cachet) doc.image(cachet, 270, y - 45, { fit: [60, 60] });
+                } catch (e) {
+                    console.error('[PAIE] Signature employeur non rendue :', e.message);
+                }
+                doc.fillColor('#0f172a').font('Helvetica-Bold').fontSize(8)
+                   .text(signataire.nom, 150, y + 18, { width: 170 });
+                doc.fillColor('#64748b').font('Helvetica').fontSize(7)
+                   .text(signataire.fonction, 150, y + 29, { width: 170 });
+            }
+
+            if (scelle) {
+                doc.fillColor('#94a3b8').font('Helvetica').fontSize(6).text(
+                    `Signé électroniquement et scellé (${scelle.algorithme}, clé ${scelle.keyId}).`,
+                    150, y + 45, { width: 380 }
+                );
             }
 
             // QR de vérification : permet à une banque ou un bailleur de

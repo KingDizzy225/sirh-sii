@@ -1,3 +1,6 @@
+const crypto = require('crypto');
+const apposition = require('../lib/apposition');
+const contratPdf = require('../lib/contratPdf');
 const prisma = require('../prismaClient');
 
 // Get all contract templates
@@ -95,5 +98,93 @@ Fait à Abidjan, le {{TODAY_DATE}}.
     } catch (error) {
         console.error("Error generating contract:", error);
         res.status(500).json({ error: "Erreur de génération du contrat." });
+    }
+};
+
+/**
+ * Contrat de travail en PDF, signé et scellé.
+ *
+ * Le studio composait le contrat dans le navigateur et l'exportait par la boîte
+ * d'impression du système : il fallait imprimer, faire signer, rescanner. Le
+ * contrat est désormais rendu par le serveur, avec la signature du signataire
+ * habilité et un sceau que le salarié — ou une banque à qui il le présentera —
+ * peut vérifier.
+ *
+ * Le texte est produit à partir des paramètres, non reçu du navigateur : un
+ * contrat dont le contenu serait dicté par le client ne serait pas
+ * reproductible, et rien ne garantirait que le PDF signé dise ce que l'écran
+ * affichait.
+ */
+exports.telechargerPdf = async (req, res) => {
+    try {
+        const {
+            employeeId, contractType, baseSalary, probationMonths,
+            includeNonCompete, includeRemoteClause, signataireId
+        } = req.body;
+
+        const employe = await prisma.employee.findUnique({ where: { id: employeeId } });
+        if (!employe) return res.status(404).json({ error: 'Employé introuvable.' });
+
+        const type = ['CDI', 'CDD', 'Stage'].includes(contractType) ? contractType : 'CDI';
+        const salaire = String(baseSalary || '').trim();
+        if (!salaire) return res.status(400).json({ error: 'La rémunération est requise.' });
+
+        const essai = parseInt(probationMonths, 10);
+        if (!Number.isFinite(essai) || essai < 0 || essai > 12) {
+            return res.status(400).json({ error: "La période d'essai doit être exprimée en mois (0 à 12)." });
+        }
+
+        // Inscription au registre : c'est ce jeton que le QR encode, et c'est
+        // lui qui permettra à un tiers de vérifier le contrat.
+        const registre = await prisma.issuedDocument.create({
+            data: {
+                token: crypto.randomBytes(24).toString('hex'),
+                type: 'CONTRAT_TRAVAIL',
+                employeeId: employe.id,
+                issuedByEmail: (req.user && req.user.email) || null,
+                employeeName: `${employe.firstName} ${employe.lastName}`,
+                positionTitle: employe.positionTitle || null,
+                department: employe.department || null,
+                hireDate: employe.hireDate || null
+            }
+        });
+
+        const signataire = await apposition.choisirSignataire(signataireId);
+
+        const doc = contratPdf.nouveauContrat({
+            employe,
+            contractType: type,
+            baseSalary: salaire,
+            probationMonths: essai,
+            nonConcurrence: Boolean(includeNonCompete),
+            teletravail: Boolean(includeRemoteClause),
+            reference: registre.token.slice(0, 12).toUpperCase()
+        });
+
+        // Emplacement de la signature du collaborateur : le contrat se signe des
+        // deux côtés, et l'employeur ne peut pas signer pour lui.
+        const ySalarie = Math.min(doc.y, 600);
+        doc.fontSize(9).fillColor('#0f172a')
+           .text('Le collaborateur, lu et approuvé', 330, ySalarie, { width: 215 });
+        doc.moveTo(330, ySalarie + 60).lineTo(520, ySalarie + 60).strokeColor('#cbd5e1').stroke();
+        doc.y = ySalarie;
+
+        await apposition.apposer(doc, {
+            signataire,
+            registre,
+            employe,
+            typeDocument: `Contrat de travail (${type})`
+        });
+
+        const nom = `contrat_${type}_${employe.lastName}_${registre.token.slice(0, 8)}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${nom}`);
+        doc.pipe(res);
+        doc.end();
+    } catch (error) {
+        console.error('Erreur génération du contrat PDF :', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Erreur lors de la génération du contrat.' });
+        }
     }
 };
