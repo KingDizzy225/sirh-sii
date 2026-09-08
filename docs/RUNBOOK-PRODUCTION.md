@@ -231,6 +231,27 @@ Ouvrir **Employés › Dossiers & corbeille** et compléter ce qui est signalé 
 rouge. À l'import en masse, les colonnes reconnues sont `matricule`, `cnps`,
 `banque`, `compte`, `enfants`, `solde congés` et `congés pris`.
 
+### Étape 4 sexies — Reprise de l'historique des situations *(facultatif)*
+
+L'historisation ne connaît que ce qu'elle a vu passer. Les salariés déjà
+présents n'ont donc aucun segment : ils sont absents de tout effectif daté, et
+l'écran conclurait à un effectif nul avant aujourd'hui.
+
+```bash
+cd server
+DATABASE_URL="<url-externe>" npm run reprise-situations            # simulation
+DATABASE_URL="<url-externe>" npm run reprise-situations -- --confirm
+```
+
+La reprise pose, pour chacun, une situation courant depuis son embauche à partir
+de sa fiche actuelle. C'est une hypothèse — « rien n'a changé depuis
+l'embauche » — fausse pour quiconque a été promu ou muté. Elle est marquée
+**reconstituée**, et l'application le signale partout où elle l'emploie : un
+organigramme reconstitué ne vaut pas un organigramme observé.
+
+Les mouvements réels que vous connaissez se saisissent ensuite, salarié par
+salarié, et prennent le pas sur la reprise.
+
 ### Étape 5 — Connexion nominative
 
 Ouvrir l'application et se connecter avec l'adresse et le mot de passe de

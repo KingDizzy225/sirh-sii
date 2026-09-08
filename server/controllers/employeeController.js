@@ -6,6 +6,7 @@ const { soldeOuverture } = require('../lib/conges');
 const dossier = require('../lib/dossier');
 const corbeille = require('../lib/corbeille');
 const remuneration = require('../lib/remuneration');
+const historique = require('../lib/historique');
 
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
@@ -98,6 +99,14 @@ exports.createEmployee = async (req, res) => {
             }
         });
 
+        // Première situation, datée de l'embauche : sans elle, le salarié
+        // n'existerait dans l'histoire qu'à compter de sa première mutation.
+        await historique.enregistrer(newEmployee.id, newEmployee, {
+            effectiveFrom: dateEmbauche,
+            motif: 'Embauche',
+            source: 'OBSERVEE'
+        }).catch((e) => console.error('Situation initiale non enregistrée :', e.message));
+
         // La rémunération d'embauche est une décision comme une autre : elle
         // est consignée avec sa date d'effet, faute de quoi le premier montant
         // serait le seul de l'historique à n'avoir ni origine ni motif.
@@ -176,6 +185,11 @@ exports.updateEmployee = async (req, res) => {
         // se confondrait avec une correction de faute de frappe.
         delete data.baseSalary;
         delete data.salaryEffectiveFrom;
+        // Ces deux-là pilotent la consignation, ils ne sont pas des colonnes.
+        const motifSituation = data.motifSituation;
+        const dateEffetSituation = data.dateEffetSituation;
+        delete data.motifSituation;
+        delete data.dateEffetSituation;
         // Le matricule porte une contrainte d'unicité : une chaîne vide est une
         // valeur comme une autre pour Postgres, et le deuxième salarié « sans
         // matricule » serait rejeté. L'absence se dit avec null.
@@ -195,10 +209,22 @@ exports.updateEmployee = async (req, res) => {
             delete data.annualLeaveBalance;
         }
 
+        // L'état antérieur est relu avant l'écriture : c'est la comparaison des
+        // deux qui dit s'il y a eu changement de situation, et laquelle.
+        const avant = await prisma.employee.findUnique({ where: { id } });
+
         const updatedEmployee = await prisma.employee.update({
             where: { id },
             data
         });
+
+        // Le changement de situation est consigné après coup : une mise à jour
+        // qui ne touche ni le poste, ni le service, ni le rattachement, ni le
+        // contrat, ni le statut ne produit aucun segment.
+        await historique.suivreChangement(avant, updatedEmployee, {
+            motif: motifSituation || undefined,
+            effectiveFrom: dateEffetSituation || undefined
+        }).catch((e) => console.error('Changement de situation non consigné :', e.message));
 
         res.status(200).json(updatedEmployee);
     } catch (error) {
@@ -810,5 +836,63 @@ exports.setRemuneration = async (req, res) => {
         if (error.code === 'DATE') return res.status(400).json({ error: error.message });
         console.error('Erreur décision de rémunération :', error);
         res.status(500).json({ error: "Erreur lors de l'enregistrement de la décision." });
+    }
+};
+
+// ----------------------------------------------------
+// Historique des situations
+// ----------------------------------------------------
+
+/** Parcours d'un salarié : situations et décisions de rémunération, en une frise. */
+exports.getHistorique = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const salarie = await prisma.employee.findUnique({
+            where: { id },
+            select: { id: true, firstName: true, lastName: true, hireDate: true, exitDate: true }
+        });
+        if (!salarie) return res.status(404).json({ error: 'Salarié introuvable.' });
+
+        const { evenements, segments } = await historique.parcours(id);
+
+        res.json({
+            salarie: {
+                id: salarie.id,
+                nom: `${salarie.lastName} ${salarie.firstName}`.trim(),
+                embauche: salarie.hireDate,
+                sortie: salarie.exitDate
+            },
+            evenements,
+            // Un historique vide n'est pas la même chose qu'une carrière sans
+            // mouvement : le dire évite de conclure à tort.
+            repris: segments.length === 0
+                ? "Aucune situation enregistrée : l'historique de ce salarié n'a pas été repris."
+                : null
+        });
+    } catch (error) {
+        console.error('Erreur lecture de l\'historique :', error);
+        res.status(500).json({ error: "Erreur lors de la lecture de l'historique." });
+    }
+};
+
+/** Situation d'un salarié à une date donnée. */
+exports.getSituationA = async (req, res) => {
+    try {
+        res.json(await historique.situationA(req.params.id, req.query.date));
+    } catch (error) {
+        console.error('Erreur lecture de situation :', error);
+        res.status(500).json({ error: 'Erreur lors de la lecture de la situation.' });
+    }
+};
+
+/** Effectif à une date : qui était là, à quel poste, dans quel service. */
+exports.getEffectifA = async (req, res) => {
+    try {
+        const quand = req.query.date ? new Date(req.query.date) : new Date();
+        if (isNaN(quand.getTime())) return res.status(400).json({ error: 'Date invalide.' });
+        res.json(await historique.effectifA(quand));
+    } catch (error) {
+        console.error('Erreur lecture de l\'effectif daté :', error);
+        res.status(500).json({ error: "Erreur lors de la lecture de l'effectif." });
     }
 };

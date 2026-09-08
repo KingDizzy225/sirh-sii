@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -67,6 +67,7 @@ const getAllNavItems = (t) => [
     // ANALYTIQUE -> INTELLIGENCE RH
     { name: t('sidebar.analytics', 'HR Analytics'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Listes et exports', path: '/requeteur', icon: Grid, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Historique daté', path: '/historique', icon: History, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Équité Salariale', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Santé d\'Équipe', path: '/team-health', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Anti-Turnover', path: '/retention-center', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },

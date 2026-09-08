@@ -30,6 +30,10 @@ router.get('/register/pdf', requireRole(...HR_ROLES), registerController.generat
 // même raison : « conformite » ne doit pas être pris pour un identifiant.
 router.get('/conformite', requireRole(...HR_ROLES), employeeController.getConformite);
 
+// Historique daté. « effectif-a » est une route nommée : placée ici pour ne pas
+// être prise pour un identifiant de salarié.
+router.get('/effectif-a', requireRole(...HR_ROLES), employeeController.getEffectifA);
+
 // Corbeille. Routes nommées, elles aussi placées avant `/:id`.
 router.get('/corbeille', requireRole(...HR_ROLES), employeeController.getCorbeille);
 router.post('/corbeille/:id/restaurer', requireRole(...HR_ROLES), employeeController.restoreEmployee);
@@ -41,6 +45,8 @@ router.delete('/:id', requireRole(...HR_ROLES), employeeController.deleteEmploye
 // Onboarding Routes
 // Rémunération : lecture et décision. Réservée à la RH et à l'administration,
 // comme la paie dont elle est la source.
+router.get('/:id/historique', requireRole(...HR_ROLES), employeeController.getHistorique);
+router.get('/:id/situation', requireRole(...HR_ROLES), employeeController.getSituationA);
 router.get('/:id/remuneration', requireRole(...HR_ROLES), employeeController.getRemuneration);
 router.post('/:id/remuneration', requireRole(...HR_ROLES), employeeController.setRemuneration);
 

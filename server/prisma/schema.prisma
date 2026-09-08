@@ -113,6 +113,7 @@ model Employee {
   exitInterview        ExitInterview?
   procedures           Procedure[]
   jobDescriptions      JobDescription[]
+  situations           SituationEmployee[]
 }
 
 // ... (existing code)
@@ -1586,4 +1587,47 @@ model DelegationValidation {
   @@index([titulaireId, debut, fin])
   @@index([suppleantId])
   @@map("delegations_validation")
+}
+
+/// Situation d'un salarié sur une période : poste, service, rattachement,
+/// nature de contrat, statut.
+///
+/// L'application ne connaissait que le présent. Elle savait qui occupe quel
+/// poste aujourd'hui, jamais qui l'occupait au 1er janvier — ni sous quel
+/// responsable, ni dans quel service. Impossible dès lors de reconstituer un
+/// organigramme passé, de savoir quel poste occupait un salarié le jour d'un
+/// accident, ou de comparer deux exercices autrement que de mémoire.
+///
+/// La fiche du salarié reste la situation courante : les écrans et les
+/// requêtes existants n'ont pas changé. Cette table ajoute la profondeur de
+/// temps, segment par segment.
+///
+/// `source` distingue ce qui a été observé de ce qui a été reconstitué : les
+/// situations reprises lors de la mise en place valent ce que vaut l'hypothèse
+/// « inchangé depuis l'embauche », et cela doit rester lisible.
+model SituationEmployee {
+  id         String    @id @default(uuid())
+  employeeId String    @map("employee_id")
+
+  effectiveFrom DateTime  @map("effective_from")
+  /// Nul tant que la situation est en cours.
+  effectiveTo   DateTime? @map("effective_to")
+
+  positionTitle String?  @map("position_title")
+  department    String?
+  managerId     String?  @map("manager_id")
+  contractType  String?  @map("contract_type")
+  status        String?
+
+  motif  String? @db.Text
+  /// OBSERVEE (changement constaté par l'application) | REPRISE (reconstituée)
+  source String  @default("OBSERVEE")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, effectiveFrom])
+  @@index([effectiveFrom, effectiveTo])
+  @@map("situations_employe")
 }
