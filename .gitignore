@@ -181,3 +181,9 @@ server/test_gemini.js
 server/list_models.js
 dist/
 .DS_Store
+
+# Doublons créés par la synchronisation iCloud (« schema 2.prisma », « index 3 »).
+# Deux d'entre eux avaient été versionnés par mégarde, dont une copie périmée du
+# schéma Prisma — un fichier qu'on risque de modifier en croyant tenir le bon.
+* [0-9]
+* [0-9].*

@@ -114,6 +114,7 @@ model Employee {
   procedures           Procedure[]
   jobDescriptions      JobDescription[]
   situations           SituationEmployee[]
+  soldeToutCompte      SoldeToutCompte?
 }
 
 // ... (existing code)
@@ -1630,4 +1631,42 @@ model SituationEmployee {
   @@index([employeeId, effectiveFrom])
   @@index([effectiveFrom, effectiveTo])
   @@map("situations_employe")
+}
+
+/// Décompte de fin de contrat arrêté.
+///
+/// Les courriers de rupture promettaient au salarié son solde de tout compte ;
+/// l'application n'en produisait qu'un écran, recalculé à chaque affichage. Un
+/// reçu que le salarié signe ne peut pas reposer sur un calcul mouvant : deux
+/// impressions à un mois d'écart auraient porté des montants différents, sans
+/// que rien ne le signale.
+///
+/// Cette table fige le décompte au jour où la RH l'arrête. Le reçu remis est
+/// produit depuis ce détail conservé, jamais d'un nouveau calcul. Reprendre un
+/// arrêté est possible — une erreur se corrige — mais révoque alors les reçus
+/// déjà émis, dont le QR signalera l'invalidité.
+model SoldeToutCompte {
+  id         String   @id @default(uuid())
+  /// Un seul arrêté par salarié : un départ n'a qu'un solde.
+  employeeId String   @unique @map("employee_id")
+
+  arreteLe   DateTime @default(now()) @map("arrete_le")
+  arretePar  String?  @map("arrete_par")
+  dateSortie DateTime @map("date_sortie")
+
+  /// Net arrêté, en FCFA. Dupliqué hors du détail pour être interrogeable.
+  netArrete  Float    @map("net_arrete")
+  /// Décompte complet tel qu'il a été arrêté, conservé au caractère près.
+  detail     String   @db.Text
+  observations String? @db.Text
+
+  /// Date de remise effective au salarié, quand elle est consignée.
+  remisLe    DateTime? @map("remis_le")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("solde_tout_compte")
 }

@@ -314,6 +314,43 @@ court, `FRONTEND_URL` absente, comptes @sirh.com actifs, ou aucun compte
 nominatif. Les avertissements (SMTP, IA) ne bloquent pas la mise en service
 mais indiquent des fonctions qui resteront muettes.
 
+
+---
+
+## Documents de fin de contrat
+
+Les lettres de rupture annoncent au salarié son **solde de tout compte**, son
+**certificat de travail** et son **attestation**. L'application produit
+désormais les trois, depuis *Départs & Offboarding*. Deux conditions, sans
+lesquelles rien ne sort — et le refus dit laquelle manque :
+
+1. **La date de sortie doit être renseignée** sur la fiche du salarié. Aucune
+   des trois pièces n'est produite sans elle : elles attestent de la fin d'un
+   contrat, et la produire sans cette date reviendrait à certifier un fait
+   inconnu.
+2. **Le décompte doit être arrêté** avant d'éditer le reçu. L'arrêté fige les
+   montants ; le reçu porte cet arrêté, jamais un calcul refait à l'impression.
+   Sans cela, deux tirages du même reçu auraient pu montrer des montants
+   différents.
+
+Reprendre un arrêté est possible — une erreur se corrige — mais **révoque les
+reçus déjà émis** : leur QR les signalera comme invalides. C'est voulu : deux
+reçus valides portant des montants différents seraient pires qu'un reçu faux.
+
+Le **certificat de travail** ne porte ni motif ni appréciation : c'est la pièce
+que le salarié présentera à son prochain employeur. La cause de la rupture
+figure sur l'**attestation de cessation d'emploi**, qui sert les démarches
+administratives — avec le matricule et le numéro CNPS, à renseigner au dossier
+sous peine de mentions vides.
+
+Les trois pièces sortent signées et scellées, comme les attestations et les
+bulletins : elles supposent donc **un signataire enregistré** (écran
+*Signataires*) et **la clé de scellement** en place (`npm run cle-scellement`).
+Sans signataire, le document sort avec la mention « émis sans signataire
+désigné » ; sans clé, une clé est produite et conservée en base au premier
+document — mais poser `SIGNATURE_SEAL_PRIVATE_KEY` dans l'environnement reste
+préférable, la clé survivant alors à une recréation de la base.
+
 ---
 
 ## Revenir en arrière
@@ -352,12 +389,11 @@ enverraient les mêmes notifications en double.
 
 Deux sujets connus, sans incidence sur la bascule mais à trancher ensuite.
 
-**Multi-entreprise.** Le schéma ne comporte aucune notion d'entreprise :
-tous les salariés vivent dans le même espace. Pour héberger plusieurs clients,
-il faudra soit une base par client (simple, coûteux à exploiter), soit un
-`tenantId` sur une trentaine de modèles et sur chaque requête (invasif, à faire
-avant que les données réelles ne s'accumulent). Décision structurante :
-elle ne peut pas être prise à la place du métier.
+**Multi-entreprise — écarté.** SII n'exploite qu'une entité juridique ; le
+schéma reste donc sans notion d'entreprise. Porter un `tenantId` sur une
+trentaine de modèles et sur chaque requête coûterait une complexité permanente
+contre un besoin inexistant. À rouvrir si une seconde société est créée — et
+alors **avant** de saisir ses données, jamais après.
 
 **Envoi d'emails.** Sans configuration SMTP, les notifications partent vers une
 boîte de test jetable. Les salariés ne reçoivent rien, et rien ne le signale

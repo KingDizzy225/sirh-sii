@@ -1,5 +1,5 @@
 const prisma = require('../prismaClient');
-const rupture = require('../lib/rupture');
+const soldeToutCompte = require('../lib/soldeToutCompte');
 
 exports.getOffboardingTasks = async (req, res) => {
     try {
@@ -60,172 +60,34 @@ exports.updateOffboardingTask = async (req, res) => {
 };
 
 /**
- * Décompte final d'un départ (solde de tout compte).
+ * Décompte final d'un départ (projet de solde de tout compte).
  *
- * Le module de départ suivait des tâches sans rien calculer, alors que toutes
- * les données nécessaires existent : solde de congés, dernier salaire, avances
- * non déduites, ancienneté. C'est pourtant le calcul le plus délicat du métier,
- * celui dont une erreur se règle devant l'inspection du travail.
+ * Le calcul lui-même vit désormais dans lib/soldeToutCompte.js : le reçu remis
+ * au salarié doit porter exactement les montants affichés ici, et deux copies
+ * du même calcul auraient fini par diverger.
  *
- * Le résultat est un projet de décompte à vérifier, jamais un document
- * définitif : la RH conserve la décision, notamment sur l'indemnité de
- * licenciement dont l'éligibilité dépend du motif de rupture.
+ * Ce que renvoie cette route reste un projet, révisable. C'est `arreterSolde`
+ * qui le fige, et le reçu n'est produit que depuis cette version figée.
  */
 exports.getFinalSettlement = async (req, res) => {
     try {
-        const { employeeId } = req.params;
+        const projet = await soldeToutCompte.calculer(req.params.employeeId);
+        if (!projet) return res.status(404).json({ error: 'Employé introuvable.' });
 
-        const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
-        if (!employee) return res.status(404).json({ error: 'Employé introuvable.' });
-
-        // Dernier bulletin connu : base du salaire de référence
-        const dernierBulletin = await prisma.payroll.findFirst({
-            where: { employeeId },
-            orderBy: { period: 'desc' }
-        });
-
-        // Le salaire brut n'est pas stocké tel quel : le bulletin conserve le
-        // salaire de base, sur lequel se calcule l'indemnité de congés payés.
-        const salaireMensuel = dernierBulletin ? (dernierBulletin.baseSalary || 0) : 0;
-        const salaireJournalier = salaireMensuel > 0 ? salaireMensuel / 30 : 0;
-
-        // Congés acquis non pris
-        const soldeConges = employee.annualLeaveBalance || 0;
-        const indemniteConges = Math.round(soldeConges * salaireJournalier);
-
-        // Avances accordées mais non encore déduites d'une paie
-        const avances = await prisma.salaryAdvance.findMany({
-            where: {
-                employeeId,
-                status: { in: ['Approuvé', 'APPROVED'] },
-                deductedOnPayrollId: null
-            },
-            select: { id: true, amount: true, requestedAt: true, reason: true }
-        });
-        const totalAvances = avances.reduce((s, a) => s + (a.amount || 0), 0);
-
-        // Ancienneté au jour du départ (ou à ce jour si non renseigné)
-        const dateSortie = employee.exitDate ? new Date(employee.exitDate) : new Date();
-        const embauche = new Date(employee.hireDate);
-        const anneesAnciennete = Math.max(
-            (dateSortie - embauche) / (365.25 * 24 * 3600 * 1000),
-            0
-        );
-
-        /**
-         * Nature de la rupture. Elle conditionne l'indemnité de licenciement,
-         * et l'application l'ignorait : elle la lit désormais dans la procédure
-         * ouverte à l'égard du salarié, plutôt que de la demander à nouveau.
-         */
-        const procedure = await prisma.procedure.findFirst({
-            where: { employeeId, statut: 'CLOTUREE' },
-            orderBy: { clotureeLe: 'desc' },
-            select: { type: true, motif: true, issue: true, clotureeLe: true }
-        });
-
-        /**
-         * Salaire de référence de l'indemnité : moyenne des bulletins connus,
-         * dans la limite de douze mois. Retenir le seul dernier bulletin
-         * exposerait le calcul à un mois atypique — une prime exceptionnelle
-         * gonflerait l'indemnité, un mois d'absence la réduirait.
-         */
-        const douzeDerniers = await prisma.payroll.findMany({
-            where: { employeeId },
-            orderBy: { period: 'desc' },
-            take: 12,
-            select: { baseSalary: true, period: true }
-        });
-        const moisRetenus = douzeDerniers.filter((b) => (b.baseSalary || 0) > 0);
-        const salaireMoyen = moisRetenus.length > 0
-            ? moisRetenus.reduce((t, b) => t + (b.baseSalary || 0), 0) / moisRetenus.length
-            : 0;
-
-        const indemnisable = procedure
-            ? rupture.NATURES_INDEMNISABLES.includes(procedure.type)
-            : false;
-
-        const indemnite = indemnisable
-            ? rupture.calculerIndemnite(anneesAnciennete, salaireMoyen)
-            : { montant: 0, eligible: false, tranches: [], motifIneligibilite: null };
-
-        const net = indemniteConges + indemnite.montant - totalAvances;
+        // L'écran doit savoir si le décompte a déjà été arrêté, et ce qui
+        // empêcherait de l'arrêter : sans cela, le bouton refuserait sans dire
+        // pourquoi.
+        const arrete = await soldeToutCompte.lireArrete(req.params.employeeId);
 
         res.json({
-            salarie: {
-                nom: `${employee.firstName} ${employee.lastName}`,
-                poste: employee.positionTitle,
-                dateEmbauche: employee.hireDate,
-                dateSortie: employee.exitDate || null,
-                ancienneteAnnees: Math.round(anneesAnciennete * 10) / 10
-            },
-            base: {
-                salaireMensuelReference: Math.round(salaireMensuel),
-                sourceReference: dernierBulletin
-                    ? `Salaire de base du bulletin de ${new Date(dernierBulletin.period).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`
-                    : 'Aucun bulletin de paie enregistré',
-                salaireJournalier: Math.round(salaireJournalier)
-            },
-            rupture: procedure ? {
-                nature: procedure.type,
-                motif: procedure.motif,
-                issue: procedure.issue,
-                clotureeLe: procedure.clotureeLe
+            ...projet,
+            arrete: arrete ? {
+                arreteLe: arrete.arreteLe,
+                arretePar: arrete.arretePar,
+                netArrete: arrete.netArrete,
+                observations: arrete.observations
             } : null,
-            indemniteLicenciement: {
-                ...indemnite,
-                salaireMoyenReference: Math.round(salaireMoyen),
-                moisRetenus: moisRetenus.length,
-                bareme: rupture.decrireBareme(),
-                ancienneteMinimale: rupture.ANCIENNETE_MINIMALE
-            },
-            lignes: [
-                {
-                    libelle: 'Indemnité compensatrice de congés payés',
-                    detail: `${soldeConges} jour(s) acquis non pris`,
-                    montant: indemniteConges,
-                    sens: 'credit'
-                },
-                ...(indemnisable && indemnite.eligible ? [{
-                    libelle: 'Indemnité de licenciement',
-                    detail: `${Math.round(anneesAnciennete * 10) / 10} an(s) d'ancienneté, ` +
-                            `salaire moyen de ${Math.round(salaireMoyen).toLocaleString('fr-FR')} F ` +
-                            `sur ${moisRetenus.length} mois`,
-                    montant: indemnite.montant,
-                    sens: 'credit'
-                }] : []),
-                {
-                    libelle: 'Avances sur salaire non déduites',
-                    detail: `${avances.length} avance(s) en cours`,
-                    montant: totalAvances,
-                    sens: 'debit'
-                }
-            ],
-            avances,
-            netEstime: net,
-            avertissements: [
-                !dernierBulletin
-                    ? "Aucun bulletin de paie n'a été trouvé : le salaire de référence est à saisir manuellement."
-                    : null,
-                !employee.exitDate
-                    ? "La date de sortie n'est pas renseignée : l'ancienneté est calculée à ce jour."
-                    : null,
-                !procedure
-                    ? "Aucune procédure close n'a été trouvée pour ce salarié : la nature de la rupture est inconnue, et l'indemnité de licenciement n'est donc pas calculée."
-                    : null,
-                procedure && !indemnisable
-                    ? `Rupture de nature « ${procedure.type} » : elle n'ouvre pas droit à l'indemnité de licenciement.`
-                    : null,
-                indemnisable && !indemnite.eligible && indemnite.motifIneligibilite
-                    ? `Indemnité de licenciement non calculée. ${indemnite.motifIneligibilite}`
-                    : null,
-                indemnisable && indemnite.eligible
-                    ? "L'indemnité de licenciement est calculée d'après le barème paramétré. Elle reste soumise à l'appréciation de la RH : une faute lourde en prive le salarié, et cette qualification ne relève pas de l'application."
-                    : null,
-                moisRetenus.length > 0 && moisRetenus.length < 12
-                    ? `Salaire de référence établi sur ${moisRetenus.length} mois au lieu de douze : l'historique de paie est incomplet.`
-                    : null,
-                'Ce décompte est un projet à vérifier avant établissement du solde de tout compte définitif.'
-            ].filter(Boolean)
+            empechements: soldeToutCompte.obstacles(projet)
         });
     } catch (error) {
         console.error('Error computing final settlement:', error);

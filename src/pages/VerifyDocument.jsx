@@ -38,7 +38,11 @@ export function VerifyDocument() {
 
     const TYPE_LABELS = {
         ATTESTATION_TRAVAIL: 'Attestation de travail',
-        BULLETIN_PAIE: 'Bulletin de paie'
+        BULLETIN_PAIE: 'Bulletin de paie',
+        CONTRAT_TRAVAIL: 'Contrat de travail',
+        CERTIFICAT_TRAVAIL: 'Certificat de travail',
+        ATTESTATION_CESSATION: "Attestation de cessation d'emploi",
+        RECU_SOLDE_TOUT_COMPTE: 'Reçu pour solde de tout compte'
     };
 
     return (

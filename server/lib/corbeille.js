@@ -58,7 +58,16 @@ const RELATIONS = [
     { cle: 'mentorshipRelation', ou: (id) => ({ OR: [{ mentorId: id }, { menteeId: id }] }) },
     { cle: 'issuedDocument' },
     { cle: 'exitInterview' },
-    { cle: 'supportTicket', ou: (id) => ({ requesterId: id }) }
+    { cle: 'supportTicket', ou: (id) => ({ requesterId: id }) },
+    // Ajoutées après coup, à mesure que le dossier s'est enrichi. Une relation
+    // oubliée ici ne fait pas échouer la suppression : elle disparaît sans
+    // laisser de trace dans l'instantané, ce qui est précisément le défaut que
+    // la corbeille devait corriger.
+    { cle: 'procedure' },
+    { cle: 'jobDescription' },
+    { cle: 'situationEmployee' },
+    { cle: 'salaryChange' },
+    { cle: 'soldeToutCompte' }
 ];
 
 const filtre = (relation, id) =>

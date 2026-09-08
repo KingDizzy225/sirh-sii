@@ -12,12 +12,18 @@ import {
     FileCheck, 
     ArrowRight,
     Trash2,
-    Search
+    Search,
+    FileSignature,
+    Download,
+    Lock,
+    AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api.js';
+import { useAuth } from '../context/AuthContext';
 
 export function Offboarding() {
+    const { token } = useAuth();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
@@ -27,6 +33,9 @@ export function Offboarding() {
     const [salarieSolde, setSalarieSolde] = useState('');
     const [solde, setSolde] = useState(null);
     const [soldeEnCours, setSoldeEnCours] = useState(false);
+    const [observations, setObservations] = useState('');
+    const [messageSolde, setMessageSolde] = useState(null);
+    const [pieceEnCours, setPieceEnCours] = useState(null);
 
     useEffect(() => {
         api.get('/employees')
@@ -39,13 +48,71 @@ export function Offboarding() {
     const calculerSolde = async () => {
         if (!salarieSolde) return;
         setSoldeEnCours(true);
+        setMessageSolde(null);
         try {
             const res = await api.get(`/offboarding/settlement/${salarieSolde}`);
             setSolde(res?.data || null);
+            setObservations(res?.data?.arrete?.observations || '');
         } catch (err) {
             setSolde(null);
+            setMessageSolde({ ton: 'alerte', texte: err.message || 'Décompte indisponible.' });
         } finally {
             setSoldeEnCours(false);
+        }
+    };
+
+    /**
+     * Arrêter le décompte le fige : c'est cette version, et non un calcul
+     * refait à l'impression, que portera le reçu remis au salarié.
+     */
+    const arreterSolde = async () => {
+        if (!salarieSolde) return;
+        setSoldeEnCours(true);
+        try {
+            const res = await api.post(`/offboarding/${salarieSolde}/solde/arreter`, { observations });
+            setMessageSolde({ ton: 'succes', texte: res?.data?.message || 'Décompte arrêté.' });
+            await calculerSolde();
+        } catch (err) {
+            setMessageSolde({ ton: 'alerte', texte: err.message || "L'arrêté a été refusé." });
+        } finally {
+            setSoldeEnCours(false);
+        }
+    };
+
+    /**
+     * Les trois pièces promises par les lettres de rupture. Le serveur refuse
+     * de les produire sur une donnée manquante, et le refus dit laquelle : ce
+     * message-là vaut mieux qu'un PDF à jeter.
+     */
+    const telechargerPiece = async (chemin, nomFichier) => {
+        if (!salarieSolde) return;
+        setPieceEnCours(chemin);
+        setMessageSolde(null);
+        try {
+            const base = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const racine = base.endsWith('/api') ? base.slice(0, -4) : base;
+
+            const res = await fetch(`${racine}/api/offboarding/${salarieSolde}/${chemin}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) {
+                const detail = await res.json().catch(() => ({}));
+                setMessageSolde({ ton: 'alerte', texte: detail.error || 'Document indisponible.' });
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nomFichier;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            setMessageSolde({ ton: 'alerte', texte: err.message || 'Téléchargement impossible.' });
+        } finally {
+            setPieceEnCours(null);
         }
     };
 
@@ -85,7 +152,10 @@ export function Offboarding() {
     const stats = [
         { label: 'Départs en cours', value: tasks.filter(t => t.status === 'Pending').length, icon: Clock, color: 'amber' },
         { label: 'Sorties clôturées', value: tasks.filter(t => t.status === 'Completed').length, icon: CheckCircle2, color: 'emerald' },
-        { label: 'Total sorties T4', value: '12', icon: PowerOff, color: 'indigo' }
+        // Ce compteur affichait « 12 », chiffre qui ne venait d'aucune donnée.
+        { label: 'Collaborateurs concernés',
+          value: new Set(tasks.map(t => t.employeeId)).size,
+          icon: PowerOff, color: 'indigo' }
     ];
 
     return (
@@ -189,9 +259,17 @@ export function Offboarding() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
+                                            {/* Une échéance « J-2 » s'affichait sur chaque
+                                                ligne sans venir d'aucune date. La tâche n'en
+                                                porte pas : on montre celle qu'on a, sa date
+                                                d'ouverture. */}
                                             <div className="text-right hidden sm:block">
-                                                <p className="text-[10px] font-black text-slate-400 uppercase">Échéance</p>
-                                                <p className="text-xs font-bold text-slate-600">J-2</p>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase">Ouverte le</p>
+                                                <p className="text-xs font-bold text-slate-600">
+                                                    {task.createdAt
+                                                        ? new Date(task.createdAt).toLocaleDateString('fr-FR')
+                                                        : '—'}
+                                                </p>
                                             </div>
                                             <Button variant="ghost" size="icon" className="text-slate-300 hover:text-rose-600 rounded-full h-8 w-8">
                                                 <Trash2 size={16} />
@@ -324,7 +402,129 @@ export function Offboarding() {
                                     <ul className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-1 list-disc list-inside">
                                         {solde.avertissements.map((a, i) => <li key={i}>{a}</li>)}
                                     </ul>
+
+                                    {/* Arrêté du décompte.
+
+                                        Le reçu que le salarié signe vaut décharge : il ne peut pas
+                                        porter un calcul qui suivrait la base au jour le jour. Deux
+                                        impressions à un mois d'écart auraient montré des montants
+                                        différents, sans que rien ne le signale. L'arrêté fige. */}
+                                    <div className="pt-3 border-t border-slate-100 space-y-2">
+                                        {solde.arrete ? (
+                                            <div className="text-xs bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                                                <p className="font-semibold text-emerald-900 flex items-center gap-1.5">
+                                                    <Lock size={12} /> Décompte arrêté à{' '}
+                                                    {solde.arrete.netArrete.toLocaleString('fr-FR')} FCFA
+                                                </p>
+                                                <p className="text-emerald-800 mt-0.5">
+                                                    Le {new Date(solde.arrete.arreteLe).toLocaleDateString('fr-FR')}
+                                                    {solde.arrete.arretePar ? ` par ${solde.arrete.arretePar}` : ''}.
+                                                </p>
+                                                {solde.arrete.netArrete !== solde.netEstime && (
+                                                    <p className="text-amber-800 mt-1.5 flex items-start gap-1.5">
+                                                        <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                                                        Le projet a évolué depuis l'arrêté
+                                                        ({solde.netEstime.toLocaleString('fr-FR')} FCFA).
+                                                        Le reçu porte le montant arrêté ; reprendre l'arrêté
+                                                        révoquera les reçus déjà remis.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : solde.empechements?.length > 0 ? (
+                                            <ul className="text-[11px] text-rose-800 bg-rose-50 border border-rose-200 rounded-lg p-3 space-y-1 list-disc list-inside">
+                                                {solde.empechements.map((e, i) => <li key={i}>{e}</li>)}
+                                            </ul>
+                                        ) : null}
+
+                                        <textarea
+                                            value={observations}
+                                            onChange={(e) => setObservations(e.target.value)}
+                                            rows={2}
+                                            placeholder="Observations portées sur le reçu (facultatif)…"
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
+                                        />
+
+                                        <Button
+                                            onClick={arreterSolde}
+                                            disabled={soldeEnCours || (solde.empechements?.length > 0)}
+                                            className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm disabled:opacity-40"
+                                        >
+                                            <Lock size={14} className="mr-2" />
+                                            {solde.arrete ? "Reprendre l'arrêté" : 'Arrêter le décompte'}
+                                        </Button>
+                                    </div>
+
+                                    {messageSolde && (
+                                        <p className={`text-xs rounded-lg p-2.5 ${
+                                            messageSolde.ton === 'succes'
+                                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                                : 'bg-rose-50 text-rose-800 border border-rose-200'
+                                        }`}>
+                                            {messageSolde.texte}
+                                        </p>
+                                    )}
                                 </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Documents de fin de contrat.
+
+                        Les lettres de rupture produites par l'application annonçaient au
+                        salarié son solde de tout compte, son certificat de travail et son
+                        attestation. Aucun des trois n'était produit : on s'en apercevait le
+                        dernier jour, devant la personne. */}
+                    <Card className="border-none shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                <FileSignature size={14} />
+                                Documents de fin de contrat
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                                Signés et scellés à l'émission, vérifiables par QR code.
+                                Choisir le collaborateur ci-dessus.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {[
+                                {
+                                    chemin: 'certificat-travail',
+                                    fichier: 'certificat_de_travail.pdf',
+                                    titre: 'Certificat de travail',
+                                    aide: "Dû à toute sortie. Ne porte ni motif ni appréciation."
+                                },
+                                {
+                                    chemin: 'attestation-cessation',
+                                    fichier: 'attestation_de_cessation.pdf',
+                                    titre: "Attestation de cessation d'emploi",
+                                    aide: 'Matricule, numéro CNPS et cause de la cessation.'
+                                },
+                                {
+                                    chemin: 'solde/recu',
+                                    fichier: 'recu_solde_de_tout_compte.pdf',
+                                    titre: 'Reçu pour solde de tout compte',
+                                    aide: "Édité depuis le décompte arrêté, avec la décharge à signer."
+                                }
+                            ].map((piece) => (
+                                <button
+                                    key={piece.chemin}
+                                    onClick={() => telechargerPiece(piece.chemin, piece.fichier)}
+                                    disabled={!salarieSolde || pieceEnCours === piece.chemin}
+                                    className="w-full text-left rounded-lg border border-slate-200 bg-white p-3 hover:border-slate-400 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:hover:border-slate-200"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-slate-900">{piece.titre}</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">{piece.aide}</p>
+                                        </div>
+                                        <Download size={16} className="text-slate-400 shrink-0 mt-0.5" />
+                                    </div>
+                                </button>
+                            ))}
+                            {!salarieSolde && (
+                                <p className="text-xs text-slate-400 italic pt-1">
+                                    Aucun collaborateur sélectionné.
+                                </p>
                             )}
                         </CardContent>
                     </Card>

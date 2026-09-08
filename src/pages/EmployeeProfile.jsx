@@ -33,6 +33,16 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+/** Libellés des documents émis. Le code interne n'a pas à s'afficher tel quel. */
+const LIBELLES_DOCUMENT = {
+    ATTESTATION_TRAVAIL: 'Attestation de travail',
+    BULLETIN_PAIE: 'Bulletin de paie',
+    CONTRAT_TRAVAIL: 'Contrat de travail',
+    CERTIFICAT_TRAVAIL: 'Certificat de travail',
+    ATTESTATION_CESSATION: "Attestation de cessation d'emploi",
+    RECU_SOLDE_TOUT_COMPTE: 'Reçu pour solde de tout compte'
+};
+
 export function EmployeeProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -568,7 +578,7 @@ export function EmployeeProfile() {
                                                     <div key={doc.id} className="flex items-center gap-4 px-6 py-4">
                                                         <div className="flex-1 min-w-0">
                                                             <p className="font-semibold text-slate-800 text-sm">
-                                                                {doc.type === 'ATTESTATION_TRAVAIL' ? 'Attestation de travail' : doc.type}
+                                                                {LIBELLES_DOCUMENT[doc.type] || doc.type}
                                                                 {doc.revokedAt && (
                                                                     <span className="ml-2 text-xs font-bold text-rose-600">RÉVOQUÉE</span>
                                                                 )}
