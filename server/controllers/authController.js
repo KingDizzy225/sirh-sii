@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const { JWT_SECRET } = require('../config/jwt');
+const crypto = require('crypto');
+const googleSso = require('../lib/googleSso');
 
 exports.login = async (req, res) => {
     try {
@@ -176,3 +178,89 @@ exports.createUser = async (req, res) => {
     }
 };
 
+// ----------------------------------------------------
+// Authentification Google Workspace
+// ----------------------------------------------------
+
+/** Ce que l'écran de connexion doit savoir avant d'afficher le bouton. */
+exports.etatSso = (req, res) => {
+    res.json(googleSso.etat());
+};
+
+const ROLE_PAR_PROFIL = {
+    Administrator: 'ADMIN', ADMIN: 'ADMIN',
+    HR: 'HR', HR_MANAGER: 'HR',
+    Manager: 'MANAGER', MANAGER: 'MANAGER'
+};
+
+/**
+ * Connexion par Google Workspace.
+ *
+ * Le navigateur obtient un jeton d'identité auprès de Google ; il est vérifié
+ * ici — signature, émetteur, destinataire, expiration, domaine de
+ * l'organisation — puis l'application délivre sa propre session.
+ *
+ * Point de doctrine : se connecter avec Google ne vaut pas appartenir à
+ * l'entreprise. Un compte du bon domaine mais inconnu du fichier du personnel
+ * est refusé. L'accès au SIRH suit l'inscription au registre, jamais l'inverse.
+ */
+exports.connexionGoogle = async (req, res) => {
+    try {
+        const identite = await googleSso.verifierJeton(req.body && req.body.credential);
+
+        let user = await prisma.user.findUnique({ where: { email: identite.email } });
+
+        if (!user) {
+            const salarie = await prisma.employee.findUnique({ where: { email: identite.email } });
+
+            if (!salarie) {
+                return res.status(403).json({
+                    error: "Ce compte Google n'est rattaché à aucun dossier salarié.",
+                    remede: 'Faites créer votre dossier par les ressources humaines avant de vous connecter.'
+                });
+            }
+            if (salarie.status === 'TERMINATED') {
+                return res.status(403).json({ error: "Ce dossier salarié est clos." });
+            }
+            if (process.env.GOOGLE_SSO_AUTO_PROVISION === 'false') {
+                return res.status(403).json({
+                    error: "Aucun compte n'existe pour cette adresse, et la création automatique est désactivée."
+                });
+            }
+
+            /**
+             * Le compte est créé avec un mot de passe aléatoire qui n'est
+             * communiqué à personne : l'accès passe alors uniquement par
+             * Google, ce qui est l'objet de l'authentification unique. Laisser
+             * un mot de passe utilisable rouvrirait la porte qu'elle ferme.
+             */
+            user = await prisma.user.create({
+                data: {
+                    name: `${salarie.firstName} ${salarie.lastName}`.trim(),
+                    email: identite.email,
+                    password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
+                    role: ROLE_PAR_PROFIL[salarie.role] || 'EMPLOYEE'
+                }
+            });
+            console.log(`[SSO] Compte créé pour ${identite.email} (rôle ${user.role}).`);
+        }
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role, name: user.name },
+            JWT_SECRET,
+            { expiresIn: '8h' }
+        );
+
+        const { password: _, ...sansMotDePasse } = user;
+        res.json({ message: 'Connexion réussie', token, user: sansMotDePasse, via: 'google' });
+    } catch (error) {
+        if (['NON_CONFIGURE', 'JETON', 'SIGNATURE', 'EMAIL', 'DOMAINE'].includes(error.code)) {
+            // Le motif exact est rendu : un domaine refusé, un jeton expiré et
+            // une configuration absente appellent des suites différentes, et
+            // « connexion impossible » ne dit rien à personne.
+            return res.status(error.code === 'NON_CONFIGURE' ? 503 : 401).json({ error: error.message });
+        }
+        console.error('Erreur connexion Google :', error);
+        res.status(500).json({ error: 'Erreur lors de la connexion par Google.' });
+    }
+};

@@ -107,6 +107,45 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Connexion par Google Workspace.
+     *
+     * Le jeton d'identité produit par Google est transmis au serveur, qui le
+     * vérifie — signature, émetteur, destinataire, expiration, domaine de
+     * l'organisation — avant de délivrer une session. Rien n'est décidé ici :
+     * le navigateur ne peut pas s'auto-authentifier.
+     */
+    const loginAvecGoogle = async (credential) => {
+        try {
+            const res = await fetch(`${API_URL}/api/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok && data.token) {
+                localStorage.setItem('sirh_token', data.token);
+                localStorage.setItem('sirh_user', JSON.stringify(data.user));
+                setUser(data.user);
+                setToken(data.token);
+                return { success: true };
+            }
+
+            // Le motif venu du serveur est rendu tel quel : « ce compte
+            // n'appartient pas à l'organisation » et « aucun dossier salarié »
+            // appellent des suites différentes.
+            return {
+                success: false,
+                error: [data.error, data.remede].filter(Boolean).join(' ') || 'Connexion Google refusée.'
+            };
+        } catch (error) {
+            console.warn('Connexion Google impossible :', error);
+            return { success: false, error: 'Serveur injoignable.' };
+        }
+    };
+
     // Accès démonstration explicite : ouvert seulement depuis le bouton dédié
     // de l'écran de connexion, jamais automatiquement.
     const loginAsDemo = async () => {
@@ -146,7 +185,7 @@ export const AuthProvider = ({ children }) => {
             token,
             isLoading,
             login,
-            loginAsDemo,
+            loginAvecGoogle, loginAsDemo,
             logout,
             demoMode: DEMO_MODE,
             // Vrai uniquement si la session courante est une session de démonstration

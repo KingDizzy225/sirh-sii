@@ -6,6 +6,11 @@ const requireRole = require('../middleware/roleMiddleware');
 
 // Ces routes gèreront l'authentification
 router.post('/login', authController.login);
+
+// Authentification Google Workspace. Ces deux routes sont nécessairement
+// publiques : elles précèdent l'existence d'une session.
+router.get('/sso', authController.etatSso);
+router.post('/google', authController.connexionGoogle);
 router.put('/update-credentials', verifyToken, authController.updateCredentials);
 
 // Gestion des utilisateurs (Super Admin uniquement)

@@ -246,9 +246,18 @@ migration s'applique, elle ne se défait pas.
 
 ## 10. Ce qui reste à décider
 
-**L'authentification unique.** Elle suppose de savoir où vivent vos comptes —
-Google Workspace, Microsoft 365, annuaire interne. Sans elle, chaque salarié a
-un mot de passe propre au SIRH.
+**L'authentification Google Workspace** est en place. Dans la console Google
+Cloud, créez un identifiant OAuth de type « Application Web », autorisez
+l'origine `https://sirh.votre-domaine.ci`, puis renseignez :
+
+```ini
+GOOGLE_CLIENT_ID="....apps.googleusercontent.com"
+GOOGLE_WORKSPACE_DOMAIN="votre-domaine.ci"
+```
+
+Le domaine n'est pas facultatif : sans lui, n'importe quel compte Google — un
+compte Gmail créé en trente secondes — pourrait ouvrir une session dès lors
+qu'une adresse correspondante figure au fichier du personnel.
 
 **Le multi-société.** Si SII exploite plusieurs entités juridiques distinctes,
 cela se décide avant de saisir les données : la séparation touche une trentaine
