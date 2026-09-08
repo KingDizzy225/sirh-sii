@@ -171,13 +171,44 @@ function ecrireCourrier(doc, modele, contexte) {
     doc.fontSize(11).fillColor('#1e293b')
        .text("Nous vous prions d'agréer, Madame, Monsieur, l'expression de nos salutations distinguées.",
              { align: 'justify' });
-    doc.moveDown(3);
+    doc.moveDown(2);
 
-    doc.fontSize(11).fillColor('#0f172a').text('Pour la direction', { align: 'right' });
-    doc.moveDown(3);
+    /**
+     * Signature de l'employeur.
+     *
+     * Ces courriers sortaient sous la seule mention « Pour la direction » : il
+     * fallait les imprimer, les signer et les rescanner avant de les remettre.
+     * La signature enregistrée est apposée ici, avec le nom et la qualité du
+     * signataire — sans lesquels le destinataire ignore qui engage l'entreprise.
+     */
+    const sign = contexte.signataire;
+    const yBloc = Math.min(doc.y + 10, 600);
+
+    if (sign && sign.image) {
+        try {
+            doc.image(sign.image, 330, yBloc, { fit: [150, 60] });
+        } catch (e) {
+            console.error('[COURRIER] Image de signature illisible :', e.message);
+        }
+    }
+    if (sign && sign.cachet) {
+        try {
+            doc.image(sign.cachet, 330, yBloc + 62, { fit: [70, 70] });
+        } catch (e) {
+            console.error('[COURRIER] Image de cachet illisible :', e.message);
+        }
+    }
+
+    const yNom = yBloc + (sign && sign.cachet ? 136 : 66);
+    doc.fontSize(11).fillColor('#0f172a')
+       .text(sign ? sign.nom : 'Pour la direction', 330, yNom, { width: 215 });
+    if (sign && sign.fonction) {
+        doc.fontSize(9).fillColor('#475569').text(sign.fonction, 330, yNom + 14, { width: 215 });
+    }
+    doc.y = yNom + 40;
 
     // Bloc de décharge : la preuve de remise est ce qui fera foi.
-    const yD = Math.min(doc.y, 660);
+    const yD = Math.min(doc.y + 10, 640);
     doc.rect(50, yD, 250, 78).strokeColor('#cbd5e1').stroke();
     doc.fontSize(9).fillColor('#475569')
        .text('Reçu en main propre le : ______________', 60, yD + 12)

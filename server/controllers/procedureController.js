@@ -1,6 +1,7 @@
 const prisma = require('../prismaClient');
 const { MODELES, TYPES } = require('../data/proceduresRupture');
 const courriers = require('../lib/courriers');
+const apposition = require('../lib/apposition');
 
 /**
  * Procédures disciplinaires et de rupture.
@@ -405,7 +406,17 @@ exports.telechargerCourrier = async (req, res) => {
         const explication = etapes.find((e) => e.code === 'EXPLICATION');
         const reponse = etapes.find((e) => e.code === 'REPONSE');
 
+        // Signataire habilité : le courrier part signé, au lieu d'être imprimé,
+        // signé à la main puis rescanné.
+        const habilite = await apposition.choisirSignataire(req.query.signataireId);
+
         const contexte = {
+            signataire: habilite ? {
+                nom: habilite.nom,
+                fonction: habilite.fonction,
+                image: apposition.imageDepuisDataUrl(habilite.signatureImage),
+                cachet: apposition.imageDepuisDataUrl(habilite.cachetImage)
+            } : null,
             motif: procedure.motif,
             sanction: procedure.issue,
             salarie: vue.salarie,

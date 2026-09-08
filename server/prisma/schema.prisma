@@ -470,7 +470,6 @@ model EmployeeDocument {
   /// document par une page de certificat seule : après signature, le contrat
   /// n'était plus attaché au dossier.
   certificatePath String? @map("certificate_path")
-
   employee Employee @relation("EmployeeDocs", fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
@@ -504,9 +503,53 @@ model IssuedDocument {
   department    String?
   hireDate      DateTime? @map("hire_date")
 
+  // --- Signature de l'employeur ---
+  //
+  // Ce que remplace la signature manuscrite : le nom et la qualité du
+  // signataire, et un sceau cryptographique qui permet à un tiers de vérifier
+  // que le document vient bien de cette entreprise et n'a pas été retouché.
+  // Sans lui, un document non imprimé ne serait qu'un fichier parmi d'autres.
+  signataireNom      String? @map("signataire_nom")
+  signataireFonction String? @map("signataire_fonction")
+  /// Le manifeste est conservé tel qu'il a été scellé, au caractère près : une
+  /// reconstruction qui réordonnerait ses clés invaliderait un sceau légitime.
+  manifeste          String? @db.Text
+  sceau              String? @db.Text
+  sceauKeyId         String? @map("sceau_key_id")
+
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@map("issued_document")
+}
+
+/// Signataire habilité à engager l'entreprise sur les documents qu'elle émet.
+///
+/// Les documents produits par l'application sortaient sans signature : ils
+/// étaient imprimés, signés à la main, puis rescannés — trois manipulations, un
+/// délai, et un fichier de moins bonne qualité que l'original. La signature est
+/// désormais enregistrée une fois et apposée à l'émission.
+model Signataire {
+  id       String @id @default(uuid())
+  nom      String
+  fonction String
+
+  /// Image de la signature manuscrite, en data URL. Elle est saisie une fois,
+  /// au trait ou par téléversement.
+  signatureImage String  @map("signature_image") @db.Text
+  /// Cachet de l'entreprise, facultatif : beaucoup de destinataires l'attendent
+  /// à côté de la signature.
+  cachetImage    String? @map("cachet_image") @db.Text
+
+  actif     Boolean  @default(true)
+  /// Signataire proposé par défaut à l'émission.
+  parDefaut Boolean  @default(false) @map("par_defaut")
+
+  creePar   String?  @map("cree_par")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([actif])
+  @@map("signataires")
 }
 
 // Entretien de sortie.
@@ -1416,4 +1459,27 @@ model BudgetEffectif {
   @@unique([annee, departement])
   @@index([annee])
   @@map("budgets_effectif")
+}
+
+/// Clé de scellement des signatures.
+///
+/// Le sceau atteste que le système a bien enregistré cette signature, sur ce
+/// document, à cette date. Sans clé stable, un sceau ne survivrait pas à un
+/// redémarrage et ne pourrait plus être vérifié — ce qui vaudrait moins que
+/// pas de sceau du tout, puisqu'un certificat invérifiable se présente
+/// néanmoins comme une preuve.
+///
+/// La clé se déclare de préférence dans l'environnement du serveur. À défaut,
+/// elle est produite une fois et conservée ici : moins protégé qu'une variable
+/// d'environnement, mais stable — et le certificat indique laquelle a servi.
+model SigningKey {
+  id            String   @id @default(uuid())
+  keyId         String   @unique @map("key_id")
+  publicKeyPem  String   @map("public_key_pem") @db.Text
+  privateKeyPem String   @map("private_key_pem") @db.Text
+  algorithm     String   @default("ed25519")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("signing_keys")
 }

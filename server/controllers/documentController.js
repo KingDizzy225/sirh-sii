@@ -6,6 +6,7 @@ const { canAccessEmployeeData } = require('../lib/access');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
+const apposition = require('../lib/apposition');
 
 exports.uploadDocument = async (req, res) => {
     try {
@@ -231,9 +232,10 @@ exports.generateAttestation = async (req, res) => {
             }
         });
 
-        const verifyUrl = `${getPublicAppUrl()}/verify/${token}`;
-        const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
-        const qrBuffer = Buffer.from(qrDataUrl.split(',')[1], 'base64');
+        // Signataire habilité : l'attestation sortait sans signature, et devait
+        // donc être imprimée, signée à la main puis rescannée avant d'être
+        // remise. Elle est désormais signée et scellée à l'émission.
+        const signataire = await apposition.choisirSignataire(req.query.signataireId);
 
         const pdfDoc = new PDFDocument({ margin: 50 });
         const fileName = `Attestation_${employee.lastName}_${Date.now()}.pdf`;
@@ -267,20 +269,18 @@ exports.generateAttestation = async (req, res) => {
         pdfDoc.text(`Fait numériquement, le ${formatDate(new Date())}`);
         pdfDoc.moveDown(3);
 
-        // QR de vérification : renvoie vers une page publique confirmant
-        // l'authenticité du document, sans exposer d'information sensible.
-        const qrSize = 90;
-        const qrX = 50;
-        const qrY = pdfDoc.y;
-        pdfDoc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
+        // QR de vérification, signature du signataire habilité et sceau
+        // cryptographique. Le QR renvoie vers une page publique confirmant
+        // l'authenticité, sans exposer d'information sensible.
+        await apposition.apposer(pdfDoc, {
+            signataire,
+            registre: issued,
+            employe: employee,
+            typeDocument: 'Attestation de travail'
+        });
 
-        pdfDoc.fontSize(7).fillColor('#64748b')
-            .text('Scannez pour vérifier', qrX, qrY + qrSize + 4, { width: qrSize, align: 'center' })
-            .text("l'authenticité", qrX, qrY + qrSize + 13, { width: qrSize, align: 'center' });
-
-        pdfDoc.fontSize(12).fillColor('#333333').text('Direction RH SIRH-SII', 350, qrY + 20);
         pdfDoc.fontSize(7).fillColor('#94a3b8')
-            .text(`Référence : ${issued.token.slice(0, 12).toUpperCase()}`, 350, qrY + 45);
+            .text(`Référence : ${issued.token.slice(0, 12).toUpperCase()}`, 400, 700);
 
         pdfDoc.end();
 
