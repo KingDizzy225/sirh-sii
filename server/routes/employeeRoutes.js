@@ -39,6 +39,11 @@ router.get('/:id', employeeController.getEmployeeById);
 router.put('/:id', requireRole(...HR_ROLES), employeeController.updateEmployee);
 router.delete('/:id', requireRole(...HR_ROLES), employeeController.deleteEmployee);
 // Onboarding Routes
+// Rémunération : lecture et décision. Réservée à la RH et à l'administration,
+// comme la paie dont elle est la source.
+router.get('/:id/remuneration', requireRole(...HR_ROLES), employeeController.getRemuneration);
+router.post('/:id/remuneration', requireRole(...HR_ROLES), employeeController.setRemuneration);
+
 router.get('/:id/onboarding', employeeController.getOnboardingTasks);
 router.post('/:id/onboarding', requireRole(...HR_ROLES), employeeController.initOnboardingTasks);
 router.put('/onboarding/:taskId', requireRole(...HR_ROLES, 'Manager'), employeeController.updateOnboardingTask);

@@ -41,6 +41,21 @@ model Employee {
   // congé supplémentaire (voir lib/conges.js), pas dans la paie.
   childrenCount Int      @default(0) @map("children_count")
 
+  /// Rémunération de référence, en FCFA.
+  ///
+  /// L'application ignorait ce que gagnait un salarié : `runPayroll` lisait le
+  /// salaire dans le corps de la requête, et l'analyse d'équité le déduisait du
+  /// dernier bulletin. Le salaire était donc une conséquence — ce qui a été
+  /// payé — et non une donnée du contrat. Il fallait le ressaisir à chaque
+  /// paie, rien ne signalait un écart d'un mois sur l'autre, et une
+  /// augmentation ne se décidait nulle part.
+  baseSalary          Float?    @map("base_salary")
+  salaryEffectiveFrom DateTime? @map("salary_effective_from")
+
+  salaryChanges SalaryChange[]
+  delegationsDonnees DelegationValidation[] @relation("Titulaire")
+  delegationsRecues  DelegationValidation[] @relation("Suppleant")
+
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
   // Le solde n'est plus forfaitaire : 30 jours par défaut créditaient une année
@@ -1482,4 +1497,53 @@ model SigningKey {
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@map("signing_keys")
+}
+
+/// Décision de rémunération : embauche, augmentation, révision.
+///
+/// Une augmentation se décide, se motive et se date. Consignée ici, elle rend
+/// la rémunération explicable — ce qu'un simple champ écrasé à chaque révision
+/// ne permet pas.
+model SalaryChange {
+  id             String   @id @default(uuid())
+  employeeId     String   @map("employee_id")
+  amount         Float
+  previousAmount Float?   @map("previous_amount")
+  /// Date à laquelle le montant prend effet : elle peut précéder ou suivre la
+  /// saisie, et c'est elle qui fait foi pour la paie.
+  effectiveFrom  DateTime @map("effective_from")
+  motif          String?  @db.Text
+  decidePar      String?  @map("decide_par")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, effectiveFrom])
+  @@map("salary_changes")
+}
+
+/// Délégation de validation pendant une absence.
+///
+/// Rien n'existait : quand le responsable qui valide est lui-même en congé, les
+/// demandes s'arrêtent. C'est le reproche le plus courant fait aux SIRH en
+/// exploitation, et le moins coûteux à corriger.
+model DelegationValidation {
+  id          String   @id @default(uuid())
+  titulaireId String   @map("titulaire_id")
+  suppleantId String   @map("suppleant_id")
+  /// CONGES | DEPENSES | TOUT
+  portee      String   @default("TOUT")
+  debut       DateTime
+  fin         DateTime
+  motif       String?
+  creePar     String?  @map("cree_par")
+  revoqueeLe  DateTime? @map("revoquee_le")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  titulaire Employee @relation("Titulaire", fields: [titulaireId], references: [id], onDelete: Cascade)
+  suppleant Employee @relation("Suppleant", fields: [suppleantId], references: [id], onDelete: Cascade)
+
+  @@index([titulaireId, debut, fin])
+  @@index([suppleantId])
+  @@map("delegations_validation")
 }

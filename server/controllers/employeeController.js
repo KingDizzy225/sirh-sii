@@ -5,6 +5,7 @@ const { construireTachesIntegration } = require('../data/onboardingTemplates');
 const { soldeOuverture } = require('../lib/conges');
 const dossier = require('../lib/dossier');
 const corbeille = require('../lib/corbeille');
+const remuneration = require('../lib/remuneration');
 
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
@@ -51,7 +52,7 @@ exports.createEmployee = async (req, res) => {
         const {
             firstName, lastName, email, role, department, positionTitle, hireDate,
             status, birthDate, gender, phone, address, nationality,
-            matricule, cnpsNumber, bankName, bankAccount, childrenCount,
+            matricule, cnpsNumber, bankName, bankAccount, childrenCount, baseSalary,
             // Solde reconnu par le système précédent, s'il y en a un.
             soldeRepris, annualLeaveBalance
         } = req.body;
@@ -89,11 +90,26 @@ exports.createEmployee = async (req, res) => {
                 bankName: bankName || null,
                 bankAccount: bankAccount || null,
                 childrenCount: Number(childrenCount) || 0,
+                baseSalary: baseSalary != null && baseSalary !== '' ? Number(baseSalary) : null,
+                salaryEffectiveFrom: baseSalary != null && baseSalary !== '' ? dateEmbauche : null,
                 annualLeaveBalance: ouverture.solde,
                 leaveBalanceSource: ouverture.source,
                 leaveBalanceSetAt: new Date()
             }
         });
+
+        // La rémunération d'embauche est une décision comme une autre : elle
+        // est consignée avec sa date d'effet, faute de quoi le premier montant
+        // serait le seul de l'historique à n'avoir ni origine ni motif.
+        if (newEmployee.baseSalary != null) {
+            await remuneration.enregistrerDecision({
+                employeeId: newEmployee.id,
+                montant: newEmployee.baseSalary,
+                effectiveFrom: dateEmbauche,
+                motif: "Rémunération d'embauche",
+                decidePar: (req.user && (req.user.email || req.user.name)) || null
+            }).catch((e) => console.error('Décision de rémunération non consignée :', e.message));
+        }
 
         // Automatically create User for Self-Service Portal access
         const defaultPassword = 'Welcome2026!';
@@ -155,6 +171,11 @@ exports.updateEmployee = async (req, res) => {
         if (data.childrenCount !== undefined) {
             data.childrenCount = Number(data.childrenCount) || 0;
         }
+        // La rémunération ne se modifie pas par le formulaire général : elle
+        // passe par une décision datée et motivée, sans quoi une augmentation
+        // se confondrait avec une correction de faute de frappe.
+        delete data.baseSalary;
+        delete data.salaryEffectiveFrom;
         // Le matricule porte une contrainte d'unicité : une chaîne vide est une
         // valeur comme une autre pour Postgres, et le deuxième salarié « sans
         // matricule » serait rejeté. L'absence se dit avec null.
@@ -716,3 +737,78 @@ exports.purgerCorbeille = async (req, res) => {
 };
 
 exports.RETENTION_JOURS = RETENTION_JOURS;
+
+// ----------------------------------------------------
+// Rémunération
+// ----------------------------------------------------
+
+/** Historique des décisions de rémunération d'un salarié. */
+exports.getRemuneration = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const salarie = await prisma.employee.findUnique({
+            where: { id },
+            select: { id: true, firstName: true, lastName: true, baseSalary: true, salaryEffectiveFrom: true }
+        });
+        if (!salarie) return res.status(404).json({ error: 'Salarié introuvable.' });
+
+        const decisions = await prisma.salaryChange.findMany({
+            where: { employeeId: id },
+            orderBy: { effectiveFrom: 'desc' }
+        });
+
+        const aVenir = decisions.filter((d) => new Date(d.effectiveFrom) > new Date());
+
+        res.json({
+            salarie: { id: salarie.id, nom: `${salarie.lastName} ${salarie.firstName}`.trim() },
+            actuel: salarie.baseSalary,
+            depuis: salarie.salaryEffectiveFrom,
+            decisions,
+            // Une décision datée du mois prochain n'est pas encore appliquée :
+            // l'afficher comme le salaire en cours induirait en erreur.
+            aVenir
+        });
+    } catch (error) {
+        console.error('Erreur lecture de la rémunération :', error);
+        res.status(500).json({ error: 'Erreur lors de la lecture de la rémunération.' });
+    }
+};
+
+/** Enregistre une décision de rémunération : embauche, augmentation, révision. */
+exports.setRemuneration = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { montant, effectiveFrom, motif } = req.body;
+
+        const invalide = remuneration.montantValide(montant);
+        if (invalide) return res.status(400).json({ error: invalide });
+
+        if (!motif || String(motif).trim().length < 3) {
+            // Une augmentation sans motif ne s'explique plus six mois après, et
+            // c'est précisément à ce moment qu'on la relit.
+            return res.status(400).json({ error: 'Le motif de la décision est requis.' });
+        }
+
+        const decision = await remuneration.enregistrerDecision({
+            employeeId: id,
+            montant: Number(montant),
+            effectiveFrom,
+            motif: String(motif).trim(),
+            decidePar: (req.user && (req.user.email || req.user.name)) || null
+        });
+
+        const differee = new Date(decision.effectiveFrom) > new Date();
+        res.status(201).json({
+            decision,
+            appliquee: !differee,
+            message: differee
+                ? `Décision enregistrée. Elle prendra effet le ${new Date(decision.effectiveFrom).toLocaleDateString('fr-FR')}.`
+                : 'Décision enregistrée et appliquée.'
+        });
+    } catch (error) {
+        if (error.code === 'INTROUVABLE') return res.status(404).json({ error: error.message });
+        if (error.code === 'DATE') return res.status(400).json({ error: error.message });
+        console.error('Erreur décision de rémunération :', error);
+        res.status(500).json({ error: "Erreur lors de l'enregistrement de la décision." });
+    }
+};

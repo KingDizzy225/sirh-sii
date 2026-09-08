@@ -10,6 +10,7 @@ const { getPublicAppUrl } = require('../lib/publicUrl');
 const { calculerPaie, decomposer, intervalleMois, TAUX } = require('../lib/paie');
 const dossier = require('../lib/dossier');
 const apposition = require('../lib/apposition');
+const remuneration = require('../lib/remuneration');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -324,9 +325,50 @@ const runPayroll = async (req, res) => {
         const employees = await prisma.employee.findMany({ where: { id: { in: employeeIds } } });
         const employeeMap = employees.reduce((acc, emp) => { acc[emp.id] = emp; return acc; }, {});
         
+        const ecarts = [];
+
         for (let p of payrolls) {
             const employee = employeeMap[p.employeeId];
             if (!employee) continue;
+
+            /**
+             * Rémunération de référence.
+             *
+             * Le montant était lu dans la requête et nulle part ailleurs : il
+             * fallait le ressaisir chaque mois, et rien ne signalait qu'il avait
+             * changé. La fiche du salarié fait désormais foi ; un montant
+             * transmis qui s'en écarte est accepté — une prime exceptionnelle,
+             * un mois incomplet, cela existe — mais signalé, pour que l'écart
+             * soit vu plutôt que subi.
+             */
+            /**
+             * Le salaire retenu est celui en vigueur au premier jour de la
+             * période traitée. Une augmentation prenant effet en cours de mois
+             * ne s'applique donc qu'à la paie suivante : c'est le choix le plus
+             * prévisible, et il évite un rappel involontaire. Une entreprise qui
+             * préfère la proratiser devra le décider explicitement.
+             */
+            const reference = await remuneration.salaireA(employee.id, p.period);
+            const transmis = p.baseSalary != null && p.baseSalary !== '' ? Number(p.baseSalary) : null;
+
+            if (transmis == null && reference.montant == null) {
+                ecarts.push({
+                    employeeId: employee.id,
+                    nom: `${employee.lastName} ${employee.firstName}`.trim(),
+                    motif: "Aucune rémunération de référence et aucun montant transmis."
+                });
+                continue;
+            }
+            if (transmis != null && reference.montant != null && Math.abs(transmis - reference.montant) > 1) {
+                ecarts.push({
+                    employeeId: employee.id,
+                    nom: `${employee.lastName} ${employee.firstName}`.trim(),
+                    reference: reference.montant,
+                    transmis,
+                    motif: 'Le montant saisi diffère de la rémunération de référence.'
+                });
+            }
+            p.baseSalary = transmis != null ? transmis : reference.montant;
 
             // Un seul calcul, partagé avec le bulletin PDF, l'export comptable
             // et les déclarations sociales. Le net retranchait auparavant la
@@ -377,7 +419,15 @@ const runPayroll = async (req, res) => {
             pr = await prisma.payroll.update({ where: { id: pr.id }, data: { pdfPath } });
             results.push(pr);
         }
-        res.status(201).json({ message: 'Paie traitée avec succès', count: results.length, data: results });
+        res.status(201).json({
+            message: 'Paie traitée avec succès',
+            count: results.length,
+            data: results,
+            // Les écarts sont rendus avec le résultat plutôt que journalisés
+            // seuls : un montant qui s'éloigne de la référence doit être vu par
+            // celui qui lance la paie, au moment où il la lance.
+            ecarts
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -6,6 +6,7 @@ const { detecterAnomaliesPointage } = require('./timeLogAnomalies');
 const { celebrerLeJour } = require('./celebrations');
 const { envoyerRecapHebdomadaire } = require('./weeklyDigest');
 const { purgerCorbeille } = require('./purgeCorbeille');
+const { appliquerRemunerations } = require('./remunerationEchue');
 
 /**
  * Ordonnanceur des traitements RH récurrents.
@@ -38,6 +39,7 @@ const runAllDue = async () => {
     await safely('célébrations du jour', () => celebrerLeJour());
     await safely('récapitulatif hebdomadaire', () => envoyerRecapHebdomadaire());
     await safely('purge de la corbeille', () => purgerCorbeille());
+    await safely('décisions de rémunération échues', () => appliquerRemunerations());
 };
 
 function startScheduledJobs() {
@@ -84,6 +86,12 @@ function startScheduledJobs() {
     // Purge des dossiers supprimés : chaque jour à 03h00, hors heures d'usage
     cron.schedule('0 3 * * *', () => {
         safely('purge de la corbeille', () => purgerCorbeille());
+    }, { timezone: TIMEZONE });
+
+    // Décisions de rémunération : chaque jour à 01h00, avant tout traitement de
+    // paie, pour qu'une augmentation datée du jour soit déjà en vigueur.
+    cron.schedule('0 1 * * *', () => {
+        safely('décisions de rémunération échues', () => appliquerRemunerations());
     }, { timezone: TIMEZONE });
 
     console.log(`[JOB] Traitements planifiés actifs (fuseau ${TIMEZONE}).`);

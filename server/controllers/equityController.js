@@ -43,7 +43,18 @@ exports.getPayEquityData = async (req, res) => {
         const couverture = { actifs: employees.length, sansSalaire: 0, sansGenre: 0 };
 
         employees.forEach(emp => {
-            const salary = emp.payrolls.length > 0 ? emp.payrolls[0].baseSalary : 0;
+            /**
+             * Le salaire de référence de la fiche fait foi ; le dernier
+             * bulletin ne sert plus que de repli.
+             *
+             * Se fonder sur le bulletin excluait silencieusement de l'analyse
+             * tout salarié qui n'en avait pas encore — une embauche récente,
+             * une reprise de données — et retenait pour les autres un montant
+             * qui pouvait comprendre une prime exceptionnelle du mois.
+             */
+            const salary = emp.baseSalary != null
+                ? emp.baseSalary
+                : (emp.payrolls.length > 0 ? emp.payrolls[0].baseSalary : 0);
             if (salary === 0) { couverture.sansSalaire++; return; }
 
             const dept = emp.department;

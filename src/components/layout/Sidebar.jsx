@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +51,9 @@ const getAllNavItems = (t) => [
     // GESTION RH -> PILOTAGE RH
     { name: 'Temps, Absences & Demandes', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Paie & Rémunérations', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Rémunérations', path: '/remunerations', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Budget & masse salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Délégations', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: t('sidebar.learning', 'Espace Formation (LMS)'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
     { name: 'Talents & GPEC', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Automatisations', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },

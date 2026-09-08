@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const delegation = require('../lib/delegation');
 const { sendMail } = require('../lib/mailer');
 
 // Get all leaves
@@ -70,7 +71,18 @@ exports.updateLeaveStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body; // Target status, or we deduce based on role
-        const userRole = req.user?.role;
+
+        /**
+         * Rôle effectif : le sien, ou celui d'un titulaire qui l'a désigné
+         * suppléant pendant son absence.
+         *
+         * Sans cela, les demandes s'arrêtaient dès que le responsable qui valide
+         * était lui-même en congé — précisément la période où elles affluent.
+         * La délégation est bornée dans le temps et dans son objet, et ne donne
+         * jamais plus que ce que le titulaire pouvait faire.
+         */
+        const effectif = await delegation.roleEffectif(req.user, 'CONGES');
+        const userRole = effectif.role;
         
         const existingLeave = await prisma.leave.findUnique({ where: { id } });
         if (!existingLeave) {
