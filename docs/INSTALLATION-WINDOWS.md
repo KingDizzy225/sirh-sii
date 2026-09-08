@@ -73,8 +73,9 @@ SERVE_FRONTEND=true
 FRONTEND_URL="https://sirh.votre-domaine.ci"
 PUBLIC_API_URL="https://sirh.votre-domaine.ci"
 
-# Clé de scellement des documents signés. À générer une fois, et à conserver
+# Clé de scellement des documents signés. À produire une fois, et à conserver
 # ailleurs qu'ici : les documents déjà émis ne se vérifient qu'avec elle.
+#   cd server && npm run cle-scellement -- --produire
 SIGNATURE_SEAL_PRIVATE_KEY="..."
 
 # Destination des sauvegardes, contrôlée par le préflight.
@@ -192,7 +193,39 @@ pg_restore -U postgres -d sirh_essai_restauration D:\Sauvegardes\SIRH\2026-09-08
 
 ---
 
-## 8. Mise à jour
+## 8. Reprendre la clé de scellement d'une installation existante
+
+Les documents émis portent un sceau. Sans la clé qui l'a produit, ils restent
+lisibles mais plus personne ne peut confirmer qu'ils viennent de l'entreprise.
+
+Avant toute migration, faites l'état des lieux sur l'installation d'origine :
+
+```bash
+cd server
+DATABASE_URL="<url-de-l-ancienne-base>" npm run cle-scellement
+```
+
+La commande ne crée rien : elle lit. Deux cas.
+
+**Aucun document n'est encore scellé.** Rien à reprendre. Produisez une clé,
+posez-la dans l'environnement du nouveau serveur, et vous n'aurez plus jamais
+à vous en soucier.
+
+```bash
+npm run cle-scellement -- --produire
+```
+
+**Des documents sont déjà scellés.** Exportez la clé existante et posez-la
+telle quelle sur le nouveau serveur, avec son identifiant : c'est par lui que
+les documents déjà émis retrouvent leur clé de vérification.
+
+```bash
+DATABASE_URL="<url-de-l-ancienne-base>" npm run cle-scellement -- --exporter
+```
+
+---
+
+## 9. Mise à jour
 
 ```powershell
 cd C:\SIRH
@@ -211,7 +244,7 @@ migration s'applique, elle ne se défait pas.
 
 ---
 
-## 9. Ce qui reste à décider
+## 10. Ce qui reste à décider
 
 **L'authentification unique.** Elle suppose de savoir où vivent vos comptes —
 Google Workspace, Microsoft 365, annuaire interne. Sans elle, chaque salarié a

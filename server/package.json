@@ -15,6 +15,7 @@
     "purge-demo": "node scripts/purgeDemoAccounts.js",
     "repair-payrolls": "node scripts/repairPayrolls.js",
     "repair-leave-balances": "node scripts/repairLeaveBalances.js",
+    "cle-scellement": "node scripts/cleScellement.js",
     "test:paie": "node tests/paie.test.js",
     "test:ecritures": "node tests/ecritures.test.js",
     "test:conges": "node tests/conges.test.js",
