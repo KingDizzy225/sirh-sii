@@ -143,6 +143,8 @@ const benefitsRoutes = require('./routes/benefitsRoutes');
 const ethicsRoutes = require('./routes/ethicsRoutes');
 const subcontractorRoutes = require('./routes/subcontractorRoutes');
 const pieceRoutes = require('./routes/pieceRoutes');
+const jourFerieRoutes = require('./routes/jourFerieRoutes');
+const pretRoutes = require('./routes/pretRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
 
 app.use('/api/announcements', announcementRoutes);
@@ -160,6 +162,10 @@ app.use('/api/subcontractors', verifyToken, subcontractorRoutes);
 // Titres et habilitations à échéance des salariés : le pendant, côté
 // personnel, du dossier de conformité des prestataires.
 app.use('/api/pieces', verifyToken, pieceRoutes);
+// Calendrier des jours fériés : il conditionne le décompte des congés.
+app.use('/api/jours-feries', verifyToken, jourFerieRoutes);
+// Prêts au personnel : les avances ne se remboursaient qu'en une fois.
+app.use('/api/prets', verifyToken, pretRoutes);
 app.use('/api/simulations', verifyToken, simulationRoutes);
 app.use('/api/equity', verifyToken, require('./routes/equityRoutes'));
 app.use('/api/succession', verifyToken, require('./routes/successionRoutes'));

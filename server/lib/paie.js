@@ -41,8 +41,35 @@ const TAUX = {
     heuresMensuelles: nombre(process.env.HEURES_MENSUELLES, 173.33),
 
     // Jours ouvrés servant au prorata d'une absence non rémunérée.
-    joursOuvres: nombre(process.env.JOURS_OUVRES_MOIS, 26)
+    joursOuvres: nombre(process.env.JOURS_OUVRES_MOIS, 26),
+
+    /**
+     * Prime d'ancienneté.
+     *
+     * La convention collective interprofessionnelle la rend due au-delà de
+     * deux ans : un pourcentage du salaire de base par année d'ancienneté,
+     * plafonné. Elle était absente du calcul, alors que l'application connaît
+     * toutes les dates d'embauche — elle était donc soit saisie à la main dans
+     * le champ « prime » chaque mois, soit pas versée du tout, la dette
+     * s'accumulant en silence jusqu'au départ ou au contrôle.
+     */
+    primeAncienneteTaux: nombre(process.env.PRIME_ANCIENNETE_TAUX, 0.01),
+    primeAncienneteSeuilAnnees: nombre(process.env.PRIME_ANCIENNETE_SEUIL_ANNEES, 2),
+    primeAnciennetePlafondAnnees: nombre(process.env.PRIME_ANCIENNETE_PLAFOND_ANNEES, 25)
 };
+
+/**
+ * La prime d'ancienneté est-elle appliquée ?
+ *
+ * Elle est **désactivée par défaut**, et ce n'est pas une position sur le
+ * droit : `runPayroll` inscrit les bulletins directement comme approuvés,
+ * sans étape de relecture. L'activer d'office changerait, dès la prochaine
+ * paie, ce que touchent les salariés — sans que personne ne l'ait décidé.
+ *
+ * Tant qu'elle est inactive, la paie calcule et **annonce** ce qu'elle
+ * ajouterait, pour que la décision se prenne sur un montant connu.
+ */
+const PRIME_ANCIENNETE_ACTIVE = String(process.env.PRIME_ANCIENNETE_ACTIVE || '').toLowerCase() === 'true';
 
 /**
  * Barème progressif de l'Impôt sur Traitement et Salaires, par tranches.
@@ -81,7 +108,61 @@ function calculerITS(netImposable) {
  * @param {number} [e.deductions]   Retenues diverses (avances, prêts…).
  * @returns {object} Décomposition complète, montants non arrondis.
  */
-function calculerPaie({ baseSalary, bonus, overtimeHours, leaveDays, deductions } = {}) {
+/**
+ * Ancienneté en années révolues à une date donnée.
+ * @returns {number|null} null si la date d'embauche est inconnue ou invalide.
+ */
+function anneesAnciennete(hireDate, reference = new Date()) {
+    if (!hireDate) return null;
+    const embauche = new Date(hireDate);
+    const a = new Date(reference);
+    if (isNaN(embauche.getTime()) || isNaN(a.getTime()) || embauche > a) return null;
+
+    let annees = a.getFullYear() - embauche.getFullYear();
+    const anniversairePasse =
+        a.getMonth() > embauche.getMonth()
+        || (a.getMonth() === embauche.getMonth() && a.getDate() >= embauche.getDate());
+    if (!anniversairePasse) annees--;
+    return Math.max(annees, 0);
+}
+
+/**
+ * Prime d'ancienneté due, en années révolues et non prorata temporis : elle
+ * s'acquiert au franchissement d'un anniversaire, pas mois par mois.
+ *
+ * @returns {{montant:number, annees:number|null, anneesRetenues:number, due:boolean, motif:string|null}}
+ */
+function calculerPrimeAnciennete(baseSalary, hireDate, reference = new Date()) {
+    const base = nombre(baseSalary, 0);
+    const annees = anneesAnciennete(hireDate, reference);
+
+    if (annees === null) {
+        return {
+            montant: 0, annees: null, anneesRetenues: 0, due: false,
+            motif: "Date d'embauche inconnue : l'ancienneté n'est pas calculable."
+        };
+    }
+    if (annees < TAUX.primeAncienneteSeuilAnnees) {
+        return {
+            montant: 0, annees, anneesRetenues: 0, due: false,
+            motif: `Ancienneté de ${annees} an(s), inférieure au seuil de `
+                + `${TAUX.primeAncienneteSeuilAnnees} an(s).`
+        };
+    }
+
+    const anneesRetenues = Math.min(annees, TAUX.primeAnciennetePlafondAnnees);
+    return {
+        montant: Math.round(base * TAUX.primeAncienneteTaux * anneesRetenues),
+        annees,
+        anneesRetenues,
+        due: true,
+        motif: annees > TAUX.primeAnciennetePlafondAnnees
+            ? `Ancienneté plafonnée à ${TAUX.primeAnciennetePlafondAnnees} ans.`
+            : null
+    };
+}
+
+function calculerPaie({ baseSalary, bonus, overtimeHours, leaveDays, deductions, hireDate, periode } = {}) {
     const base = nombre(baseSalary, 0);
     const primes = nombre(bonus, 0);
     const heuresSup = nombre(overtimeHours, 0);
@@ -99,7 +180,13 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, leaveDays, deductions 
         ? (base / TAUX.joursOuvres) * joursAbsence
         : 0;
 
-    const brut = Math.max(base + montantHeuresSup - retenueAbsence + primes, 0);
+    // Prime d'ancienneté : calculée dans tous les cas, ajoutée au brut
+    // seulement si elle est activée. `annoncee` porte ce qu'elle vaudrait, pour
+    // que la décision de l'activer se prenne sur un montant connu.
+    const anciennete = calculerPrimeAnciennete(base, hireDate, periode ? new Date(periode) : new Date());
+    const primeAnciennete = PRIME_ANCIENNETE_ACTIVE ? anciennete.montant : 0;
+
+    const brut = Math.max(base + montantHeuresSup - retenueAbsence + primes + primeAnciennete, 0);
 
     const cnpsSalarie = brut * TAUX.cnpsSalarie;
     const cmu = brut > 0 ? TAUX.cmuForfait : 0;
@@ -120,6 +207,13 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, leaveDays, deductions 
     return {
         baseSalary: base,
         bonus: primes,
+        primeAnciennete,
+        anciennete: {
+            ...anciennete,
+            active: PRIME_ANCIENNETE_ACTIVE,
+            // Montant non versé faute d'activation : la dette qui s'accumule.
+            annoncee: PRIME_ANCIENNETE_ACTIVE ? 0 : anciennete.montant
+        },
         overtimeHours: heuresSup,
         overtimeAmount: montantHeuresSup,
         leaveDays: joursAbsence,
@@ -136,6 +230,28 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, leaveDays, deductions 
         // Ce que le poste coûte réellement à l'entreprise.
         employerCost: brut + cotisationsPatronales
     };
+}
+
+/**
+ * Colonnes du bulletin, extraites d'un calcul.
+ *
+ * `calculerPaie` renvoie aussi ce qui décrit le poste ou explique le calcul —
+ * coût employeur, détail de l'ancienneté — qui ne sont pas des colonnes de
+ * `Payroll`. Étaler le résultat dans une création Prisma échoue donc, et
+ * échouera de nouveau au prochain champ ajouté. Ce filtre existe pour que
+ * l'appelant n'ait pas à connaître la liste.
+ */
+const CHAMPS_BULLETIN = [
+    'baseSalary', 'bonus', 'primeAnciennete', 'overtimeHours', 'overtimeAmount',
+    'leaveDays', 'leaveDeduction', 'grossSalary', 'cnpsEmployee', 'cmu',
+    'taxableIncome', 'its', 'deductions', 'employeeContributions',
+    'employerContributions', 'netSalary'
+];
+
+function colonnesBulletin(calcul) {
+    return Object.fromEntries(
+        CHAMPS_BULLETIN.filter((c) => calcul[c] !== undefined).map((c) => [c, calcul[c]])
+    );
 }
 
 /**
@@ -182,4 +298,8 @@ function intervalleMois(libelle) {
     };
 }
 
-module.exports = { calculerPaie, calculerITS, decomposer, intervalleMois, TAUX, TRANCHES_ITS };
+module.exports = {
+    calculerPaie, calculerITS, decomposer, intervalleMois,
+    anneesAnciennete, calculerPrimeAnciennete, colonnesBulletin, CHAMPS_BULLETIN,
+    TAUX, TRANCHES_ITS, PRIME_ANCIENNETE_ACTIVE
+};

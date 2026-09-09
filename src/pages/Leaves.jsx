@@ -42,6 +42,11 @@ export function Leaves() {
     const [isLoading, setIsLoading] = useState(true);
     const [employeeProfile, setEmployeeProfile] = useState(null);
 
+    // Aperçu de la demande : ce qu'elle coûtera en jours ouvrables, et qui
+    // sera absent en même temps. Sans lui, le décompte se découvre après
+    // validation et le chevauchement le matin venu.
+    const [apercu, setApercu] = useState(null);
+
     const [leaveForm, setLeaveForm] = useState({
         employeeId: user?.id || '',
         type: 'Congé Annuel',
@@ -151,6 +156,32 @@ END:VCALENDAR`;
         a.click();
         a.remove();
     };
+
+    /**
+     * Aperçu, rechargé dès que les dates ou le bénéficiaire changent.
+     *
+     * Le décompte se fait en jours ouvrables — dimanches et jours fériés
+     * déduits — alors qu'il se faisait en jours calendaires : un congé du
+     * vendredi au lundi retirait quatre jours au lieu de deux.
+     */
+    useEffect(() => {
+        const beneficiaire = (isManagerOrAdmin && leaveForm.employeeId) ? leaveForm.employeeId : user?.id;
+        if (!isLeaveModalOpen || !beneficiaire || !leaveForm.startDate || !leaveForm.endDate) {
+            setApercu(null);
+            return;
+        }
+        if (new Date(leaveForm.endDate) < new Date(leaveForm.startDate)) {
+            setApercu(null);
+            return;
+        }
+
+        let vivant = true;
+        api.get(`/leaves/apercu?employeeId=${beneficiaire}`
+                + `&startDate=${leaveForm.startDate}&endDate=${leaveForm.endDate}`)
+            .then((res) => { if (vivant && res?.data) setApercu(res.data); })
+            .catch(() => { if (vivant) setApercu(null); });
+        return () => { vivant = false; };
+    }, [isLeaveModalOpen, leaveForm.startDate, leaveForm.endDate, leaveForm.employeeId, user?.id, isManagerOrAdmin]);
 
     const handleLeaveSubmit = async (e) => {
         e.preventDefault();
@@ -285,6 +316,46 @@ END:VCALENDAR`;
                                             />
                                         </div>
                                     </div>
+                                    {apercu && (
+                                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                                            <div className="flex items-baseline justify-between gap-3">
+                                                <span className="text-sm font-semibold text-slate-800">
+                                                    {apercu.jours} jour(s) décompté(s)
+                                                </span>
+                                                <span className="text-xs text-slate-500">
+                                                    solde {apercu.soldeActuel} → {apercu.soldeApres}
+                                                </span>
+                                            </div>
+
+                                            {apercu.jours !== apercu.joursCalendaires && (
+                                                <p className="text-xs text-slate-500">
+                                                    La période couvre {apercu.joursCalendaires} jour(s) calendaire(s) :
+                                                    dimanches et jours fériés ne sont pas décomptés.
+                                                </p>
+                                            )}
+
+                                            {apercu.feriesTraverses?.length > 0 && (
+                                                <p className="text-xs text-slate-600">
+                                                    Jour(s) férié(s) sur la période :{' '}
+                                                    {apercu.feriesTraverses.map((f) => f.libelle).join(', ')}.
+                                                </p>
+                                            )}
+
+                                            {!apercu.soldeSuffisant && (
+                                                <p className="text-xs text-amber-700">
+                                                    Le solde ne couvre pas cette demande. Elle reste possible :
+                                                    la RH peut accorder une avance sur congés.
+                                                </p>
+                                            )}
+
+                                            {apercu.couverture?.avertissement && (
+                                                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                                                    {apercu.couverture.avertissement}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700">Motif (Optionnel)</label>
                                         <textarea

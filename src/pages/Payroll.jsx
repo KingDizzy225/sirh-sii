@@ -31,6 +31,11 @@ export function Payroll() {
     const [allPayrolls, setAllPayrolls] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
 
+    // Prime d'ancienneté : due par la convention collective au-delà de deux
+    // ans, elle était absente du calcul alors que l'application connaît toutes
+    // les dates d'embauche.
+    const [prime, setPrime] = useState(null);
+
     // Period selection
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const d = new Date();
@@ -411,6 +416,13 @@ export function Payroll() {
         return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
     };
 
+    useEffect(() => {
+        if (!isHR) return;
+        api.get('/payrolls/prime-anciennete')
+            .then((res) => { if (res?.data) setPrime(res.data); })
+            .catch(() => { /* la carte ne s'affiche pas, le reste de la page tient */ });
+    }, [isHR]);
+
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-screen flex flex-col h-full relative">
             <AnimatePresence>
@@ -525,6 +537,47 @@ export function Payroll() {
                 {/* 2. RUN PAYROLL (HR PREPARATION) */}
                 {isHR && activeTab === 'run-payroll' && (
                     <div className="space-y-6">
+                        {/* Prime d'ancienneté.
+
+                            La paie inscrit les bulletins directement comme approuvés :
+                            activer la prime d'office changerait dès la prochaine
+                            exécution ce que touchent les salariés. On montre donc ce
+                            qu'elle ajouterait, pour décider sur un montant connu. */}
+                        {prime && prime.beneficiaires > 0 && (
+                            <div className={`rounded-xl border p-4 ${
+                                prime.active
+                                    ? 'bg-emerald-50 border-emerald-200'
+                                    : 'bg-amber-50 border-amber-200'
+                            }`}>
+                                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                                    <p className={`text-sm font-bold ${prime.active ? 'text-emerald-900' : 'text-amber-900'}`}>
+                                        Prime d'ancienneté — {prime.beneficiaires} bénéficiaire(s),
+                                        {' '}{prime.totalMensuel.toLocaleString('fr-FR')} F par mois
+                                    </p>
+                                    <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                                        prime.active
+                                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                            : 'bg-amber-100 text-amber-800 border-amber-300'
+                                    }`}>
+                                        {prime.active ? 'appliquée' : 'non appliquée'}
+                                    </span>
+                                </div>
+                                <p className={`text-xs mt-1.5 ${prime.active ? 'text-emerald-800' : 'text-amber-800'}`}>
+                                    {prime.bareme.libelle}. Coût employeur, charges comprises :
+                                    {' '}{prime.coutEmployeurMensuel.toLocaleString('fr-FR')} F par mois.
+                                </p>
+                                <p className={`text-xs mt-1 ${prime.active ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                    {prime.message}
+                                </p>
+                                {(prime.lacunes.sansDateEmbauche > 0 || prime.lacunes.sansSalaireDeReference > 0) && (
+                                    <p className="text-xs mt-1 text-slate-600">
+                                        Non calculable pour {prime.lacunes.sansDateEmbauche} dossier(s) sans date
+                                        d'embauche et {prime.lacunes.sansSalaireDeReference} sans salaire de référence.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
                         <div className="flex justify-between items-center bg-white border border-slate-200 rounded-xl p-4 shadow-sm gap-4 flex-wrap">
                             <div className="flex items-center gap-3">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Période d'imputation :</span>

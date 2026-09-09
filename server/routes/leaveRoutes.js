@@ -13,6 +13,10 @@ router.use(auditTrail);
 router.post('/public', upload.single('attachment'), leaveController.createPublicLeave);
 
 // Leave Routes (Protected)
+// Aperçu avant demande : ce que le congé coûtera, et qui sera absent en même
+// temps. Déclaré avant les routes à paramètre.
+router.get('/apercu', verifyToken, leaveController.apercu);
+
 router.get('/', verifyToken, leaveController.getAllLeaves);
 router.post('/', verifyToken, upload.single('attachment'), leaveController.createLeave);
 router.put('/:id/status', verifyToken, requireRole(['ADMIN', 'HR', 'MANAGER']),  leaveController.updateLeaveStatus);

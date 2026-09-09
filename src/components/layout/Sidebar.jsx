@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity} from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +52,9 @@ const getAllNavItems = (t) => [
 
     // GESTION RH -> PILOTAGE RH
     { name: 'Temps, Absences & Demandes', path: '/timesheet', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Jours fériés', path: '/jours-feries', icon: CalendarDays, domain: 'Pilotage RH', permission: 'employees:edit' },
     { name: 'Paie & Rémunérations', path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Prêts au personnel', path: '/prets', icon: Landmark, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Relevé des heures', path: '/releve-heures', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Rémunérations', path: '/remunerations', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Budget & masse salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },

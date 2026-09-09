@@ -8,7 +8,9 @@ const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
 const { calculerPaie, decomposer, intervalleMois, TAUX } = require('../lib/paie');
+const paie = require('../lib/paie');
 const explication = require('../lib/explication');
+const { salaireConnu } = require('../lib/demographie');
 const dossier = require('../lib/dossier');
 const apposition = require('../lib/apposition');
 const remuneration = require('../lib/remuneration');
@@ -371,6 +373,26 @@ const runPayroll = async (req, res) => {
             }
             p.baseSalary = transmis != null ? transmis : reference.montant;
 
+            /**
+             * Échéance de prêt due sur cette période.
+             *
+             * Elle s'ajoute aux retenues du bulletin. Sans cette lecture, un
+             * échéancier arrêté à l'accord ne serait jamais prélevé : le prêt
+             * figurerait au dossier et ne se rembourserait pas.
+             */
+            const periodeCle = new Date(p.period).toISOString().slice(0, 7);
+            const echeanceDue = await prisma.echeancePret.findFirst({
+                where: {
+                    periode: periodeCle,
+                    statut: { in: ['A_RETENIR', 'RETENUE'] },
+                    pret: { employeeId: employee.id, statut: 'EN_COURS' }
+                },
+                include: { pret: { select: { id: true } } }
+            });
+            if (echeanceDue) {
+                p.deductions = (Number(p.deductions) || 0) + echeanceDue.montant;
+            }
+
             // Un seul calcul, partagé avec le bulletin PDF, l'export comptable
             // et les déclarations sociales. Le net retranchait auparavant la
             // part patronale au lieu des retenues du salarié : sur un brut de
@@ -381,7 +403,11 @@ const runPayroll = async (req, res) => {
                 bonus: p.bonus,
                 overtimeHours: p.overtimeHours,
                 leaveDays: p.leaveDays,
-                deductions: p.deductions
+                deductions: p.deductions,
+                // L'ancienneté se lit sur la fiche, jamais dans la requête :
+                // c'est une donnée du contrat, pas une saisie de paie.
+                hireDate: employee.hireDate,
+                periode: p.period
             });
 
             // Supprimer l'ancienne paie pour cette période (éviter les doublons et les conflits de mémorisation)
@@ -408,12 +434,38 @@ const runPayroll = async (req, res) => {
                     cmu: bulletin.cmu,
                     taxableIncome: bulletin.taxableIncome,
                     its: bulletin.its,
+                    primeAnciennete: bulletin.primeAnciennete,
                     employerContributions: bulletin.employerContributions,
                     employeeContributions: bulletin.employeeContributions,
                     netSalary: bulletin.netSalary,
                     status: 'APPROVED'
                 }
             });
+
+            /**
+             * L'échéance est marquée retenue, rattachée au bulletin qui la
+             * porte. Une paie relancée sur la même période repasse ici : le
+             * rattachement est donc réécrit plutôt qu'ajouté, et l'échéance ne
+             * peut pas être prélevée deux fois.
+             */
+            if (echeanceDue) {
+                await prisma.echeancePret.update({
+                    where: { id: echeanceDue.id },
+                    data: { statut: 'RETENUE', payrollId: pr.id, retenueLe: new Date() }
+                });
+
+                // Le prêt est soldé quand il ne reste aucune échéance à
+                // retenir — déduit de l'échéancier, jamais d'un compteur tenu
+                // à part qui pourrait mentir sur l'état réel.
+                const reste = await prisma.echeancePret.count({
+                    where: { pretId: echeanceDue.pret.id, statut: 'A_RETENIR' }
+                });
+                if (reste === 0) {
+                    await prisma.pret.update({
+                        where: { id: echeanceDue.pret.id }, data: { statut: 'SOLDE' }
+                    });
+                }
+            }
 
             const pdfPath = await generatePayslipPDF({ ...pr }, employee);
             
@@ -509,6 +561,87 @@ const getExplication = async (req, res) => {
     } catch (error) {
         console.error('Erreur explication de bulletin :', error);
         res.status(500).json({ error: "Erreur lors de l'explication du bulletin." });
+    }
+};
+
+/**
+ * GET /api/payrolls/prime-anciennete
+ *
+ * Ce que la prime d'ancienneté coûterait si elle était activée, salarié par
+ * salarié. Elle est due par la convention collective au-delà de deux ans, et
+ * l'application ne la versait pas.
+ *
+ * `runPayroll` inscrivant les bulletins directement comme approuvés, l'activer
+ * d'office changerait dès la prochaine paie ce que touchent les salariés. Cet
+ * état permet de décider sur un montant connu plutôt que de découvrir l'écart
+ * après coup.
+ */
+const getPrimeAnciennete = async (req, res) => {
+    try {
+        const salaries = await prisma.employee.findMany({
+            where: { status: { not: 'TERMINATED' } },
+            select: {
+                id: true, firstName: true, lastName: true, department: true,
+                hireDate: true, baseSalary: true,
+                payrolls: { orderBy: { period: 'desc' }, take: 1, select: { baseSalary: true } }
+            }
+        });
+
+        const lignes = [];
+        let totalMensuel = 0;
+        let sansSalaire = 0;
+        let sansDate = 0;
+
+        for (const s of salaries) {
+            const base = salaireConnu(s);
+            if (base === 0) { sansSalaire++; continue; }
+
+            const prime = paie.calculerPrimeAnciennete(base, s.hireDate);
+            if (prime.annees === null) { sansDate++; continue; }
+            if (!prime.due) continue;
+
+            totalMensuel += prime.montant;
+            lignes.push({
+                salarie: `${s.firstName} ${s.lastName}`,
+                service: s.department,
+                anciennete: prime.annees,
+                anneesRetenues: prime.anneesRetenues,
+                salaireBase: Math.round(base),
+                montantMensuel: prime.montant,
+                plafonne: Boolean(prime.motif)
+            });
+        }
+
+        lignes.sort((a, b) => b.montantMensuel - a.montantMensuel);
+
+        res.json({
+            active: paie.PRIME_ANCIENNETE_ACTIVE,
+            bareme: {
+                taux: paie.TAUX.primeAncienneteTaux,
+                seuilAnnees: paie.TAUX.primeAncienneteSeuilAnnees,
+                plafondAnnees: paie.TAUX.primeAnciennetePlafondAnnees,
+                libelle: `${(paie.TAUX.primeAncienneteTaux * 100).toFixed(0)} % du salaire de base `
+                    + `par année d'ancienneté, au-delà de ${paie.TAUX.primeAncienneteSeuilAnnees} ans, `
+                    + `plafonné à ${paie.TAUX.primeAnciennetePlafondAnnees} ans`
+            },
+            beneficiaires: lignes.length,
+            totalMensuel,
+            // Le brut augmente, donc la charge patronale aussi : le coût réel
+            // n'est pas le seul montant versé.
+            coutEmployeurMensuel: Math.round(totalMensuel * (1 + paie.TAUX.cnpsPatronal)),
+            lignes,
+            lacunes: {
+                sansSalaireDeReference: sansSalaire,
+                sansDateEmbauche: sansDate
+            },
+            message: paie.PRIME_ANCIENNETE_ACTIVE
+                ? 'La prime est appliquée aux bulletins produits.'
+                : "La prime n'est pas appliquée : poser PRIME_ANCIENNETE_ACTIVE=true pour "
+                  + "l'inclure à la prochaine paie. Les bulletins déjà émis ne sont pas repris."
+        });
+    } catch (error) {
+        console.error("Erreur état de la prime d'ancienneté :", error);
+        res.status(500).json({ error: "Erreur lors du calcul de la prime d'ancienneté." });
     }
 };
 
@@ -750,4 +883,4 @@ const getDeclaration = async (req, res) => {
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, signPayroll, exportSage, getDeclaration };
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, getPrimeAnciennete, signPayroll, exportSage, getDeclaration };

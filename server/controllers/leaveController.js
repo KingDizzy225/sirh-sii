@@ -1,6 +1,85 @@
 const prisma = require('../prismaClient');
 const delegation = require('../lib/delegation');
 const { sendMail } = require('../lib/mailer');
+const joursFeries = require('../lib/joursFeries');
+const couverture = require('../lib/couverture');
+
+/**
+ * Durée d'un congé, en jours décomptés du solde.
+ *
+ * Elle valait `(fin - début) + 1` en jours calendaires. Le solde étant crédité
+ * en jours ouvrables — 2,2 par mois de travail effectif —, le compteur se
+ * remplissait dans une unité et se vidait dans une autre : un congé du vendredi
+ * au lundi retirait quatre jours au lieu de deux, et le 7 août se décomptait
+ * comme un jour ordinaire.
+ *
+ * Le surplus se propageait jusqu'au solde de tout compte, où l'indemnité
+ * compensatrice se calcule sur ce même solde : le salarié partait avec moins
+ * que son dû.
+ *
+ * @returns {Promise<{jours:number, feriesTraverses:Array, calendaires:number}>}
+ */
+async function dureeEnJoursOuvrables(debut, fin) {
+    const enBase = await prisma.jourFerie.findMany({
+        where: { date: { gte: new Date(debut), lte: new Date(fin) }, chome: true },
+        select: { date: true, libelle: true }
+    }).catch((e) => {
+        // Le calendrier indisponible ne doit pas empêcher de poser un congé ;
+        // le décompte reste alors celui des jours ouvrables hors fériés.
+        console.error('[CONGES] Calendrier des fériés illisible :', e.message);
+        return [];
+    });
+
+    const calcul = joursFeries.joursOuvrables(debut, fin, joursFeries.indexer(enBase));
+    return {
+        jours: calcul.jours,
+        feriesTraverses: calcul.feriesTraverses,
+        calendaires: joursFeries.joursCalendaires(debut, fin)
+    };
+}
+
+/**
+ * GET /api/leaves/apercu?employeeId=&startDate=&endDate=
+ *
+ * Ce que coûtera le congé, et qui sera absent en même temps — avant de le
+ * poser. Sans cet aperçu, le demandeur découvre le décompte après validation
+ * et le responsable découvre le chevauchement le matin venu.
+ */
+exports.apercu = async (req, res) => {
+    try {
+        const { employeeId, startDate, endDate } = req.query;
+        if (!employeeId || !startDate || !endDate) {
+            return res.status(400).json({ error: 'employeeId, startDate et endDate sont requis.' });
+        }
+
+        const salarie = await prisma.employee.findUnique({ where: { id: employeeId } });
+        if (!salarie) return res.status(404).json({ error: 'Salarié introuvable.' });
+
+        const debut = new Date(startDate);
+        const fin = new Date(endDate);
+        if (isNaN(debut.getTime()) || isNaN(fin.getTime()) || fin < debut) {
+            return res.status(400).json({ error: 'Dates invalides.' });
+        }
+
+        const decompte = await dureeEnJoursOuvrables(debut, fin);
+        const equipe = await couverture.conflits(prisma, salarie, debut, fin);
+
+        res.json({
+            jours: decompte.jours,
+            joursCalendaires: decompte.calendaires,
+            feriesTraverses: decompte.feriesTraverses,
+            soldeActuel: salarie.annualLeaveBalance,
+            soldeApres: Math.round((salarie.annualLeaveBalance - decompte.jours) * 10) / 10,
+            // Le solde peut passer sous zéro : l'application le montre plutôt
+            // que de refuser, la RH pouvant accorder une avance sur congés.
+            soldeSuffisant: salarie.annualLeaveBalance >= decompte.jours,
+            couverture: { ...equipe, avertissement: couverture.avertissement(equipe) }
+        });
+    } catch (error) {
+        console.error('Erreur aperçu de congé :', error);
+        res.status(500).json({ error: "Erreur lors du calcul de l'aperçu." });
+    }
+};
 
 // Get all leaves
 exports.getAllLeaves = async (req, res) => {
@@ -24,7 +103,18 @@ exports.createLeave = async (req, res) => {
 
         const start = new Date(startDate);
         const end = new Date(endDate);
-        const durationDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+            return res.status(400).json({ error: 'Dates de congé invalides.' });
+        }
+
+        const decompte = await dureeEnJoursOuvrables(start, end);
+        if (decompte.jours === 0) {
+            return res.status(400).json({
+                error: 'La période demandée ne comporte aucun jour ouvrable : '
+                    + 'elle ne tombe que sur des dimanches ou des jours fériés.'
+            });
+        }
+        const durationDays = decompte.jours;
 
         const newLeave = await prisma.leave.create({
             data: {
@@ -39,6 +129,17 @@ exports.createLeave = async (req, res) => {
             },
             include: { employee: true }
         });
+
+        // Chevauchement dans l'équipe : signalé, jamais bloquant. Un congé
+        // simultané peut être voulu, et une règle qui refuserait serait
+        // contournée en une semaine.
+        const equipe = await couverture.conflits(
+            prisma, newLeave.employee, start, end, newLeave.id
+        ).catch(() => null);
+        newLeave.couverture = equipe
+            ? { ...equipe, avertissement: couverture.avertissement(equipe) }
+            : null;
+        newLeave.feriesTraverses = decompte.feriesTraverses;
 
         // Notify employee by email
         if (newLeave.employee?.email) {
@@ -185,7 +286,17 @@ exports.createPublicLeave = async (req, res) => {
 
         const start = new Date(startDate);
         const end = new Date(endDate);
-        const durationDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+            return res.status(400).json({ error: 'Dates de congé invalides.' });
+        }
+
+        const decompte = await dureeEnJoursOuvrables(start, end);
+        if (decompte.jours === 0) {
+            return res.status(400).json({
+                error: 'La période demandée ne comporte aucun jour ouvrable.'
+            });
+        }
+        const durationDays = decompte.jours;
 
         const newLeave = await prisma.leave.create({
             data: {

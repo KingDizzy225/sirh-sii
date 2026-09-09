@@ -116,6 +116,7 @@ model Employee {
   situations           SituationEmployee[]
   soldeToutCompte      SoldeToutCompte?
   pieces               PieceSalarie[]
+  prets                Pret[]
 }
 
 // ... (existing code)
@@ -164,6 +165,16 @@ model Payroll {
   cmu            Float?
   taxableIncome  Float? @map("taxable_income")
   its            Float?
+  /// Prime d'ancienneté, en FCFA.
+  ///
+  /// Due au-delà de deux ans par la convention collective, elle était absente
+  /// du calcul alors que l'application connaît toutes les dates d'embauche :
+  /// soit elle était retapée à la main dans le champ « prime » chaque mois,
+  /// soit elle n'était pas versée et la dette s'accumulait en silence.
+  ///
+  /// Colonne distincte et non fondue dans `bonus` : elle doit figurer sur son
+  /// propre poste au bulletin.
+  primeAnciennete Float? @map("prime_anciennete")
   pdfPath               String?   @map("pdf_path")
   signature             String? // Base64 signature
   signedAt              DateTime? @map("signed_at")
@@ -1724,4 +1735,91 @@ model PieceSalarie {
   @@index([employeeId, type])
   @@index([expireLe])
   @@map("piece_salarie")
+}
+
+/// Jour férié.
+///
+/// L'application n'en connaissait aucun : le 7 août se décomptait comme un
+/// jour de congé ordinaire, et le compteur, crédité en jours ouvrables, était
+/// débité en jours calendaires.
+///
+/// Les fêtes fixes et les fêtes chrétiennes mobiles sont calculables et
+/// peuvent être engendrées pour une année. Les fêtes musulmanes suivent le
+/// calendrier lunaire et sont arrêtées par décret : elles sont saisies ici, et
+/// l'application signale celles qui manquent plutôt que d'avancer une date
+/// approximative — un férié inventé fausserait chaque congé qui le traverse.
+model JourFerie {
+  id      String   @id @default(uuid())
+  /// Minuit local du jour férié.
+  date    DateTime
+  libelle String
+  /// LEGAL_FIXE | LEGAL_MOBILE (calculés) | DECRET (fêtes musulmanes) | ENTREPRISE
+  source  String   @default("DECRET")
+  /// Un jour chômé mais non payé, ou un pont accordé, se distingue d'un férié légal.
+  chome   Boolean  @default(true)
+  note    String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+
+  /// Un même jour ne peut être férié deux fois.
+  @@unique([date])
+  @@index([date])
+  @@map("jour_ferie")
+}
+
+/// Prêt au personnel, remboursable en plusieurs échéances.
+///
+/// `SalaryAdvance` ne portait qu'un seul `deductedOnPayrollId` : une avance se
+/// remboursait en une fois, sur une paie. Un salarié empruntant cinq cent
+/// mille francs n'avait que deux issues — tout voir retenu d'un coup, ou faire
+/// créer cinq avances fictives dont plus rien ne disait qu'elles n'en
+/// formaient qu'une.
+model Pret {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+
+  montant    Float
+  motif      String?
+  /// Mensualité théorique à l'accord, conservée telle quelle : l'échéancier est
+  /// arrêté au moment de l'accord et non recalculé à chaque paie.
+  mensualite Float
+
+  accordeLe  DateTime @default(now()) @map("accorde_le")
+  accordePar String?  @map("accorde_par")
+  /// EN_COURS | SOLDE | ANNULE
+  statut     String   @default("EN_COURS")
+  annuleLe   DateTime? @map("annule_le")
+  annuleMotif String?  @map("annule_motif")
+
+  echeances  EcheancePret[]
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, statut])
+  @@map("pret")
+}
+
+/// Une mensualité de prêt.
+///
+/// Le solde restant dû est la somme des échéances non soldées, jamais un
+/// compteur décrémenté à part : un compteur se désynchronise, une somme non.
+model EcheancePret {
+  id     String @id @default(uuid())
+  pretId String @map("pret_id")
+
+  rang    Int
+  /// « AAAA-MM » : la paie sur laquelle la retenue doit tomber.
+  periode String
+  montant Float
+
+  /// A_RETENIR | RETENUE | ANNULEE
+  statut    String    @default("A_RETENIR")
+  payrollId String?   @map("payroll_id")
+  retenueLe DateTime? @map("retenue_le")
+
+  pret Pret @relation(fields: [pretId], references: [id], onDelete: Cascade)
+
+  @@unique([pretId, rang])
+  @@index([periode, statut])
+  @@map("echeance_pret")
 }

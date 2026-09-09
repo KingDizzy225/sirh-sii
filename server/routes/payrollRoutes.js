@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/authMiddleware');
-const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, getExplication, exportSage, getDeclaration } = require('../controllers/payrollController');
+const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, getExplication, getPrimeAnciennete, exportSage, getDeclaration } = require('../controllers/payrollController');
 const requireRole = require('../middleware/roleMiddleware');
 const { traceAccess, cibles } = require('../middleware/accessTrace');
 
@@ -9,6 +9,10 @@ const { traceAccess, cibles } = require('../middleware/accessTrace');
 router.get('/', verifyToken, requireRole(['ADMIN', 'HR']), getPayrolls);
 router.post('/run', verifyToken, requireRole(['ADMIN', 'HR']), runPayroll);
 router.get('/export/sage', verifyToken, requireRole(['ADMIN', 'HR']), exportSage);
+
+// Ce que la prime d'ancienneté coûterait si elle était activée. Déclaré avec
+// les routes fixes : placé après /:id, il serait pris pour un identifiant.
+router.get('/prime-anciennete', verifyToken, requireRole(['ADMIN', 'HR']), getPrimeAnciennete);
 
 // Récapitulatif de la déclaration sociale du mois, à consulter avant dépôt.
 // Placée avant `/:id` : sans cela, « declaration » serait pris pour un

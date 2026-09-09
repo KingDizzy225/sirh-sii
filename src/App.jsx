@@ -32,6 +32,8 @@ import { PolicyRules } from './pages/PolicyRules';
 import { Conformite } from './pages/Conformite';
 import { PiecesEcheances } from './pages/PiecesEcheances';
 import { Absenteisme } from './pages/Absenteisme';
+import { JoursFeries } from './pages/JoursFeries';
+import { Prets } from './pages/Prets';
 import { Procedures } from './pages/Procedures';
 import { Budget } from './pages/Budget';
 import { Signataires } from './pages/Signataires';
@@ -350,6 +352,18 @@ const AppContent = () => {
             <Route path="/absenteisme" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
                 <Absenteisme />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/jours-feries" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <JoursFeries />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/prets" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Prets />
               </ProtectedRoute>
             } />
 

@@ -319,6 +319,102 @@ mais indiquent des fonctions qui resteront muettes.
 
 
 
+
+---
+
+## Décompte des congés, jours fériés
+
+**Un défaut corrigé, et il coûtait de l'argent aux salariés.** Le compteur se
+créditait en **jours ouvrables** — 2,2 par mois de travail effectif, la règle —
+et se débitait en **jours calendaires**. Un congé du vendredi au lundi retirait
+quatre jours au lieu de deux ; deux semaines en coûtaient quatorze au lieu de
+douze. Aucun jour férié n'était connu : le 7 août se décomptait comme un jour
+ordinaire. Le solde ainsi surconsommé alimentait le solde de tout compte, où
+l'indemnité compensatrice se calcule dessus — le salarié partait avec moins que
+son dû.
+
+Le décompte se fait désormais en jours ouvrables, dimanches et fériés déduits.
+`CONGES_CONVENTION` vaut `LUNDI_SAMEDI` par défaut ; `LUNDI_VENDREDI` pour une
+entreprise qui ne travaille pas le samedi. **Ce choix doit suivre celui qui a
+servi à fixer l'acquisition**, faute de quoi le compteur redeviendrait
+incohérent avec lui-même.
+
+**Les congés déjà validés ne sont pas repris.** Ils conservent la durée arrêtée
+au moment de leur validation : recalculer des soldes après coup changerait ce
+que les gens croient avoir, sans que personne l'ait demandé. Si vous voulez
+reprendre l'historique, c'est une décision à prendre explicitement.
+
+### Ce que vous devez saisir
+
+Écran *Jours fériés*, sous Pilotage RH. « Engendrer » pose les fêtes fixes et
+les fêtes chrétiennes mobiles d'une année — calculables.
+
+**Les fêtes musulmanes ne sont pas engendrées.** Elles suivent le calendrier
+lunaire et sont arrêtées par décret peu de temps avant : aucune formule ne les
+donne de façon fiable, et un férié inventé fausserait chaque congé qui le
+traverse. L'écran signale celles qui manquent — Aïd el-Fitr, Tabaski, Maouloud,
+Nuit du Destin — pour que vous les saisissiez dès parution du décret.
+
+---
+
+## Couverture de l'équipe
+
+La validation d'un congé regardait le solde, jamais la présence des autres. Le
+formulaire de demande affiche désormais qui, dans la même équipe, est déjà
+absent sur ces dates, et quelle part de l'effectif serait absente.
+
+**C'est un avertissement, jamais un blocage.** Un chevauchement peut être voulu,
+et une règle qui refuserait serait contournée en une semaine. L'équipe est celle
+des personnes rattachées au même responsable ; à défaut de responsable
+renseigné, le service.
+
+---
+
+## Prime d'ancienneté
+
+Due par la convention collective interprofessionnelle au-delà de deux ans, elle
+était **absente du calcul de paie** alors que l'application connaît toutes les
+dates d'embauche. Elle était donc retapée à la main dans le champ « prime »
+chaque mois, ou pas versée du tout — la dette s'accumulant en silence.
+
+**Elle est désactivée par défaut, et ce n'est pas une position sur le droit.**
+`runPayroll` inscrit les bulletins directement comme approuvés, sans étape de
+relecture : l'activer d'office changerait dès la prochaine paie ce que touchent
+les salariés, sans que personne l'ait décidé.
+
+L'onglet *Préparation de la Paie* affiche ce qu'elle ajouterait — nombre de
+bénéficiaires, coût mensuel, charge patronale induite — pour que la décision se
+prenne sur un montant connu. Poser `PRIME_ANCIENNETE_ACTIVE=true` l'inclut à la
+paie suivante ; **les bulletins déjà émis ne sont pas repris.**
+
+Barème réglable : `PRIME_ANCIENNETE_TAUX` (1 %), `PRIME_ANCIENNETE_SEUIL_ANNEES`
+(2), `PRIME_ANCIENNETE_PLAFOND_ANNEES` (25). L'ancienneté se compte en années
+révolues **à la période de paie traitée**, non à la date du jour.
+
+---
+
+## Prêts au personnel
+
+Écran *Prêts au personnel*, sous Pilotage RH. Une avance ne se remboursait qu'en
+une fois : un salarié empruntant 500 000 F voyait tout retenu sur un seul
+bulletin, ou la RH créait cinq avances fictives dont plus rien ne disait
+qu'elles n'en formaient qu'une.
+
+- **L'échéancier est arrêté à l'accord** et ne bouge plus. Les mensualités sont
+  égales, la dernière absorbant l'arrondi pour que leur somme retombe
+  exactement sur le capital.
+- **Les retenues tombent automatiquement** sur la paie du mois correspondant.
+  Aucune saisie mensuelle. Relancer une paie ne prélève pas deux fois.
+- **La quotité est plafonnée** à `PRET_QUOTITE_MAX` (33 % du net), encours des
+  autres prêts compris. Une retenue qui ne laisserait rien au salarié n'est pas
+  un remboursement. Sans net connu, le prêt est refusé plutôt qu'accordé à
+  l'aveugle.
+- **Le restant dû est la somme des échéances non retenues**, jamais un compteur
+  tenu à part qui se désynchroniserait.
+- **Annuler abandonne le restant dû** et n'annule que les échéances à venir :
+  ce qui a été retenu sur des bulletins remis n'est pas défait. L'annulation
+  doit être motivée.
+
 ---
 
 ## L'absentéisme
