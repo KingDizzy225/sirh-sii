@@ -134,3 +134,89 @@ exports.publicClockIn = async (req, res) => {
         res.status(500).json({ error: "Erreur serveur lors du pointage." });
     }
 };
+
+/**
+ * GET /api/public/suivi/:reference
+ *
+ * Le portail rendait une référence après chaque dépôt, et rien ne permettait de
+ * la consulter : le salarié déposait sa demande et n'en entendait plus parler.
+ * Depuis que les comptes salariés sont fermés, c'était son seul lien avec
+ * l'application — et il ne menait nulle part.
+ *
+ * La référence est l'identifiant du dépôt : trente-six caractères aléatoires,
+ * ni devinables ni énumérables. C'est elle qui tient lieu d'autorisation, comme
+ * le jeton d'un lien de remise.
+ *
+ * Ne sont renvoyées que les mentions du dépôt lui-même — nature, dates, état.
+ * Ni rémunération, ni coordonnées, ni rien qui concerne un autre salarié.
+ */
+exports.suivreDemande = async (req, res) => {
+    try {
+        const reference = String(req.params.reference || '').trim();
+        // Un format invalide se répond comme une référence inconnue : distinguer
+        // les deux dirait à quoi ressemble une référence valable.
+        if (!/^[0-9a-f-]{20,40}$/i.test(reference)) {
+            return res.status(404).json({ trouve: false, motif: 'Référence inconnue.' });
+        }
+
+        const etatsLisibles = {
+            PENDING: 'Reçue, en attente de validation',
+            PENDING_HR: 'Validée par le responsable, en attente des ressources humaines',
+            APPROVED: 'Approuvée',
+            REJECTED: 'Refusée',
+            'En attente': 'Reçue, en attente de validation',
+            'Approuvé': 'Approuvée',
+            'Rejeté': 'Refusée',
+            OUVERT: 'Reçue',
+            'Ouvert': 'Reçue',
+            'Résolu': 'Traitée',
+            'Fermé': 'Clôturée'
+        };
+        const lisible = (v) => etatsLisibles[v] || v || 'Reçue';
+
+        const [conge, avance, ticket] = await Promise.all([
+            prisma.leave.findUnique({
+                where: { id: reference },
+                select: { type: true, startDate: true, endDate: true, durationDays: true,
+                          status: true, createdAt: true }
+            }),
+            prisma.salaryAdvance.findUnique({
+                where: { id: reference },
+                select: { amount: true, status: true, requestedAt: true, reason: true }
+            }),
+            prisma.supportTicket.findUnique({
+                where: { id: reference },
+                select: { category: true, status: true, createdAt: true }
+            })
+        ]);
+
+        if (conge) {
+            return res.json({
+                trouve: true, nature: 'Demande de congé', objet: conge.type,
+                depose: conge.createdAt, etat: lisible(conge.status),
+                detail: `${conge.durationDays} jour(s) ouvrable(s), `
+                    + `du ${new Date(conge.startDate).toLocaleDateString('fr-FR')} `
+                    + `au ${new Date(conge.endDate).toLocaleDateString('fr-FR')}`
+            });
+        }
+        if (avance) {
+            return res.json({
+                trouve: true, nature: 'Demande d\'avance', objet: avance.reason || null,
+                depose: avance.requestedAt, etat: lisible(avance.status),
+                detail: `${Math.round(avance.amount).toLocaleString('fr-FR')} FCFA`
+            });
+        }
+        if (ticket) {
+            return res.json({
+                trouve: true, nature: 'Demande au service social', objet: ticket.category,
+                depose: ticket.createdAt, etat: lisible(ticket.status),
+                detail: null
+            });
+        }
+
+        res.status(404).json({ trouve: false, motif: 'Référence inconnue.' });
+    } catch (error) {
+        console.error('Erreur suivi de demande :', error);
+        res.status(500).json({ error: 'Erreur lors de la lecture du suivi.' });
+    }
+};

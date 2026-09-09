@@ -9,7 +9,7 @@ import {
     Download, PlayCircle, FileText, CheckCircle2, Search, UserCheck, 
     Eye, PiggyBank, Calculator, Briefcase, AlertCircle, Save, Sparkles,
     Banknote, Receipt, Clock, XCircle, CheckCheck, Filter, Landmark, ShieldAlert
-} from 'lucide-react';
+, Send, Copy, X} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
 import { cn } from '@/lib/utils';
@@ -35,6 +35,12 @@ export function Payroll() {
     // ans, elle était absente du calcul alors que l'application connaît toutes
     // les dates d'embauche.
     const [prime, setPrime] = useState(null);
+
+    // Remise d'un bulletin au salarié. Les comptes salariés étant fermés, un
+    // bulletin n'avait plus aucun moyen de leur parvenir : le PDF restait dans
+    // l'application, alors que sa remise est une obligation.
+    const [remise, setRemise] = useState(null);
+    const [remiseEnCours, setRemiseEnCours] = useState(null);
 
     // Period selection
     const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -423,6 +429,21 @@ export function Payroll() {
             .catch(() => { /* la carte ne s'affiche pas, le reste de la page tient */ });
     }, [isHR]);
 
+    /** Produit un lien de retrait et l'affiche pour transmission. */
+    const remettreBulletin = async (pay) => {
+        setRemiseEnCours(pay.id);
+        try {
+            const res = await api.post('/remises', { sourceType: 'BULLETIN', sourceId: pay.id });
+            setRemise(res?.data || null);
+        } catch (err) {
+            // Le refus porte sa raison : date de naissance absente, PDF manquant.
+            // « Erreur » ne dirait pas quoi corriger.
+            setRemise({ erreur: err.message || 'Le lien n\'a pas pu être produit.' });
+        } finally {
+            setRemiseEnCours(null);
+        }
+    };
+
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-slate-50 min-h-screen flex flex-col h-full relative">
             <AnimatePresence>
@@ -711,12 +732,22 @@ export function Payroll() {
                                                 <td className="p-4 text-slate-700">{formatCurrency(pay.grossSalary ?? (pay.baseSalary + pay.bonus))}</td>
                                                 <td className="p-4 text-slate-900 font-black">{formatCurrency(pay.netSalary)}</td>
                                                 <td className="p-4 text-right">
-                                                    <Button 
-                                                        onClick={() => navigate(`/payroll/${pay.id}`)}
-                                                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1 h-8 rounded-lg"
-                                                    >
-                                                        <Eye size={13} className="mr-1" /> Consulter
-                                                    </Button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button 
+                                                            onClick={() => navigate(`/payroll/${pay.id}`)}
+                                                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1 h-8 rounded-lg"
+                                                        >
+                                                            <Eye size={13} className="mr-1" /> Consulter
+                                                        </Button>
+                                                        <Button
+                                                            onClick={() => remettreBulletin(pay)}
+                                                            disabled={remiseEnCours === pay.id}
+                                                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-1 h-8 rounded-lg"
+                                                        >
+                                                            <Send size={13} className="mr-1" />
+                                                            {remiseEnCours === pay.id ? 'Lien…' : 'Remettre'}
+                                                        </Button>
+                                                    </div>
                                                 </td>
                                             </TableRow>
                                         ))}
@@ -1242,6 +1273,64 @@ export function Payroll() {
                     </div>
                 )}
             </div>
+        
+            {/* Lien de remise produit.
+
+                Le lien vaut autorisation de télécharger : il ne se transmet
+                qu'au salarié concerné, et la fenêtre le dit. */}
+            {remise && (
+                <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-[110]">
+                    <Card className="w-full max-w-lg border-none shadow-2xl">
+                        <CardHeader className="flex flex-row items-start justify-between">
+                            <div>
+                                <CardTitle className="text-lg font-black">
+                                    {remise.erreur ? 'Lien non produit' : 'Lien de retrait'}
+                                </CardTitle>
+                                {!remise.erreur && (
+                                    <CardDescription className="text-xs">
+                                        {remise.titre} — {remise.salarie}
+                                    </CardDescription>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setRemise(null)}
+                                aria-label="Fermer"
+                                className="text-slate-400 hover:text-slate-700"
+                            >
+                                <X size={18} />
+                            </button>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {remise.erreur ? (
+                                <p className="text-sm text-rose-800 bg-rose-50 border border-rose-200 rounded-xl p-3">
+                                    {remise.erreur}
+                                </p>
+                            ) : (
+                                <>
+                                    <div className="bg-slate-900 rounded-xl p-3">
+                                        <p className="font-mono text-[11px] text-white break-all leading-relaxed">
+                                            {remise.lien}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        onClick={() => navigator.clipboard?.writeText(remise.lien)}
+                                        className="w-full bg-slate-900 hover:bg-slate-800 text-white"
+                                    >
+                                        <Copy size={14} className="mr-2" /> Copier le lien
+                                    </Button>
+                                    <p className="text-xs text-slate-600 leading-relaxed">{remise.consigne}</p>
+                                    <p className="text-[11px] text-slate-500">
+                                        Valable jusqu'au{' '}
+                                        {new Date(remise.expireLe).toLocaleDateString('fr-FR')}. Chaque
+                                        ouverture et chaque téléchargement sont datés : vous pourrez
+                                        vérifier que le document a bien été retiré.
+                                    </p>
+                                </>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

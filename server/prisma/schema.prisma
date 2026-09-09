@@ -117,6 +117,7 @@ model Employee {
   soldeToutCompte      SoldeToutCompte?
   pieces               PieceSalarie[]
   prets                Pret[]
+  remises              RemiseDocument[]
 }
 
 // ... (existing code)
@@ -1822,4 +1823,55 @@ model EcheancePret {
   @@unique([pretId, rang])
   @@index([periode, statut])
   @@map("echeance_pret")
+}
+
+/// Remise d'un document à un salarié, par lien.
+///
+/// Les salariés n'ouvrant plus de session, un bulletin de paie ou une
+/// attestation n'avait plus aucun moyen de leur parvenir : le PDF restait dans
+/// l'application. La remise du bulletin est pourtant une obligation.
+///
+/// Le lien porte un jeton aléatoire qui vaut autorisation de télécharger. Trois
+/// garde-fous l'encadrent, parce qu'un lien circule — il se transfère, il
+/// s'oublie dans une conversation :
+///   - il **expire** ;
+///   - il peut exiger une **vérification** (date de naissance), pour qu'un lien
+///     transféré ne suffise pas à lire le bulletin de quelqu'un d'autre ;
+///   - chaque ouverture et chaque téléchargement sont **datés**, afin que la RH
+///     puisse dire quand le document a été retiré — ou qu'il ne l'a pas été.
+model RemiseDocument {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  employeeId String   @map("employee_id")
+
+  /// BULLETIN | DOCUMENT | ATTESTATION — d'où vient le fichier remis.
+  sourceType String   @map("source_type")
+  /// Identifiant dans la table d'origine (Payroll, EmployeeDocument…).
+  sourceId   String   @map("source_id")
+  /// Intitulé montré au salarié, figé à la remise : renommer la source plus
+  /// tard ne doit pas changer ce qu'il a reçu.
+  titre      String
+
+  remisLe    DateTime  @default(now()) @map("remis_le")
+  remisPar   String?   @map("remis_par")
+  expireLe   DateTime  @map("expire_le")
+
+  /// Contrôle demandé à l'ouverture. AUCUNE | NAISSANCE
+  verification String  @default("NAISSANCE")
+
+  ouvertLe        DateTime? @map("ouvert_le")
+  telechargeLe    DateTime? @map("telecharge_le")
+  telechargements Int       @default(0)
+  derniereIp      String?   @map("derniere_ip")
+  /// Tentatives de vérification échouées, pour bloquer l'essai systématique.
+  echecs          Int       @default(0)
+
+  revoqueeLe    DateTime? @map("revoquee_le")
+  revoqueeMotif String?   @map("revoquee_motif")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, remisLe])
+  @@index([sourceType, sourceId])
+  @@map("remise_document")
 }

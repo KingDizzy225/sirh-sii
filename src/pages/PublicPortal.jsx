@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,7 +7,7 @@ import {
     CheckCircle2, HelpCircle, ArrowRight, MessageSquare, Briefcase, 
     Banknote, Calendar, Clock, TrendingUp, AlertCircle, Send, 
     FileText, Shield, ChevronRight, X
-} from 'lucide-react';
+, Search, CalendarDays} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -39,6 +39,14 @@ export function PublicPortal() {
     // UI State
     const [loading, setLoading] = useState(false);
     const [trackingId, setTrackingId] = useState(null);
+
+    // Suivi d'une demande déposée et retrait d'un document remis : les deux
+    // seuls canaux de retour du salarié depuis que les comptes sont fermés.
+    const [refSuivi, setRefSuivi] = useState('');
+    const [suivi, setSuivi] = useState(null);
+    const [suiviEnCours, setSuiviEnCours] = useState(false);
+    const [codeDocument, setCodeDocument] = useState('');
+    const [feries, setFeries] = useState(null);
     const [notification, setNotification] = useState(null);
 
     const showNotification = (message, isError = false) => {
@@ -135,6 +143,46 @@ export function PublicPortal() {
         }
     };
 
+    /**
+     * Suivi d'un dépôt par sa référence.
+     *
+     * Elle était rendue après chaque demande — tronquée à ses huit premiers
+     * caractères, et ne menant nulle part. Le salarié déposait sa demande et
+     * n'en entendait plus parler.
+     */
+    const consulterSuivi = async (evenement) => {
+        evenement.preventDefault();
+        const reference = refSuivi.trim();
+        if (!reference) return;
+        setSuiviEnCours(true);
+        setSuivi(null);
+        try {
+            const res = await fetch(`${API_URL}/api/public/suivi/${encodeURIComponent(reference)}`);
+            const data = await res.json().catch(() => ({}));
+            setSuivi(res.ok && data.trouve ? data : { trouve: false, motif: data.motif || 'Référence inconnue.' });
+        } catch {
+            setSuivi({ trouve: false, motif: 'Le service est momentanément injoignable.' });
+        } finally {
+            setSuiviEnCours(false);
+        }
+    };
+
+    /** Le code d'un lien de remise mène à la page de retrait du document. */
+    const ouvrirDocument = (evenement) => {
+        evenement.preventDefault();
+        const code = codeDocument.trim().split('/').pop();
+        if (code) window.location.href = `/document/${encodeURIComponent(code)}`;
+    };
+
+    // Jours fériés de l'année : information générale, sans donnée personnelle.
+    useEffect(() => {
+        if (activeTab !== 'infos' || feries) return;
+        fetch(`${API_URL}/api/jours-feries?annee=${new Date().getFullYear()}`)
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => { if (Array.isArray(data?.feries)) setFeries(data.feries); })
+            .catch(() => setFeries([]));
+    }, [activeTab, feries]);
+
     // Success screen
     if (trackingId) {
         return (
@@ -163,9 +211,28 @@ export function PublicPortal() {
                             <p className="text-sm text-slate-600">
                                 Conservez ce numéro de suivi pour toute communication ultérieure avec le service RH.
                             </p>
-                            <div className="bg-slate-900 p-5 rounded-2xl font-mono text-lg font-bold text-white tracking-widest shadow-lg">
-                                RÉF : {trackingId.split('-')[0].toUpperCase()}
+                            {/* La référence était tronquée à ses huit premiers
+                                caractères : elle ne permettait donc pas de suivre
+                                la demande. Elle est rendue entière, et copiable. */}
+                            <div className="bg-slate-900 p-4 rounded-2xl shadow-lg space-y-2">
+                                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">
+                                    Votre référence
+                                </p>
+                                <p className="font-mono text-xs text-white break-all leading-relaxed">
+                                    {trackingId}
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => navigator.clipboard?.writeText(trackingId)}
+                                    className="text-xs font-semibold text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
+                                >
+                                    Copier la référence
+                                </button>
                             </div>
+                            <p className="text-xs text-slate-500">
+                                Conservez-la : elle vous permet de suivre l'avancement
+                                de votre demande depuis l'onglet « Suivre une demande ».
+                            </p>
                             <Button onClick={() => window.location.reload()} className="w-full bg-slate-900 hover:bg-slate-800 h-12 rounded-xl font-bold shadow-md">
                                 Faire une autre demande
                             </Button>
@@ -180,7 +247,13 @@ export function PublicPortal() {
         { id: 'general', label: 'Requête Générale', icon: MessageSquare, color: 'indigo' },
         { id: 'advance', label: 'Avance sur Salaire', icon: Banknote, color: 'emerald' },
         { id: 'absence', label: 'Demande d\'Absence', icon: Calendar, color: 'blue' },
+        { id: 'suivi', label: 'Suivre une demande', icon: Search, color: 'slate' },
+        { id: 'documents', label: 'Mes documents', icon: FileText, color: 'slate' },
+        { id: 'infos', label: 'Informations', icon: CalendarDays, color: 'slate' }
     ];
+
+    // Les trois derniers onglets ne déposent rien : ils consultent.
+    const ongletDeDepot = ['general', 'advance', 'absence'].includes(activeTab);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-50 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
@@ -249,14 +322,169 @@ export function PublicPortal() {
                             >
                                 <Icon size={24} />
                                 <span className="hidden sm:inline">{tab.label}</span>
-                                <span className="sm:hidden text-xs">{tab.id === 'general' ? 'Requête' : tab.id === 'advance' ? 'Avance' : 'Absence'}</span>
+                                <span className="sm:hidden text-xs">{
+                                    { general: 'Requête', advance: 'Avance', absence: 'Absence',
+                                      suivi: 'Suivi', documents: 'Documents', infos: 'Infos' }[tab.id] || tab.label
+                                }</span>
                             </motion.button>
                         );
                     })}
                 </div>
             </motion.div>
 
+            {/* Suivre une demande, retirer un document, informations générales.
+
+                Ces trois onglets ne déposent rien : ils consultent. Ils sont les
+                seuls canaux de retour du salarié depuis que les comptes sont
+                fermés — auparavant, il déposait une demande et n'en entendait
+                plus jamais parler. */}
+            {!ongletDeDepot && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full max-w-3xl"
+                >
+                    <Card className="shadow-2xl border-slate-200/80 overflow-hidden rounded-3xl">
+                        {activeTab === 'suivi' && (
+                            <>
+                                <CardHeader className="bg-slate-50 border-b border-slate-100">
+                                    <CardTitle className="flex items-center gap-2 text-xl font-['Outfit']">
+                                        <Search className="text-slate-600" /> Suivre une demande
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Saisissez la référence reçue après le dépôt de votre demande.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="pt-6 space-y-4">
+                                    <form onSubmit={consulterSuivi} className="flex flex-col sm:flex-row gap-2">
+                                        <input
+                                            value={refSuivi}
+                                            onChange={(e) => setRefSuivi(e.target.value)}
+                                            placeholder="Votre référence"
+                                            aria-label="Référence de la demande"
+                                            className="flex-1 h-12 rounded-xl border border-slate-200 px-4 text-sm font-mono"
+                                        />
+                                        <Button
+                                            type="submit"
+                                            disabled={suiviEnCours || !refSuivi.trim()}
+                                            className="h-12 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 font-bold"
+                                        >
+                                            {suiviEnCours ? 'Recherche…' : 'Consulter'}
+                                        </Button>
+                                    </form>
+
+                                    {suivi && !suivi.trouve && (
+                                        <p className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                            {suivi.motif} Vérifiez que la référence est complète :
+                                            elle est longue, et se copie entière.
+                                        </p>
+                                    )}
+
+                                    {suivi && suivi.trouve && (
+                                        <div className="rounded-2xl border border-slate-200 overflow-hidden">
+                                            <div className="bg-slate-900 px-5 py-3">
+                                                <p className="text-white font-semibold">{suivi.nature}</p>
+                                                {suivi.objet && (
+                                                    <p className="text-slate-300 text-xs mt-0.5">{suivi.objet}</p>
+                                                )}
+                                            </div>
+                                            <div className="p-5 space-y-2 text-sm">
+                                                <p className="flex items-center gap-2">
+                                                    <Clock size={14} className="text-slate-400" />
+                                                    <span className="font-semibold text-slate-900">{suivi.etat}</span>
+                                                </p>
+                                                {suivi.detail && <p className="text-slate-600">{suivi.detail}</p>}
+                                                <p className="text-xs text-slate-500">
+                                                    Déposée le {new Date(suivi.depose).toLocaleDateString('fr-FR')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </>
+                        )}
+
+                        {activeTab === 'documents' && (
+                            <>
+                                <CardHeader className="bg-slate-50 border-b border-slate-100">
+                                    <CardTitle className="flex items-center gap-2 text-xl font-['Outfit']">
+                                        <FileText className="text-slate-600" /> Mes documents
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Bulletins de paie, attestations et certificats vous sont remis
+                                        par un lien personnel.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="pt-6 space-y-4">
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        Le service des ressources humaines vous transmet un lien à
+                                        chaque document. Ouvrez-le directement, ou collez-le
+                                        ci-dessous. Votre date de naissance vous sera demandée.
+                                    </p>
+                                    <form onSubmit={ouvrirDocument} className="flex flex-col sm:flex-row gap-2">
+                                        <input
+                                            value={codeDocument}
+                                            onChange={(e) => setCodeDocument(e.target.value)}
+                                            placeholder="Collez ici le lien reçu"
+                                            aria-label="Lien du document"
+                                            className="flex-1 h-12 rounded-xl border border-slate-200 px-4 text-sm"
+                                        />
+                                        <Button
+                                            type="submit"
+                                            disabled={!codeDocument.trim()}
+                                            className="h-12 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 font-bold"
+                                        >
+                                            Ouvrir
+                                        </Button>
+                                    </form>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        Vous n'avez pas reçu de lien&nbsp;? Demandez-le au service des
+                                        ressources humaines depuis l'onglet « Requête générale ».
+                                    </p>
+                                </CardContent>
+                            </>
+                        )}
+
+                        {activeTab === 'infos' && (
+                            <>
+                                <CardHeader className="bg-slate-50 border-b border-slate-100">
+                                    <CardTitle className="flex items-center gap-2 text-xl font-['Outfit']">
+                                        <CalendarDays className="text-slate-600" /> Jours fériés {new Date().getFullYear()}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Un jour férié traversé par un congé n'est pas décompté de votre solde.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="pt-6">
+                                    {feries === null ? (
+                                        <p className="text-sm text-slate-400">Lecture du calendrier…</p>
+                                    ) : feries.length === 0 ? (
+                                        <p className="text-sm text-slate-500">
+                                            Le calendrier de l'année n'est pas encore publié.
+                                        </p>
+                                    ) : (
+                                        <ul className="divide-y divide-slate-100">
+                                            {feries.map((f) => (
+                                                <li key={f.id} className="py-2.5 flex justify-between gap-4 text-sm">
+                                                    <span className="text-slate-800">{f.libelle}</span>
+                                                    <span className="text-slate-500 shrink-0 capitalize">
+                                                        {new Date(f.date).toLocaleDateString('fr-FR', {
+                                                            weekday: 'long', day: 'numeric', month: 'long'
+                                                        })}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </CardContent>
+                            </>
+                        )}
+                    </Card>
+                </motion.div>
+            )}
+
             {/* Form Card */}
+            {ongletDeDepot && (
             <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -574,6 +802,7 @@ export function PublicPortal() {
                     </CardContent>
                 </Card>
             </motion.div>
+            )}
 
             {/* Privacy footer */}
             <motion.div 

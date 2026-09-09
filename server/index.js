@@ -145,6 +145,7 @@ const subcontractorRoutes = require('./routes/subcontractorRoutes');
 const pieceRoutes = require('./routes/pieceRoutes');
 const jourFerieRoutes = require('./routes/jourFerieRoutes');
 const pretRoutes = require('./routes/pretRoutes');
+const remiseRoutes = require('./routes/remiseRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
 
 app.use('/api/announcements', announcementRoutes);
@@ -166,6 +167,8 @@ app.use('/api/pieces', verifyToken, pieceRoutes);
 app.use('/api/jours-feries', verifyToken, jourFerieRoutes);
 // Prêts au personnel : les avances ne se remboursaient qu'en une fois.
 app.use('/api/prets', verifyToken, pretRoutes);
+// Remise de documents aux salariés : la partie publique vit dans publicRoutes.
+app.use('/api/remises', verifyToken, remiseRoutes);
 app.use('/api/simulations', verifyToken, simulationRoutes);
 app.use('/api/equity', verifyToken, require('./routes/equityRoutes'));
 app.use('/api/succession', verifyToken, require('./routes/successionRoutes'));

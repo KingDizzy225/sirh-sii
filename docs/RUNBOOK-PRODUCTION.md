@@ -367,6 +367,71 @@ du 401 d'un mauvais mot de passe : le compte existe et le mot de passe était
 bon. L'écran de connexion propose alors d'ouvrir le portail plutôt que de
 laisser recommencer.
 
+
+---
+
+## Remettre un document à un salarié
+
+Les salariés n'ouvrant plus de session, un bulletin de paie n'avait plus aucun
+moyen de leur parvenir : le PDF restait dans l'application, alors que sa remise
+est une obligation.
+
+Depuis le registre de paie, le bouton **Remettre** produit un lien à
+transmettre par le canal de votre choix — WhatsApp, message, main propre.
+
+**Le lien est la clé**, et c'est un choix : exiger un mot de passe reviendrait à
+rouvrir les comptes qu'on vient de fermer. Trois garde-fous l'encadrent, parce
+qu'un lien circule :
+
+- **il expire** (`REMISE_VALIDITE_JOURS`, 90 jours par défaut) ;
+- **il demande la date de naissance** à l'ouverture. Ce n'est pas un secret
+  fort et ce n'en est pas l'objet : il s'agit d'écarter le destinataire par
+  erreur. Cinq échecs bloquent le lien (`REMISE_ECHECS_MAX`) ;
+- **chaque ouverture et chaque téléchargement sont datés.** Vous pouvez dire
+  quand le document a été retiré — ou qu'il ne l'a pas été.
+
+Ce que la page publique refuse de dire compte autant : **avant vérification, ni
+le nom du destinataire ni l'intitulé du document.** Un lien transféré par
+erreur ne révèle pas de qui il s'agit. Et un jeton inconnu se répond comme un
+jeton expiré : les distinguer dirait qu'un lien a existé.
+
+Deux refus à connaître :
+
+- **sans date de naissance au dossier**, la remise contrôlée est refusée — le
+  salarié serait bloqué devant une vérification impossible. Renseignez la date,
+  ou produisez le lien sans contrôle en sachant que quiconque l'ouvrira pourra
+  télécharger ;
+- **sans PDF enregistré**, aucun lien n'est produit : un lien qui mène à une
+  erreur est pire que pas de lien.
+
+Un lien transmis par erreur s'annule. L'annulation ne rattrape évidemment pas
+un téléchargement déjà fait, et l'application le dit.
+
+---
+
+## Le portail des salariés
+
+C'est désormais leur seul accès. Il compte six onglets :
+
+**Déposer** — requête générale, avance sur salaire, demande d'absence. Comme
+avant, mais la **référence rendue après le dépôt est maintenant entière et
+copiable** : elle était tronquée à ses huit premiers caractères, donc
+inutilisable.
+
+**Suivre une demande** — la référence donne l'état d'avancement : reçue,
+validée par le responsable, approuvée, refusée. Le salarié déposait sa demande
+et n'en entendait plus jamais parler ; c'était son seul lien avec
+l'application, et il ne menait nulle part.
+
+**Mes documents** — pour coller un lien de remise reçu.
+
+**Informations** — les jours fériés de l'année, qui conditionnent le décompte
+des congés.
+
+Aucune donnée personnelle n'est accessible sans référence ou sans lien : ce
+sont eux qui tiennent lieu d'autorisation, et ils sont assez longs pour n'être
+ni devinables ni énumérables.
+
 ---
 
 ## Le menu

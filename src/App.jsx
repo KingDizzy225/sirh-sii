@@ -58,6 +58,7 @@ import { Rewards } from './pages/Rewards';
 import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
 import { PublicCareers } from './pages/PublicCareers';
+import { PublicDocument } from './pages/PublicDocument';
 import { PublicSignature } from './pages/PublicSignature';
 
 import { Referrals } from './pages/Referrals';
@@ -102,6 +103,19 @@ const AppContent = () => {
   // Vérification publique d'un document (QR d'attestation) : rendue hors de
   // toute session, qu'un utilisateur soit connecté ou non — le visiteur est
   // typiquement un tiers (banque, bailleur) sans compte.
+  /**
+   * Retrait d'un document remis par la RH. Rendu hors de toute session, comme
+   * la vérification : les salariés n'ouvrent plus de compte, et c'est le jeton
+   * du lien qui vaut autorisation.
+   */
+  if (location.pathname.startsWith('/document/')) {
+    return (
+      <Routes>
+        <Route path="/document/:token" element={<PublicDocument />} />
+      </Routes>
+    );
+  }
+
   if (location.pathname.startsWith('/verify/')) {
     return (
       <Routes>
