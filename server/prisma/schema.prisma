@@ -333,6 +333,15 @@ model Applicant {
   // candidature et écrite par le contrôleur alors que la colonne manquait.
   experience  String?
   appliedDate DateTime @default(now()) @map("applied_date")
+  /// Date de passage au statut « recrutée ».
+  ///
+  /// Le délai de recrutement s'affichait au tableau de bord sous la forme de
+  /// six valeurs écrites en dur : la candidature portait sa date de dépôt et
+  /// son statut, jamais la date à laquelle elle avait abouti, si bien que le
+  /// délai n'était pas calculable. Il l'est à partir d'ici — et l'indicateur
+  /// reste vide tant qu'aucun recrutement n'a été conclu dans l'application,
+  /// ce qui est la réponse exacte.
+  hiredAt     DateTime? @map("hired_at")
 
   jobOffer JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
 }

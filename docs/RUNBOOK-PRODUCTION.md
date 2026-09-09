@@ -315,6 +315,41 @@ nominatif. Les avertissements (SMTP, IA) ne bloquent pas la mise en service
 mais indiquent des fonctions qui resteront muettes.
 
 
+
+---
+
+## Chiffres affichés et chiffres mesurés
+
+Le tableau de bord analytique remplaçait par des valeurs écrites en dur toute
+série qu'il ne pouvait pas calculer — et quatre d'entre elles s'affichaient
+ainsi **en toutes circonstances**, mesurées ou non : l'écart salarial
+femmes/hommes, le délai de recrutement, le turnover mensuel et la part de
+mobilité interne. Rien ne distinguait à l'écran un chiffre mesuré d'un chiffre
+inventé. La zone de question en langage naturel fabriquait de son côté des
+analyses complètes — « risque de départ de 25 % », « enveloppe de rattrapage
+de 1,2 million » — dès que l'assistant ne répondait pas.
+
+Tout cela est retiré. Ce qui le remplace :
+
+- **Une série vide s'affiche vide**, accompagnée de la phrase qui dit ce qui
+  manque (`indisponibles` dans la réponse de `/api/analytics/dashboard`).
+- **L'écart salarial est calculé**, mais publié seulement au-dessus d'un seuil
+  d'effectif par genre et par service (`EFFECTIF_MIN_EQUITE`, 3 par défaut).
+  En deçà, la moyenne d'un groupe revient à divulguer une rémunération
+  individuelle : dans un service comptant une seule femme, « salaire moyen des
+  femmes du service » est son salaire, nommément. Le nombre de services écartés
+  est indiqué à l'écran.
+- **Le délai de recrutement** se mesure depuis la date d'aboutissement d'une
+  candidature (`Applicant.hiredAt`), posée au passage au statut « recrutée ».
+  L'indicateur reste vide jusqu'au premier recrutement conclu dans
+  l'application — ce qui est la réponse exacte.
+- **L'assistant indisponible le dit** au lieu d'inventer une réponse. Poser
+  `ANTHROPIC_WORKSPACE_ID` le remet en service, avec dix autres fonctions.
+
+Conséquence pratique à la bascule : **les écrans d'analyse seront largement
+vides les premières semaines**, et c'est voulu. Un tableau de bord qui se
+remplit tout seul le premier jour ne décrit pas l'entreprise.
+
 ---
 
 ## Documents de fin de contrat

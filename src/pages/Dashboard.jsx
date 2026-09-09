@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, Timer, HeartPulse, Loader2, TrendingUp, Star, Inbox } from 'lucide-react';
+import { Users, Briefcase, GraduationCap, Clock, CheckCircle2, Activity, Scale, Timer, HeartPulse, Loader2, TrendingUp, Star, Inbox, Info
+} from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +9,46 @@ import { ComplianceMonitor } from '../components/dashboard/ComplianceMonitor';
 import { api } from '../lib/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+
+/**
+ * Enveloppe d'une série de données.
+ *
+ * Les graphiques recevaient des valeurs écrites en dur lorsque la donnée
+ * manquait — un turnover « Ingénierie 4,2 % » chez un employeur qui n'a pas de
+ * service d'ingénierie. Rien ne distinguait à l'écran un chiffre mesuré d'un
+ * chiffre inventé.
+ *
+ * Une série vide s'affiche désormais vide, avec la phrase que le serveur
+ * renvoie pour dire ce qui manque. C'est moins flatteur, et c'est vérifiable.
+ */
+function Serie({ cle, donnees, indispo, children }) {
+    const motif = indispo?.[cle];
+    const vide = !Array.isArray(donnees) || donnees.length === 0;
+
+    if (vide) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center text-center gap-2 px-6">
+                <Info size={20} className="text-slate-300" />
+                <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
+                    {motif || "Pas encore de donnée pour cet indicateur."}
+                </p>
+            </div>
+        );
+    }
+
+    // La carte a une hauteur fixe et le graphique occupe 100 % de son parent :
+    // une phrase ajoutée en frère déborderait. La colonne flexible lui laisse
+    // sa place en réduisant d'autant le graphique.
+    return (
+        <div className="h-full flex flex-col min-h-0">
+            <div className="flex-1 min-h-0">{children}</div>
+            {motif && (
+                <p className="text-[11px] text-amber-700 leading-snug pt-2 shrink-0">{motif}</p>
+            )}
+        </div>
+    );
+}
 
 export function Dashboard() {
     const { token, user } = useAuth();
@@ -109,6 +150,10 @@ export function Dashboard() {
             </div>
         );
     }
+
+    // Ce que le serveur dit ne pas savoir mesurer, et pourquoi. Les séries
+    // vides s'affichent avec cette phrase au lieu de valeurs inventées.
+    const indisponibles = analyticsData?.indisponibles || {};
 
     const turnoverByDept = analyticsData?.charts?.turnoverByDept || [];
     const timeToHireData = analyticsData?.charts?.timeToHireData || [];
@@ -353,17 +398,19 @@ export function Dashboard() {
                         </CardHeader>
                         <CardContent className="pl-0">
                             <div className="h-[300px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={genderPayGapData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dx={-10} />
-                                        <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                        <Bar dataKey="male" name="Salaire Moyen Hommes" fill="#78bc1b" radius={[4, 4, 0, 0]} />
-                                        <Bar dataKey="female" name="Salaire Moyen Femmes" fill="#ec4899" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                                <Serie cle="genderPayGapData" donnees={genderPayGapData} indispo={indisponibles}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={genderPayGapData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                            <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dx={-10} />
+                                            <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                            <Bar dataKey="male" name="Salaire Moyen Hommes" fill="#78bc1b" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="female" name="Salaire Moyen Femmes" fill="#ec4899" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </Serie>
                             </div>
                         </CardContent>
                     </Card>
@@ -478,15 +525,17 @@ export function Dashboard() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="h-[250px] w-full mt-2">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={turnoverByDept} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
-                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-                                                <XAxis type="number" hide />
-                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                                <Bar dataKey="rate" name="Rotation (%)" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={20} />
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                                        <Serie cle="turnoverByDept" donnees={turnoverByDept} indispo={indisponibles}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={turnoverByDept} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                                                    <XAxis type="number" hide />
+                                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                    <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                    <Bar dataKey="rate" name="Rotation (%)" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={20} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </Serie>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -504,15 +553,17 @@ export function Dashboard() {
                                 </CardHeader>
                                 <CardContent className="flex flex-col items-center justify-center">
                                     <div className="h-[250px] w-full mt-2">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <LineChart data={timeToHireData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                                <Line type="monotone" dataKey="days" name="Délai Moyen d'Embauche" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} />
-                                            </LineChart>
-                                        </ResponsiveContainer>
+                                        <Serie cle="timeToHireData" donnees={timeToHireData} indispo={indisponibles}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <LineChart data={timeToHireData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                    <Line type="monotone" dataKey="days" name="Délai Moyen d'Embauche" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </Serie>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -531,21 +582,23 @@ export function Dashboard() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="h-[250px] w-full mt-2">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={monthlyTurnover} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="colorTurnover" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                                                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                                <Area type="monotone" dataKey="rate" name="Rotation (%)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorTurnover)" />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
+                                        <Serie cle="monthlyTurnover" donnees={monthlyTurnover} indispo={indisponibles}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={monthlyTurnover} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id="colorTurnover" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                    <Area type="monotone" dataKey="rate" name="Rotation (%)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorTurnover)" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </Serie>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -564,18 +617,20 @@ export function Dashboard() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="h-[250px] w-full mt-2">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={agePyramidData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }} stackOffset="sign">
-                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-                                                <XAxis type="number" hide />
-                                                <YAxis dataKey="ageGroup" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                                <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
-                                                {/* To make a standard age pyramid, males are negative and females are positive, but Recharts handles it via stackOffset="sign" with data mapping, so we'll just stack them side-by-side or standard stacked for visual simplicity here */}
-                                                <Bar dataKey="male" name="Hommes" stackId="a" fill="#78bc1b" radius={[0, 0, 0, 0]} />
-                                                <Bar dataKey="female" name="Femmes" stackId="a" fill="#ec4899" radius={[0, 4, 4, 0]} />
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                                        <Serie cle="agePyramidData" donnees={agePyramidData} indispo={indisponibles}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={agePyramidData} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }} stackOffset="sign">
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                                                    <XAxis type="number" hide />
+                                                    <YAxis dataKey="ageGroup" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                    <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
+                                                    {/* To make a standard age pyramid, males are negative and females are positive, but Recharts handles it via stackOffset="sign" with data mapping, so we'll just stack them side-by-side or standard stacked for visual simplicity here */}
+                                                    <Bar dataKey="male" name="Hommes" stackId="a" fill="#78bc1b" radius={[0, 0, 0, 0]} />
+                                                    <Bar dataKey="female" name="Femmes" stackId="a" fill="#ec4899" radius={[0, 4, 4, 0]} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </Serie>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -594,25 +649,27 @@ export function Dashboard() {
                                 </CardHeader>
                                 <CardContent className="flex items-center justify-center">
                                     <div className="h-[250px] w-full mt-2">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={mobilityVsHiringData}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={90}
-                                                    paddingAngle={5}
-                                                    dataKey="value"
-                                                >
-                                                    {mobilityVsHiringData.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                                <Legend verticalAlign="middle" align="right" layout="vertical" wrapperStyle={{ fontSize: '12px' }} />
-                                            </PieChart>
-                                        </ResponsiveContainer>
+                                        <Serie cle="mobilityVsHiringData" donnees={mobilityVsHiringData} indispo={indisponibles}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={mobilityVsHiringData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={60}
+                                                        outerRadius={90}
+                                                        paddingAngle={5}
+                                                        dataKey="value"
+                                                    >
+                                                        {mobilityVsHiringData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                                    <Legend verticalAlign="middle" align="right" layout="vertical" wrapperStyle={{ fontSize: '12px' }} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </Serie>
                                     </div>
                                 </CardContent>
                             </Card>

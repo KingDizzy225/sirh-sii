@@ -6,13 +6,53 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { 
     TrendingUp, Users, DollarSign, Clock, Briefcase, AlertTriangle, ArrowUpRight, ArrowDownRight,
-    PieChart as PieIcon, BarChart3, Activity, BrainCircuit, Search, Sparkles, Send, Fingerprint
+    PieChart as PieIcon, BarChart3, Activity, BrainCircuit, Search, Sparkles, Send, Fingerprint, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api.js';
 
 // Refined Palette aligned with our new CSS variables
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308'];
+
+
+/**
+ * Enveloppe d'une série de données.
+ *
+ * Les graphiques recevaient des valeurs écrites en dur lorsque la donnée
+ * manquait — un turnover « Ingénierie 4,2 % » chez un employeur qui n'a pas de
+ * service d'ingénierie. Rien ne distinguait à l'écran un chiffre mesuré d'un
+ * chiffre inventé.
+ *
+ * Une série vide s'affiche désormais vide, avec la phrase que le serveur
+ * renvoie pour dire ce qui manque. C'est moins flatteur, et c'est vérifiable.
+ */
+function Serie({ cle, donnees, indispo, children }) {
+    const motif = indispo?.[cle];
+    const vide = !Array.isArray(donnees) || donnees.length === 0;
+
+    if (vide) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center text-center gap-2 px-6">
+                <Info size={20} className="text-slate-300" />
+                <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
+                    {motif || "Pas encore de donnée pour cet indicateur."}
+                </p>
+            </div>
+        );
+    }
+
+    // La carte a une hauteur fixe et le graphique occupe 100 % de son parent :
+    // une phrase ajoutée en frère déborderait. La colonne flexible lui laisse
+    // sa place en réduisant d'autant le graphique.
+    return (
+        <div className="h-full flex flex-col min-h-0">
+            <div className="flex-1 min-h-0">{children}</div>
+            {motif && (
+                <p className="text-[11px] text-amber-700 leading-snug pt-2 shrink-0">{motif}</p>
+            )}
+        </div>
+    );
+}
 
 export function Analytics() {
     const [data, setData] = useState(null);
@@ -34,22 +74,15 @@ export function Analytics() {
                 if (res.data && res.data.stats && res.data.charts) {
                     setData(res.data);
                 } else {
-                    // Fallback local if api.js returned the generic mock
-                    setData({
-                        stats: {
-                            totalEmployees: 150, activeEmployees: 142, globalTurnover: 4.2, 
-                            absenceRate: 2.1, payrollCount: 142, avgNetSalary: 450000, totalNetSalary: 63900000
-                        },
-                        charts: {
-                            turnoverByDept: [{name: 'Tech', rate: 4}, {name: 'RH', rate: 2}],
-                            salaryByDept: [{name: 'Tech', Moyenne: 500000, Total: 20000000}],
-                            contractTypes: [{name: 'CDI', value: 120}, {name: 'CDD', value: 22}],
-                            monthlyFlux: [{month: 'Jan', Entrées: 5, Départs: 2}],
-                            agePyramidData: [{ageGroup: '26-35', male: -35, female: 40}],
-                            genderPayGapData: [{department: 'Tech', male: 500, female: 480}],
-                            seniorityData: [{name: '1-3 ans', value: 45}]
-                        }
-                    });
+                    // Une réponse inattendue faisait afficher un effectif de 150
+                    // personnes, une masse salariale de 63,9 millions et sept
+                    // graphiques de valeurs inventées — chez un employeur qui
+                    // compte sept salariés. Mieux vaut dire que la lecture a
+                    // échoué que montrer l'entreprise d'un autre.
+                    throw new Error(
+                        "Le serveur a renvoyé des statistiques incomplètes. Aucun chiffre n'est affiché : "
+                        + "mieux vaut une page vide qu'un tableau de bord qui ne décrit pas votre entreprise."
+                    );
                 }
 
                 try {
@@ -79,31 +112,35 @@ export function Analytics() {
         setNlqResponse(null);
         
         try {
-            // Option 1 : Tenter d'utiliser l'API NLP Gemini (notre Concept 2) si elle est configurée
             const res = await api.post('/chat', { message: searchQuery });
             if (res.data && res.data.response) {
                 setNlqResponse(res.data.response);
             } else {
-                throw new Error("Fallback to mock");
+                setNlqResponse(
+                    "L'assistant n'a pas renvoyé de réponse. Rien n'est affiché à la place : "
+                    + "une analyse inventée serait indiscernable d'une analyse réelle."
+                );
             }
         } catch (error) {
-            // Option 2 : Fallback local riche si le vrai endpoint NLP n'est pas dispo
-            setTimeout(() => {
-                let mockResponse = "L'IA analyse vos données RH actuelles... Aucune corrélation critique n'a été détectée.";
-                const lowerQuery = searchQuery.toLowerCase();
-                
-                if (lowerQuery.includes("départ") || lowerQuery.includes("turnover") || lowerQuery.includes("risque")) {
-                    mockResponse = "📊 **Analyse Prédictive (Modèle IA)** :\n\n- **Risque Global** : Le risque de départ est modéré (+1.2% ce mois-ci).\n- **Département Critique** : L'équipe Technique affiche une probabilité de départ de 25% (cause principale identifiée : stagnation salariale).\n- **Recommandation** : Envisager une révision des primes de rétention pour les profils Tech Seniors.";
-                } else if (lowerQuery.includes("équité") || lowerQuery.includes("salaire") || lowerQuery.includes("salariale")) {
-                    mockResponse = "💰 **Analyse de l'Équité Salariale** :\n\n- L'écart global hommes-femmes est actuellement de **4.1%** à l'avantage des hommes.\n- Cet écart s'est réduit de 0.5% depuis le trimestre dernier.\n- **Action requise** : Une enveloppe de rattrapage de 1.2M FCFA serait nécessaire pour atteindre la parité parfaite dans le département RH.";
-                } else if (lowerQuery.includes("effectif") || lowerQuery.includes("évolution")) {
-                    mockResponse = "📈 **Évolution des Effectifs** :\n\n- **Tendance** : Croissance nette positive. +12 recrutements prévus d'ici la fin d'année.\n- Le délai moyen d'embauche est descendu à 18 jours (très performant).";
-                }
-                
-                setNlqResponse(mockResponse);
-            }, 1500);
+            /*
+             * Quand l'assistant ne répondait pas — ce qui est le cas tant que la
+             * clé d'accès n'est pas rattachée à un espace de travail —, cette
+             * page fabriquait une réponse et la présentait sous le titre
+             * « Analyse prédictive (Modèle IA) » : un risque de départ de 25 %
+             * pour « l'équipe Technique », un écart salarial de 4,1 %, une
+             * enveloppe de rattrapage de 1,2 million de FCFA.
+             *
+             * Aucun de ces chiffres n'existait. C'étaient des phrases écrites
+             * dans le code, rendues au hasard des mots-clés de la question, à
+             * quelqu'un qui interrogeait ses propres données. L'indisponibilité
+             * se dit ; elle ne se comble pas.
+             */
+            setNlqResponse(
+                "L'assistant est indisponible : " + (error.message || 'le service ne répond pas')
+                + ". Aucune analyse n'est produite tant qu'il ne répond pas."
+            );
         } finally {
-            setTimeout(() => setIsSearching(false), 1500); // sync with fallback timeout
+            setIsSearching(false);
             setSearchQuery('');
         }
     };
@@ -117,6 +154,7 @@ export function Analytics() {
     if (error) return <div className="p-8 text-rose-500 font-bold bg-rose-50 rounded-xl m-8 border border-rose-200">Erreur critique: {error}</div>;
 
     const { stats, charts } = data;
+    const indisponibles = data.indisponibles || {};
 
     // Animation Variants
     const containerVariants = {
@@ -334,15 +372,17 @@ export function Analytics() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="h-[350px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={charts.salaryByDept} layout="vertical" margin={{ left: 40, right: 20 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                                    <XAxis type="number" hide />
-                                                    <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} />
-                                                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', padding: '12px' }} />
-                                                    <Bar dataKey="Total" fill="var(--primary)" radius={[0, 8, 8, 0]} barSize={24} />
-                                                </BarChart>
-                                            </ResponsiveContainer>
+                                            <Serie cle="salaryByDept" donnees={charts.salaryByDept} indispo={indisponibles}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={charts.salaryByDept} layout="vertical" margin={{ left: 40, right: 20 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                        <XAxis type="number" hide />
+                                                        <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} />
+                                                        <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)', padding: '12px' }} />
+                                                        <Bar dataKey="Total" fill="var(--primary)" radius={[0, 8, 8, 0]} barSize={24} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </Serie>
                                         </CardContent>
                                     </Card>
                                 </motion.div>
@@ -357,21 +397,23 @@ export function Analytics() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="h-[350px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={charts.turnoverByDept} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                                    <defs>
-                                                        <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4}/>
-                                                            <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
-                                                        </linearGradient>
-                                                    </defs>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600, fontSize: 12}} dy={10} />
-                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                                                    <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
-                                                    <Area type="monotone" dataKey="rate" stroke="#f43f5e" strokeWidth={4} fillOpacity={1} fill="url(#colorRate)" />
-                                                </AreaChart>
-                                            </ResponsiveContainer>
+                                            <Serie cle="turnoverByDept" donnees={charts.turnoverByDept} indispo={indisponibles}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <AreaChart data={charts.turnoverByDept} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                        <defs>
+                                                            <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4}/>
+                                                                <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600, fontSize: 12}} dy={10} />
+                                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                                                        <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                        <Area type="monotone" dataKey="rate" stroke="#f43f5e" strokeWidth={4} fillOpacity={1} fill="url(#colorRate)" />
+                                                    </AreaChart>
+                                                </ResponsiveContainer>
+                                            </Serie>
                                         </CardContent>
                                     </Card>
                                 </motion.div>
@@ -386,17 +428,19 @@ export function Analytics() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="h-[350px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={charts.monthlyFlux} margin={{ top: 20 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
-                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                                                    <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
-                                                    <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: '20px' }} iconType="circle" />
-                                                    <Bar dataKey="Entrées" fill="#10b981" radius={[8, 8, 0, 0]} barSize={20} />
-                                                    <Bar dataKey="Départs" fill="#f43f5e" radius={[8, 8, 0, 0]} barSize={20} />
-                                                </BarChart>
-                                            </ResponsiveContainer>
+                                            <Serie cle="monthlyFlux" donnees={charts.monthlyFlux} indispo={indisponibles}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={charts.monthlyFlux} margin={{ top: 20 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
+                                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                                                        <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                        <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: '20px' }} iconType="circle" />
+                                                        <Bar dataKey="Entrées" fill="#10b981" radius={[8, 8, 0, 0]} barSize={20} />
+                                                        <Bar dataKey="Départs" fill="#f43f5e" radius={[8, 8, 0, 0]} barSize={20} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </Serie>
                                         </CardContent>
                                     </Card>
                                 </motion.div>
@@ -411,26 +455,28 @@ export function Analytics() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="h-[350px] flex justify-center">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie
-                                                        data={charts.contractTypes}
-                                                        cx="50%"
-                                                        cy="50%"
-                                                        innerRadius={80}
-                                                        outerRadius={120}
-                                                        paddingAngle={4}
-                                                        dataKey="value"
-                                                        stroke="none"
-                                                    >
-                                                        {charts.contractTypes.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                        ))}
-                                                    </Pie>
-                                                    <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
-                                                    <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                                                </PieChart>
-                                            </ResponsiveContainer>
+                                            <Serie cle="contractTypes" donnees={charts.contractTypes} indispo={indisponibles}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={charts.contractTypes}
+                                                            cx="50%"
+                                                            cy="50%"
+                                                            innerRadius={80}
+                                                            outerRadius={120}
+                                                            paddingAngle={4}
+                                                            dataKey="value"
+                                                            stroke="none"
+                                                        >
+                                                            {charts.contractTypes.map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                            ))}
+                                                        </Pie>
+                                                        <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                        <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            </Serie>
                                         </CardContent>
                                     </Card>
                                 </motion.div>
@@ -445,17 +491,19 @@ export function Analytics() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="h-[350px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={charts.agePyramidData} layout="vertical" stackOffset="sign" margin={{ left: 10, right: 10 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                                    <XAxis type="number" hide />
-                                                    <YAxis dataKey="ageGroup" type="category" width={60} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} />
-                                                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} formatter={(value) => Math.abs(value)} />
-                                                    <Legend verticalAlign="top" align="right" iconType="circle" />
-                                                    <Bar dataKey="male" name="Hommes" fill="#3b82f6" stackId="stack" radius={[8, 0, 0, 8]} barSize={24} />
-                                                    <Bar dataKey="female" name="Femmes" fill="#ec4899" stackId="stack" radius={[0, 8, 8, 0]} barSize={24} />
-                                                </BarChart>
-                                            </ResponsiveContainer>
+                                            <Serie cle="agePyramidData" donnees={charts.agePyramidData} indispo={indisponibles}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={charts.agePyramidData} layout="vertical" stackOffset="sign" margin={{ left: 10, right: 10 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                        <XAxis type="number" hide />
+                                                        <YAxis dataKey="ageGroup" type="category" width={60} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} />
+                                                        <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} formatter={(value) => Math.abs(value)} />
+                                                        <Legend verticalAlign="top" align="right" iconType="circle" />
+                                                        <Bar dataKey="male" name="Hommes" fill="#3b82f6" stackId="stack" radius={[8, 0, 0, 8]} barSize={24} />
+                                                        <Bar dataKey="female" name="Femmes" fill="#ec4899" stackId="stack" radius={[0, 8, 8, 0]} barSize={24} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </Serie>
                                         </CardContent>
                                     </Card>
                                 </motion.div>
@@ -470,19 +518,21 @@ export function Analytics() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="h-[350px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={charts.seniorityData || []} margin={{ top: 20 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
-                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                                                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
-                                                    <Bar dataKey="value" name="Employés" fill="#06b6d4" radius={[8, 8, 0, 0]} barSize={32}>
-                                                        {charts.seniorityData?.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={COLORS[(index+1) % COLORS.length]} />
-                                                        ))}
-                                                    </Bar>
-                                                </BarChart>
-                                            </ResponsiveContainer>
+                                            <Serie cle="seniorityData" donnees={charts.seniorityData} indispo={indisponibles}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={charts.seniorityData || []} margin={{ top: 20 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
+                                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                                                        <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                        <Bar dataKey="value" name="Employés" fill="#06b6d4" radius={[8, 8, 0, 0]} barSize={32}>
+                                                            {charts.seniorityData?.map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={COLORS[(index+1) % COLORS.length]} />
+                                                            ))}
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </Serie>
                                         </CardContent>
                                     </Card>
                                 </motion.div>
@@ -497,17 +547,19 @@ export function Analytics() {
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="h-[400px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={charts.genderPayGapData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                                    <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
-                                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                                                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
-                                                    <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
-                                                    <Bar dataKey="male" name="Hommes (Moyenne en kFCFA)" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
-                                                    <Bar dataKey="female" name="Femmes (Moyenne en kFCFA)" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={24} />
-                                                </BarChart>
-                                            </ResponsiveContainer>
+                                            <Serie cle="genderPayGapData" donnees={charts.genderPayGapData} indispo={indisponibles}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={charts.genderPayGapData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                                        <XAxis dataKey="department" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontWeight: 600}} dy={10} />
+                                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                                                        <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }} />
+                                                        <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
+                                                        <Bar dataKey="male" name="Hommes (Moyenne en kFCFA)" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
+                                                        <Bar dataKey="female" name="Femmes (Moyenne en kFCFA)" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={24} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </Serie>
                                         </CardContent>
                                     </Card>
                                 </motion.div>

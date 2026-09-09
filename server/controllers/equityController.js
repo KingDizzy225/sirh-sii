@@ -1,26 +1,12 @@
 const prisma = require('../prismaClient');
 
 /**
- * Normalise le genre déclaré sur la fiche employé.
- *
- * Le champ est libre et facultatif ; il vaut « Non spécifié » par défaut. Tout
- * ce qui n'est pas reconnu comme féminin ou masculin est classé « inconnu » et
- * exclu des comparaisons : une valeur non renseignée ne doit ni être devinée,
- * ni être versée arbitrairement dans l'un des deux groupes.
+ * La lecture du genre et le seuil de comparaison vivent dans lib/demographie.js :
+ * le tableau de bord analytique en a besoin lui aussi, et deux définitions
+ * concurrentes finiraient par donner deux écarts salariaux différents dans la
+ * même application, sans qu'on sache lequel croire.
  */
-/**
- * Nombre minimal de titulaires d'un poste pour qu'une comparaison individuelle
- * ait un sens. Surchargeable pour une petite structure, où trois personnes sur
- * un même intitulé sont déjà rares.
- */
-const EFFECTIF_MIN_COMPARAISON = parseInt(process.env.EFFECTIF_MIN_EQUITE, 10) || 3;
-
-const normaliserGenre = (valeur) => {
-    const v = String(valeur || '').trim().toLowerCase();
-    if (['f', 'femme', 'féminin', 'feminin', 'female'].includes(v)) return 'F';
-    if (['m', 'homme', 'masculin', 'male'].includes(v)) return 'M';
-    return null;
-};
+const { normaliserGenre, EFFECTIF_MIN_COMPARAISON } = require('../lib/demographie');
 
 exports.getPayEquityData = async (req, res) => {
     try {

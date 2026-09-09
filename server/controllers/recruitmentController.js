@@ -202,7 +202,12 @@ exports.updateApplicantStatus = async (req, res) => {
             const result = await prisma.$transaction(async (tx) => {
                 const updatedApp = await tx.applicant.update({
                     where: { id },
-                    data: { status }
+                    // La date d'aboutissement est posée ici et nulle part
+                    // ailleurs : c'est elle qui rend le délai de recrutement
+                    // mesurable. Une candidature repassée au statut « recrutée »
+                    // conserve sa première date, sinon le délai s'allongerait
+                    // à chaque clic.
+                    data: { status, hiredAt: applicant.hiredAt || new Date() }
                 });
 
                 // Evite les doublons si cliqué multiples fois

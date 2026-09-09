@@ -1,5 +1,6 @@
 const prisma = require('../prismaClient');
 const { getGenerativeModel } = require("../lib/claudeAI");
+const { normaliserGenre, EFFECTIF_MIN_COMPARAISON, salaireConnu } = require('../lib/demographie');
 const aiModel = getGenerativeModel();
 
 const getRatingScore = (rating) => {
@@ -72,30 +73,63 @@ exports.getDashboardAnalytics = async (req, res) => {
             Montant: Math.round(total)
         }));
 
-        // 5. Répartition types de postes (CDI/CDD/Stage via JobOffer)
-        const jobOffers = await prisma.jobOffer.findMany({ select: { type: true } });
+        // 5. Répartition des contrats.
+        //
+        // Cette série comptait les types des *offres d'emploi* publiées, sous un
+        // intitulé qui annonce la répartition des contrats du personnel. Un
+        // lecteur y voyait l'effectif ; il regardait le plan de recrutement.
+        // Elle est désormais lue sur les fiches salariés.
+        const salariesActifs = await prisma.employee.findMany({
+            where: { status: 'ACTIVE' },
+            select: { contractType: true }
+        });
         const contractTypeMap = {};
-        jobOffers.forEach(j => {
-            contractTypeMap[j.type] = (contractTypeMap[j.type] || 0) + 1;
+        salariesActifs.forEach((e) => {
+            const type = e.contractType || 'Non renseigné';
+            contractTypeMap[type] = (contractTypeMap[type] || 0) + 1;
         });
         const contractTypes = Object.entries(contractTypeMap).map(([name, value]) => ({ name, value }));
 
-        // 6. Flux embauches (6 derniers mois)
+        // 6. Flux mensuel des entrées et des sorties (6 derniers mois).
+        //
+        // Les sorties étaient rangées au mois de l'*embauche* : un salarié
+        // recruté en mars et parti en août apparaissait comme un départ de
+        // mars. Le graphique montrait ainsi des départs avant l'arrivée des
+        // intéressés. Chaque événement est désormais daté par ce qui le date :
+        // l'entrée par la date d'embauche, la sortie par la date de sortie.
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-        const recentHires = await prisma.employee.findMany({
-            where: { hireDate: { gte: sixMonthsAgo } },
-            select: { hireDate: true, status: true }
-        });
-        const monthLabels = ['fr-FR'];
-        const hiresMap = {};
-        recentHires.forEach(e => {
-            const label = new Date(e.hireDate).toLocaleDateString('fr-FR', { month: 'short' });
-            if (!hiresMap[label]) hiresMap[label] = { Entrées: 0, Départs: 0 };
-            if (e.status === 'TERMINATED') hiresMap[label].Départs++;
-            else hiresMap[label].Entrées++;
-        });
-        const monthlyFlux = Object.entries(hiresMap).map(([month, v]) => ({ month, ...v }));
+        sixMonthsAgo.setDate(1);
+        sixMonthsAgo.setHours(0, 0, 0, 0);
+
+        const [entrees, sorties] = await Promise.all([
+            prisma.employee.findMany({
+                where: { hireDate: { gte: sixMonthsAgo } }, select: { hireDate: true }
+            }),
+            prisma.employee.findMany({
+                where: { exitDate: { gte: sixMonthsAgo } }, select: { exitDate: true }
+            })
+        ]);
+
+        // Les mois sont posés d'avance, du plus ancien au plus récent : un mois
+        // sans mouvement doit apparaître à zéro, non disparaître de la courbe.
+        const moisFlux = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(1);
+            d.setMonth(d.getMonth() - i);
+            moisFlux.push({
+                cle: `${d.getFullYear()}-${d.getMonth()}`,
+                month: d.toLocaleDateString('fr-FR', { month: 'short' }),
+                Entrées: 0,
+                Départs: 0
+            });
+        }
+        const parCle = new Map(moisFlux.map((m) => [m.cle, m]));
+        const cleDe = (v) => { const d = new Date(v); return `${d.getFullYear()}-${d.getMonth()}`; };
+        entrees.forEach((e) => { const m = parCle.get(cleDe(e.hireDate)); if (m) m.Entrées++; });
+        sorties.forEach((e) => { const m = parCle.get(cleDe(e.exitDate)); if (m) m.Départs++; });
+        const monthlyFlux = moisFlux.map(({ cle, ...reste }) => reste);
 
         // 7. Absentéisme réel (jours de congés PENDING + APPROVED ce mois)
         const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
@@ -179,15 +213,163 @@ exports.getDashboardAnalytics = async (req, res) => {
             female: ageGroups[ageGroup].female
         }));
 
-        // Check if there's any data, if not use fallback to avoid empty charts for demo
-        const hasAgeData = employeesForAge.length > 0;
-        const finalAgePyramidData = hasAgeData ? agePyramidData : [
-            { ageGroup: '18-25', male: -15, female: 12 },
-            { ageGroup: '26-35', male: -35, female: 40 },
-            { ageGroup: '36-45', male: -25, female: 22 },
-            { ageGroup: '46-55', male: -10, female: 8 },
-            { ageGroup: '56+', male: -5, female: 3 }
-        ];
+        // La pyramide se lit sur les dates de naissance renseignées. Elle
+        // reposait sur un jeu de valeurs inventées dès que ce n'était pas le
+        // cas : un effectif de 145 personnes s'affichait chez un employeur qui
+        // en compte sept.
+        const finalAgePyramidData = employeesForAge.length > 0 ? agePyramidData : [];
+
+        /**
+         * 9 bis. Écart de rémunération entre femmes et hommes, par service.
+         *
+         * Cette série était écrite en dur — « Ingénierie 450 / 430 », pour des
+         * services qui n'existent pas nécessairement — et s'affichait en toutes
+         * circonstances, mesurée ou non. C'est le chiffre le plus dangereux que
+         * l'application pouvait produire : un écart salarial se cite en réunion,
+         * puis en comité, puis dans un rapport.
+         *
+         * Il est désormais calculé, et soumis à un seuil : sous
+         * EFFECTIF_MIN_COMPARAISON personnes d'un genre dans un service, la
+         * moyenne du groupe revient à divulguer une rémunération individuelle.
+         * Mieux vaut alors ne rien publier.
+         */
+        const salariesRemuneres = await prisma.employee.findMany({
+            where: { status: 'ACTIVE' },
+            select: {
+                department: true, gender: true, baseSalary: true,
+                payrolls: { orderBy: { period: 'desc' }, take: 1, select: { baseSalary: true } }
+            }
+        });
+
+        const parService = new Map();
+        const couvertureEcart = { retenus: 0, sansGenre: 0, sansSalaire: 0 };
+        for (const emp of salariesRemuneres) {
+            const genre = normaliserGenre(emp.gender);
+            if (!genre) { couvertureEcart.sansGenre++; continue; }
+            const salaire = salaireConnu(emp);
+            if (salaire === 0) { couvertureEcart.sansSalaire++; continue; }
+
+            const service = emp.department || 'Non renseigné';
+            if (!parService.has(service)) {
+                parService.set(service, { M: [], F: [] });
+            }
+            parService.get(service)[genre].push(salaire);
+            couvertureEcart.retenus++;
+        }
+
+        const moyenne = (t) => Math.round(t.reduce((a, b) => a + b, 0) / t.length);
+        const genderPayGapData = [...parService.entries()]
+            .filter(([, g]) => g.M.length >= EFFECTIF_MIN_COMPARAISON
+                            && g.F.length >= EFFECTIF_MIN_COMPARAISON)
+            .map(([department, g]) => ({
+                department,
+                male: moyenne(g.M),
+                female: moyenne(g.F),
+                effectifM: g.M.length,
+                effectifF: g.F.length
+            }));
+
+        const servicesSousSeuil = parService.size - genderPayGapData.length;
+
+        /**
+         * 9 ter. Turnover mensuel des douze derniers mois.
+         *
+         * Écrit en dur lui aussi (« Jan 2,1 % … Juin 1,5 % »). Il se calcule
+         * pourtant : les sorties du mois rapportées à l'effectif du mois.
+         */
+        const douzeMois = new Date();
+        douzeMois.setDate(1);
+        douzeMois.setHours(0, 0, 0, 0);
+        douzeMois.setMonth(douzeMois.getMonth() - 11);
+
+        const sortiesAnnee = await prisma.employee.findMany({
+            where: { exitDate: { gte: douzeMois } }, select: { exitDate: true }
+        });
+
+        const moisTurnover = [];
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(1);
+            d.setMonth(d.getMonth() - i);
+            moisTurnover.push({
+                cle: `${d.getFullYear()}-${d.getMonth()}`,
+                name: d.toLocaleDateString('fr-FR', { month: 'short' }),
+                sorties: 0
+            });
+        }
+        const turnoverParCle = new Map(moisTurnover.map((m) => [m.cle, m]));
+        sortiesAnnee.forEach((e) => {
+            const d = new Date(e.exitDate);
+            const m = turnoverParCle.get(`${d.getFullYear()}-${d.getMonth()}`);
+            if (m) m.sorties++;
+        });
+
+        // Le dénominateur est l'effectif présent : sans lui, un départ sur cinq
+        // personnes et un départ sur cinq cents donneraient le même taux.
+        const monthlyTurnover = activeEmployees > 0
+            ? moisTurnover.map(({ name, sorties }) => ({
+                name, rate: parseFloat(((sorties / activeEmployees) * 100).toFixed(1)), sorties
+            }))
+            : [];
+
+        /**
+         * 9 quater. Mobilité interne contre recrutement externe.
+         *
+         * Une part fixe de 35 / 65 s'affichait, quelle que soit la réalité.
+         * L'historisation des situations, en place depuis le 8 septembre,
+         * permet enfin de la mesurer : un changement de poste consigné est une
+         * mobilité, une date d'embauche est un recrutement.
+         */
+        const [mobilites, recrutements] = await Promise.all([
+            prisma.situationEmployee.count({
+                where: {
+                    effectiveFrom: { gte: douzeMois },
+                    source: 'OBSERVEE',
+                    positionTitle: { not: null }
+                }
+            }),
+            prisma.employee.count({ where: { hireDate: { gte: douzeMois } } })
+        ]);
+
+        const totalPourvus = mobilites + recrutements;
+        const mobilityVsHiringData = totalPourvus > 0 ? [
+            { name: 'Mobilité interne', value: mobilites, color: '#10b981' },
+            { name: 'Recrutement externe', value: recrutements, color: '#3b82f6' }
+        ] : [];
+
+        /**
+         * 9 quinquies. Délai de recrutement.
+         *
+         * Six mois de valeurs écrites en dur (« 24, 22, 28, 21, 19, 18 jours »),
+         * affichées sans condition. Le délai n'est pas calculable en l'état : la
+         * candidature porte sa date de dépôt et son statut, jamais la date à
+         * laquelle elle est passée à « recrutée ».
+         *
+         * `hiredAt` est ajouté à la candidature et renseigné au passage au
+         * statut « Hired ». L'indicateur restera donc vide jusqu'au premier
+         * recrutement postérieur à cette mise en service — ce qui est la
+         * réponse exacte, là où six nombres inventés ne l'étaient pas.
+         */
+        const recrutes = await prisma.applicant.findMany({
+            where: { status: 'Hired', hiredAt: { not: null } },
+            select: { appliedDate: true, hiredAt: true },
+            orderBy: { hiredAt: 'asc' }
+        });
+
+        const delaisParMois = new Map();
+        for (const c of recrutes) {
+            const jours = Math.round(
+                (new Date(c.hiredAt) - new Date(c.appliedDate)) / 86400000
+            );
+            if (jours < 0) continue; // dossier incohérent : ignoré, jamais corrigé d'office
+            const d = new Date(c.hiredAt);
+            const cle = d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+            if (!delaisParMois.has(cle)) delaisParMois.set(cle, []);
+            delaisParMois.get(cle).push(jours);
+        }
+        const timeToHireData = [...delaisParMois.entries()].map(([month, jours]) => ({
+            month, days: moyenne(jours), recrutements: jours.length
+        }));
 
         // 10. Répartition par Ancienneté
         const seniorityGroups = {
@@ -198,10 +380,6 @@ exports.getDashboardAnalytics = async (req, res) => {
             '10+ ans': 0
         };
 
-        employeesForAge.forEach(emp => {
-            // We need hireDate which isn't in employeesForAge currently! Let's fetch it.
-        });
-        
         // `hireDate` est obligatoire au schéma : Prisma rejette `not: null` sur
         // un champ non nullable, et l'ensemble du tableau de bord analytique
         // répondait en erreur serveur. Le filtre était de toute façon inutile.
@@ -228,13 +406,7 @@ exports.getDashboardAnalytics = async (req, res) => {
             value: seniorityGroups[name]
         }));
 
-        const finalSeniorityData = employeesForSeniority.length > 0 ? seniorityData : [
-            { name: '0-1 an', value: 15 },
-            { name: '1-3 ans', value: 30 },
-            { name: '3-5 ans', value: 20 },
-            { name: '5-10 ans', value: 10 },
-            { name: '10+ ans', value: 5 }
-        ];
+        const finalSeniorityData = employeesForSeniority.length > 0 ? seniorityData : [];
 
         res.status(200).json({
             stats: {
@@ -248,48 +420,78 @@ exports.getDashboardAnalytics = async (req, res) => {
                 variations
             },
             charts: {
-                turnoverByDept: turnoverByDept.length > 0 ? turnoverByDept : [
-                    { name: 'Ingénierie', rate: 4.2 }, { name: 'Ventes', rate: 12.5 }
-                ],
-                salaryByDept: salaryByDept.length > 0 ? salaryByDept : [
-                    { name: 'Ingénierie', Moyenne: 450000 }, { name: 'RH', Moyenne: 320000 }
-                ],
-                expensesByDept: expensesByDept.length > 0 ? expensesByDept : [],
-                contractTypes: contractTypes.length > 0 ? contractTypes : [
-                    { name: 'CDI', value: 3 }, { name: 'CDD', value: 2 }
-                ],
-                monthlyFlux: monthlyFlux.length > 0 ? monthlyFlux : [
-                    { month: 'Mars', Entrées: 2, Départs: 0 }
-                ],
-                timeToHireData: [
-                    { month: 'Jan', days: 24 },
-                    { month: 'Fév', days: 22 },
-                    { month: 'Mar', days: 28 },
-                    { month: 'Avr', days: 21 },
-                    { month: 'Mai', days: 19 },
-                    { month: 'Juin', days: 18 }
-                ],
-                genderPayGapData: [
-                    { department: 'Ingénierie', male: 450, female: 430 },
-                    { department: 'RH', male: 310, female: 320 },
-                    { department: 'Ventes', male: 400, female: 380 },
-                    { department: 'Marketing', male: 350, female: 340 },
-                    { department: 'Finance', male: 390, female: 385 }
-                ],
-                monthlyTurnover: [
-                    { name: 'Jan', rate: 2.1 },
-                    { name: 'Fév', rate: 2.3 },
-                    { name: 'Mar', rate: 2.5 },
-                    { name: 'Avr', rate: 2.2 },
-                    { name: 'Mai', rate: 1.8 },
-                    { name: 'Juin', rate: 1.5 }
-                ],
+                turnoverByDept,
+                salaryByDept,
+                expensesByDept,
+                contractTypes,
+                monthlyFlux,
+                timeToHireData,
+                genderPayGapData,
+                monthlyTurnover,
                 agePyramidData: finalAgePyramidData,
-                mobilityVsHiringData: [
-                    { name: 'Mobilité Interne', value: 35, color: '#10b981' },
-                    { name: 'Recrutement Externe', value: 65, color: '#3b82f6' }
-                ],
+                mobilityVsHiringData,
                 seniorityData: finalSeniorityData
+            },
+            /**
+             * Ce que l'application ne sait pas mesurer, et pourquoi.
+             *
+             * Onze séries recevaient jusqu'ici des valeurs écrites en dur quand
+             * la donnée manquait, et quatre d'entre elles s'affichaient ainsi
+             * en toutes circonstances. Rien ne distinguait à l'écran un chiffre
+             * mesuré d'un chiffre inventé.
+             *
+             * Une série vide s'affiche désormais vide, accompagnée de la phrase
+             * qui dit ce qui manque. C'est moins flatteur et c'est vérifiable.
+             */
+            indisponibles: Object.fromEntries(Object.entries({
+                turnoverByDept: turnoverByDept.length === 0
+                    ? "Aucun service ne compte encore de salarié dont le dossier soit exploitable."
+                    : null,
+                salaryByDept: salaryByDept.length === 0
+                    ? "Aucun bulletin de paie n'est enregistré : la masse salariale par service n'est pas calculable."
+                    : null,
+                expensesByDept: expensesByDept.length === 0
+                    ? "Aucune note de frais n'a encore été saisie."
+                    : null,
+                contractTypes: contractTypes.length === 0
+                    ? "Aucun salarié actif : la répartition des contrats est sans objet."
+                    : null,
+                // Six mois à zéro sont une mesure, pas une panne d'affichage :
+                // la courbe reste, la phrase dit qu'elle est juste.
+                monthlyFlux: monthlyFlux.every((m) => m.Entrées === 0 && m.Départs === 0)
+                    ? "Aucune entrée ni sortie sur les six derniers mois."
+                    : null,
+                timeToHireData: timeToHireData.length === 0
+                    ? "Le délai de recrutement se mesure depuis la mise en service du suivi : "
+                      + "il apparaîtra au premier recrutement conclu dans l'application."
+                    : null,
+                genderPayGapData: genderPayGapData.length === 0
+                    ? (couvertureEcart.retenus === 0
+                        ? "Écart non calculable : ni genre ni salaire de référence ne sont renseignés sur les fiches."
+                        : `Aucun service ne compte au moins ${EFFECTIF_MIN_COMPARAISON} femmes `
+                          + `et ${EFFECTIF_MIN_COMPARAISON} hommes. Publier une moyenne sous ce seuil `
+                          + "reviendrait à divulguer une rémunération individuelle.")
+                    : (servicesSousSeuil > 0
+                        ? `${servicesSousSeuil} service(s) sont écartés du graphique, faute d'un effectif `
+                          + "suffisant dans chaque groupe pour qu'une moyenne ne désigne pas quelqu'un."
+                        : null),
+                monthlyTurnover: monthlyTurnover.length === 0
+                    ? "Aucun salarié actif : le turnover n'a pas de dénominateur."
+                    : null,
+                agePyramidData: finalAgePyramidData.length === 0
+                    ? "Aucune date de naissance n'est renseignée sur les fiches salariés."
+                    : null,
+                mobilityVsHiringData: mobilityVsHiringData.length === 0
+                    ? "Ni changement de poste ni embauche sur les douze derniers mois."
+                    : null,
+                seniorityData: finalSeniorityData.length === 0
+                    ? "Aucun salarié actif."
+                    : null
+            }).filter(([, motif]) => motif !== null)),
+            couverture: {
+                ecartSalarial: couvertureEcart,
+                servicesSousSeuil,
+                effectifMinComparaison: EFFECTIF_MIN_COMPARAISON
             }
         });
     } catch (error) {

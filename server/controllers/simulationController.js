@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const { salaireConnu } = require('../lib/demographie');
 
 // ----------------------------------------------------
 // SIMULATION
@@ -30,8 +31,14 @@ exports.createSimulation = async (req, res) => {
             const idMap = new Map();
 
             // Pass 1: Create nodes (Parallelized)
+            //
+            // Un salarié sans bulletin se voyait attribuer 500 000 F. Ce montant
+            // supposé entrait ensuite dans la masse salariale simulée, où plus
+            // rien ne le distinguait d'un salaire réel : l'arbitrage budgétaire
+            // portait sur un total en partie inventé. La fiche fait désormais
+            // foi, le bulletin sert de repli, et l'inconnu vaut zéro.
             const nodeCreationPromises = allEmployees.map(emp => {
-                const monthlySalary = emp.payrolls.length > 0 ? emp.payrolls[0].baseSalary : 500000;
+                const monthlySalary = salaireConnu(emp);
                 return prisma.orgSimulationNode.create({
                     data: {
                         simulationId: simulation.id,
