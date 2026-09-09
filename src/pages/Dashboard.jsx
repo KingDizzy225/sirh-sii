@@ -162,38 +162,34 @@ export function Dashboard() {
     const agePyramidData = analyticsData?.charts?.agePyramidData || [];
     const mobilityVsHiringData = analyticsData?.charts?.mobilityVsHiringData || [];
 
+    /**
+     * Vignettes du tableau de bord.
+     *
+     * Trois valeurs y étaient écrites en dur — un turnover de 3,2 %, douze
+     * recrutements, une équipe de huit personnes — affichées à côté de
+     * chiffres réels sans que rien ne les distingue.
+     *
+     * Les branches « manager » et « salarié » ont disparu avec leurs comptes :
+     * l'application est réservée aux ressources humaines, les salariés passent
+     * par le portail public.
+     */
     const getStatsByRole = () => {
-        const role = user?.role;
-        const baseStats = [
-            { title: 'Employés', value: analyticsData?.totalEmployees || 0, change: 'Actif', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-            { title: 'Congés', value: analyticsData?.activeLeaves || 0, change: 'Aujourd\'hui', icon: Timer, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-        ];
-
-        if (role === 'HR' || role === 'ADMIN') {
-            return [
-                ...baseStats,
-                { title: 'Frais', value: analyticsData?.pendingExpenses || 0, change: 'À valider', icon: Activity, color: 'text-rose-600', bg: 'bg-rose-100' },
-                { title: 'Demandes Portal', value: analyticsData?.pendingTickets || 0, change: 'Self-Service', icon: Inbox, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-                { title: 'Turnover', value: '3.2%', change: 'Annuel', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-100' },
-                { title: 'Recrutements', value: '12', change: 'En cours', icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100' },
-            ];
-        }
-
-        if (role === 'MANAGER') {
-            return [
-                ...baseStats,
-                { title: 'Mon Équipe', value: '8', change: 'Membres', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-                { title: 'Approbations', value: '3', change: 'En attente', icon: CheckCircle2, color: 'text-amber-600', bg: 'bg-amber-100' },
-                { title: 'Performance', value: '4.2/5', change: 'Moyenne', icon: Star, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-            ];
-        }
-
-        // Default / Employee
+        const avancees = analyticsData?.advancedStats;
         return [
-            { title: 'Mes Congés', value: '14j', change: 'Restant', icon: Timer, color: 'text-blue-600', bg: 'bg-blue-100' },
-            { title: 'Mes Frais', value: '0', change: 'Payés', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-            { title: 'Formations', value: '2', change: 'À suivre', icon: GraduationCap, color: 'text-purple-600', bg: 'bg-purple-100' },
-            { title: 'Engagement', value: '9/10', change: 'Score Pulse', icon: HeartPulse, color: 'text-rose-600', bg: 'bg-rose-100' },
+            { title: 'Salariés', value: analyticsData?.totalEmployees ?? 0, change: 'Actifs', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+            { title: 'Congés', value: analyticsData?.activeLeaves ?? 0, change: 'Aujourd\'hui', icon: Timer, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+            { title: 'Frais', value: analyticsData?.pendingExpenses ?? 0, change: 'À valider', icon: Activity, color: 'text-rose-600', bg: 'bg-rose-100' },
+            { title: 'Demandes du portail', value: analyticsData?.pendingTickets ?? 0, change: 'À traiter', icon: Inbox, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+            {
+                title: 'Turnover',
+                value: avancees?.globalTurnover != null ? `${avancees.globalTurnover} %` : '—',
+                change: 'Depuis la mise en service', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-100'
+            },
+            {
+                title: 'Offres ouvertes',
+                value: avancees?.offresOuvertes ?? 0,
+                change: 'Recrutement', icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100'
+            }
         ];
     };
 

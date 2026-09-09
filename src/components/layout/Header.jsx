@@ -6,10 +6,14 @@ import { ServerStatus } from '../ui/ServerStatus';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-const getDomainsForRole = (role) => {
-    // Application is exclusively for HR Professionals
-    return ['Accueil', 'Mon Espace', 'Intelligence RH', 'Pilotage RH', 'Employés'];
-};
+/**
+ * Domaines proposés en tête d'application.
+ *
+ * « Mon Espace » en a disparu avec les comptes salariés : l'application est
+ * réservée aux ressources humaines, et les salariés passent par le portail
+ * public, qui ne demande aucun mot de passe.
+ */
+const getDomainsForRole = () => ['Accueil', 'Employés', 'Pilotage RH', 'Intelligence RH'];
 
 export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
     const { user, logout, token } = useAuth();

@@ -164,6 +164,10 @@ exports.getDashboardAnalytics = async (req, res) => {
         // intitulé qui annonce la répartition des contrats du personnel. Un
         // lecteur y voyait l'effectif ; il regardait le plan de recrutement.
         // Elle est désormais lue sur les fiches salariés.
+        const offresOuvertes = await prisma.jobOffer.count({
+            where: { status: { in: ['Active', 'PUBLISHED', 'Publiée'] } }
+        });
+
         const salariesActifs = await prisma.employee.findMany({
             where: { status: 'ACTIVE' },
             select: { contractType: true }
@@ -500,6 +504,9 @@ exports.getDashboardAnalytics = async (req, res) => {
                 globalTurnover: parseFloat(globalTurnover) || 0,
                 absenceRate: parseFloat(absenceRate) || 0,
                 payrollCount: payrollsThisMonth.length,
+                // Le tableau de bord affichait « 12 recrutements en cours »,
+                // nombre écrit en dur. Il est désormais compté.
+                offresOuvertes: offresOuvertes,
                 avgNetSalary,
                 totalNetSalary: Math.round(totalNetSalary),
                 variations

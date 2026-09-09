@@ -206,8 +206,27 @@ export function Login() {
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {error && (
-                                <div className="p-3 text-sm text-rose-400 bg-rose-900/30 border border-rose-700/50 rounded-lg">
+                                /* Un refus de rôle n'est pas une erreur de saisie : le compte
+                                   existe et le mot de passe était bon. On oriente vers le
+                                   portail au lieu de laisser recommencer indéfiniment. */
+                                <div className={`p-3 text-sm rounded-lg border ${
+                                    /ressources humaines/i.test(error)
+                                        ? 'text-amber-200 bg-amber-900/30 border-amber-700/50'
+                                        : 'text-rose-400 bg-rose-900/30 border-rose-700/50'
+                                }`}>
                                     {error}
+                                    {/ressources humaines/i.test(error) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setError(null);
+                                                setIsPortalOpen(true);
+                                            }}
+                                            className="block mt-2 font-semibold underline underline-offset-2 text-amber-100 hover:text-white"
+                                        >
+                                            Ouvrir le portail des salariés
+                                        </button>
+                                    )}
                                 </div>
                             )}
                             <div className="space-y-2">

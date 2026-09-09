@@ -209,11 +209,6 @@ const AppContent = () => {
                 <PayEquityScanner />
               </ProtectedRoute>
             } />
-            <Route path="/succession-planning" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <SkillsMatrix />
-              </ProtectedRoute>
-            } />
             <Route path="/job-studio" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
                 <JobDescriptionStudio />
@@ -226,18 +221,8 @@ const AppContent = () => {
             } />
             
             {/* Other Restricted Routes */}
-            <Route path="/request-center" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <Timesheet />
-              </ProtectedRoute>
-            } />
             <Route path="/timesheet" element={
               <ProtectedRoute>
-                <Timesheet />
-              </ProtectedRoute>
-            } />
-            <Route path="/qr-pointage" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Timesheet />
               </ProtectedRoute>
             } />
@@ -461,17 +446,7 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/compensation" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <Payroll />
-              </ProtectedRoute>
-            } />
 
-            <Route path="/trainings" element={
-              <ProtectedRoute>
-                <Learning />
-              </ProtectedRoute>
-            } />
 
             {/* V4 Modules */}
             <Route path="/announcements" element={<Announcements />} />
@@ -491,16 +466,6 @@ const AppContent = () => {
                 pourtant nécessaire aux alertes de replanification). */}
             <Route path="/medical" element={<Navigate to="/medical-hub" replace />} />
             <Route path="/rewards" element={<Rewards />} />
-            <Route path="/gpec" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <SkillsMatrix />
-              </ProtectedRoute>
-            } />
-            <Route path="/talent-management" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <SkillsMatrix />
-              </ProtectedRoute>
-            } />
 
             {/* V5 Modules */}
             <Route path="/offboarding" element={
@@ -514,7 +479,6 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
             <Route path="/benefits" element={<Benefits />} />
-            <Route path="/ethics" element={<Ethics />} />
             <Route path="/subcontractors" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Subcontractors />

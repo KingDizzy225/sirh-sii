@@ -320,6 +320,71 @@ mais indiquent des fonctions qui resteront muettes.
 
 
 
+
+---
+
+## Qui accède à l'application
+
+**L'application est réservée au service des ressources humaines.** Les salariés
+n'y ouvrent plus de session : ils passent par le **portail public**
+(`/portal`, également accessible depuis l'écran de connexion), qui ne demande
+aucun mot de passe.
+
+Ce que cela ferme : l'application créait un compte à chaque recrutement, avec
+un mot de passe par défaut. Ces comptes dormants ouvraient sur des écrans qui
+montrent les rémunérations de tout le monde.
+
+**Le portail public n'affiche aucune donnée personnelle.** C'est ce qui le rend
+sûr sans mot de passe : il reçoit des demandes — congé, avance, question,
+signalement — et ne restitue rien. Un salarié qui veut consulter son bulletin
+s'adresse à la RH, ou reçoit son PDF signé par le canal habituel.
+
+### Deux conséquences à peser
+
+1. **Les responsables ne se connectent plus non plus.** Le circuit de
+   validation des congés comportait une étape « responsable » : elle repose
+   désormais entièrement sur la RH. Si ce n'est pas ce que vous voulez, ajouter
+   `MANAGER` à `ROLES_AUTORISES_CONNEXION` (par défaut `ADMIN,HR`) suffit —
+   aucune reprise de code.
+
+2. **Les écrans de libre-service deviennent sans usage.** Le portail salarié
+   connecté (`/my-space`), les kudos, le mentorat, l'explorateur de carrière,
+   l'assistance sociale et les avantages ne sont plus proposés au menu. Leurs
+   routes existent toujours : rien n'est perdu si vous rouvrez les comptes
+   salariés un jour.
+
+Un refus de connexion pour cause de rôle renvoie un **403 explicite**, distinct
+du 401 d'un mauvais mot de passe : le compte existe et le mot de passe était
+bon. L'écran de connexion propose alors d'ouvrir le portail plutôt que de
+laisser recommencer.
+
+---
+
+## Le menu
+
+Il comptait **61 entrées**, dont trois écrans présentés sous deux noms
+différents et cinq entrées portant le mot « absences » pour deux écrans
+distincts — personne ne pouvait deviner où poser un congé. Il en compte **51**,
+sans aucun doublon, et deux principes le tiennent :
+
+- **Un écran, une entrée.** Une page qui s'adapte au rôle ne se dédouble pas
+  dans le menu.
+- **Le nom dit ce que l'écran fait**, en français. « Flex-Workforce » est
+  devenu « Prestataires & sous-traitance », « Automatisations » et « Parcours
+  d'intégration » — deux outils réellement distincts dont les noms suggéraient
+  les deux moitiés d'un même — sont devenus « Traitements planifiés » et
+  « Modèles de tâches ».
+
+Sept routes accessibles par URL mais absentes du menu, qui doublaient un
+composant déjà servi ailleurs, ont été retirées : `/succession-planning`,
+`/gpec`, `/talent-management`, `/trainings`, `/compensation`,
+`/request-center`, `/qr-pointage`. Et `/ethics`, déclarée deux fois, ne l'est
+plus qu'une.
+
+L'écran « Qualité de vie (QVT) » a été absorbé par « Baromètre social » : il ne
+faisait que lire la même liste d'enquêtes, sans permettre d'en créer ni d'y
+répondre.
+
 ---
 
 ## Décompte des congés, jours fériés

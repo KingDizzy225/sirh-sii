@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/jwt');
 const crypto = require('crypto');
 const googleSso = require('../lib/googleSso');
+const acces = require('../lib/acces');
 
 exports.login = async (req, res) => {
     try {
@@ -25,7 +26,23 @@ exports.login = async (req, res) => {
             return res.status(401).json({ error: 'Identifiants incorrects' });
         }
 
-        // 3. Créer le jeton (Token) JWT
+        /**
+         * 3. Le rôle donne-t-il accès à l'application ?
+         *
+         * Elle est réservée aux ressources humaines. Un salarié dispose du
+         * portail public, qui n'affiche aucune donnée personnelle et se
+         * contente de recevoir ses demandes.
+         *
+         * Le refus intervient après la vérification du mot de passe et ne se
+         * confond pas avec elle : le compte existe, le mot de passe était bon,
+         * et dire « identifiants incorrects » ferait recommencer l'intéressé
+         * indéfiniment.
+         */
+        if (!acces.peutSeConnecter(user)) {
+            return res.status(403).json({ error: acces.MESSAGE_REFUS, portail: '/portal' });
+        }
+
+        // 4. Créer le jeton (Token) JWT
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role, name: user.name },
             JWT_SECRET,
@@ -243,6 +260,12 @@ exports.connexionGoogle = async (req, res) => {
                 }
             });
             console.log(`[SSO] Compte créé pour ${identite.email} (rôle ${user.role}).`);
+        }
+
+        // Le contrôle vaut pour Google comme pour le mot de passe : une
+        // authentification réussie n'est pas une autorisation d'entrer.
+        if (!acces.peutSeConnecter(user)) {
+            return res.status(403).json({ error: acces.MESSAGE_REFUS, portail: '/portal' });
         }
 
         const token = jwt.sign(
