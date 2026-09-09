@@ -1,6 +1,7 @@
 const prisma = require('../prismaClient');
 const { getGenerativeModel } = require("../lib/claudeAI");
 const { normaliserGenre, EFFECTIF_MIN_COMPARAISON, salaireConnu } = require('../lib/demographie');
+const absenteisme = require('../lib/absenteisme');
 const aiModel = getGenerativeModel();
 
 const getRatingScore = (rating) => {
@@ -10,6 +11,90 @@ const getRatingScore = (rating) => {
     if (rating.includes('Attente') || rating.includes('attente')) return 3.0;
     if (rating.includes('Insuffisant') || rating.includes('Besoin') || rating.includes('insuffisant') || rating.includes('besoin')) return 1.5;
     return 3.0;
+};
+
+/**
+ * GET /api/analytics/absenteisme?du=AAAA-MM&au=AAAA-MM
+ *
+ * Le taux d'absentéisme, que l'application ne savait pas produire. Lecture
+ * seule : rien n'est écrit, aucune table nouvelle.
+ *
+ * Le périmètre retenu et la formule accompagnent le chiffre. Un taux dont on
+ * ignore le dénominateur ne se défend pas en réunion, et c'est en réunion que
+ * celui-ci sera cité.
+ */
+exports.getAbsenteisme = async (req, res) => {
+    try {
+        // Fenêtre par défaut : les douze derniers mois, mois courant compris.
+        const finDemandee = req.query.au ? new Date(`${req.query.au}-01T00:00:00Z`) : new Date();
+        const debutDemande = req.query.du
+            ? new Date(`${req.query.du}-01T00:00:00Z`)
+            : (() => { const d = new Date(finDemandee); d.setMonth(d.getMonth() - 11); return d; })();
+
+        if (isNaN(debutDemande.getTime()) || isNaN(finDemandee.getTime())) {
+            return res.status(400).json({ error: 'Période invalide. Format attendu : AAAA-MM.' });
+        }
+        if (debutDemande > finDemandee) {
+            return res.status(400).json({ error: 'La date de début est postérieure à la date de fin.' });
+        }
+
+        const debut = new Date(debutDemande.getFullYear(), debutDemande.getMonth(), 1);
+        const finExclue = new Date(finDemandee.getFullYear(), finDemandee.getMonth() + 1, 1);
+
+        // Les mois sont posés d'avance : un mois sans absence doit apparaître à
+        // zéro, non disparaître de la courbe.
+        const mois = [];
+        for (let d = new Date(debut); d < finExclue; d.setMonth(d.getMonth() + 1)) {
+            mois.push(absenteisme.cleMois(d));
+        }
+        if (mois.length > 36) {
+            return res.status(400).json({ error: 'Période trop longue : trente-six mois au plus.' });
+        }
+
+        const [conges, absences, salaries] = await Promise.all([
+            // Un arrêt qui chevauche la fenêtre est retenu : il compte pour la
+            // part de ses jours qui y tombe.
+            prisma.leave.findMany({
+                where: { startDate: { lt: finExclue }, endDate: { gte: debut } },
+                include: { employee: { select: { department: true } } }
+            }),
+            prisma.absence.findMany({
+                where: { date: { gte: debut, lt: finExclue } },
+                include: { employee: { select: { department: true } } }
+            }),
+            prisma.employee.findMany({
+                where: { status: { not: 'TERMINATED' } },
+                select: { department: true }
+            })
+        ]);
+
+        const parService = {};
+        for (const s of salaries) {
+            const service = s.department || 'Non renseigné';
+            parService[service] = (parService[service] || 0) + 1;
+        }
+        const effectifs = Object.entries(parService).map(([department, actifs]) => ({ department, actifs }));
+
+        const resultat = absenteisme.bilan({ conges, absences, effectifs, mois });
+
+        res.json({
+            periode: {
+                du: absenteisme.cleMois(debut),
+                au: mois[mois.length - 1] || absenteisme.cleMois(debut),
+                mois: mois.length
+            },
+            ...resultat,
+            // L'effectif retenu est celui d'aujourd'hui, faute d'un effectif
+            // daté mois par mois. Le dire : sur une année où l'entreprise a
+            // beaucoup recruté, le dénominateur des premiers mois est surévalué.
+            reserve: "L'effectif du dénominateur est celui constaté aujourd'hui. "
+                + "Sur une période où l'effectif a sensiblement varié, les taux des mois "
+                + 'anciens sont à lire avec prudence.'
+        });
+    } catch (error) {
+        console.error("Erreur calcul de l'absentéisme :", error);
+        res.status(500).json({ error: "Erreur lors du calcul de l'absentéisme." });
+    }
 };
 
 exports.getDashboardAnalytics = async (req, res) => {

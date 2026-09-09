@@ -6,6 +6,9 @@ const requireRole = require('../middleware/roleMiddleware');
 
 // Accessible par HR, Admin et Manager (pour la vue synthétique)
 router.get('/dashboard', verifyToken, requireRole('HR', 'ADMIN', 'MANAGER'), analyticsController.getDashboardAnalytics);
+// Absentéisme mesuré : lecture seule, ouverte aussi à l'encadrement, qui pilote
+// ses effectifs sans avoir à consulter le dossier de qui que ce soit.
+router.get('/absenteisme', verifyToken, requireRole('HR', 'ADMIN', 'MANAGER'), analyticsController.getAbsenteisme);
 router.get('/predictive', verifyToken, requireRole('HR', 'ADMIN'), analyticsController.getPredictiveAnalytics);
 router.get('/flight-risk/:id', verifyToken, requireRole('HR', 'ADMIN', 'MANAGER'), analyticsController.calculateFlightRisk);
 

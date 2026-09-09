@@ -318,6 +318,49 @@ mais indiquent des fonctions qui resteront muettes.
 
 
 
+
+---
+
+## L'absentéisme
+
+Écran *Absentéisme*, sous Intelligence RH. Lecture seule : aucune table
+nouvelle, rien n'est écrit.
+
+Trois décisions font la validité du chiffre, et il faut les connaître avant de
+le citer :
+
+- **Un congé payé n'est pas de l'absentéisme.** Sont retenus les arrêts
+  maladie, les congés sans solde et les absences non justifiées. Les congés
+  annuels sont exclus — les inclure ferait culminer le taux en août pour la
+  meilleure des raisons — et la maternité aussi, pour ne pas pénaliser les
+  services qui emploient des femmes. Les retards sont comptés à part : arriver
+  en retard n'est pas s'absenter.
+- **Les arrêts longs et les absences courtes répétées ne se mélangent pas.**
+  Un service à 4 % fait de trois arrêts longs et un service à 4 % fait de vingt
+  absences d'un jour n'appellent pas la même conversation : le premier relève
+  de la santé au travail, le second de l'encadrement. L'écran est bâti sur
+  cette distinction, pas sur le taux global.
+- **Un arrêt à cheval sur deux mois compte dans les deux**, au prorata des
+  jours. L'imputer entièrement à son mois de début produirait des pics là où
+  il n'y en a pas.
+
+Ce que l'écran dit de lui-même, et qu'il faut lire :
+
+- La **formule et le périmètre** accompagnent le taux. Un taux dont on ignore
+  le dénominateur ne se défend pas en réunion, et c'est en réunion qu'il sera
+  cité.
+- **Aucune tendance n'est affichée sous trois mois d'historique.**
+- **Un type de congé non classé est signalé**, ni compté ni écarté en silence :
+  si vous ajoutez un type, il apparaîtra dans l'avertissement jusqu'à ce qu'on
+  tranche.
+- **Le dénominateur utilise l'effectif d'aujourd'hui**, faute d'effectif daté
+  mois par mois. Sur une période où l'effectif a beaucoup varié, les taux des
+  mois anciens sont à lire avec prudence. La réserve est portée à l'écran.
+
+Réglages : `ABSENTEISME_SEUIL_COURT_JOURS` (3), `ABSENTEISME_SEUIL_REPETITION`
+(3), `ABSENTEISME_MOIS_MIN_TENDANCE` (3), et `JOURS_OUVRES_MOIS` (26), déjà
+utilisé par la paie pour le prorata d'une absence.
+
 ---
 
 ## Le bulletin expliqué
