@@ -43,7 +43,7 @@ const getAllNavItems = (t) => [
     { name: 'Contrats de travail', path: '/contracts', icon: FileText, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Simulateur d\'organisation', path: '/org-simulation', icon: Rocket, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Entretiens & évaluations', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Entretiens & évaluations', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Procédures & sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Intégration (onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
     { name: 'Départs (offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
@@ -57,13 +57,13 @@ const getAllNavItems = (t) => [
     { name: 'Sourcing assisté (IA)', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Employés', permission: 'recruitment:view' },
 
     // ── PILOTAGE RH : les processus qui tournent tous les mois ──
-    { name: 'Congés & absences', path: '/leaves', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Congés & absences', path: '/leaves', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
     // Absences ponctuelles, retards et demandes. Cet écran figurait deux fois,
     // sous « Absences & Retards » et sous « Temps, Absences & Demandes ».
-    { name: 'Retards & demandes', path: '/timesheet', icon: AlertTriangle, domain: 'Pilotage RH', permission: 'dashboard:view' },
-    { name: 'Relevé des pointages', path: '/releve-heures', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Retards & demandes', path: '/timesheet', icon: AlertTriangle, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Relevé des pointages', path: '/releve-heures', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
     { name: 'Jours fériés', path: '/jours-feries', icon: CalendarDays, domain: 'Pilotage RH', permission: 'employees:edit' },
-    { name: 'Plannings & rotations', path: '/shifts', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Plannings & rotations', path: '/shifts', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
     { name: t('sidebar.payroll', 'Paie & bulletins'), path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     // Décisions d'augmentation, distinctes de l'exécution de la paie.
     { name: 'Décisions de rémunération', path: '/remunerations', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
@@ -83,13 +83,13 @@ const getAllNavItems = (t) => [
     { name: 'Guichet WhatsApp', path: '/whatsapp-bot', icon: MessageSquare, domain: 'Pilotage RH', permission: 'dashboard:view' },
 
     // ── INTELLIGENCE RH : ce qui se lit, jamais ce qui s'écrit ──
-    { name: t('sidebar.analytics', 'Analyses RH'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
-    { name: 'Absentéisme', path: '/absenteisme', icon: Activity, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: t('sidebar.analytics', 'Analyses RH'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
+    { name: 'Absentéisme', path: '/absenteisme', icon: Activity, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Listes & exports', path: '/requeteur', icon: Grid, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Historique daté', path: '/historique', icon: History, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Équité salariale', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Simulateur de masse salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Intelligence RH', permission: 'payroll:view' },
-    { name: 'Risque de départ', path: '/retention-center', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Risque de départ', path: '/retention-center', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Santé d\'équipe', path: '/team-health', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
     // Absorbe l'ancien écran « Qualité de vie (QVT) », qui ne faisait que lire
     // la même liste d'enquêtes sans permettre d'en créer ni d'y répondre.
@@ -114,8 +114,18 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
         if (userRole === 'EMPLOYEE') {
             return item.domain === 'Mon Espace' || item.domain === 'Accueil';
         } else if (userRole === 'MANAGER') {
-            if (item.permission === 'payroll:view' || item.permission === 'settings:view') return false;
-            return true;
+            /**
+             * Le responsable ne voyait « tout sauf la paie ». Il lui était donc
+             * proposé le répertoire complet, les procédures disciplinaires et
+             * les départs — des écrans que le serveur lui refuse, et qui ne lui
+             * auraient renvoyé qu'une erreur.
+             *
+             * La liste est désormais explicite, portée par `manager: true` sur
+             * chaque entrée, et calquée sur ce que les routes autorisent
+             * réellement. Un menu qui promet ce que l'API refuse est pire
+             * qu'un menu court.
+             */
+            return item.manager === true;
         } else {
             // HR / ADMIN
             if (item.permission === 'settings:view' && userRole !== 'ADMIN') return false;

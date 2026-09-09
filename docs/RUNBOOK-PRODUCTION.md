@@ -325,10 +325,10 @@ mais indiquent des fonctions qui resteront muettes.
 
 ## Qui accède à l'application
 
-**L'application est réservée au service des ressources humaines.** Les salariés
-n'y ouvrent plus de session : ils passent par le **portail public**
-(`/portal`, également accessible depuis l'écran de connexion), qui ne demande
-aucun mot de passe.
+**L'application est réservée au service des ressources humaines et à
+l'encadrement.** Les salariés n'y ouvrent plus de session : ils passent par le
+**portail public** (`/portal`, également accessible depuis l'écran de
+connexion), qui ne demande aucun mot de passe.
 
 Ce que cela ferme : l'application créait un compte à chaque recrutement, avec
 un mot de passe par défaut. Ces comptes dormants ouvraient sur des écrans qui
@@ -341,11 +341,20 @@ s'adresse à la RH, ou reçoit son PDF signé par le canal habituel.
 
 ### Deux conséquences à peser
 
-1. **Les responsables ne se connectent plus non plus.** Le circuit de
-   validation des congés comportait une étape « responsable » : elle repose
-   désormais entièrement sur la RH. Si ce n'est pas ce que vous voulez, ajouter
-   `MANAGER` à `ROLES_AUTORISES_CONNEXION` (par défaut `ADMIN,HR`) suffit —
-   aucune reprise de code.
+1. **Les responsables se connectent, mais ne voient que huit écrans.** Ils
+   valident les congés de leur équipe, d'où leur admission. Leur menu est une
+   **liste explicite** — congés & absences, retards & demandes, plannings,
+   relevé des pointages, entretiens, absentéisme, analyses, risque de départ —
+   calquée sur ce que les routes leur autorisent réellement.
+
+   Ils ne voient ni le répertoire complet, ni la paie, ni les prêts, ni les
+   procédures disciplinaires, ni les départs, ni le matériel. Auparavant leur
+   menu proposait « tout sauf la paie », y compris des écrans que le serveur
+   leur refuse : ils n'y auraient trouvé qu'une erreur. Un menu qui promet ce
+   que l'API refuse est pire qu'un menu court.
+
+   `ROLES_AUTORISES_CONNEXION=ADMIN,HR` referme l'accès des responsables, sans
+   reprise de code.
 
 2. **Les écrans de libre-service deviennent sans usage.** Le portail salarié
    connecté (`/my-space`), les kudos, le mentorat, l'explorateur de carrière,

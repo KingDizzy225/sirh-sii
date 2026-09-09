@@ -13,12 +13,18 @@ const { hasRole } = require('../middleware/roleMiddleware');
  * recrutement — était une porte ouverte sur des écrans qui montrent les
  * rémunérations de tout le monde.
  *
- * **La liste est réglable, et c'est délibéré.** Le circuit de validation des
- * congés comporte une étape « responsable » : retirer MANAGER la reporte
- * entièrement sur la RH. Si cela ne convient pas, ajouter MANAGER à
- * `ROLES_AUTORISES_CONNEXION` suffit — aucune reprise de code.
+ * **Les responsables sont admis**, parce que le circuit de validation des
+ * congés comporte une étape « responsable » : les en exclure la reporterait
+ * entièrement sur la RH. Ils ne voient toutefois qu'une poignée d'écrans —
+ * congés, absences, plannings, pointages, entretiens et les analyses de leur
+ * périmètre —, liste calquée sur ce que les routes leur autorisent
+ * réellement. Ni le répertoire complet, ni la paie, ni les procédures
+ * disciplinaires, ni les départs.
+ *
+ * La liste reste réglable : `ROLES_AUTORISES_CONNEXION=ADMIN,HR` la referme
+ * sans reprise de code.
  */
-const ROLES_AUTORISES = (process.env.ROLES_AUTORISES_CONNEXION || 'ADMIN,HR')
+const ROLES_AUTORISES = (process.env.ROLES_AUTORISES_CONNEXION || 'ADMIN,HR,MANAGER')
     .split(',')
     .map((r) => r.trim().toUpperCase())
     .filter(Boolean);
@@ -35,7 +41,8 @@ function peutSeConnecter(user) {
  * passe était bon. Laisser croire à une erreur de saisie ferait recommencer
  * l'intéressé indéfiniment.
  */
-const MESSAGE_REFUS = "Cette application est réservée au service des ressources humaines. "
+const MESSAGE_REFUS = "Cette application est réservée au service des ressources humaines "
+    + "et à l'encadrement. "
     + 'Pour une demande de congé, une avance ou une question, utilisez le portail '
     + "des salariés — il ne demande aucun mot de passe.";
 
