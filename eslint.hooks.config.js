@@ -1,10 +1,18 @@
-// Configuration ESLint dédiée à la CI : uniquement les règles des hooks React.
+// Configuration ESLint dédiée à la CI : les règles qui attrapent des erreurs
+// d'exécution, et elles seules.
 //
 // Le lint complet du projet remonte encore beaucoup d'avertissements hérités ;
 // les bloquer d'un coup arrêterait tous les déploiements. On ne verrouille donc
-// que « rules-of-hooks », qui détecte des erreurs d'exécution réelles — un hook
-// appelé conditionnellement casse la page en production (React #310), sans que
-// la vérification de syntaxe ni le build ne s'en aperçoivent.
+// que deux règles, choisies parce qu'elles détectent des pannes réelles que ni
+// la vérification de syntaxe ni le build ne voient passer :
+//
+//   - « rules-of-hooks » : un hook appelé conditionnellement casse la page en
+//     production (React #310) ;
+//   - « no-undef » : une variable jamais déclarée passe la compilation et lève
+//     « Can't find variable » au clic. C'est arrivé deux fois — un appel à `api`
+//     dans un écran qui ne l'importe pas, et un garde portant sur une fonction
+//     inexistante dans le mentorat. Le build ne résout pas les identifiants ;
+//     cette règle, si.
 //
 // Le lint complet reste disponible via `npm run lint`.
 
@@ -17,7 +25,7 @@ export default [
     files: ['src/**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: { ...globals.browser, ...globals.es2021 },
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
@@ -27,6 +35,7 @@ export default [
     plugins: { 'react-hooks': reactHooks },
     rules: {
       'react-hooks/rules-of-hooks': 'error',
+      'no-undef': 'error',
     },
   },
 ]

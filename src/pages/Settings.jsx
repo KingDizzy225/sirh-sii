@@ -215,13 +215,19 @@ export function Settings() {
     const chargerServices = async (testerIA = false) => {
         setServicesEnCours(true);
         try {
-            // Le chemin est écrit en clair : le vérificateur de routes ne sait
-            // pas lire un gabarit conditionnel, et une route qu'il ne voit pas
-            // n'est plus contrôlée.
-            const res = testerIA
-                ? await api.get('/jobs/etat-services?tester=true')
-                : await api.get('/jobs/etat-services');
-            setServices(res?.data || null);
+            // Même appel que le reste de la page : `fetch` avec le jeton.
+            // Le chemin est écrit en clair et non composé dans un gabarit
+            // conditionnel — le vérificateur de routes ne sait pas lire un
+            // gabarit, et une route qu'il ne voit pas n'est plus contrôlée.
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const adresse = testerIA
+                ? `${API_URL}/api/jobs/etat-services?tester=true`
+                : `${API_URL}/api/jobs/etat-services`;
+            const res = await fetch(adresse, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+            });
+            if (res.ok) setServices(await res.json());
+            else setServices({ erreur: "Lecture de l'état impossible." });
         } catch (err) {
             setServices({ erreur: err.message || "Lecture de l'état impossible." });
         } finally {

@@ -188,7 +188,10 @@ export function Mentorship() {
                                         </div>
                                     </div>
 
-                                    <Button onClick={() => handleOpenModalForMentor ? handleOpenRequestModal(mentor) : null} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md">
+                                    {/* Le garde portait sur `handleOpenModalForMentor`, qui n'existe
+                                        nulle part : le clic levait une erreur au lieu d'ouvrir la
+                                        fenêtre. `handleOpenRequestModal` est déclarée plus haut. */}
+                                    <Button onClick={() => handleOpenRequestModal(mentor)} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md">
                                         <UserCheck size={16} className="mr-2" /> Demander un mentorat
                                     </Button>
                                 </CardContent>
