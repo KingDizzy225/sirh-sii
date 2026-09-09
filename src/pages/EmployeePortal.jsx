@@ -28,6 +28,42 @@ export function EmployeePortal() {
     const [depotEnCours, setDepotEnCours] = useState(false);
     const [messagePiece, setMessagePiece] = useState(null);
 
+    // Explication du dernier bulletin. `null` = pas encore lu ; un objet sans
+    // `evolution` = premier bulletin, rien à comparer.
+    const [explicationPaie, setExplicationPaie] = useState(null);
+    const [detailPaieOuvert, setDetailPaieOuvert] = useState(false);
+
+    /**
+     * Explication du dernier bulletin.
+     *
+     * « Pourquoi j'ai touché ça ce mois-ci ? » est la question la plus posée à
+     * une RH. L'application connaît la réponse : elle a fait le calcul. Rien
+     * n'est recalculé ici, le serveur compare deux bulletins enregistrés.
+     */
+    const chargerExplicationPaie = async () => {
+        try {
+            const listeRes = await fetch(`${API_URL}/api/payrolls/my`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!listeRes.ok) return;
+            const bulletins = await listeRes.json();
+            if (!Array.isArray(bulletins) || bulletins.length === 0) return;
+
+            // Le plus récent : c'est celui sur lequel porte la question.
+            const dernier = [...bulletins].sort(
+                (a, b) => new Date(b.period) - new Date(a.period)
+            )[0];
+
+            const res = await fetch(`${API_URL}/api/payrolls/${dernier.id}/explication`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) return;
+            setExplicationPaie(await res.json());
+        } catch {
+            // Une carte secondaire ne doit pas rendre le portail inutilisable.
+        }
+    };
+
     /** Dossier de titres du salarié : ce qu'il a déposé, et où en est chaque pièce. */
     const chargerMesPieces = async (employeeId) => {
         try {
@@ -161,7 +197,10 @@ export function EmployeePortal() {
                 if (res.ok) {
                     const fiche = await res.json();
                     setProfile(fiche);
-                    if (fiche?.id) chargerMesPieces(fiche.id);
+                    if (fiche?.id) {
+                        chargerMesPieces(fiche.id);
+                        chargerExplicationPaie();
+                    }
                 }
             } catch (err) {
                 console.error("Failed to load profile", err);
@@ -675,10 +714,95 @@ export function EmployeePortal() {
                                 {/* « Dernier versement : 28 Fév 2026 » était écrit en dur. Le
                                     portail ne lit pas les bulletins ; il renvoie donc vers eux
                                     plutôt que d'annoncer une date qu'il ignore. */}
-                                <p className="text-sm text-slate-500 mb-2 font-medium">Montant masqué sur cet écran</p>
-                                <div className="text-4xl font-extrabold text-slate-900 mb-6 font-['Outfit']">
+                                <p className="text-sm text-slate-500 mb-2 font-medium">
+                                    {explicationPaie?.periode
+                                        ? `Bulletin de ${explicationPaie.periode}`
+                                        : 'Montant masqué sur cet écran'}
+                                </p>
+                                <div className="text-4xl font-extrabold text-slate-900 mb-4 font-['Outfit']">
                                     *** *** <span className="text-2xl text-slate-400 font-medium">FCFA</span>
                                 </div>
+
+                                {/* Ce qui a changé, et pourquoi.
+
+                                    Le bulletin porte les lignes, jamais les raisons. Le
+                                    salarié qui constate un écart n'avait d'autre recours
+                                    que de passer au bureau. */}
+                                {explicationPaie?.resume?.length > 0 && (
+                                    <div className="mb-4 space-y-1.5">
+                                        {explicationPaie.resume.map((ligne, i) => (
+                                            <p key={i} className={`text-sm leading-snug ${i === 0 ? 'font-semibold text-slate-800' : 'text-slate-500'}`}>
+                                                {ligne}
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {explicationPaie?.evolution
+                                 && (explicationPaie.evolution.causes.length > 0
+                                     || explicationPaie.evolution.consequences.length > 0) && (
+                                    <div className="mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDetailPaieOuvert((o) => !o)}
+                                            aria-expanded={detailPaieOuvert}
+                                            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1"
+                                        >
+                                            {detailPaieOuvert ? 'Masquer le détail' : 'Voir le détail'}
+                                            <ChevronDown size={13} className={detailPaieOuvert ? 'rotate-180 transition-transform' : 'transition-transform'} />
+                                        </button>
+
+                                        {detailPaieOuvert && (
+                                            <div className="mt-3 space-y-3 text-xs">
+                                                {explicationPaie.evolution.causes.length > 0 && (
+                                                    <div>
+                                                        <p className="font-semibold text-slate-700 mb-1">Ce qui a changé</p>
+                                                        <ul className="space-y-1.5">
+                                                            {explicationPaie.evolution.causes.map((c, i) => (
+                                                                <li key={i}>
+                                                                    <span className="flex justify-between gap-3">
+                                                                        <span className="text-slate-700">{c.libelle}</span>
+                                                                        <span className={`font-mono shrink-0 ${c.montant > 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                                                                            {c.montant > 0 ? '+' : '-'}{Math.abs(c.montant).toLocaleString('fr-FR')} F
+                                                                        </span>
+                                                                    </span>
+                                                                    <span className="block text-slate-500 leading-snug">{c.explication}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+
+                                                {explicationPaie.evolution.consequences.length > 0 && (
+                                                    <div>
+                                                        <p className="font-semibold text-slate-700 mb-1">
+                                                            Ce qui en découle
+                                                        </p>
+                                                        <p className="text-slate-500 mb-1.5 leading-snug">
+                                                            Les cotisations suivent le brut : une hausse de
+                                                            rémunération ne se retrouve jamais entièrement
+                                                            sur le net.
+                                                        </p>
+                                                        <ul className="space-y-1.5">
+                                                            {explicationPaie.evolution.consequences.map((c, i) => (
+                                                                <li key={i}>
+                                                                    <span className="flex justify-between gap-3">
+                                                                        <span className="text-slate-700">{c.libelle}</span>
+                                                                        <span className={`font-mono shrink-0 ${c.montant > 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                                                                            {c.montant > 0 ? '+' : '-'}{Math.abs(c.montant).toLocaleString('fr-FR')} F
+                                                                        </span>
+                                                                    </span>
+                                                                    <span className="block text-slate-500 leading-snug">{c.explication}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 <Link to="/documents">
                                     <Button variant="outline" className="w-full text-emerald-700 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 rounded-xl transition-all">
                                         Voir mes bulletins

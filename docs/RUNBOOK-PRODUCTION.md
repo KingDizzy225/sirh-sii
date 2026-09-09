@@ -317,6 +317,36 @@ mais indiquent des fonctions qui resteront muettes.
 
 
 
+
+---
+
+## Le bulletin expliqué
+
+Sur le portail, la carte *Ma Paie* dit désormais **pourquoi** le net a changé
+depuis le mois précédent : c'est la première question posée à une RH, et le
+bulletin porte les lignes sans jamais porter les raisons.
+
+Rien n'est recalculé ni deviné. Le serveur compare deux bulletins enregistrés
+et rend l'écart en français courant, avec une distinction qui fait tout :
+
+- **Les causes** agissent sur le brut — salaire de base, prime, heures
+  supplémentaires, absences, retenues.
+- **Les conséquences** en découlent : CNPS, CMU et ITS suivent le brut. Une
+  augmentation de 50 000 F n'ajoute pas 50 000 F au net, et c'est précisément
+  l'incompréhension que l'écran lève.
+
+Deux garde-fous, qui expliquent ce que vous verrez sur des dossiers anciens :
+
+- **Ce qui ne s'explique pas est affiché comme tel.** Les bulletins antérieurs
+  à l'enregistrement du détail des cotisations ne se décomposent pas ; l'écart
+  est alors mesuré sur le net réellement versé — celui que le salarié a sous
+  les yeux — et le reste inexpliqué est annoncé, avec un renvoi vers la RH.
+- **Aucun « motif principal » n'est désigné** lorsque l'essentiel de l'écart
+  échappe au calcul. Nommer un coupable au hasard serait pire que se taire.
+
+Aucune IA n'intervient : c'est de l'arithmétique déjà faite, rendue lisible.
+La fonction marche donc même sans `ANTHROPIC_WORKSPACE_ID`.
+
 ---
 
 ## Titres et habilitations des salariés

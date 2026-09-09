@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/authMiddleware');
-const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, exportSage, getDeclaration } = require('../controllers/payrollController');
+const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, getExplication, exportSage, getDeclaration } = require('../controllers/payrollController');
 const requireRole = require('../middleware/roleMiddleware');
 const { traceAccess, cibles } = require('../middleware/accessTrace');
 
@@ -20,6 +20,8 @@ router.get('/declaration', verifyToken, requireRole(['ADMIN', 'HR']), getDeclara
 router.get('/my', verifyToken, getMyPayrolls);
 router.get('/:id', verifyToken, traceAccess('PAIE', cibles.parBulletin), getPayslip);
 router.get('/:id/download', verifyToken, traceAccess('PAIE', cibles.parBulletin), downloadPayslip);
+// Le bulletin expliqué : même contrôle d'accès que le bulletin lui-même.
+router.get('/:id/explication', verifyToken, traceAccess('PAIE', cibles.parBulletin), getExplication);
 router.post('/:id/sign', verifyToken, signPayroll);
 
 module.exports = router;

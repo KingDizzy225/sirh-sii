@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
 const { calculerPaie, decomposer, intervalleMois, TAUX } = require('../lib/paie');
+const explication = require('../lib/explication');
 const dossier = require('../lib/dossier');
 const apposition = require('../lib/apposition');
 const remuneration = require('../lib/remuneration');
@@ -469,6 +470,48 @@ const getPayslip = async (req, res) => {
     }
 };
 
+/**
+ * GET /api/payroll/:id/explication
+ *
+ * « Pourquoi j'ai touché ça ce mois-ci ? » est la première question posée à une
+ * RH. Le bulletin porte les lignes, jamais les raisons ; le salarié qui
+ * constate un écart n'a d'autre recours que de passer au bureau.
+ *
+ * Rien n'est recalculé ni deviné ici : les écarts sont lus entre deux bulletins
+ * enregistrés et rendus en français courant.
+ */
+const getExplication = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const payroll = await prisma.payroll.findUnique({
+            where: { id }, include: { employee: true }
+        });
+        if (!payroll) return res.status(404).json({ error: 'Fiche de paie introuvable' });
+        if (!(await canAccessPayroll(req.user, payroll))) {
+            return res.status(403).json({ error: 'Accès interdit à cette fiche de paie.' });
+        }
+
+        // Bulletin immédiatement antérieur du même salarié. On ne remonte pas
+        // plus loin : comparer à un mois d'il y a un an expliquerait un écart
+        // que le salarié n'a pas constaté.
+        const precedent = await prisma.payroll.findFirst({
+            where: { employeeId: payroll.employeeId, period: { lt: payroll.period } },
+            orderBy: { period: 'desc' }
+        });
+
+        const mois = (d) => new Date(d).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+        res.json({
+            periode: mois(payroll.period),
+            periodePrecedente: precedent ? mois(precedent.period) : null,
+            ...explication.expliquer(payroll, precedent)
+        });
+    } catch (error) {
+        console.error('Erreur explication de bulletin :', error);
+        res.status(500).json({ error: "Erreur lors de l'explication du bulletin." });
+    }
+};
+
 const signPayroll = async (req, res) => {
     try {
         const { id } = req.params;
@@ -707,4 +750,4 @@ const getDeclaration = async (req, res) => {
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, signPayroll, exportSage, getDeclaration };
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, signPayroll, exportSage, getDeclaration };
