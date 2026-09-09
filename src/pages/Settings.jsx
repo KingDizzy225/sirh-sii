@@ -30,6 +30,12 @@ export function Settings() {
     const [isFetchingJobs, setIsFetchingJobs] = useState(false);
     const [isRunningJobs, setIsRunningJobs] = useState(false);
 
+    // État des services extérieurs. Le diagnostic de l'IA existait, derrière une
+    // adresse qui exige un jeton : la coller dans un navigateur répond « Token
+    // non fourni ». Il était donc inatteignable sans outils de développement.
+    const [services, setServices] = useState(null);
+    const [servicesEnCours, setServicesEnCours] = useState(false);
+
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
@@ -202,9 +208,33 @@ export function Settings() {
         );
     };
 
+    /**
+     * @param {boolean} testerIA  interroge réellement l'IA. Cela consomme un
+     *   appel : on ne le fait qu'à la demande, pas à chaque ouverture.
+     */
+    const chargerServices = async (testerIA = false) => {
+        setServicesEnCours(true);
+        try {
+            // Le chemin est écrit en clair : le vérificateur de routes ne sait
+            // pas lire un gabarit conditionnel, et une route qu'il ne voit pas
+            // n'est plus contrôlée.
+            const res = testerIA
+                ? await api.get('/jobs/etat-services?tester=true')
+                : await api.get('/jobs/etat-services');
+            setServices(res?.data || null);
+        } catch (err) {
+            setServices({ erreur: err.message || "Lecture de l'état impossible." });
+        } finally {
+            setServicesEnCours(false);
+        }
+    };
+
     React.useEffect(() => {
         if (activeTab === 'Integrations') {
             fetchWebhooks();
+        }
+        if (activeTab === 'Services') {
+            chargerServices(false);
         }
         if (activeTab === 'Work Sites') {
             fetchWorkSites();
@@ -222,6 +252,7 @@ export function Settings() {
         'Integrations': 'Intégrations',
         'Work Sites': 'Sites de pointage',
         'Scheduled Jobs': 'Traitements RH automatiques',
+        'Services': 'État des services',
         'Notifications': 'Notifications',
         'Billing': 'Facturation'
     };
@@ -287,6 +318,7 @@ export function Settings() {
                     {renderTabButton('Integrations', 'settings:manage')}
                     {['ADMIN', 'Administrator', 'HR'].includes(user?.role) && renderTabButton('Work Sites')}
                     {['ADMIN', 'Administrator', 'HR'].includes(user?.role) && renderTabButton('Scheduled Jobs')}
+                    {['ADMIN', 'Administrator', 'HR'].includes(user?.role) && renderTabButton('Services')}
                     {renderTabButton('Notifications')}
                     {renderTabButton('Billing', 'settings:manage')}
                 </div>
@@ -772,6 +804,81 @@ export function Settings() {
                                 </CardContent>
                             </Card>
                         </motion.div>
+                    )}
+
+                    {activeTab === 'Services' && (
+                        <Card className="border-none shadow-sm">
+                            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <CardTitle className="text-lg font-black">État des services</CardTitle>
+                                    <CardDescription className="text-xs">
+                                        Ce qui est raccordé, ce qui ne l'est pas, et ce que chaque manque empêche.
+                                        Aucune clé n'est affichée.
+                                    </CardDescription>
+                                </div>
+                                <div className="flex gap-2 shrink-0">
+                                    <Button
+                                        onClick={() => chargerServices(false)}
+                                        disabled={servicesEnCours}
+                                        className="h-9 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700"
+                                    >
+                                        Rafraîchir
+                                    </Button>
+                                    <Button
+                                        onClick={() => chargerServices(true)}
+                                        disabled={servicesEnCours}
+                                        className="h-9 text-xs bg-slate-900 hover:bg-slate-800 text-white"
+                                    >
+                                        {servicesEnCours ? 'Essai…' : "Tester l'IA"}
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {!services && (
+                                    <p className="text-sm text-slate-400">Lecture de l'état…</p>
+                                )}
+
+                                {services?.erreur && (
+                                    <p className="text-sm text-rose-800 bg-rose-50 border border-rose-200 rounded-xl p-3">
+                                        {services.erreur}
+                                    </p>
+                                )}
+
+                                {services?.services && (
+                                    <div className="space-y-3">
+                                        <p className="text-xs text-slate-500">
+                                            {services.synthese.ok} service(s) en ordre ·{' '}
+                                            {services.synthese.avertissements} à surveiller ·{' '}
+                                            {services.synthese.absents} hors service.
+                                            {!services.iaTestee && " L'IA n'a pas été interrogée : « Tester l'IA » consomme un appel."}
+                                        </p>
+
+                                        <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+                                            {services.services.map((s) => (
+                                                <div key={s.cle} className="p-4 flex items-start gap-3">
+                                                    <span className={`mt-0.5 h-2.5 w-2.5 rounded-full shrink-0 ${
+                                                        s.niveau === 'ok' ? 'bg-emerald-500'
+                                                        : s.niveau === 'avertissement' ? 'bg-amber-500'
+                                                        : 'bg-rose-500'
+                                                    }`} />
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold text-slate-900 text-sm">{s.libelle}</p>
+                                                        <p className="text-xs text-slate-600 mt-0.5">{s.detail}</p>
+                                                        {s.consequence && (
+                                                            <p className={`text-xs mt-1 leading-relaxed ${
+                                                                s.niveau === 'absent' ? 'text-rose-700' : 'text-amber-700'
+                                                            }`}>
+                                                                {s.consequence}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     )}
 
                     {activeTab === 'Integrations' && (

@@ -368,6 +368,35 @@ bon. L'écran de connexion propose alors d'ouvrir le portail plutôt que de
 laisser recommencer.
 
 
+
+---
+
+## Savoir ce qui est raccordé
+
+Écran *Paramètres → État des services*. Il répond à la question qu'on se pose
+tout le temps : **qu'est-ce qui marche, et qu'est-ce qui ne marche pas ?**
+
+Sept services y figurent — IA, courriel, adresse publique, clé de scellement,
+signataire, connexion Google, guichet WhatsApp — chacun avec sa conséquence en
+clair. « SMTP non configuré » n'apprend rien ; « les envois aboutissent dans une
+boîte de test et personne ne les reçoit » dit ce qui ne marche pas, et pour qui.
+
+**Aucune clé n'est affichée** : seulement « défini » ou « absent ». Un écran de
+diagnostic qui recopie les secrets est un écran de fuite.
+
+Le bouton **Tester l'IA** interroge réellement le service. Il consomme un appel,
+et n'est donc pas déclenché à chaque ouverture de l'écran : tant qu'il n'a pas
+été pressé, « configurée » ne veut pas dire « vérifiée », et l'écran le dit.
+
+Ce panneau ne remplace pas `npm run preflight`, qui reste l'audit de fond avant
+une bascule — compteurs de congés, dossiers incomplets, comptes de
+démonstration. Il répond à une autre question, à tout moment, sans shell.
+
+*Note : le diagnostic existait déjà derrière `GET /api/jobs/ia`, mais cette
+adresse exige un jeton que le navigateur n'envoie pas — la coller dans la barre
+d'adresse répond « Token non fourni ». Elle reste utilisable depuis un appel
+authentifié.*
+
 ---
 
 ## Remettre un document à un salarié

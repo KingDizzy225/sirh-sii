@@ -53,4 +53,25 @@ router.get('/ia', verifyToken, requireRole(['ADMIN', 'HR']), async (req, res) =>
     res.json(await diagnostiquer());
 });
 
+/**
+ * État des services extérieurs.
+ *
+ * Le diagnostic de l'IA existait, derrière une adresse qui exige un jeton :
+ * la coller dans un navigateur répond « Token non fourni ». Il était donc
+ * inatteignable sans outils de développement. Cet état est consultable depuis
+ * l'écran des paramètres.
+ *
+ * `?tester=true` interroge réellement l'IA — ce qui consomme un appel, et n'est
+ * donc pas fait à chaque ouverture de l'écran.
+ */
+router.get('/etat-services', verifyToken, requireRole(['ADMIN', 'HR']), async (req, res) => {
+    try {
+        const { etat } = require('../lib/etatServices');
+        res.json(await etat({ testerIA: req.query.tester === 'true' }));
+    } catch (error) {
+        console.error('Erreur état des services :', error);
+        res.status(500).json({ error: "Erreur lors de la lecture de l'état des services." });
+    }
+});
+
 module.exports = router;
