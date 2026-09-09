@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User, CheckCircle2, Award, Sparkles, X, MessageCircle, Send, Bot, Banknote, TrendingUp, AlertCircle, Check, BookOpen, ChevronDown } from 'lucide-react';
+import { Calendar, FileText, Receipt, Heart, Clock, ArrowRight, ShieldCheck, DollarSign, User, CheckCircle2, Award, Sparkles, X, MessageCircle, Send, Bot, Banknote, TrendingUp, AlertCircle, Check, BookOpen, ChevronDown , IdCard} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +19,67 @@ export function EmployeePortal() {
     const [regleOuverte, setRegleOuverte] = useState(null);
     const [pointagesEnAttente, setPointagesEnAttente] = useState(0);
     const [salaireDisponible, setSalaireDisponible] = useState(null);
+
+    // Titres et habilitations du salarié. `null` distingue « pas encore lu » de
+    // « dossier vide » : afficher « aucun titre » pendant le chargement ferait
+    // croire à une absence.
+    const [mesPieces, setMesPieces] = useState(null);
+    const [typesPiece, setTypesPiece] = useState([]);
+    const [depotEnCours, setDepotEnCours] = useState(false);
+    const [messagePiece, setMessagePiece] = useState(null);
+
+    /** Dossier de titres du salarié : ce qu'il a déposé, et où en est chaque pièce. */
+    const chargerMesPieces = async (employeeId) => {
+        try {
+            const res = await fetch(`${API_URL}/api/pieces/employe/${employeeId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) { setMesPieces([]); return; }
+            const donnees = await res.json();
+            setMesPieces(Array.isArray(donnees?.pieces) ? donnees.pieces : []);
+        } catch {
+            // Le portail ne doit pas devenir inutilisable parce qu'une carte
+            // secondaire n'a pas répondu.
+            setMesPieces([]);
+        }
+    };
+
+    /**
+     * Dépôt d'un titre depuis le portail.
+     *
+     * Le salarié ne choisit ni le dossier de destination ni le statut : le
+     * serveur déduit le premier de son compte et impose « à contrôler » au
+     * second. Ce qui part d'ici est une demande de vérification, pas une mise à
+     * jour du dossier.
+     */
+    const deposerPiece = async (evenement) => {
+        evenement.preventDefault();
+        const formulaire = evenement.target;
+        const donnees = new FormData(formulaire);
+        if (!donnees.get('type')) return;
+
+        setDepotEnCours(true);
+        setMessagePiece(null);
+        try {
+            const res = await fetch(`${API_URL}/api/pieces/portail`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: donnees
+            });
+            const detail = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                setMessagePiece({ ton: 'alerte', texte: detail.error || 'Dépôt refusé.' });
+                return;
+            }
+            setMessagePiece({ ton: 'succes', texte: detail.message || 'Pièce déposée.' });
+            formulaire.reset();
+            if (profile?.id) chargerMesPieces(profile.id);
+        } catch (err) {
+            setMessagePiece({ ton: 'alerte', texte: err.message || 'Dépôt impossible.' });
+        } finally {
+            setDepotEnCours(false);
+        }
+    };
     const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
     const [absenceForm, setAbsenceForm] = useState({
         type: 'Absence injustifiée',
@@ -82,12 +143,26 @@ export function EmployeePortal() {
     }, []);
 
     useEffect(() => {
+        // Catalogue des types de titres, qui alimente le formulaire de dépôt.
+        fetch(`${API_URL}/api/pieces/types`, { headers: { Authorization: `Bearer ${token}` } })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((donnees) => {
+                if (Array.isArray(donnees?.types)) setTypesPiece(donnees.types);
+            })
+            .catch(() => { /* le formulaire restera sans choix, il le montrera */ });
+    }, [token]);
+
+    useEffect(() => {
         const fetchProfile = async () => {
             try {
                 const res = await fetch(`${API_URL}/api/employees/profile`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (res.ok) setProfile(await res.json());
+                if (res.ok) {
+                    const fiche = await res.json();
+                    setProfile(fiche);
+                    if (fiche?.id) chargerMesPieces(fiche.id);
+                }
             } catch (err) {
                 console.error("Failed to load profile", err);
             }
@@ -506,6 +581,7 @@ export function EmployeePortal() {
         visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
     };
 
+
     return (
         <div className="flex-1 space-y-8 p-4 md:p-8 bg-slate-50/50 min-h-[calc(100vh-4rem)] overflow-x-hidden relative">
             
@@ -596,7 +672,10 @@ export function EmployeePortal() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-slate-500 mb-2 font-medium">Dernier versement : 28 Fév 2026</p>
+                                {/* « Dernier versement : 28 Fév 2026 » était écrit en dur. Le
+                                    portail ne lit pas les bulletins ; il renvoie donc vers eux
+                                    plutôt que d'annoncer une date qu'il ignore. */}
+                                <p className="text-sm text-slate-500 mb-2 font-medium">Montant masqué sur cet écran</p>
                                 <div className="text-4xl font-extrabold text-slate-900 mb-6 font-['Outfit']">
                                     *** *** <span className="text-2xl text-slate-400 font-medium">FCFA</span>
                                 </div>
@@ -625,8 +704,20 @@ export function EmployeePortal() {
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-slate-500 mb-2 font-medium">Solde disponible (Congés Annuels)</p>
+                                {/* Ce chiffre valait « 14.5 » pour tout le monde : une constante
+                                    écrite dans la page, que chaque salarié lisait comme son propre
+                                    solde. Le solde réel figure sur sa fiche. */}
                                 <div className="text-4xl font-extrabold text-slate-900 mb-6 font-['Outfit']">
-                                    14.5 <span className="text-2xl font-medium text-slate-400">Jours</span>
+                                    {profile && profile.annualLeaveBalance !== undefined && profile.annualLeaveBalance !== null ? (
+                                        <>
+                                            {Number(profile.annualLeaveBalance).toLocaleString('fr-FR')}{' '}
+                                            <span className="text-2xl font-medium text-slate-400">Jours</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-base font-medium text-slate-400">
+                                            Solde non disponible
+                                        </span>
+                                    )}
                                 </div>
                                 <Link to="/leaves">
                                     <Button variant="outline" className="w-full text-blue-700 border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl transition-all">
@@ -696,6 +787,98 @@ export function EmployeePortal() {
                                         </Button>
                                     </Link>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+
+                    {/* WIDGET: Mes titres et habilitations
+
+                        Le salarié dépose son permis renouvelé ou son certificat
+                        d'aptitude depuis chez lui, au lieu de passer au bureau. Ce
+                        qu'il dépose attend une vérification : la conformité ne se
+                        déclare pas elle-même. */}
+                    <motion.div variants={itemVariants} whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 400 }}>
+                        <Card className="glass-panel h-full rounded-3xl border-0 overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <IdCard size={100} />
+                            </div>
+                            <CardHeader className="pb-2">
+                                <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center mb-4 shadow-inner">
+                                    <IdCard size={24} />
+                                </div>
+                                <CardTitle className="text-xl font-bold text-slate-800 font-['Outfit']">
+                                    Mes titres
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {mesPieces === null ? (
+                                    <p className="text-sm text-slate-400 mb-4">Lecture de votre dossier…</p>
+                                ) : mesPieces.length === 0 ? (
+                                    <p className="text-sm text-slate-500 mb-4">
+                                        Aucun titre enregistré : permis de conduire, aptitude médicale,
+                                        habilitation.
+                                    </p>
+                                ) : (
+                                    <ul className="space-y-2 mb-4">
+                                        {mesPieces.slice(0, 3).map((p) => (
+                                            <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                                                <span className="text-slate-700 truncate">{p.libelle}</span>
+                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg border shrink-0 ${
+                                                    p.etat === 'EXPIREE' ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                    : p.etat === 'BIENTOT_EXPIREE' ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                                    : p.statut === 'A_CONTROLER' ? 'bg-sky-50 text-sky-700 border-sky-200'
+                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                }`}>
+                                                    {p.etat === 'EXPIREE' ? 'expiré'
+                                                     : p.etat === 'BIENTOT_EXPIREE' ? 'à renouveler'
+                                                     : p.statut === 'A_CONTROLER' ? 'en vérification'
+                                                     : 'valide'}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+
+                                {messagePiece && (
+                                    <p className={`text-xs rounded-xl p-3 mb-3 ${
+                                        messagePiece.ton === 'succes'
+                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                            : 'bg-amber-50 text-amber-700 border border-amber-100'
+                                    }`}>
+                                        {messagePiece.texte}
+                                    </p>
+                                )}
+
+                                <form onSubmit={deposerPiece} className="space-y-2">
+                                    <select
+                                        name="type"
+                                        required
+                                        aria-label="Type de titre"
+                                        className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                                    >
+                                        <option value="">Type de titre…</option>
+                                        {typesPiece.map((t) => (
+                                            <option key={t.code} value={t.code}>{t.libelle}</option>
+                                        ))}
+                                    </select>
+                                    <label className="block text-xs text-slate-500">
+                                        Expire le
+                                        <input type="date" name="expireLe"
+                                               className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm mt-1" />
+                                    </label>
+                                    <input type="file" name="fichier" required
+                                           accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
+                                           aria-label="Fichier du titre"
+                                           className="w-full text-xs" />
+                                    <Button type="submit" disabled={depotEnCours}
+                                            className="w-full bg-sky-600 hover:bg-sky-700 text-white rounded-xl">
+                                        {depotEnCours ? 'Envoi…' : 'Déposer'}
+                                    </Button>
+                                </form>
+                                <p className="text-[11px] text-slate-400 mt-2 leading-snug">
+                                    Votre dépôt est vérifié par les ressources humaines avant d'être
+                                    pris en compte.
+                                </p>
                             </CardContent>
                         </Card>
                     </motion.div>

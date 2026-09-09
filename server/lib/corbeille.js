@@ -67,7 +67,8 @@ const RELATIONS = [
     { cle: 'jobDescription' },
     { cle: 'situationEmployee' },
     { cle: 'salaryChange' },
-    { cle: 'soldeToutCompte' }
+    { cle: 'soldeToutCompte' },
+    { cle: 'pieceSalarie' }
 ];
 
 const filtre = (relation, id) =>

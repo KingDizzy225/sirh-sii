@@ -316,6 +316,44 @@ mais indiquent des fonctions qui resteront muettes.
 
 
 
+
+---
+
+## Titres et habilitations des salariés
+
+Écran *Titres & habilitations*. Permis de conduire, visite médicale d'aptitude,
+habilitation technique, carte professionnelle, titre de séjour : les mêmes
+échéances que le dossier des prestataires, avec les mêmes conséquences. Un
+permis expiré au volant d'un véhicule de service engage l'entreprise.
+
+Ce qu'il faut savoir pour l'exploiter :
+
+- **Le salarié dépose depuis son portail**, la RH valide ou refuse. Ce qu'il
+  dépose vaut « à contrôler », jamais « valide » : sans cette règle, la
+  conformité se déclarerait elle-même. Un refus doit être motivé — sans motif,
+  l'intéressé n'a rien à corriger.
+- **Une échéance laissée vide est déduite** de la date de délivrance et de la
+  durée de validité du type. Une pièce sans échéance ne serait jamais relancée
+  et paraîtrait valide indéfiniment.
+- **L'aptitude médicale et le titre de séjour sont des pièces personnelles.**
+  Un responsable voit qu'une échéance approche — c'est ce dont il a besoin pour
+  organiser un remplacement — mais ni la référence, ni le fichier, ni le motif
+  d'un refus. La restriction est appliquée à la source, pour chaque pièce, et
+  non laissée à la discipline de chacun.
+- **L'écran ne dit pas ce qui manque au dossier.** L'application ignore quelles
+  pièces tel poste exige ; elle sait seulement que celles qui figurent au
+  dossier sont valides ou non. « À jour » ne veut pas dire « complet ».
+
+Réglages, tous surchargeables sans redéploiement : `PIECES_PREAVIS_JOURS`
+(60 jours par défaut, plus large que les 30 jours des prestataires — un permis
+ou une visite médicale demandent des rendez-vous, pas un courrier), et
+`PIECES_VALIDITE_<TYPE>_MOIS` pour chaque durée de validité.
+
+Comme pour les attestations de prestataires, **les fichiers déposés supposent
+un disque persistant**. Sur un hébergement au disque éphémère, la ligne
+subsiste et le fichier disparaît à chaque redéploiement ; l'application le dit
+alors explicitement au lieu d'échouer en silence.
+
 ---
 
 ## Chiffres affichés et chiffres mesurés

@@ -142,6 +142,7 @@ const shiftRoutes = require('./routes/shiftRoutes');
 const benefitsRoutes = require('./routes/benefitsRoutes');
 const ethicsRoutes = require('./routes/ethicsRoutes');
 const subcontractorRoutes = require('./routes/subcontractorRoutes');
+const pieceRoutes = require('./routes/pieceRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
 
 app.use('/api/announcements', announcementRoutes);
@@ -156,6 +157,9 @@ app.use('/api/shifts', verifyToken, shiftRoutes);
 app.use('/api/benefits', verifyToken, benefitsRoutes);
 app.use('/api/ethics', ethicsRoutes); // Public & Admin inside
 app.use('/api/subcontractors', verifyToken, subcontractorRoutes);
+// Titres et habilitations à échéance des salariés : le pendant, côté
+// personnel, du dossier de conformité des prestataires.
+app.use('/api/pieces', verifyToken, pieceRoutes);
 app.use('/api/simulations', verifyToken, simulationRoutes);
 app.use('/api/equity', verifyToken, require('./routes/equityRoutes'));
 app.use('/api/succession', verifyToken, require('./routes/successionRoutes'));

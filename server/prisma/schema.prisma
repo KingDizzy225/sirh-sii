@@ -115,6 +115,7 @@ model Employee {
   jobDescriptions      JobDescription[]
   situations           SituationEmployee[]
   soldeToutCompte      SoldeToutCompte?
+  pieces               PieceSalarie[]
 }
 
 // ... (existing code)
@@ -1678,4 +1679,49 @@ model SoldeToutCompte {
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@map("solde_tout_compte")
+}
+
+/// Titre ou habilitation à échéance d'un salarié.
+///
+/// Les prestataires disposaient d'un dossier de pièces daté et relancé avant
+/// expiration ; les salariés n'avaient rien. Permis de conduire, aptitude
+/// médicale, habilitation technique, titre de séjour : mêmes échéances, mêmes
+/// conséquences. Un permis expiré au volant d'un véhicule de service engage
+/// l'entreprise, et rien ne permettait de savoir qui était concerné.
+///
+/// Deux notions distinctes cohabitent ici, et les confondre ferait passer pour
+/// acquis un document que personne n'a regardé :
+///   - la **validité**, qui se déduit de `expireLe` ;
+///   - le **contrôle**, porté par `statut` : une pièce déposée par le salarié
+///     lui-même vaut A_CONTROLER jusqu'à ce que la RH la valide.
+model PieceSalarie {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+
+  /// PERMIS | APTITUDE | HABILITATION | CARTE_PRO | SEJOUR | AUTRE
+  type       String
+  reference  String?
+  delivreeLe DateTime? @map("delivree_le")
+  /// Déduite de la date de délivrance quand elle n'est pas fournie : une pièce
+  /// sans échéance ne serait jamais relancée et paraîtrait valide indéfiniment.
+  expireLe   DateTime? @map("expire_le")
+
+  filePath   String?  @map("file_path")
+  note       String?  @db.Text
+
+  /// VALIDE | A_CONTROLER | REFUSEE
+  statut       String    @default("A_CONTROLER")
+  deposeePar   String?   @map("deposee_par")
+  controleePar String?   @map("controlee_par")
+  controleeLe  DateTime? @map("controlee_le")
+  motifRefus   String?   @map("motif_refus") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, type])
+  @@index([expireLe])
+  @@map("piece_salarie")
 }
