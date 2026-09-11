@@ -68,6 +68,9 @@ const getAllNavItems = (t) => [
     // Décisions d'augmentation, distinctes de l'exécution de la paie.
     { name: 'Décisions de rémunération', path: '/remunerations', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Prêts au personnel', path: '/prets', icon: Landmark, domain: 'Pilotage RH', permission: 'payroll:view' },
+    // Le seul accès proposé aux notes de frais était un onglet de la paie qui
+    // affichait six notes inventées, et dont la validation n'enregistrait rien.
+    { name: 'Notes de frais', path: '/expenses', icon: Receipt, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Budget & masse salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Délégations de validation', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: t('sidebar.learning', 'Formation'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },

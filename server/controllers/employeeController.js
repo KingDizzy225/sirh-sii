@@ -7,6 +7,28 @@ const dossier = require('../lib/dossier');
 const corbeille = require('../lib/corbeille');
 const remuneration = require('../lib/remuneration');
 const historique = require('../lib/historique');
+const { hasRole } = require('../middleware/roleMiddleware');
+
+/**
+ * Champs réservés à la RH.
+ *
+ * Les responsables ouvrent une session depuis qu'ils valident les congés de
+ * leur équipe, et la liste des salariés leur rendait chaque dossier entier :
+ * salaire, compte bancaire, numéro CNPS, adresse. Ils n'en ont pas l'usage.
+ */
+const CHAMPS_RH = [
+    'baseSalary', 'salaryEffectiveFrom', 'bankName', 'bankAccount', 'cnpsNumber',
+    'birthDate', 'address', 'phone', 'nationality', 'childrenCount', 'annualLeaveBalance',
+    'leaveBalanceSource', 'leaveBalanceSetAt'
+];
+
+const pourLecteur = (user, salarie) => {
+    if (!salarie || hasRole(user, ['ADMIN', 'HR'])) return salarie;
+    const vue = { ...salarie };
+    for (const champ of CHAMPS_RH) delete vue[champ];
+    return vue;
+};
+exports.CHAMPS_RH = CHAMPS_RH;
 
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
@@ -17,7 +39,7 @@ exports.getAllEmployees = async (req, res) => {
             },
             orderBy: { createdAt: 'desc' }
         });
-        res.status(200).json(employees);
+        res.status(200).json(employees.map((e) => pourLecteur(req.user, e)));
     } catch (error) {
         console.error('Error fetching employees:', error);
         res.status(500).json({ error: 'Failed to fetch employees' });
@@ -555,7 +577,7 @@ exports.getEmployeeById = async (req, res) => {
             return res.status(404).json({ error: 'Employé introuvable' });
         }
 
-        res.status(200).json(employee);
+        res.status(200).json(pourLecteur(req.user, employee));
     } catch (error) {
         console.error('Error fetching employee profile by ID:', error);
         res.status(500).json({ error: 'Failed to fetch employee profile' });

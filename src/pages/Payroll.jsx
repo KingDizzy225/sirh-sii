@@ -50,6 +50,9 @@ export function Payroll() {
 
     // Payroll variables form for HR (employeeId -> {variables})
     const [payrollVariables, setPayrollVariables] = useState({});
+    // Écarts rendus par le serveur au lancement : salaire saisi différent de la
+    // référence, ou salarié sans aucun salaire connu (non payé).
+    const [ecarts, setEcarts] = useState([]);
 
     // Déclaration sociale du mois : montants agrégés par le serveur à partir
     // des bulletins enregistrés. Rien n'est recalculé ici — c'est justement ce
@@ -59,22 +62,13 @@ export function Payroll() {
 
     // Compensation Campaign State
     const [campaignEmployees, setCampaignEmployees] = useState([]);
-    const [globalBudget] = useState(250000); // 250,000 FCFA budget envelope for salary increases
+    // Enveloppe saisie par la RH. Elle valait 250 000 FCFA en dur, un montant
+    // que personne n'avait décidé.
+    const [globalBudget, setGlobalBudget] = useState('');
 
     // Salary Advances State
     const [advancesFilter, setAdvancesFilter] = useState('all');
     const [advancesData, setAdvancesData] = useState([]);
-
-    // Expenses (Notes de Frais) State
-    const [expensesFilter, setExpensesFilter] = useState('all');
-    const [expensesData, setExpensesData] = useState([
-        { id: 'EXP-001', employee: 'Amadou Diallo', category: 'Déplacement', description: 'Mission client Abidjan', amount: 85000, date: '2026-05-08', status: 'pending', receipt: true },
-        { id: 'EXP-002', employee: 'Fatou Sow', category: 'Restauration', description: 'Repas réunion partenaires', amount: 25000, date: '2026-05-09', status: 'approved', receipt: true },
-        { id: 'EXP-003', employee: 'Ibrahim Ndiaye', category: 'Formation', description: 'Certification AWS Cloud', amount: 350000, date: '2026-05-11', status: 'pending', receipt: false },
-        { id: 'EXP-004', employee: 'Mariama Ba', category: 'Matériel', description: 'Fournitures bureau', amount: 15000, date: '2026-05-14', status: 'approved', receipt: true },
-        { id: 'EXP-005', employee: 'Oumar Traoré', category: 'Déplacement', description: 'Carburant livraisons', amount: 45000, date: '2026-05-16', status: 'rejected', receipt: true },
-        { id: 'EXP-006', employee: 'Aïcha Koné', category: 'Hébergement', description: 'Hôtel mission Dakar', amount: 120000, date: '2026-05-19', status: 'pending', receipt: true },
-    ]);
 
 
     const showNotification = (message) => {
@@ -90,12 +84,13 @@ export function Payroll() {
                 const mapped = data.map(a => ({
                     id: a.id,
                     employee: a.employee,
-                    department: a.department || 'Opérations',
+                    department: a.department || '—',
                     amount: a.amount,
                     reason: a.reason || '—',
                     status: (a.status === 'Approuvé' || a.status === 'APPROVED' || a.status === 'approved') ? 'approved' :
                             (a.status === 'Rejeté' || a.status === 'REJECTED' || a.status === 'rejected') ? 'rejected' : 'pending',
-                    repayment: '3 mois',
+                    // Aucune modalité n'est enregistrée : « 3 mois » était affiché pour toutes.
+                    repayment: '—',
                     requestDate: a.requestedAt || new Date().toISOString()
                 }));
                 setAdvancesData(mapped);
@@ -117,12 +112,6 @@ export function Payroll() {
             console.error("Error updating advance status:", e);
             showNotification('Erreur lors du traitement de la demande.', true);
         }
-    };
-
-    // Handlers for Expenses
-    const handleExpenseAction = (id, action) => {
-        setExpensesData(prev => prev.map(e => e.id === id ? { ...e, status: action } : e));
-        showNotification(action === 'approved' ? '✅ Note de frais approuvée.' : '❌ Note de frais rejetée.');
     };
 
 
@@ -152,11 +141,14 @@ export function Payroll() {
 
             if (empRes.data) {
                 const employeesData = empRes.data.employees || empRes.data;
-                setEmployees(employeesData);
+                // Un salarié sorti ne reçoit plus de bulletin : la liste servait
+                // telle quelle à la paie, départs compris.
+                const actifs = employeesData.filter(e => e.status !== 'TERMINATED');
+                setEmployees(actifs);
                 
                 // Initialize preparation variables
                 const vars = {};
-                employeesData.forEach(emp => {
+                actifs.forEach(emp => {
                     const empPayrolls = payrollsData.filter(p => p.employeeId === emp.id);
                     const currentMonthPay = empPayrolls.find(p => {
                         try {
@@ -167,17 +159,21 @@ export function Payroll() {
 
                     if (currentMonthPay) {
                         vars[emp.id] = {
-                            baseSalary: currentMonthPay.baseSalary,
+                            // Vide : le serveur retient le salaire en vigueur à la
+                            // période. Recopier l'ancien montant le ferait passer
+                            // pour une saisie, et masquerait une augmentation.
+                            baseSalary: '',
                             overtimeHours: currentMonthPay.overtimeHours || 0,
                             leaveDays: currentMonthPay.leaveDays || 0,
                             bonus: currentMonthPay.bonus || 0,
                             deductions: currentMonthPay.deductions || 0
                         };
                     } else {
-                        empPayrolls.sort((a, b) => new Date(b.period) - new Date(a.period));
-                        const latestPay = empPayrolls[0];
                         vars[emp.id] = {
-                            baseSalary: latestPay ? latestPay.baseSalary : 350000,
+                            // Aucun montant par défaut. Il valait 350 000 FCFA pour tout
+                            // salarié sans bulletin antérieur, et le serveur retenait ce
+                            // montant transmis de préférence au salaire du dossier.
+                            baseSalary: '',
                             overtimeHours: 0,
                             leaveDays: 0,
                             bonus: 0,
@@ -187,23 +183,17 @@ export function Payroll() {
                 });
                 setPayrollVariables(vars);
 
-                // Initialize Campaign Roster by combining real employees with simulated base stats
-                const compRoster = employeesData.map(emp => {
-                    const empPayrolls = payrollsData.filter(p => p.employeeId === emp.id);
-                    empPayrolls.sort((a, b) => new Date(b.period) - new Date(a.period));
-                    const lastPay = empPayrolls[0];
-
-                    return {
-                        id: emp.id,
-                        name: `${emp.firstName} ${emp.lastName}`,
-                        role: emp.positionTitle || 'Collaborateur',
-                        department: emp.department || 'Opérations',
-                        perfScore: parseFloat((Math.random() * 2 + 3).toFixed(1)), // Simulate rating 3.0 - 5.0
-                        currentSalary: lastPay ? lastPay.baseSalary : 350000,
-                        proposedIncreasePercentage: 0
-                    };
-                });
-                setCampaignEmployees(compRoster);
+                // Simulation d'augmentations : le salaire est celui du dossier. La
+                // note de performance était tirée au hasard à chaque ouverture et
+                // colorait des salariés réels comme sous-performants.
+                setCampaignEmployees(actifs.map(emp => ({
+                    id: emp.id,
+                    name: `${emp.firstName} ${emp.lastName}`,
+                    role: emp.positionTitle || '',
+                    department: emp.department || '—',
+                    currentSalary: emp.baseSalary ?? null,
+                    proposedIncreasePercentage: 0
+                })));
             }
         } catch (error) {
             console.error("Error loading payroll dashboard", error);
@@ -248,7 +238,11 @@ export function Payroll() {
             payrolls: employees.map(emp => ({
                 employeeId: emp.id,
                 period: `${selectedMonth}-01`,
-                baseSalary: payrollVariables[emp.id].baseSalary || 350000,
+                // null : le serveur applique la rémunération de référence. Un montant
+                // saisi la remplace pour ce bulletin, et l'écart est signalé.
+                baseSalary: payrollVariables[emp.id]?.baseSalary === '' || payrollVariables[emp.id]?.baseSalary == null
+                    ? null
+                    : payrollVariables[emp.id].baseSalary,
                 overtimeHours: payrollVariables[emp.id].overtimeHours || 0,
                 leaveDays: payrollVariables[emp.id].leaveDays || 0,
                 bonus: payrollVariables[emp.id].bonus || 0,
@@ -259,13 +253,18 @@ export function Payroll() {
         try {
             const { data } = await api.post(`/payrolls/run`, payload);
             if (data) {
-                showNotification('Bordereau de paie généré et bulletins PDF créés !');
+                // Les écarts restent affichés sur l'écran de préparation : le serveur
+                // les calculait, personne ne les voyait.
+                const signales = Array.isArray(data.ecarts) ? data.ecarts : [];
+                setEcarts(signales);
+                showNotification(`${data.count} bulletin(s) produit(s)`
+                    + (signales.length ? ` — ${signales.length} écart(s) à vérifier` : ''));
                 loadEmployeesAndPayrolls();
-                setActiveTab('history');
+                if (signales.length === 0) setActiveTab('history');
             }
         } catch (error) {
             console.error(error);
-            showNotification('Erreur lors de la génération de la paie.');
+            showNotification(error.message || 'Erreur lors de la génération de la paie.');
         } finally {
             setIsGenerating(false);
         }
@@ -394,23 +393,22 @@ export function Payroll() {
         ));
     };
 
-    const handleSaveCampaign = () => {
-        showNotification("Campagne salariale sauvegardée en base de données !");
-    };
 
     // Calculations Campaign stats
     const campaignStats = useMemo(() => {
         let totalCurrent = 0;
         let totalProposed = 0;
+        let sansSalaire = 0;
 
         campaignEmployees.forEach(emp => {
+            // Un salaire inconnu ne compte pas pour zéro : il sortirait la
+            // masse salariale de la réalité sans que rien ne l'indique.
+            if (emp.currentSalary == null) { sansSalaire++; return; }
             totalCurrent += emp.currentSalary;
-            const increaseAmount = (emp.currentSalary * emp.proposedIncreasePercentage) / 100;
-            totalProposed += (emp.currentSalary + increaseAmount);
+            totalProposed += emp.currentSalary * (1 + emp.proposedIncreasePercentage / 100);
         });
 
-        const budgetConsumed = totalProposed - totalCurrent;
-        return { totalCurrent, totalProposed, budgetConsumed };
+        return { totalCurrent, totalProposed, budgetConsumed: totalProposed - totalCurrent, sansSalaire };
     }, [campaignEmployees]);
 
     const formatCurrency = (amount) => {
@@ -478,9 +476,8 @@ export function Payroll() {
                     { id: 'run-payroll', label: 'Préparation de la Paie', icon: PlayCircle, hidden: !isHR },
                     { id: 'history', label: 'Registre & Téléchargements', icon: Search, hidden: !isHR },
                     { id: 'declaration', label: 'Déclarations Sociales', icon: Landmark, hidden: !isHR },
-                    { id: 'campaign', label: 'Campagne Salariale', icon: PiggyBank, hidden: !isHR },
+                    { id: 'campaign', label: "Simulation d'augmentations", icon: PiggyBank, hidden: !isHR },
                     { id: 'advances', label: 'Avances sur Salaire', icon: Banknote, hidden: !isHR },
-                    { id: 'expenses', label: 'Notes de Frais', icon: Receipt, hidden: !isHR },
                 ].map(tab => {
                     if (tab.hidden) return null;
                     const Icon = tab.icon;
@@ -619,6 +616,29 @@ export function Payroll() {
                             </Button>
                         </div>
 
+                        {ecarts.length > 0 && (
+                            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 space-y-2">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm font-bold text-rose-900 flex items-center gap-2">
+                                        <ShieldAlert size={16} /> {ecarts.length} écart(s) relevé(s) au dernier lancement
+                                    </p>
+                                    <button onClick={() => setEcarts([])} aria-label="Masquer les écarts" className="text-rose-400 hover:text-rose-700">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                <ul className="space-y-1">
+                                    {ecarts.map((e, i) => (
+                                        <li key={i} className="text-xs text-rose-800">
+                                            <span className="font-bold">{e.nom}</span> — {e.motif}
+                                            {e.reference != null && e.transmis != null && (
+                                                <> Dossier : {formatCurrency(e.reference)}, saisi : {formatCurrency(e.transmis)}.</>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
                         <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden">
                             <CardHeader className="py-4 border-b border-slate-100 bg-slate-50/50">
                                 <CardTitle className="text-sm font-bold text-slate-800">Saisie des Éléments Variables de Paie (EVP)</CardTitle>
@@ -646,9 +666,12 @@ export function Payroll() {
                                                 <td className="p-4">
                                                     <input 
                                                         type="number" 
-                                                        value={payrollVariables[emp.id]?.baseSalary || ''} 
+                                                        value={payrollVariables[emp.id]?.baseSalary ?? ''}
                                                         onChange={(e) => handleVariableChange(emp.id, 'baseSalary', e.target.value)}
-                                                        className="w-24 border border-slate-200 rounded-lg p-1.5 text-xs font-bold bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                        placeholder={emp.baseSalary != null ? `Dossier : ${Math.round(emp.baseSalary).toLocaleString('fr-FR')}` : 'Aucun salaire au dossier'}
+                                                        title="Laisser vide pour appliquer le salaire en vigueur à la période"
+                                                        className={cn("w-32 border rounded-lg p-1.5 text-xs font-bold bg-slate-50 focus:ring-1 focus:ring-indigo-500 outline-none",
+                                                            emp.baseSalary == null ? "border-rose-300 placeholder:text-rose-500" : "border-slate-200")}
                                                     />
                                                 </td>
                                                 <td className="p-4">
@@ -907,120 +930,129 @@ export function Payroll() {
                     </div>
                 )}
 
-                {/* 5. COMPENSATION CAMPAIGN */}
+                {/* 5. SIMULATION D'AUGMENTATIONS
+
+                    Simulation seulement. L'écran annonçait « Campagne salariale
+                    sauvegardée en base de données » sans rien enregistrer. Les
+                    décisions se prennent dans « Décisions de rémunération », qui
+                    les date, les motive et les applique à la paie. */}
                 {isHR && activeTab === 'campaign' && (
                     <div className="space-y-6">
-                        {/* Envelope Budget KPIs */}
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-xs text-amber-900 max-w-2xl leading-relaxed">
+                                Simulation : rien n'est enregistré sur cet écran. Une augmentation se décide,
+                                avec sa date d'effet et son motif, dans « Décisions de rémunération ».
+                            </p>
+                            <Button size="sm" onClick={() => navigate('/remunerations')} className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">
+                                Décisions de rémunération
+                            </Button>
+                        </div>
+
                         <div className="grid gap-4 md:grid-cols-3">
                             <Card className="border-none shadow-sm bg-white">
                                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Masse Salariale Actuelle</CardTitle>
+                                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Masse salariale actuelle</CardTitle>
                                     <Briefcase className="h-4 w-4 text-slate-400" />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-black text-slate-800">{formatCurrency(campaignStats.totalCurrent)}</div>
+                                    {campaignStats.sansSalaire > 0 && (
+                                        <p className="text-[11px] text-rose-600 font-semibold mt-1">
+                                            {campaignStats.sansSalaire} salarié(s) sans salaire au dossier, exclu(s) du total.
+                                        </p>
+                                    )}
                                 </CardContent>
                             </Card>
                             <Card className="border-none shadow-sm bg-white">
                                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Masse Salariale Projetée</CardTitle>
+                                    <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">Masse salariale projetée</CardTitle>
                                     <Calculator className="h-4 w-4 text-indigo-500" />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-black text-indigo-600">{formatCurrency(campaignStats.totalProposed)}</div>
                                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">
-                                        +{((campaignStats.totalProposed - campaignStats.totalCurrent) / (campaignStats.totalCurrent || 1) * 100).toFixed(2)}% global
+                                        +{(campaignStats.budgetConsumed / (campaignStats.totalCurrent || 1) * 100).toFixed(2)} % global
                                     </p>
                                 </CardContent>
                             </Card>
-                            <Card className={cn("border-none shadow-sm", campaignStats.budgetConsumed > globalBudget ? 'bg-red-50' : 'bg-white')}>
+                            <Card className={cn("border-none shadow-sm", globalBudget !== '' && campaignStats.budgetConsumed > Number(globalBudget) ? 'bg-red-50' : 'bg-white')}>
                                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-xs font-bold text-slate-600 uppercase tracking-widest">Consommation Enveloppe</CardTitle>
-                                    <AlertCircle className={cn("h-4 w-4", campaignStats.budgetConsumed > globalBudget ? 'text-red-500' : 'text-emerald-500')} />
+                                    <CardTitle className="text-xs font-bold text-slate-600 uppercase tracking-widest">Enveloppe</CardTitle>
+                                    <AlertCircle className="h-4 w-4 text-slate-400" />
                                 </CardHeader>
-                                <CardContent>
-                                    <div className={cn("text-2xl font-black", campaignStats.budgetConsumed > globalBudget ? 'text-rose-600' : 'text-emerald-600')}>
-                                        {formatCurrency(campaignStats.budgetConsumed)} 
-                                        <span className="text-xs font-normal text-slate-400">/ {formatCurrency(globalBudget)}</span>
-                                    </div>
-                                    {campaignStats.budgetConsumed > globalBudget && (
-                                        <p className="text-[10px] text-rose-600 font-black mt-1 uppercase tracking-wide">
-                                            ⚠️ Budget dépassé de {formatCurrency(campaignStats.budgetConsumed - globalBudget)}
+                                <CardContent className="space-y-2">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={globalBudget}
+                                        onChange={(e) => setGlobalBudget(e.target.value)}
+                                        placeholder="Montant mensuel décidé"
+                                        className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    />
+                                    <p className="text-xs text-slate-500">
+                                        Consommé : <span className="font-bold text-slate-800">{formatCurrency(campaignStats.budgetConsumed)}</span>
+                                    </p>
+                                    {globalBudget !== '' && campaignStats.budgetConsumed > Number(globalBudget) && (
+                                        <p className="text-[10px] text-rose-600 font-black uppercase tracking-wide">
+                                            Enveloppe dépassée de {formatCurrency(campaignStats.budgetConsumed - Number(globalBudget))}
                                         </p>
                                     )}
                                 </CardContent>
                             </Card>
                         </div>
 
-                        {/* Roster spreadsheet */}
                         <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden">
-                            <CardHeader className="py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                <div>
-                                    <CardTitle className="text-sm font-bold text-slate-800">Grille d'Augmentations Annuelles (Campagne 2026)</CardTitle>
-                                    <CardDescription>Simulez et validez les augmentations de salaire de base selon le score de performance.</CardDescription>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" className="text-xs font-bold"><Download size={14} className="mr-1.5" /> Exporter CSV</Button>
-                                    <Button size="sm" onClick={handleSaveCampaign} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"><Save size={14} className="mr-1.5" /> Enregistrer</Button>
-                                </div>
+                            <CardHeader className="py-4 border-b border-slate-100 bg-slate-50/50">
+                                <CardTitle className="text-sm font-bold text-slate-800">Simulation d'augmentations</CardTitle>
+                                <CardDescription>Salaire de base au dossier. Les pourcentages saisis ne sont pas conservés.</CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50/30">
-                                            <TableHead className="w-[200px]">Employé</TableHead>
+                                            <TableHead className="w-[220px]">Employé</TableHead>
                                             <TableHead>Département</TableHead>
-                                            <TableHead className="text-center">Perf. (sur 5)</TableHead>
-                                            <TableHead className="text-right">Salaire Actuel</TableHead>
+                                            <TableHead className="text-right">Salaire actuel</TableHead>
                                             <TableHead className="text-center bg-indigo-50/20 w-[160px]">Augmentation %</TableHead>
-                                            <TableHead className="text-right bg-indigo-50/20 w-[180px]">Nouveau Salaire Base</TableHead>
+                                            <TableHead className="text-right bg-indigo-50/20 w-[180px]">Nouveau salaire de base</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody className="text-xs font-semibold">
-                                        {campaignEmployees.map(emp => {
-                                            const increaseVal = (emp.currentSalary * emp.proposedIncreasePercentage) / 100;
-                                            const newSal = emp.currentSalary + increaseVal;
-                                            const isWarning = (emp.perfScore < 3.5 && emp.proposedIncreasePercentage > 0) || (emp.perfScore >= 4.5 && emp.proposedIncreasePercentage < 1);
-
-                                            return (
-                                                <TableRow key={emp.id} className="hover:bg-slate-50/30">
-                                                    <td className="p-4 font-bold text-slate-800">
-                                                        <div>{emp.name}</div>
-                                                        <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{emp.role}</div>
-                                                    </td>
-                                                    <td className="p-4 text-slate-500">{emp.department}</td>
-                                                    <td className="p-4 text-center">
-                                                        <Badge variant="outline" className={cn(
-                                                            "text-[10px] font-bold border",
-                                                            emp.perfScore >= 4.3 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-                                                            emp.perfScore < 3.5 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-600'
-                                                        )}>
-                                                            {emp.perfScore} / 5
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="p-4 text-right text-slate-700 font-bold">{formatCurrency(emp.currentSalary)}</td>
-                                                    <td className="p-4 bg-indigo-50/10">
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <input
-                                                                type="number"
-                                                                min="0" max="50" step="0.5"
-                                                                value={emp.proposedIncreasePercentage}
-                                                                onChange={(e) => handleIncreaseChange(emp.id, e.target.value)}
-                                                                className={cn(
-                                                                    "w-16 border rounded-lg p-1.5 text-center text-xs font-bold focus:ring-1 focus:ring-indigo-500 outline-none",
-                                                                    isWarning ? 'border-amber-300 bg-amber-50/50 text-amber-700' : 'border-slate-200'
-                                                                )}
-                                                            />
-                                                            <span className="text-slate-400 font-bold">%</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-4 text-right font-black text-indigo-700 bg-indigo-50/10">{formatCurrency(newSal)}</td>
-                                                </TableRow>
-                                            );
-                                        })}
+                                        {campaignEmployees.map(emp => (
+                                            <TableRow key={emp.id} className="hover:bg-slate-50/30">
+                                                <td className="p-4 font-bold text-slate-800">
+                                                    <div>{emp.name}</div>
+                                                    <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{emp.role}</div>
+                                                </td>
+                                                <td className="p-4 text-slate-500">{emp.department}</td>
+                                                <td className="p-4 text-right text-slate-700 font-bold">
+                                                    {emp.currentSalary == null
+                                                        ? <span className="text-rose-600 font-semibold">Non renseigné</span>
+                                                        : formatCurrency(emp.currentSalary)}
+                                                </td>
+                                                <td className="p-4 bg-indigo-50/10">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <input
+                                                            type="number"
+                                                            min="0" max="50" step="0.5"
+                                                            value={emp.proposedIncreasePercentage}
+                                                            disabled={emp.currentSalary == null}
+                                                            onChange={(e) => handleIncreaseChange(emp.id, e.target.value)}
+                                                            className="w-16 border border-slate-200 rounded-lg p-1.5 text-center text-xs font-bold focus:ring-1 focus:ring-indigo-500 outline-none disabled:opacity-40"
+                                                        />
+                                                        <span className="text-slate-400 font-bold">%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right font-black text-indigo-700 bg-indigo-50/10">
+                                                    {emp.currentSalary == null
+                                                        ? '—'
+                                                        : formatCurrency(emp.currentSalary * (1 + emp.proposedIncreasePercentage / 100))}
+                                                </td>
+                                            </TableRow>
+                                        ))}
                                         {campaignEmployees.length === 0 && (
                                             <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-6 text-slate-400 font-medium">
+                                                <TableCell colSpan={5} className="text-center py-6 text-slate-400 font-medium">
                                                     Aucun collaborateur trouvé pour la simulation.
                                                 </TableCell>
                                             </TableRow>
@@ -1154,124 +1186,6 @@ export function Payroll() {
                     </div>
                 )}
 
-                {/* 6. NOTES DE FRAIS */}
-                {isHR && activeTab === 'expenses' && (
-                    <div className="space-y-6">
-                        {/* KPIs */}
-                        <div className="grid gap-4 md:grid-cols-4">
-                            {[
-                                { label: 'En Attente', count: expensesData.filter(e => e.status === 'pending').length, amount: expensesData.filter(e => e.status === 'pending').reduce((s, e) => s + e.amount, 0), color: 'amber', icon: Clock },
-                                { label: 'Approuvées', count: expensesData.filter(e => e.status === 'approved').length, amount: expensesData.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), color: 'emerald', icon: CheckCheck },
-                                { label: 'Rejetées', count: expensesData.filter(e => e.status === 'rejected').length, amount: 0, color: 'rose', icon: XCircle },
-                                { label: 'Total Mois', count: expensesData.length, amount: expensesData.reduce((s, e) => s + e.amount, 0), color: 'indigo', icon: Receipt },
-                            ].map(kpi => (
-                                <Card key={kpi.label} className="border-none shadow-sm bg-white">
-                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">{kpi.label}</CardTitle>
-                                        <kpi.icon className={`h-4 w-4 text-${kpi.color}-500`} />
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className={`text-2xl font-black text-${kpi.color}-600`}>{kpi.count}</div>
-                                        {kpi.amount > 0 && <p className="text-xs text-slate-400 mt-1">{formatCurrency(kpi.amount)}</p>}
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-
-                        <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden">
-                            <CardHeader className="py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                <div>
-                                    <CardTitle className="text-sm font-bold text-slate-800">Notes de Frais Professionnels</CardTitle>
-                                    <CardDescription>Validez et remboursez les frais professionnels soumis par les collaborateurs via le portail employé.</CardDescription>
-                                </div>
-                                <div className="flex gap-2 items-center">
-                                    <Filter size={14} className="text-slate-400" />
-                                    <select
-                                        value={expensesFilter}
-                                        onChange={e => setExpensesFilter(e.target.value)}
-                                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    >
-                                        <option value="all">Tous</option>
-                                        <option value="pending">En attente</option>
-                                        <option value="approved">Approuvées</option>
-                                        <option value="rejected">Rejetées</option>
-                                    </select>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-0 overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-slate-50/30">
-                                            <TableHead>Réf.</TableHead>
-                                            <TableHead>Employé</TableHead>
-                                            <TableHead>Catégorie</TableHead>
-                                            <TableHead>Description</TableHead>
-                                            <TableHead>Montant</TableHead>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Justificatif</TableHead>
-                                            <TableHead>Statut</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody className="text-xs">
-                                        {expensesData
-                                            .filter(e => expensesFilter === 'all' || e.status === expensesFilter)
-                                            .map(exp => (
-                                            <TableRow key={exp.id} className="hover:bg-slate-50/30 font-semibold">
-                                                <td className="p-4 font-mono text-indigo-700 font-bold">{exp.id}</td>
-                                                <td className="p-4 font-bold text-slate-800">{exp.employee}</td>
-                                                <td className="p-4">
-                                                    <Badge variant="outline" className="text-[10px] font-bold border-slate-200 text-slate-600">{exp.category}</Badge>
-                                                </td>
-                                                <td className="p-4 text-slate-500 max-w-[180px] truncate">{exp.description}</td>
-                                                <td className="p-4 font-black text-slate-900">{formatCurrency(exp.amount)}</td>
-                                                <td className="p-4 text-slate-400">{new Date(exp.date).toLocaleDateString('fr-FR')}</td>
-                                                <td className="p-4">
-                                                    {exp.receipt
-                                                        ? <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">✓ Fourni</Badge>
-                                                        : <Badge className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">✗ Manquant</Badge>
-                                                    }
-                                                </td>
-                                                <td className="p-4">
-                                                    <Badge className={cn(
-                                                        'text-[10px] font-bold border',
-                                                        exp.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                                        exp.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                                                        'bg-amber-50 text-amber-700 border-amber-200'
-                                                    )}>
-                                                        {exp.status === 'approved' ? 'Approuvée' : exp.status === 'rejected' ? 'Rejetée' : 'En attente'}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    {exp.status === 'pending' && (
-                                                        <div className="flex gap-1.5 justify-end">
-                                                            <Button
-                                                                onClick={() => handleExpenseAction(exp.id, 'approved')}
-                                                                disabled={!exp.receipt}
-                                                                size="sm"
-                                                                className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg disabled:opacity-40"
-                                                            >
-                                                                <CheckCheck size={12} className="mr-1" /> Valider
-                                                            </Button>
-                                                            <Button
-                                                                onClick={() => handleExpenseAction(exp.id, 'rejected')}
-                                                                size="sm"
-                                                                className="h-7 px-2.5 bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold rounded-lg"
-                                                            >
-                                                                <XCircle size={12} className="mr-1" /> Rejeter
-                                                            </Button>
-                                                        </div>
-                                                    )}
-                                                    {exp.status !== 'pending' && <span className="text-slate-300 text-[10px] font-bold">Traité</span>}
-                                                </td>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
             </div>
         
             {/* Lien de remise produit.
