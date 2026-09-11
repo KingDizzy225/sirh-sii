@@ -19,6 +19,8 @@ const remise = require('../lib/remise');
 const ADRESSE_IP = (req) =>
     (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || null;
 
+const evenements = require('../lib/evenements');
+
 /**
  * Retrouve le fichier derrière une source, et son intitulé.
  * @returns {Promise<{chemin:string, titre:string}|{erreur:string}>}
@@ -147,6 +149,12 @@ exports.remettre = async (req, res) => {
                 expireLe: remise.echeance(jours),
                 verification: controle
             }
+        });
+
+        // Le lien n'est jamais transmis : il vaut autorisation de télécharger.
+        evenements.emettreSansAttendre('DOCUMENT_REMIS', {
+            document: { titre: creee.titre, nature: sourceType, expireLe: creee.expireLe, verification: controle },
+            salarie: { id: salarie.id, nom: `${salarie.firstName} ${salarie.lastName}` }
         });
 
         res.status(201).json({

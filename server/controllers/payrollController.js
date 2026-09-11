@@ -17,6 +17,7 @@ const remuneration = require('../lib/remuneration');
 const cloture = require('../lib/cloture');
 const preparationPaie = require('../lib/preparationPaie');
 const declarationAnnuelle = require('../lib/declarationAnnuelle');
+const evenements = require('../lib/evenements');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -1017,6 +1018,14 @@ const cloturer = async (req, res) => {
                 netTotal: controles.netTotal,
                 avertissements: controles.avertissements.length > 0 ? controles.avertissements : undefined
             }
+        });
+
+        // Totaux du mois seulement : aucun montant individuel ne sort.
+        evenements.emettreSansAttendre('PAYROLL_CLOSED', {
+            periode: controles.periode,
+            effectif: controles.effectif,
+            masseBrute: Math.round(controles.masseBrute),
+            cloturePar: creee.cloturePar
         });
 
         res.status(201).json({

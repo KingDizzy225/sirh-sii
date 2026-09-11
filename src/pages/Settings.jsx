@@ -19,6 +19,9 @@ export function Settings() {
     const [webhooksList, setWebhooksList] = useState([]);
     const [isFetchingWebhooks, setIsFetchingWebhooks] = useState(false);
     const [isAddingWebhook, setIsAddingWebhook] = useState(false);
+    // Événements réellement émis. L'écran en proposait trois, dont un seul
+    // partait jamais.
+    const [catalogueEvenements, setCatalogueEvenements] = useState([]);
 
     // Work sites (pointage géolocalisé) state
     const [workSites, setWorkSites] = useState([]);
@@ -71,6 +74,13 @@ export function Settings() {
             if (res.ok) {
                 const data = await res.json();
                 setWebhooksList(data);
+            }
+            const resCatalogue = await fetch(`${API_URL}/api/webhooks/evenements`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('sirh_token')}` }
+            });
+            if (resCatalogue.ok) {
+                const catalogue = await resCatalogue.json();
+                setCatalogueEvenements(Array.isArray(catalogue) ? catalogue : []);
             }
         } catch (error) {
             console.error(error);
@@ -967,6 +977,10 @@ export function Settings() {
                                                             showNotification('Webhook créé avec succès');
                                                             setIsAddingWebhook(false);
                                                             fetchWebhooks();
+                                                        } else {
+                                                            // Le refus dit pourquoi : événement jamais émis, adresse non https.
+                                                            const detail = await res.json().catch(() => ({}));
+                                                            showNotification(detail.error || 'Webhook refusé');
                                                         }
                                                     } catch (err) {
                                                         showNotification('Erreur serveur');
@@ -981,9 +995,9 @@ export function Settings() {
                                                         <div className="space-y-2">
                                                             <label className="text-xs font-medium text-slate-700">Événement déclencheur</label>
                                                             <select name="eventType" required className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-                                                                <option value="EMPLOYEE_CREATED">EMPLOYEE_CREATED (Création Profil)</option>
-                                                                <option value="PAYROLL_APPROVED">PAYROLL_APPROVED (Paie Validée)</option>
-                                                                <option value="LEAVE_REQUESTED">LEAVE_REQUESTED (Demande Congé)</option>
+                                                                {catalogueEvenements.map((e) => (
+                                                                    <option key={e.type} value={e.type}>{e.libelle} ({e.type})</option>
+                                                                ))}
                                                             </select>
                                                         </div>
                                                         <div className="space-y-2 md:col-span-2">
@@ -993,6 +1007,10 @@ export function Settings() {
                                                         <div className="space-y-2 md:col-span-2">
                                                             <label className="text-xs font-medium text-slate-700">Secret HMAC (Optionnel)</label>
                                                             <Input name="secret" type="password" placeholder="Clé secrète pour sécuriser l'appel" className="bg-white" />
+                                                            <p className="text-[11px] text-slate-500">
+                                                                Le secret n'est jamais envoyé : chaque appel porte l'en-tête X-SIRH-Signature,
+                                                                égal à « sha256= » suivi du HMAC-SHA256 du corps de la requête.
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className="flex justify-end gap-2 pt-2">
@@ -1019,9 +1037,14 @@ export function Settings() {
                                                     </p>
                                                     <div className="flex flex-wrap gap-1.5 mb-4">
                                                         <span className="bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-medium rounded uppercase tracking-wider">{webhook.eventType}</span>
+                                                        {webhook.emis === false && (
+                                                            <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 text-[10px] font-medium rounded">
+                                                                Événement jamais émis : ce webhook ne recevra rien
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="flex justify-between items-center border-t pt-3 mt-1">
-                                                        <span className="text-xs text-slate-400">{webhook.secret ? 'Sécurisé' : 'Non sécurisé'}</span>
+                                                        <span className="text-xs text-slate-400">{webhook.securise ? 'Appels signés (HMAC)' : 'Appels non signés'}</span>
                                                         <Button variant="outline" size="sm" onClick={async () => {
                                                             if (!window.confirm('Voulez-vous supprimer ce webhook ?')) return;
                                                             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';

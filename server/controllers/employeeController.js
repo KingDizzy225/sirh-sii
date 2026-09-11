@@ -1,6 +1,6 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
-const { triggerWebhook } = require('./webhookController');
+const evenements = require('../lib/evenements');
 const { construireTachesIntegration } = require('../data/onboardingTemplates');
 const { soldeOuverture } = require('../lib/conges');
 const dossier = require('../lib/dossier');
@@ -161,7 +161,13 @@ exports.createEmployee = async (req, res) => {
         });
 
         // Trigger Webhook
-        triggerWebhook('EMPLOYEE_CREATED', newEmployee);
+        // La fiche entière partait vers l'outil de messagerie : salaire,
+        // compte bancaire, numéro CNPS. De quoi reconnaître le salarié suffit.
+        evenements.emettreSansAttendre('EMPLOYEE_CREATED', {
+            salarie: evenements.salarie(newEmployee),
+            dateEmbauche: newEmployee.hireDate,
+            contrat: newEmployee.contractType || null
+        });
 
         res.status(201).json(newEmployee);
     } catch (error) {

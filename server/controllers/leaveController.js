@@ -2,6 +2,12 @@ const prisma = require('../prismaClient');
 const delegation = require('../lib/delegation');
 const { sendMail } = require('../lib/mailer');
 const couverture = require('../lib/couverture');
+const evenements = require('../lib/evenements');
+
+/** Ce qu'un événement dit d'un congé : ni motif, ni justificatif. */
+const congePourEvenement = (c) => ({
+    id: c.id, type: c.type, du: c.startDate, au: c.endDate, jours: c.durationDays
+});
 
 /**
  * Durée d'un congé, en jours décomptés du solde.
@@ -125,6 +131,12 @@ exports.createLeave = async (req, res) => {
             : null;
         newLeave.feriesTraverses = decompte.feriesTraverses;
 
+        evenements.emettreSansAttendre('LEAVE_REQUESTED', {
+            conge: congePourEvenement(newLeave),
+            salarie: evenements.salarie(newLeave.employee),
+            canal: 'APPLICATION'
+        });
+
         // Notify employee by email
         if (newLeave.employee?.email) {
             sendMail({
@@ -213,6 +225,16 @@ exports.updateLeaveStatus = async (req, res) => {
                 include: { employee: true }
             });
         });
+
+        // Seule une décision est un événement : le passage d'un responsable à la
+        // RH (PENDING_HR) n'en est pas une pour qui suit les absences.
+        if (['APPROVED', 'REJECTED'].includes(newStatus) && newStatus !== existingLeave.status) {
+            evenements.emettreSansAttendre('LEAVE_DECIDED', {
+                conge: congePourEvenement(result),
+                decision: newStatus === 'APPROVED' ? 'VALIDE' : 'REFUSE',
+                salarie: evenements.salarie(result.employee)
+            });
+        }
 
         // Envoi E-mail transactionnel de statut
         if (result.employee?.email) {
@@ -305,6 +327,12 @@ exports.createPublicLeave = async (req, res) => {
                 date: new Date()
             });
         }
+
+        evenements.emettreSansAttendre('LEAVE_REQUESTED', {
+            conge: congePourEvenement(newLeave),
+            salarie: evenements.salarie(newLeave.employee),
+            canal: 'PORTAIL'
+        });
 
         res.status(201).json({
             message: 'Votre demande de congé a été transmise au service RH.',

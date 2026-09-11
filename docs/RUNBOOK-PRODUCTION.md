@@ -585,6 +585,139 @@ qu'elles n'en formaient qu'une.
 
 ---
 
+## Préparer, clôturer et rectifier la paie
+
+Écran *Paie & bulletins*, onglet *Préparation de la paie*.
+
+**Ce qui est proposé.** La saisie des éléments variables reprend ce que
+l'application sait déjà :
+
+| Case | Proposé d'après | À savoir |
+|---|---|---|
+| Salaire de base | La fiche, ou la décision de rémunération en vigueur à la période | Laisser **vide**. Un montant saisi remplace la référence pour ce bulletin, et l'écart s'affiche au lancement |
+| Heures sup. | Les pointages du mois, ventilés par majoration | Un relevé comportant des anomalies (sortie oubliée…) n'est **pas repris** : le total relevé s'affiche sous la case, à vérifier |
+| Jours d'absence | Les congés **sans solde** validés, en jours ouvrables du seul mois | Les absences non justifiées sont signalées, **jamais déduites d'office** |
+| Retenues | Rien | L'échéance de prêt s'ajoute toute seule et s'affiche sous la case : **ne pas la saisir** |
+
+Un salarié sans aucun salaire connu n'est pas payé d'un montant quelconque : il
+est écarté et signalé. L'écran envoyait auparavant 350 000 F par défaut.
+
+**Relancer un mois ouvert** remplace ses bulletins, mais ne les efface plus :
+chaque bulletin remplacé est conservé avec son PDF et sa date de signature. Un
+lien déjà transmis au salarié continue de mener au document qu'il a reçu, et
+lui indique qu'une version rectifiée existe. Le QR du bulletin remplacé cesse
+de le certifier.
+
+**Clôturer le mois** une fois les bulletins remis. Deux contrôles :
+
+- **bloquants** — aucun bulletin, ou des bulletins sans décomposition des
+  cotisations (ils seraient déclarés à zéro) ;
+- **à confirmer** — salariés actifs sans bulletin, bulletins sans PDF. Cocher
+  « J'ai vérifié ces points » : ils peuvent être voulus, ils doivent être vus.
+
+Un mois clôturé ne se relance plus. **Pour rectifier**, un administrateur rouvre
+le mois en motivant la réouverture (15 caractères au moins), la paie est
+relancée, puis le mois est clôturé de nouveau. L'historique garde chaque
+passage et chaque motif.
+
+### Heures supplémentaires
+
+La paie appliquait un taux unique de 15 % à toutes les heures supplémentaires.
+Elles sont désormais ventilées :
+
+| Catégorie | Majoration par défaut | Variable |
+|---|---|---|
+| De la 41e à la 46e heure de la semaine, de jour | 15 % | `MAJORATION_HS_PREMIERES` |
+| Au-delà de la 46e heure, de jour | 50 % | `MAJORATION_HS_SUIVANTES` |
+| De nuit, ou de jour un dimanche ou un férié | 75 % | `MAJORATION_HS_NUIT_OU_REPOS` |
+| De nuit un dimanche ou un férié | 100 % | `MAJORATION_HS_NUIT_DE_REPOS` |
+
+Valeurs du décret n° 96-203 du 7 mars 1996 : **à faire confirmer par le cabinet**,
+comme les autres taux. La nuit court de `TRAVAIL_NUIT_DEBUT` (21) à
+`TRAVAIL_NUIT_FIN` (5) heures ; la durée hebdomadaire est
+`TEMPS_HEURES_HEBDOMADAIRES` (40). Une heure n'est supplémentaire qu'au-delà de
+cette durée : c'est la nature des heures qui la dépassent qui fixe leur taux.
+
+Le bulletin porte une ligne par majoration. Un total **retouché à la main** ne
+correspond plus aux pointages : il garde le taux unique
+(`MAJORATION_HEURE_SUP`), et l'écran l'indique.
+
+---
+
+## Récapitulatif annuel des salaires (DISA, ITS)
+
+Onglet *Déclarations sociales*, sous la déclaration du mois. Cumuls de l'année
+par salarié — brut, CNPS salarié et employeur, CMU, assiette et retenue d'ITS,
+net —, lus sur les bulletins enregistrés.
+
+L'ancien bouton « Export DISA » produisait un fichier **mensuel**, reprenant
+toutes les périodes à la suite, avec l'identifiant technique du salarié dans la
+colonne du numéro CNPS. Il a été retiré.
+
+L'état annuel **n'est pas exporté** tant qu'un point bloquant subsiste
+(bulletin sans décomposition, dossier sans matricule ou numéro CNPS). Il
+signale aussi les mois non clôturés et les mois sans aucun bulletin.
+
+> **Le fichier ne reproduit pas le gabarit de dépôt de la CNPS ni celui de la
+> DGI**, que l'application ne connaît pas. C'est un état de contrôle et de
+> saisie : reporter les montants dans le format demandé par chaque organisme.
+
+---
+
+## Suivi des CDD
+
+Écran *Suivi des CDD*, sous Employés. L'application ne connaissait d'un CDD
+que sa date de fin. Elle classe désormais les contrats du plus exposé au moins
+exposé :
+
+| Situation | Signification |
+|---|---|
+| Plafond dépassé | Le terme dépasse `CDD_DUREE_MAX_MOIS` (24) renouvellements compris |
+| Terme échu, en poste | Le salarié travaille après le terme |
+| Sans terme | CDD sans date de fin |
+| Plafond atteint | Le terme approche et ne peut plus être repoussé |
+| Échéance proche | Terme dans moins de `CDD_HORIZON_JOURS` (60) jours, renouvellement possible |
+
+Les quatre premières exposent à une requalification en CDI ; elles font l'objet
+d'une alerte quotidienne à la RH.
+
+**Renouveler** exige un motif et refuse toute date au-delà du plafond ; le
+refus donne la date limite. Chaque renouvellement est consigné. Pour un contrat
+antérieur à ce suivi, la période est reconstituée depuis la fiche (embauche →
+terme), et l'écran le signale : les renouvellements plus anciens ne sont pas
+connus. Le nombre de renouvellements admis n'est pas imposé : le renseigner
+dans `CDD_RENOUVELLEMENTS_MAX` **après avis du conseil** de l'entreprise.
+
+---
+
+## Événements sortants (webhooks)
+
+*Paramètres › Intégrations*. L'écran proposait trois événements ; un seul était
+émis. Seuls les événements réellement émis sont désormais proposés :
+
+| Événement | Émis quand |
+|---|---|
+| `EMPLOYEE_CREATED` | Un dossier salarié est créé |
+| `LEAVE_REQUESTED` | Une demande de congé est déposée (application ou portail) |
+| `LEAVE_DECIDED` | Un congé est validé ou refusé |
+| `PAYROLL_CLOSED` | Un mois de paie est clôturé (reçu aussi par les webhooks enregistrés sous l'ancien `PAYROLL_APPROVED`) |
+| `CONTRACT_RENEWED` | Un CDD est renouvelé |
+| `DOCUMENT_REMIS` | Un document est remis par lien — **le lien lui-même n'est jamais transmis** |
+
+- **Aucune rémunération ne sort.** La création d'un salarié transmettait sa
+  fiche entière — salaire, compte bancaire, numéro CNPS. Les événements ne
+  portent plus que de quoi reconnaître le salarié : nom, service, poste.
+- **Les appels sont signés.** Le « secret » était envoyé en clair dans un
+  en-tête, et ne prouvait rien. Il ne quitte plus le serveur : chaque appel
+  porte `X-SIRH-Signature: sha256=<HMAC-SHA256 du corps brut>`. Le destinataire
+  recalcule et compare.
+- **L'adresse doit être en https.**
+- **Un refus du destinataire n'est plus compté comme un succès**, et un
+  destinataire lent (au-delà de `WEBHOOK_DELAI_MS`, 5 s) ne bloque jamais
+  l'action RH.
+
+---
+
 ## L'absentéisme
 
 Écran *Absentéisme*, sous Intelligence RH. Lecture seule : aucune table
