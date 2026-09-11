@@ -760,7 +760,7 @@ export function SkillsMatrix() {
                                                                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Poste Cible</div>
                                                                 <div className="text-xs font-bold text-white truncate max-w-[150px]">{compareRole}</div>
                                                             </div>
-                                                            <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30 text-[10px] uppercase font-bold py-1 px-2">Gemini AI Engine</Badge>
+                                                            <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30 text-[10px] uppercase font-bold py-1 px-2">Analyse par Claude</Badge>
                                                         </div>
                                                     </div>
                                                 </div>

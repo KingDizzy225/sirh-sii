@@ -370,7 +370,7 @@ export function Expenses() {
                                                 <div className="p-2 bg-emerald-500 text-white rounded-xl">
                                                     <Check size={16} />
                                                 </div>
-                                                <p className="text-xs font-bold text-emerald-700 leading-tight">Données extraites avec succès par l'IA Gemini !</p>
+                                                <p className="text-xs font-bold text-emerald-700 leading-tight">Données extraites par Claude — à vérifier avant validation.</p>
                                             </div>
                                         )}
                                     </div>

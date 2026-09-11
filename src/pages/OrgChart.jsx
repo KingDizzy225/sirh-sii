@@ -169,10 +169,10 @@ export function OrgChart() {
     }, []);
 
     const handleGenerateAI = async () => {
-        if (!confirm("Voulez-vous générer la hiérarchie par IA (Gemini) ? Cela attribuera intelligemment des managers en fonction des rôles existants.")) return;
+        if (!confirm("Voulez-vous générer la hiérarchie avec Claude ? Cela attribuera intelligemment des managers en fonction des rôles existants.")) return;
         
         setIsGenerating(true);
-        toast.info("L'IA Gemini/Secours analyse les postes et génère l'organigramme...");
+        toast.info("Claude analyse les postes et propose l'organigramme…");
 
         try {
             const res = await api.post('/employees/generate-org-chart');

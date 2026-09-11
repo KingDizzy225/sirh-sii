@@ -220,7 +220,7 @@ export function ClimateSurveys() {
                 <CardHeader className="p-6 border-b border-indigo-100 flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="text-lg font-bold text-indigo-950 flex items-center gap-2">
-                            <BrainCircuit className="text-indigo-600" /> Synthèse & Recommandations IA Gemini
+                            <BrainCircuit className="text-indigo-600" /> Synthèse & recommandations par Claude
                         </CardTitle>
                         <CardDescription className="text-indigo-700 text-xs">
                             Analyse automatique des sentiments exprimés par les collaborateurs.

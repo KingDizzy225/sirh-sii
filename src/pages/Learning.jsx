@@ -376,7 +376,7 @@ export function Learning() {
                                 onClick={() => setIsAIGeneratorModalOpen(true)}
                                 className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm font-semibold gap-2 rounded-xl"
                             >
-                                ✨ Assistant IA Gemini
+                                ✨ Assistant Claude
                             </Button>
                             <Button
                                 onClick={() => setIsAddCourseModalOpen(true)}
@@ -1036,7 +1036,7 @@ export function Learning() {
                             <CardHeader className="flex flex-row items-center justify-between border-b py-4 px-6 bg-indigo-50/40">
                                 <div>
                                     <CardTitle className="text-indigo-900 flex items-center gap-2">
-                                        ✨ Assistant Pédagogique IA (Gemini)
+                                        ✨ Assistant pédagogique (Claude)
                                     </CardTitle>
                                     <CardDescription>Générez un cours complet structuré avec quiz de validation.</CardDescription>
                                 </div>
@@ -1058,7 +1058,7 @@ export function Learning() {
                                     {isGenerating && (
                                         <div className="text-xs text-indigo-700 flex flex-col items-center justify-center py-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
                                             <div className="w-7 h-7 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2" />
-                                            L'IA Gemini rédige le programme de formation et crée le QCM interactif...
+                                            Claude rédige le programme de formation et crée le QCM interactif…
                                         </div>
                                     )}
                                 </form>
