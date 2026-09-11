@@ -118,6 +118,7 @@ model Employee {
   pieces               PieceSalarie[]
   prets                Pret[]
   remises              RemiseDocument[]
+  bulletinsRemplaces   BulletinRemplace[]
 }
 
 // ... (existing code)
@@ -1874,4 +1875,55 @@ model RemiseDocument {
   @@index([employeeId, remisLe])
   @@index([sourceType, sourceId])
   @@map("remise_document")
+}
+
+/// Clôture d'un mois de paie.
+///
+/// Relancer la paie supprimait les bulletins du mois et les recréait : un
+/// bulletin signé disparaissait, et le lien transmis au salarié ne menait plus
+/// à rien. Un mois clôturé ne se relance plus.
+///
+/// Historique d'événements, non drapeau : un mois rouvert puis clôturé de
+/// nouveau garde les deux passages, avec le motif de la réouverture.
+model CloturePaie {
+  id               String    @id @default(uuid())
+  /// « AAAA-MM »
+  periode          String
+  clotureLe        DateTime  @default(now()) @map("cloture_le")
+  cloturePar       String    @map("cloture_par")
+  /// Photographie du mois au moment de la clôture.
+  effectif         Int
+  masseBrute       Float     @map("masse_brute")
+  netTotal         Float     @map("net_total")
+  /// Avertissements vus et acceptés au moment de clôturer.
+  avertissements   Json?
+  reouvertLe       DateTime? @map("reouvert_le")
+  reouvertPar      String?   @map("reouvert_par")
+  motifReouverture String?   @map("motif_reouverture")
+
+  @@index([periode, clotureLe])
+  @@map("cloture_paie")
+}
+
+/// Bulletin remplacé par une relance de la paie.
+///
+/// Conservé avec son PDF et sa date de signature : c'est le document que le
+/// salarié a reçu, et les liens déjà transmis continuent d'y mener.
+model BulletinRemplace {
+  id                   String    @id @default(uuid())
+  payrollIdOrigine     String    @map("payroll_id_origine")
+  employeeId           String    @map("employee_id")
+  periode              DateTime
+  /// La fiche telle qu'elle était, hors image de signature.
+  donnees              Json
+  pdfPath              String?   @map("pdf_path")
+  signeLe              DateTime? @map("signe_le")
+  remplaceLe           DateTime  @default(now()) @map("remplace_le")
+  remplacePar          String?   @map("remplace_par")
+  remplaceParPayrollId String?   @map("remplace_par_payroll_id")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, periode])
+  @@map("bulletin_remplace")
 }

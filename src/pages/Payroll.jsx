@@ -54,6 +54,55 @@ export function Payroll() {
     // référence, ou salarié sans aucun salaire connu (non payé).
     const [ecarts, setEcarts] = useState([]);
 
+    // Clôture du mois : un mois clôturé ne se relance plus. Relancer effaçait
+    // les bulletins signés et cassait les liens transmis aux salariés.
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'Administrator';
+    const [clotureMois, setClotureMois] = useState(null);
+    const [avertissementsVus, setAvertissementsVus] = useState(false);
+    const [clotureEnCours, setClotureEnCours] = useState(false);
+
+    const chargerCloture = async () => {
+        try {
+            const { data } = await api.get(`/payrolls/cloture?period=${selectedMonth}`);
+            setClotureMois(data && data.periode ? data : null);
+        } catch {
+            setClotureMois(null);
+        }
+        setAvertissementsVus(false);
+    };
+
+    const cloturerMois = async () => {
+        setClotureEnCours(true);
+        try {
+            const { data } = await api.post('/payrolls/cloture', {
+                period: selectedMonth,
+                accepterAvertissements: avertissementsVus
+            });
+            showNotification(data?.message || 'Mois clôturé.');
+        } catch (err) {
+            showNotification(err.message || 'Clôture refusée.');
+        } finally {
+            setClotureEnCours(false);
+            chargerCloture();
+        }
+    };
+
+    const rouvrirMois = async () => {
+        const motif = window.prompt(
+            'Motif de la réouverture (conservé avec la clôture) :\n'
+            + 'par exemple « Prime de juillet oubliée sur le bulletin de M. Koné ».'
+        );
+        if (!motif) return;
+        try {
+            const { data } = await api.post('/payrolls/cloture/reouvrir', { period: selectedMonth, motif });
+            showNotification(data?.message || 'Mois rouvert.');
+        } catch (err) {
+            showNotification(err.message || 'Réouverture refusée.');
+        } finally {
+            chargerCloture();
+        }
+    };
+
     // Déclaration sociale du mois : montants agrégés par le serveur à partir
     // des bulletins enregistrés. Rien n'est recalculé ici — c'est justement ce
     // que faisait l'ancien export DISA, avec des taux qui avaient divergé.
@@ -217,6 +266,7 @@ export function Payroll() {
         if (isHR) {
             loadEmployeesAndPayrolls();
             loadAdvances();
+            chargerCloture();
             if (activeTab === 'declaration') chargerDeclaration();
         }
         loadMyPayslips();
@@ -258,8 +308,10 @@ export function Payroll() {
                 const signales = Array.isArray(data.ecarts) ? data.ecarts : [];
                 setEcarts(signales);
                 showNotification(`${data.count} bulletin(s) produit(s)`
+                    + (data.remplaces ? `, ${data.remplaces} remplacé(s) et conservé(s)` : '')
                     + (signales.length ? ` — ${signales.length} écart(s) à vérifier` : ''));
                 loadEmployeesAndPayrolls();
+                chargerCloture();
                 if (signales.length === 0) setActiveTab('history');
             }
         } catch (error) {
@@ -608,13 +660,67 @@ export function Payroll() {
                             </div>
                             <Button 
                                 onClick={handleRunPayroll} 
-                                disabled={isGenerating || employees.length === 0}
+                                disabled={isGenerating || employees.length === 0 || Boolean(clotureMois?.cloturee)}
+                                title={clotureMois?.cloturee ? 'Mois clôturé : la paie ne se relance plus sans réouverture' : undefined}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 font-bold text-xs py-2 px-4 shadow-sm rounded-lg"
                             >
                                 {isGenerating ? <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 mr-1"></span> : <PlayCircle size={14} />}
                                 Lancer la Génération de Paie
                             </Button>
                         </div>
+
+                        {clotureMois?.cloturee && (
+                            <div className="rounded-xl border border-slate-300 bg-slate-100 p-4 flex flex-wrap items-center justify-between gap-3">
+                                <p className="text-sm text-slate-800">
+                                    <span className="font-bold">Paie de {clotureMois.periode} clôturée</span> le{' '}
+                                    {new Date(clotureMois.derniere.clotureLe).toLocaleDateString('fr-FR')} par {clotureMois.derniere.cloturePar}
+                                    {' '}— {clotureMois.derniere.effectif} bulletin(s). Elle ne se relance plus.
+                                </p>
+                                {isAdmin ? (
+                                    <Button size="sm" variant="outline" onClick={rouvrirMois} className="text-xs font-bold">
+                                        Rouvrir pour rectifier…
+                                    </Button>
+                                ) : (
+                                    <span className="text-xs text-slate-500">Une rectification passe par un administrateur.</span>
+                                )}
+                            </div>
+                        )}
+
+                        {clotureMois && !clotureMois.cloturee && clotureMois.controles?.effectif > 0 && (
+                            <div className="rounded-xl border border-indigo-200 bg-white p-4 space-y-3">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <p className="text-sm font-bold text-slate-800">
+                                        {clotureMois.controles.effectif} bulletin(s) sur {clotureMois.periode} — mois ouvert
+                                    </p>
+                                    <Button
+                                        size="sm"
+                                        onClick={cloturerMois}
+                                        disabled={clotureEnCours
+                                            || clotureMois.controles.bloquantes.length > 0
+                                            || (clotureMois.controles.avertissements.length > 0 && !avertissementsVus)}
+                                        className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold"
+                                    >
+                                        {clotureEnCours ? 'Clôture…' : 'Clôturer le mois'}
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-slate-500">
+                                    Une fois clôturé, le mois ne se relance plus : les bulletins remis et signés sont figés.
+                                    Relancer un mois ouvert conserve les bulletins remplacés.
+                                </p>
+                                {clotureMois.controles.bloquantes.map((b, i) => (
+                                    <p key={`b${i}`} className="text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded-lg p-2">{b}</p>
+                                ))}
+                                {clotureMois.controles.avertissements.map((a, i) => (
+                                    <p key={`a${i}`} className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg p-2">{a}</p>
+                                ))}
+                                {clotureMois.controles.avertissements.length > 0 && clotureMois.controles.bloquantes.length === 0 && (
+                                    <label className="flex items-center gap-2 text-xs text-slate-700">
+                                        <input type="checkbox" checked={avertissementsVus} onChange={(e) => setAvertissementsVus(e.target.checked)} />
+                                        J'ai vérifié ces points et je clôture en connaissance de cause.
+                                    </label>
+                                )}
+                            </div>
+                        )}
 
                         {ecarts.length > 0 && (
                             <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 space-y-2">

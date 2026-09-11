@@ -38,6 +38,25 @@ async function localiserSource(sourceType, sourceId) {
         return { chemin: bulletin.pdfPath, titre: `Bulletin de paie — ${mois}`, employeeId: bulletin.employeeId };
     }
 
+    // Bulletin remplacé depuis sa remise : le lien continue de servir le
+    // document que le salarié a reçu, non celui qui l'a remplacé.
+    if (sourceType === 'BULLETIN_REMPLACE') {
+        const archive = await prisma.bulletinRemplace.findUnique({
+            where: { id: sourceId },
+            select: { pdfPath: true, periode: true, employeeId: true, remplaceLe: true }
+        });
+        if (!archive) return { erreur: 'Bulletin introuvable.' };
+        if (!archive.pdfPath) return { erreur: "Ce bulletin remplacé n'a pas de PDF conservé." };
+        const mois = new Date(archive.periode)
+            .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        return {
+            chemin: archive.pdfPath,
+            titre: `Bulletin de paie — ${mois} (version remplacée)`,
+            employeeId: archive.employeeId,
+            remplaceLe: archive.remplaceLe
+        };
+    }
+
     if (sourceType === 'DOCUMENT') {
         const doc = await prisma.employeeDocument.findUnique({
             where: { id: sourceId },
@@ -223,6 +242,9 @@ exports.consulter = async (req, res) => {
             verification: enregistrement.verification,
             // L'intitulé n'est rendu qu'une fois la vérification franchie.
             titre: enregistrement.verification === 'AUCUNE' ? enregistrement.titre : null,
+            remplace: enregistrement.verification === 'AUCUNE'
+                ? enregistrement.sourceType === 'BULLETIN_REMPLACE'
+                : undefined,
             expireLe: enregistrement.expireLe,
             organisation: process.env.ORGANISATION_NAME || 'SIRH-SII'
         });
@@ -269,6 +291,9 @@ exports.ouvrir = async (req, res) => {
         res.json({
             valide: true,
             titre: enregistrement.titre,
+            // Le salarié doit savoir que ce bulletin a été rectifié depuis :
+            // sinon il le garderait comme son bulletin du mois.
+            remplace: enregistrement.sourceType === 'BULLETIN_REMPLACE',
             remisLe: enregistrement.remisLe,
             expireLe: enregistrement.expireLe,
             destinataire: `${enregistrement.employee.firstName} ${enregistrement.employee.lastName}`

@@ -132,6 +132,8 @@ function pourRh(remise) {
         sourceType: remise.sourceType,
         sourceId: remise.sourceId,
         lien: lienDe(remise.token),
+        // Le bulletin remis a été rectifié depuis : un nouveau lien est à produire.
+        documentRemplace: remise.sourceType === 'BULLETIN_REMPLACE',
         remisLe: remise.remisLe,
         remisPar: remise.remisPar,
         expireLe: remise.expireLe,

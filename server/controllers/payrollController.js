@@ -14,6 +14,7 @@ const { salaireConnu } = require('../lib/demographie');
 const dossier = require('../lib/dossier');
 const apposition = require('../lib/apposition');
 const remuneration = require('../lib/remuneration');
+const cloture = require('../lib/cloture');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -323,12 +324,32 @@ const runPayroll = async (req, res) => {
     try {
         const { payrolls } = req.body;
         const results = [];
+
+        if (!Array.isArray(payrolls) || payrolls.length === 0) {
+            return res.status(400).json({ error: 'Aucun bulletin à produire.' });
+        }
+
+        // Un mois clôturé ne se relance pas : ses bulletins ont été remis,
+        // signés, déclarés. Le corriger passe par une réouverture motivée.
+        const clotures = await cloture.moisClotures(payrolls.map((p) => p.period));
+        if (clotures.length > 0) {
+            const c = clotures[0].derniere;
+            return res.status(409).json({
+                error: `La paie de ${clotures[0].periode} est clôturée depuis le `
+                    + `${new Date(c.clotureLe).toLocaleDateString('fr-FR')} (${c.cloturePar}).`,
+                remede: 'Pour rectifier un bulletin, un administrateur rouvre le mois en motivant '
+                    + 'la réouverture, puis la paie est relancée. Les bulletins remplacés sont conservés.',
+                periodes: clotures.map((x) => x.periode)
+            });
+        }
         
         const employeeIds = payrolls.map(p => p.employeeId);
         const employees = await prisma.employee.findMany({ where: { id: { in: employeeIds } } });
         const employeeMap = employees.reduce((acc, emp) => { acc[emp.id] = emp; return acc; }, {});
         
         const ecarts = [];
+        const auteur = req.user?.name || req.user?.email || null;
+        let remplaces = 0;
 
         for (let p of payrolls) {
             const employee = employeeMap[p.employeeId];
@@ -410,7 +431,16 @@ const runPayroll = async (req, res) => {
                 periode: p.period
             });
 
-            // Supprimer l'ancienne paie pour cette période (éviter les doublons et les conflits de mémorisation)
+            // Le bulletin existant était supprimé sans trace. Il est désormais
+            // archivé avec son PDF et sa date de signature, et les liens déjà
+            // transmis au salarié continuent de mener au document remis.
+            const existants = await prisma.payroll.findMany({
+                where: { employeeId: employee.id, period: new Date(p.period) }
+            });
+            const archives = [];
+            for (const ancien of existants) {
+                archives.push((await cloture.archiverBulletin(ancien, auteur)).archive);
+            }
             await prisma.payroll.deleteMany({
                 where: {
                     employeeId: employee.id,
@@ -471,6 +501,14 @@ const runPayroll = async (req, res) => {
             
             pr = await prisma.payroll.update({ where: { id: pr.id }, data: { pdfPath } });
             results.push(pr);
+
+            if (archives.length > 0) {
+                await prisma.bulletinRemplace.updateMany({
+                    where: { id: { in: archives.map((a) => a.id) } },
+                    data: { remplaceParPayrollId: pr.id }
+                });
+                remplaces += archives.length;
+            }
         }
         res.status(201).json({
             message: 'Paie traitée avec succès',
@@ -479,7 +517,9 @@ const runPayroll = async (req, res) => {
             // Les écarts sont rendus avec le résultat plutôt que journalisés
             // seuls : un montant qui s'éloigne de la référence doit être vu par
             // celui qui lance la paie, au moment où il la lance.
-            ecarts
+            ecarts,
+            // Bulletins existants remplacés par cette exécution, et conservés.
+            remplaces
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -883,4 +923,119 @@ const getDeclaration = async (req, res) => {
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, getPrimeAnciennete, signPayroll, exportSage, getDeclaration };
+/**
+ * GET /api/payrolls/cloture?period=AAAA-MM
+ *
+ * Où en est le mois : clôturé ou non, par qui, et ce qui empêcherait ou
+ * mériterait d'être vu avant de le clôturer.
+ */
+const getCloture = async (req, res) => {
+    try {
+        const [situation, controles] = await Promise.all([
+            cloture.etat(req.query.period),
+            cloture.controler(req.query.period)
+        ]);
+        res.json({ ...situation, controles });
+    } catch (error) {
+        console.error('Erreur état de clôture :', error);
+        res.status(500).json({ error: "Erreur lors de la lecture de l'état de clôture." });
+    }
+};
+
+/**
+ * POST /api/payrolls/cloture { period, accepterAvertissements }
+ *
+ * Les avertissements ne bloquent pas — un salarié sans bulletin peut être
+ * voulu — mais ils doivent avoir été vus : sans confirmation explicite, la
+ * clôture est refusée et les rend.
+ */
+const cloturer = async (req, res) => {
+    try {
+        const { period, accepterAvertissements } = req.body || {};
+        if (!/^\d{4}-\d{2}/.test(String(period || ''))) {
+            return res.status(400).json({ error: 'Période attendue au format AAAA-MM.' });
+        }
+
+        const situation = await cloture.etat(period);
+        if (situation.cloturee) {
+            return res.status(409).json({ error: `La paie de ${situation.periode} est déjà clôturée.` });
+        }
+
+        const controles = await cloture.controler(period);
+        if (controles.bloquantes.length > 0) {
+            return res.status(409).json({
+                error: "Clôture impossible en l'état.",
+                bloquantes: controles.bloquantes,
+                avertissements: controles.avertissements
+            });
+        }
+        if (controles.avertissements.length > 0 && accepterAvertissements !== true) {
+            return res.status(409).json({
+                error: 'Des points restent à vérifier avant de clôturer.',
+                avertissements: controles.avertissements,
+                confirmationRequise: true
+            });
+        }
+
+        const creee = await prisma.cloturePaie.create({
+            data: {
+                periode: controles.periode,
+                cloturePar: req.user?.name || req.user?.email || 'inconnu',
+                effectif: controles.effectif,
+                masseBrute: controles.masseBrute,
+                netTotal: controles.netTotal,
+                avertissements: controles.avertissements.length > 0 ? controles.avertissements : undefined
+            }
+        });
+
+        res.status(201).json({
+            message: `Paie de ${controles.periode} clôturée : elle ne peut plus être relancée sans réouverture.`,
+            cloture: creee
+        });
+    } catch (error) {
+        console.error('Erreur clôture de paie :', error);
+        res.status(500).json({ error: 'Erreur lors de la clôture.' });
+    }
+};
+
+/**
+ * POST /api/payrolls/cloture/reouvrir { period, motif }
+ *
+ * Réservé à l'administration. Le motif est conservé avec la clôture qu'il
+ * lève : c'est lui qu'on relira quand un bulletin rectificatif sera discuté.
+ */
+const reouvrir = async (req, res) => {
+    try {
+        const { period, motif } = req.body || {};
+        const situation = await cloture.etat(period);
+        if (!situation.cloturee) {
+            return res.status(409).json({ error: `La paie de ${situation.periode} n'est pas clôturée.` });
+        }
+        const texte = String(motif || '').trim();
+        if (texte.length < cloture.MOTIF_REOUVERTURE_MIN) {
+            return res.status(400).json({
+                error: `Motif requis, d'au moins ${cloture.MOTIF_REOUVERTURE_MIN} caractères : `
+                    + 'il est conservé avec la réouverture.'
+            });
+        }
+
+        await prisma.cloturePaie.update({
+            where: { id: situation.derniere.id },
+            data: {
+                reouvertLe: new Date(),
+                reouvertPar: req.user?.name || req.user?.email || 'inconnu',
+                motifReouverture: texte
+            }
+        });
+
+        res.json({
+            message: `Paie de ${situation.periode} rouverte. Les bulletins relancés remplaceront `
+                + 'les actuels, qui restent conservés. Pensez à clôturer de nouveau.'
+        });
+    } catch (error) {
+        console.error('Erreur réouverture de paie :', error);
+        res.status(500).json({ error: 'Erreur lors de la réouverture.' });
+    }
+};
+
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, getPrimeAnciennete, signPayroll, exportSage, getDeclaration, getCloture, cloturer, reouvrir };

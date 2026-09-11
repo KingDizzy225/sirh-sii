@@ -35,7 +35,7 @@ export function PublicDocument() {
                     return;
                 }
                 if (data.verification === 'AUCUNE') {
-                    setDocument({ titre: data.titre, expireLe: data.expireLe });
+                    setDocument({ titre: data.titre, expireLe: data.expireLe, remplace: data.remplace });
                     setEtat({ phase: 'pret', organisation: data.organisation });
                 } else {
                     setEtat({ phase: 'verification', organisation: data.organisation, expireLe: data.expireLe });
@@ -160,6 +160,13 @@ export function PublicDocument() {
                                 )}
                             </div>
                         </div>
+
+                        {document.remplace && (
+                            <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-3 leading-relaxed">
+                                Ce bulletin a été remplacé depuis par une version rectifiée. Demandez le
+                                nouveau lien au service des ressources humaines.
+                            </p>
+                        )}
 
                         <a
                             href={lienFichier}
