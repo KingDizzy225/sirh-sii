@@ -151,6 +151,12 @@ model Payroll {
   bonus                 Float     @default(0)
   deductions            Float     @default(0)
   overtimeHours         Float     @default(0) @map("overtime_hours")
+  /// Heures supplémentaires ventilées par majoration : { h15, h50, h75, h100 }.
+  ///
+  /// Un taux unique de 15 % s'appliquait à toutes les heures, y compris de
+  /// nuit, du dimanche ou au-delà de la 46e heure. Nul quand les heures ont
+  /// été saisies en un seul total, qui garde alors le taux unique.
+  heuresSupDetail       Json?     @map("heures_sup_detail")
   leaveDays             Float     @default(0) @map("leave_days")
   employerContributions Float     @default(0) @map("employer_contributions")
   employeeContributions Float     @default(0) @map("employee_contributions")

@@ -135,6 +135,122 @@ function heuresSupplementaires(journees) {
 }
 
 /**
+ * Travail de nuit : de 21 h à 5 h par défaut. Les heures sont lues en temps
+ * universel, qui est l'heure légale d'Abidjan (GMT, sans heure d'été).
+ */
+const NUIT_DEBUT = parseInt(process.env.TRAVAIL_NUIT_DEBUT || '21', 10);
+const NUIT_FIN = parseInt(process.env.TRAVAIL_NUIT_FIN || '5', 10);
+
+/** Heures supplémentaires majorées au premier taux avant de passer au second. */
+const SEUIL_PREMIERES_HEURES_SUP = parseFloat(process.env.HS_SEUIL_PREMIERES_HEURES || '6');
+
+const estNuit = (date) => {
+    const h = date.getUTCHours();
+    return NUIT_DEBUT > NUIT_FIN ? (h >= NUIT_DEBUT || h < NUIT_FIN) : (h >= NUIT_DEBUT && h < NUIT_FIN);
+};
+
+/** Prochaine borne où la nature d'une heure peut changer : minuit, début ou fin de nuit. */
+function prochaineBorne(t) {
+    const d = new Date(t);
+    const minuit = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    return Math.min(...[0, NUIT_FIN, NUIT_DEBUT, 24]
+        .map((h) => minuit + h * HEURE)
+        .filter((b) => b > t));
+}
+
+const arrondi = (x) => Math.round(x * 100) / 100;
+
+/**
+ * Heures supplémentaires ventilées par majoration.
+ *
+ * Le total ne suffit pas : la paie appliquait un taux unique de 15 % à toutes
+ * les heures, y compris à celles faites la nuit, un dimanche, un jour férié ou
+ * au-delà de la quarante-sixième heure de la semaine, qui sont majorées bien
+ * davantage. Le salarié qui les faisait était payé comme pour les autres.
+ *
+ * Catégories rendues :
+ *  - `h15`  : heures supplémentaires de jour, dans les six premières de la semaine ;
+ *  - `h50`  : heures supplémentaires de jour, au-delà ;
+ *  - `h75`  : heures supplémentaires de nuit, ou de jour un dimanche ou un férié ;
+ *  - `h100` : heures supplémentaires de nuit un dimanche ou un férié.
+ *
+ * Une heure n'est supplémentaire qu'au-delà de la durée hebdomadaire : les
+ * heures de la semaine sont prises dans l'ordre où elles ont été faites, et
+ * c'est la nature des heures qui dépassent qui détermine leur majoration.
+ * Les taux eux-mêmes vivent dans lib/paie.js ; ce module ne compte que des heures.
+ *
+ * @param {Array} journees  journées produites par `apparier`
+ * @param {Map|Array} feries index des fériés chômés, ou liste brute
+ */
+function ventilerHeuresSup(journees, feries = new Map()) {
+    const { indexer } = require('./joursFeries');
+    const index = feries instanceof Map ? feries : indexer(feries);
+
+    // Découpage en segments homogènes, rattachés à la semaine de début de la
+    // journée — la même clé que `heuresSupplementaires`, pour des totaux égaux.
+    const semaines = new Map();
+    const triees = [...journees].sort((a, b) => new Date(a.debut) - new Date(b.debut));
+    for (const j of triees) {
+        const debut = new Date(j.debut);
+        const decalage = (debut.getUTCDay() + 6) % 7;
+        const cle = new Date(Date.UTC(debut.getUTCFullYear(), debut.getUTCMonth(), debut.getUTCDate() - decalage))
+            .toISOString().slice(0, 10);
+        if (!semaines.has(cle)) semaines.set(cle, []);
+
+        const fin = new Date(j.fin).getTime();
+        for (let t = debut.getTime(); t < fin;) {
+            const suivant = Math.min(prochaineBorne(t), fin);
+            const instant = new Date(t);
+            semaines.get(cle).push({
+                heures: (suivant - t) / HEURE,
+                nuit: estNuit(instant),
+                repos: instant.getUTCDay() === 0 || index.has(instant.toISOString().slice(0, 10))
+            });
+            t = suivant;
+        }
+    }
+
+    const total = { h15: 0, h50: 0, h75: 0, h100: 0 };
+    const parSemaine = [];
+    for (const [semaineDu, segments] of [...semaines.entries()].sort()) {
+        const semaine = { h15: 0, h50: 0, h75: 0, h100: 0 };
+        let cumul = 0;
+        for (const s of segments) {
+            const normales = Math.max(Math.min(s.heures, HEURES_HEBDO - cumul), 0);
+            const sup = s.heures - normales;
+            if (sup > 0) {
+                if (s.repos && s.nuit) semaine.h100 += sup;
+                else if (s.repos || s.nuit) semaine.h75 += sup;
+                else {
+                    const dejaSup = Math.max(cumul - HEURES_HEBDO, 0);
+                    const auPremierTaux = Math.min(sup, Math.max(SEUIL_PREMIERES_HEURES_SUP - dejaSup, 0));
+                    semaine.h15 += auPremierTaux;
+                    semaine.h50 += sup - auPremierTaux;
+                }
+            }
+            cumul += s.heures;
+        }
+        for (const c of Object.keys(total)) total[c] += semaine[c];
+        parSemaine.push({
+            semaineDu,
+            heures: arrondi(cumul),
+            h15: arrondi(semaine.h15), h50: arrondi(semaine.h50),
+            h75: arrondi(semaine.h75), h100: arrondi(semaine.h100)
+        });
+    }
+
+    const ventilation = {
+        h15: arrondi(total.h15), h50: arrondi(total.h50),
+        h75: arrondi(total.h75), h100: arrondi(total.h100)
+    };
+    return {
+        ...ventilation,
+        total: arrondi(total.h15 + total.h50 + total.h75 + total.h100),
+        parSemaine
+    };
+}
+
+/**
  * Relevé du mois pour l'ensemble de l'effectif.
  * @returns {Promise<object>}
  */
@@ -195,6 +311,6 @@ async function releveMensuel(periode) {
 }
 
 module.exports = {
-    HEURES_HEBDO, JOURNEE_MAX_HEURES,
-    intervalleMois, apparier, heuresSupplementaires, releveMensuel
+    HEURES_HEBDO, JOURNEE_MAX_HEURES, NUIT_DEBUT, NUIT_FIN, SEUIL_PREMIERES_HEURES_SUP,
+    intervalleMois, apparier, heuresSupplementaires, ventilerHeuresSup, releveMensuel
 };

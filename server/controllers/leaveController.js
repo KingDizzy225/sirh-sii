@@ -1,7 +1,6 @@
 const prisma = require('../prismaClient');
 const delegation = require('../lib/delegation');
 const { sendMail } = require('../lib/mailer');
-const joursFeries = require('../lib/joursFeries');
 const couverture = require('../lib/couverture');
 
 /**
@@ -19,24 +18,9 @@ const couverture = require('../lib/couverture');
  *
  * @returns {Promise<{jours:number, feriesTraverses:Array, calendaires:number}>}
  */
-async function dureeEnJoursOuvrables(debut, fin) {
-    const enBase = await prisma.jourFerie.findMany({
-        where: { date: { gte: new Date(debut), lte: new Date(fin) }, chome: true },
-        select: { date: true, libelle: true }
-    }).catch((e) => {
-        // Le calendrier indisponible ne doit pas empêcher de poser un congé ;
-        // le décompte reste alors celui des jours ouvrables hors fériés.
-        console.error('[CONGES] Calendrier des fériés illisible :', e.message);
-        return [];
-    });
-
-    const calcul = joursFeries.joursOuvrables(debut, fin, joursFeries.indexer(enBase));
-    return {
-        jours: calcul.jours,
-        feriesTraverses: calcul.feriesTraverses,
-        calendaires: joursFeries.joursCalendaires(debut, fin)
-    };
-}
+// Désormais partagé avec la préparation de la paie, qui décompte les congés
+// sans solde dans la même unité.
+const { dureeEnJoursOuvrables } = require('../lib/calendrier');
 
 /**
  * GET /api/leaves/apercu?employeeId=&startDate=&endDate=

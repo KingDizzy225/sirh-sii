@@ -37,7 +37,22 @@ const TAUX = {
     cnpsPatronal: nombre(process.env.TAUX_CNPS_PATRONAL, 0.15),
 
     // Heures supplémentaires : majoration et horaire mensuel de référence.
+    // Le taux unique ne s'applique plus qu'aux heures saisies sans ventilation.
     majorationHeureSup: nombre(process.env.MAJORATION_HEURE_SUP, 1.15),
+
+    /**
+     * Majorations par catégorie d'heure supplémentaire (voir
+     * `tempsTravail.ventilerHeuresSup`). Valeurs du décret n° 96-203 du
+     * 7 mars 1996 relatif à la durée du travail, à confirmer comme les autres
+     * taux : 15 % de la 41e à la 46e heure, 50 % au-delà, 75 % la nuit ou le
+     * jour d'un dimanche ou d'un férié, 100 % la nuit d'un dimanche ou d'un férié.
+     */
+    majorationsHeuresSup: {
+        h15: nombre(process.env.MAJORATION_HS_PREMIERES, 1.15),
+        h50: nombre(process.env.MAJORATION_HS_SUIVANTES, 1.50),
+        h75: nombre(process.env.MAJORATION_HS_NUIT_OU_REPOS, 1.75),
+        h100: nombre(process.env.MAJORATION_HS_NUIT_DE_REPOS, 2.00)
+    },
     heuresMensuelles: nombre(process.env.HEURES_MENSUELLES, 173.33),
 
     // Jours ouvrés servant au prorata d'une absence non rémunérée.
@@ -162,18 +177,43 @@ function calculerPrimeAnciennete(baseSalary, hireDate, reference = new Date()) {
     };
 }
 
-function calculerPaie({ baseSalary, bonus, overtimeHours, leaveDays, deductions, hireDate, periode } = {}) {
+/**
+ * Ventilation d'heures supplémentaires, nettoyée.
+ * @returns {{h15:number,h50:number,h75:number,h100:number}|null} null si absente ou nulle.
+ */
+function normaliserVentilation(detail) {
+    if (!detail || typeof detail !== 'object') return null;
+    const v = {};
+    let somme = 0;
+    for (const c of Object.keys(TAUX.majorationsHeuresSup)) {
+        v[c] = Math.max(nombre(detail[c], 0), 0);
+        somme += v[c];
+    }
+    return somme > 0 ? v : null;
+}
+
+function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leaveDays, deductions, hireDate, periode } = {}) {
     const base = nombre(baseSalary, 0);
     const primes = nombre(bonus, 0);
-    const heuresSup = nombre(overtimeHours, 0);
+    const ventilation = normaliserVentilation(heuresSupDetail);
+    const heuresSup = ventilation
+        ? Object.values(ventilation).reduce((s, h) => s + h, 0)
+        : nombre(overtimeHours, 0);
     const joursAbsence = nombre(leaveDays, 0);
     const retenuesDiverses = nombre(deductions, 0);
 
     // Les heures supplémentaires sont une quantité, pas un montant : l'export
     // comptable les additionnait telles quelles au brut, ce qui ajoutait
     // 10 FCFA pour 10 heures effectuées.
+    //
+    // Ventilées, chaque catégorie porte sa majoration. Saisies en un seul
+    // total, elles gardent le taux unique : on ne devine pas la part de nuit.
+    const tauxHoraire = base / TAUX.heuresMensuelles;
     const montantHeuresSup = base > 0 && heuresSup > 0
-        ? (base / TAUX.heuresMensuelles) * TAUX.majorationHeureSup * heuresSup
+        ? (ventilation
+            ? tauxHoraire * Object.entries(ventilation)
+                .reduce((s, [c, h]) => s + h * TAUX.majorationsHeuresSup[c], 0)
+            : tauxHoraire * TAUX.majorationHeureSup * heuresSup)
         : 0;
 
     const retenueAbsence = base > 0 && joursAbsence > 0
@@ -215,6 +255,8 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, leaveDays, deductions,
             annoncee: PRIME_ANCIENNETE_ACTIVE ? 0 : anciennete.montant
         },
         overtimeHours: heuresSup,
+        // undefined plutôt que null : Prisma refuse null sur une colonne JSON.
+        heuresSupDetail: ventilation || undefined,
         overtimeAmount: montantHeuresSup,
         leaveDays: joursAbsence,
         leaveDeduction: retenueAbsence,
@@ -242,7 +284,7 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, leaveDays, deductions,
  * l'appelant n'ait pas à connaître la liste.
  */
 const CHAMPS_BULLETIN = [
-    'baseSalary', 'bonus', 'primeAnciennete', 'overtimeHours', 'overtimeAmount',
+    'baseSalary', 'bonus', 'primeAnciennete', 'overtimeHours', 'heuresSupDetail', 'overtimeAmount',
     'leaveDays', 'leaveDeduction', 'grossSalary', 'cnpsEmployee', 'cmu',
     'taxableIncome', 'its', 'deductions', 'employeeContributions',
     'employerContributions', 'netSalary'
@@ -299,7 +341,7 @@ function intervalleMois(libelle) {
 }
 
 module.exports = {
-    calculerPaie, calculerITS, decomposer, intervalleMois,
+    calculerPaie, calculerITS, decomposer, intervalleMois, normaliserVentilation,
     anneesAnciennete, calculerPrimeAnciennete, colonnesBulletin, CHAMPS_BULLETIN,
     TAUX, TRANCHES_ITS, PRIME_ANCIENNETE_ACTIVE
 };

@@ -15,6 +15,7 @@ const dossier = require('../lib/dossier');
 const apposition = require('../lib/apposition');
 const remuneration = require('../lib/remuneration');
 const cloture = require('../lib/cloture');
+const preparationPaie = require('../lib/preparationPaie');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -193,9 +194,30 @@ const generatePayslipPDF = async (payroll, employee, signatureOverride) => {
             // Les heures supplémentaires et les absences composaient le brut
             // sans jamais apparaître : le total ne se vérifiait pas à l'œil.
             if ((b.overtimeAmount || 0) > 0) {
-                addRow('Heures supplémentaires', `${b.overtimeHours} h`,
-                       `+ ${Math.round((TAUX.majorationHeureSup - 1) * 100)} %`,
-                       formatFCFA(b.overtimeAmount));
+                const ventilation = paie.normaliserVentilation(b.heuresSupDetail);
+                if (ventilation) {
+                    // Une ligne par majoration : un total unique ne se vérifie
+                    // pas, et c'est précisément la nuit ou le dimanche qu'on
+                    // conteste.
+                    const LIBELLES_HS = {
+                        h15: 'Heures sup. (41e à 46e heure)',
+                        h50: 'Heures sup. (au-delà de la 46e heure)',
+                        h75: 'Heures sup. de nuit, dimanche ou férié',
+                        h100: 'Heures sup. de nuit, dimanche ou férié'
+                    };
+                    const tauxHoraire = b.baseSalary / TAUX.heuresMensuelles;
+                    for (const [categorie, heures] of Object.entries(ventilation)) {
+                        if (heures <= 0) continue;
+                        const majoration = TAUX.majorationsHeuresSup[categorie];
+                        addRow(LIBELLES_HS[categorie], `${heures} h`,
+                               `+ ${Math.round((majoration - 1) * 100)} %`,
+                               formatFCFA(tauxHoraire * majoration * heures));
+                    }
+                } else {
+                    addRow('Heures supplémentaires', `${b.overtimeHours} h`,
+                           `+ ${Math.round((TAUX.majorationHeureSup - 1) * 100)} %`,
+                           formatFCFA(b.overtimeAmount));
+                }
             }
             if ((b.bonus || 0) > 0) addRow('Prime / Bonus', '-', '-', formatFCFA(b.bonus));
             if ((b.leaveDeduction || 0) > 0) {
@@ -402,11 +424,16 @@ const runPayroll = async (req, res) => {
              * figurerait au dossier et ne se rembourserait pas.
              */
             const periodeCle = new Date(p.period).toISOString().slice(0, 7);
+            // Une échéance déjà retenue reste due à la relance, même si elle a
+            // soldé le prêt : filtrer sur les seuls prêts en cours la faisait
+            // disparaître du bulletin relancé du dernier mois.
             const echeanceDue = await prisma.echeancePret.findFirst({
                 where: {
                     periode: periodeCle,
-                    statut: { in: ['A_RETENIR', 'RETENUE'] },
-                    pret: { employeeId: employee.id, statut: 'EN_COURS' }
+                    OR: [
+                        { statut: 'A_RETENIR', pret: { employeeId: employee.id, statut: 'EN_COURS' } },
+                        { statut: 'RETENUE', pret: { employeeId: employee.id } }
+                    ]
                 },
                 include: { pret: { select: { id: true } } }
             });
@@ -423,6 +450,8 @@ const runPayroll = async (req, res) => {
                 baseSalary: p.baseSalary,
                 bonus: p.bonus,
                 overtimeHours: p.overtimeHours,
+                // Ventilation par majoration, quand elle est connue (pointages).
+                heuresSupDetail: p.heuresSupDetail,
                 leaveDays: p.leaveDays,
                 deductions: p.deductions,
                 // L'ancienneté se lit sur la fiche, jamais dans la requête :
@@ -456,6 +485,7 @@ const runPayroll = async (req, res) => {
                     bonus: bulletin.bonus,
                     deductions: bulletin.deductions,
                     overtimeHours: bulletin.overtimeHours,
+                    heuresSupDetail: bulletin.heuresSupDetail,
                     leaveDays: bulletin.leaveDays,
                     overtimeAmount: bulletin.overtimeAmount,
                     leaveDeduction: bulletin.leaveDeduction,
@@ -1038,4 +1068,20 @@ const reouvrir = async (req, res) => {
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, getPrimeAnciennete, signPayroll, exportSage, getDeclaration, getCloture, cloturer, reouvrir };
+/**
+ * GET /api/payrolls/preparation?period=AAAA-MM
+ *
+ * Éléments variables que l'application connaît déjà — salaire en vigueur,
+ * congés sans solde, heures supplémentaires ventilées, échéance de prêt —
+ * proposés à la saisie avec leur origine.
+ */
+const getPreparation = async (req, res) => {
+    try {
+        res.json(await preparationPaie.preparer(req.query.period));
+    } catch (error) {
+        console.error('Erreur préparation de paie :', error);
+        res.status(500).json({ error: 'Erreur lors de la préparation de la paie.' });
+    }
+};
+
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, getPrimeAnciennete, signPayroll, exportSage, getDeclaration, getCloture, cloturer, reouvrir, getPreparation };

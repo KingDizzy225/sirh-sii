@@ -53,6 +53,9 @@ export function Payroll() {
     // Écarts rendus par le serveur au lancement : salaire saisi différent de la
     // référence, ou salarié sans aucun salaire connu (non payé).
     const [ecarts, setEcarts] = useState([]);
+    // Ce que l'application sait déjà du mois, par salarié : congés sans solde,
+    // heures supplémentaires ventilées, échéance de prêt, bulletin existant.
+    const [preparation, setPreparation] = useState({});
 
     // Clôture du mois : un mois clôturé ne se relance plus. Relancer effaçait
     // les bulletins signés et cassait les liens transmis aux salariés.
@@ -177,16 +180,21 @@ export function Payroll() {
     const loadEmployeesAndPayrolls = async () => {
         if (!isHR) return;
         try {
-            const [empRes, payRes] = await Promise.all([
+            const [empRes, payRes, prepRes] = await Promise.all([
                 api.get('/employees'),
-                api.get('/payrolls')
+                api.get('/payrolls'),
+                api.get(`/payrolls/preparation?period=${selectedMonth}`).catch(() => ({ data: null }))
             ]);
-            
+
             let payrollsData = [];
             if (payRes.data) {
                 payrollsData = payRes.data;
                 setAllPayrolls(payrollsData);
             }
+
+            const lignesPrep = Array.isArray(prepRes?.data?.lignes) ? prepRes.data.lignes : [];
+            const prepParSalarie = Object.fromEntries(lignesPrep.map(l => [l.employeeId, l]));
+            setPreparation(prepParSalarie);
 
             if (empRes.data) {
                 const employeesData = empRes.data.employees || empRes.data;
@@ -194,41 +202,30 @@ export function Payroll() {
                 // telle quelle à la paie, départs compris.
                 const actifs = employeesData.filter(e => e.status !== 'TERMINATED');
                 setEmployees(actifs);
-                
-                // Initialize preparation variables
+
+                // Variables du mois. Un bulletin existant est repris tel qu'il a été
+                // saisi ; sinon, les éléments connus sont proposés au lieu d'être
+                // ressaisis. Le salaire reste vide : le serveur applique celui en
+                // vigueur à la période (l'écran envoyait 350 000 FCFA par défaut).
                 const vars = {};
                 actifs.forEach(emp => {
-                    const empPayrolls = payrollsData.filter(p => p.employeeId === emp.id);
-                    const currentMonthPay = empPayrolls.find(p => {
-                        try {
-                            const dateIso = new Date(p.period).toISOString();
-                            return dateIso.substring(0, 7) === selectedMonth;
-                        } catch (e) { return false; }
-                    });
-
-                    if (currentMonthPay) {
-                        vars[emp.id] = {
-                            // Vide : le serveur retient le salaire en vigueur à la
-                            // période. Recopier l'ancien montant le ferait passer
-                            // pour une saisie, et masquerait une augmentation.
-                            baseSalary: '',
-                            overtimeHours: currentMonthPay.overtimeHours || 0,
-                            leaveDays: currentMonthPay.leaveDays || 0,
-                            bonus: currentMonthPay.bonus || 0,
-                            deductions: currentMonthPay.deductions || 0
-                        };
-                    } else {
-                        vars[emp.id] = {
-                            // Aucun montant par défaut. Il valait 350 000 FCFA pour tout
-                            // salarié sans bulletin antérieur, et le serveur retenait ce
-                            // montant transmis de préférence au salaire du dossier.
-                            baseSalary: '',
-                            overtimeHours: 0,
-                            leaveDays: 0,
-                            bonus: 0,
-                            deductions: 0
-                        };
+                    const ligne = prepParSalarie[emp.id];
+                    if (ligne?.bulletin) {
+                        vars[emp.id] = { baseSalary: '', ...ligne.bulletin.variables };
+                        return;
                     }
+                    const hs = ligne?.proposition?.heuresSup;
+                    // Un relevé de pointage incomplet n'est pas repris d'office : il
+                    // est signalé sous la case, pour vérification.
+                    const hsReprises = Boolean(hs && hs.exploitable && hs.total > 0);
+                    vars[emp.id] = {
+                        baseSalary: '',
+                        overtimeHours: hsReprises ? hs.total : 0,
+                        heuresSupDetail: hsReprises ? { h15: hs.h15, h50: hs.h50, h75: hs.h75, h100: hs.h100 } : null,
+                        leaveDays: ligne?.proposition?.joursSansSolde?.jours || 0,
+                        bonus: 0,
+                        deductions: 0
+                    };
                 });
                 setPayrollVariables(vars);
 
@@ -277,7 +274,10 @@ export function Payroll() {
             ...prev,
             [empId]: {
                 ...prev[empId],
-                [field]: value === '' ? '' : (parseFloat(value) || 0)
+                [field]: value === '' ? '' : (parseFloat(value) || 0),
+                // Un total retouché ne correspond plus à la ventilation des
+                // pointages : il repasse au taux unique, et l'écran le dit.
+                ...(field === 'overtimeHours' ? { heuresSupDetail: null } : {})
             }
         }));
     };
@@ -294,6 +294,7 @@ export function Payroll() {
                     ? null
                     : payrollVariables[emp.id].baseSalary,
                 overtimeHours: payrollVariables[emp.id].overtimeHours || 0,
+                heuresSupDetail: payrollVariables[emp.id].heuresSupDetail || undefined,
                 leaveDays: payrollVariables[emp.id].leaveDays || 0,
                 bonus: payrollVariables[emp.id].bonus || 0,
                 deductions: payrollVariables[emp.id].deductions || 0
@@ -748,7 +749,7 @@ export function Payroll() {
                         <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden">
                             <CardHeader className="py-4 border-b border-slate-100 bg-slate-50/50">
                                 <CardTitle className="text-sm font-bold text-slate-800">Saisie des Éléments Variables de Paie (EVP)</CardTitle>
-                                <CardDescription>Renseignez et ajustez les primes, retenues ou heures supplémentaires pour la période.</CardDescription>
+                                <CardDescription>Congés sans solde et heures supplémentaires sont proposés d'après les congés validés et les pointages. Chaque valeur reste modifiable.</CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 overflow-x-auto">
                                 <Table>
@@ -768,6 +769,11 @@ export function Payroll() {
                                                 <td className="p-4 font-bold text-slate-800">
                                                     <div>{emp.firstName} {emp.lastName}</div>
                                                     <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{emp.positionTitle}</div>
+                                                    {preparation[emp.id]?.bulletin?.signe && (
+                                                        <div className="text-[10px] text-amber-700 font-semibold mt-1">
+                                                            Bulletin signé : une relance le remplace, il reste conservé.
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="p-4">
                                                     <input 
@@ -787,6 +793,31 @@ export function Payroll() {
                                                         onChange={(e) => handleVariableChange(emp.id, 'overtimeHours', e.target.value)}
                                                         className="w-16 border border-slate-200 rounded-lg p-1.5 text-xs font-bold text-blue-700 bg-blue-50/30"
                                                     />
+                                                    {(() => {
+                                                        const v = payrollVariables[emp.id];
+                                                        const hs = preparation[emp.id]?.proposition?.heuresSup;
+                                                        if (v?.heuresSupDetail) {
+                                                            const d = v.heuresSupDetail;
+                                                            const libelles = [['h15', "jusqu'à 46 h"], ['h50', 'au-delà'], ['h75', 'nuit ou repos'], ['h100', 'nuit de repos']];
+                                                            return (
+                                                                <div className="text-[10px] text-blue-800 mt-1 leading-tight max-w-[140px]">
+                                                                    {libelles.filter(([c]) => d[c] > 0).map(([c, l]) => `${d[c]} h ${l}`).join(' · ')}
+                                                                    <span className="block text-slate-400">d'après les pointages</span>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        if (hs && !hs.exploitable) {
+                                                            return (
+                                                                <div className="text-[10px] text-amber-700 mt-1 leading-tight max-w-[140px]">
+                                                                    Relevé incomplet ({hs.anomalies} anomalie(s)) : {hs.total} h relevées, non reprises
+                                                                </div>
+                                                            );
+                                                        }
+                                                        if ((v?.overtimeHours || 0) > 0) {
+                                                            return <div className="text-[10px] text-slate-400 mt-1 leading-tight">Saisie manuelle : taux unique</div>;
+                                                        }
+                                                        return null;
+                                                    })()}
                                                 </td>
                                                 <td className="p-4">
                                                     <input 
@@ -795,6 +826,16 @@ export function Payroll() {
                                                         onChange={(e) => handleVariableChange(emp.id, 'leaveDays', e.target.value)}
                                                         className="w-16 border border-slate-200 rounded-lg p-1.5 text-xs font-bold text-rose-700 bg-rose-50/30"
                                                     />
+                                                    {(preparation[emp.id]?.proposition?.joursSansSolde?.jours || 0) > 0 && (
+                                                        <div className="text-[10px] text-rose-800 mt-1 leading-tight">
+                                                            dont congé sans solde : {preparation[emp.id].proposition.joursSansSolde.jours} j
+                                                        </div>
+                                                    )}
+                                                    {(preparation[emp.id]?.proposition?.absencesNonJustifiees || 0) > 0 && (
+                                                        <div className="text-[10px] text-amber-700 mt-1 leading-tight max-w-[140px]">
+                                                            {preparation[emp.id].proposition.absencesNonJustifiees} absence(s) non justifiée(s), non déduite(s)
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="p-4">
                                                     <input 
@@ -811,6 +852,11 @@ export function Payroll() {
                                                         onChange={(e) => handleVariableChange(emp.id, 'deductions', e.target.value)}
                                                         className="w-20 border border-slate-200 rounded-lg p-1.5 text-xs font-semibold text-slate-700"
                                                     />
+                                                    {(preparation[emp.id]?.proposition?.echeancePret || 0) > 0 && (
+                                                        <div className="text-[10px] text-slate-500 mt-1 leading-tight max-w-[150px]">
+                                                            + échéance de prêt {formatCurrency(preparation[emp.id].proposition.echeancePret)}, ajoutée d'office : ne pas la saisir
+                                                        </div>
+                                                    )}
                                                 </td>
                                             </TableRow>
                                         ))}
