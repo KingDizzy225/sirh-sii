@@ -90,6 +90,14 @@ function motifLisible(erreur) {
                "ANTHROPIC_WORKSPACE_ID sur le serveur, ou utiliser une clé créée " +
                "dans un espace de travail.";
     }
+    // L'API rend un 400 — pas un 402 ni un 429 — quand le compte n'a plus de
+    // crédits. Sans ce cas, le message anglais passait tel quel à l'écran, sans
+    // dire que la clé est bonne et que seul le solde manque.
+    if (/credit balance is too low|insufficient.{0,10}credit/i.test(erreur?.message || '')) {
+        return "Crédits Anthropic épuisés : la clé est valide mais le compte n'a plus de solde. " +
+               "Réapprovisionner sur console.anthropic.com → Plans & Billing ; " +
+               "les fonctions d'IA reprennent dès le paiement, sans redémarrage.";
+    }
     if (statut === 400 && /model/i.test(erreur.message || '')) {
         return `Modèle « ${MODEL} » refusé par l'API. Vérifier la variable ANTHROPIC_MODEL.`;
     }
@@ -208,4 +216,4 @@ async function diagnostiquer() {
     }
 }
 
-module.exports = { getGenerativeModel, diagnostiquer, MODEL };
+module.exports = { getGenerativeModel, diagnostiquer, motifLisible, MODEL };
