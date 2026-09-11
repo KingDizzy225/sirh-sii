@@ -34,6 +34,7 @@ import { PiecesEcheances } from './pages/PiecesEcheances';
 import { Absenteisme } from './pages/Absenteisme';
 import { JoursFeries } from './pages/JoursFeries';
 import { Prets } from './pages/Prets';
+import { SuiviCdd } from './pages/SuiviCdd';
 import { Procedures } from './pages/Procedures';
 import { Budget } from './pages/Budget';
 import { Signataires } from './pages/Signataires';
@@ -363,6 +364,12 @@ const AppContent = () => {
             <Route path="/prets" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Prets />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/cdd" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <SuiviCdd />
               </ProtectedRoute>
             } />
 

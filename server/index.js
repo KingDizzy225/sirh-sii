@@ -167,6 +167,8 @@ app.use('/api/pieces', verifyToken, pieceRoutes);
 app.use('/api/jours-feries', verifyToken, jourFerieRoutes);
 // Prêts au personnel : les avances ne se remboursaient qu'en une fois.
 app.use('/api/prets', verifyToken, pretRoutes);
+// Suivi des CDD : durée cumulée, renouvellements, plafond.
+app.use('/api/cdd', verifyToken, require('./routes/cddRoutes'));
 // Remise de documents aux salariés : la partie publique vit dans publicRoutes.
 app.use('/api/remises', verifyToken, remiseRoutes);
 app.use('/api/simulations', verifyToken, simulationRoutes);

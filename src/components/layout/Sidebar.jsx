@@ -41,6 +41,8 @@ const getAllNavItems = (t) => [
     // Rédige une fiche avec l'assistant ; « Fiches de poste » les conserve.
     { name: 'Rédiger une fiche (IA)', path: '/job-studio', icon: Sparkles, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Contrats de travail', path: '/contracts', icon: FileText, domain: 'Employés', permission: 'employees:edit' },
+    // Durée cumulée et renouvellements : la seule alerte portait sur la date de fin.
+    { name: 'Suivi des CDD', path: '/cdd', icon: ClipboardList, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Simulateur d\'organisation', path: '/org-simulation', icon: Rocket, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Entretiens & évaluations', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },

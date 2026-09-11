@@ -338,6 +338,98 @@ async function main() {
     await whatsappController.recevoirWebhook(
         { rawBody: corps, body: { entry: [] }, get: () => null }, res);
     egal('Un appel non signé au webhook est rejeté', res.statut, 403);
+
+    // ---------------------------------------------------------------
+    console.log('\n▸ Suivi des CDD\n');
+
+    const cdd = require(path.join(racine, 'lib', 'cdd'));
+    const cddController = require(path.join(racine, 'controllers', 'cddController'));
+    const JOUR = 86400000;
+    const reponseCdd = () => {
+        const r = { statut: 200, corps: null };
+        r.status = (c) => { r.statut = c; return r; };
+        r.json = (d) => { r.corps = d; return r; };
+        return r;
+    };
+    const rhCdd = { email: 'rh@essai.local', name: 'RH', role: 'HR' };
+
+    const fiche = (debut, fin, statut = 'ACTIVE') => ({
+        hireDate: new Date(debut), contractEndDate: fin ? new Date(fin) : null, status: statut, contractType: 'CDD'
+    });
+    const auJour = new Date('2026-05-15');
+
+    egal('Un mois ajouté au 31 janvier tombe le dernier jour de février',
+        cdd.ajouterMois(new Date('2024-01-31'), 1).toISOString().slice(0, 10), '2024-02-29');
+
+    let situation = cdd.bilan(fiche('2025-01-01', '2026-06-30'), [], auJour);
+    egal('Un terme proche avec de la marge sous le plafond appelle une décision', situation.etat, 'ECHEANCE_PROCHE');
+    egal('...et le plafond de deux ans est daté', situation.finMaxLegale.toISOString().slice(0, 10), '2026-12-31');
+    verifier('Un renouvellement au-delà du plafond est refusé',
+        /dépasserait/.test(cdd.obstaclesRenouvellement(situation, '2027-02-01') || ''));
+    egal("...et accepté jusqu'au dernier jour du plafond", cdd.obstaclesRenouvellement(situation, '2026-12-31'), null);
+    verifier('Une nouvelle échéance antérieure au terme actuel est refusée',
+        Boolean(cdd.obstaclesRenouvellement(situation, '2026-06-01')));
+
+    egal('Un terme qui ne peut plus être repoussé est signalé',
+        cdd.bilan(fiche('2025-01-01', '2026-12-20'), [], new Date('2026-11-15')).etat, 'PLAFOND_ATTEINT');
+    egal('Un terme au-delà du plafond est signalé',
+        cdd.bilan(fiche('2025-01-01', '2027-03-01'), [], auJour).etat, 'DEPASSE');
+    egal('Un salarié en poste après le terme est signalé',
+        cdd.bilan(fiche('2025-01-01', '2026-04-30'), [], auJour).etat, 'ECHU_EN_POSTE');
+    egal('Un CDD sans date de fin est signalé',
+        cdd.bilan(fiche('2025-01-01', null), [], auJour).etat, 'SANS_TERME');
+    verifier('Une période reconstituée depuis la fiche le dit',
+        cdd.bilan(fiche('2025-01-01', '2026-06-30'), [], auJour).avertissements.some((a) => /reconstituée/.test(a)));
+
+    // Parcours complet, en dates relatives pour ne pas vieillir.
+    const embauche = new Date(Date.now() - 300 * JOUR);
+    const enCdd = await prisma.employee.create({
+        data: {
+            firstName: 'Cdd', lastName: marque, email: courriel('cdd'), role: 'Employee', department: 'Essai',
+            status: 'ACTIVE', hireDate: embauche, positionTitle: 'Agent', contractType: 'CDD',
+            contractEndDate: new Date(Date.now() + 30 * JOUR)
+        }
+    });
+
+    let rCdd = reponseCdd();
+    await cddController.lister({ user: rhCdd, query: {} }, rCdd);
+    const ligneCdd = (rCdd.corps?.lignes || []).find((l) => l.employeeId === enCdd.id);
+    egal('Le CDD figure au suivi, à échéance proche', ligneCdd?.etat, 'ECHEANCE_PROCHE');
+
+    const plafond = new Date(cdd.ajouterMois(embauche, cdd.DUREE_MAX_MOIS).getTime() - JOUR);
+    rCdd = reponseCdd();
+    await cddController.renouveler({ user: rhCdd, params: { employeeId: enCdd.id }, body: { nouvelleFin: new Date(plafond.getTime() - 10 * JOUR).toISOString() } }, rCdd);
+    egal('Un renouvellement sans motif est refusé', rCdd.statut, 400);
+
+    rCdd = reponseCdd();
+    await cddController.renouveler({ user: rhCdd, params: { employeeId: enCdd.id }, body: { nouvelleFin: new Date(plafond.getTime() + 5 * JOUR).toISOString(), motif: 'Surcroît temporaire' } }, rCdd);
+    egal('Un renouvellement au-delà du plafond est refusé', rCdd.statut, 409);
+    verifier('...et le refus donne la date limite', Boolean(rCdd.corps?.finMaxLegale));
+
+    const nouveauTerme = new Date(plafond.getTime() - 10 * JOUR);
+    rCdd = reponseCdd();
+    await cddController.renouveler({ user: rhCdd, params: { employeeId: enCdd.id }, body: { nouvelleFin: nouveauTerme.toISOString(), motif: 'Surcroît temporaire' } }, rCdd);
+    egal('Un renouvellement dans le plafond est accepté', rCdd.statut, 201);
+    const periodesConsignees = await prisma.periodeCdd.findMany({ where: { employeeId: enCdd.id }, orderBy: { debut: 'asc' } });
+    verifier('La période initiale et le renouvellement sont consignés',
+        periodesConsignees.length === 2 && periodesConsignees[0].nature === 'INITIAL' && periodesConsignees[1].nature === 'RENOUVELLEMENT');
+    egal('Le terme de la fiche suit le renouvellement',
+        (await prisma.employee.findUnique({ where: { id: enCdd.id } })).contractEndDate.getTime(), nouveauTerme.getTime());
+    egal('...et le suivi compte le renouvellement', rCdd.corps?.renouvellements, 1);
+
+    const enCdi = await prisma.employee.create({
+        data: {
+            firstName: 'Cdi', lastName: marque, email: courriel('cdi'), role: 'Employee', department: 'Essai',
+            status: 'ACTIVE', hireDate: embauche, positionTitle: 'Agent', contractType: 'CDI'
+        }
+    });
+    rCdd = reponseCdd();
+    await cddController.renouveler({ user: rhCdd, params: { employeeId: enCdi.id }, body: { nouvelleFin: nouveauTerme.toISOString(), motif: 'Sans objet' } }, rCdd);
+    egal("Un CDI ne se renouvelle pas comme un CDD", rCdd.statut, 409);
+
+    const routesCdd = require('fs').readFileSync(path.join(racine, 'routes', 'cddRoutes.js'), 'utf8');
+    verifier('Le suivi des CDD est réservé à la RH',
+        (routesCdd.match(/requireRole\(\['ADMIN', 'HR'\]\)/g) || []).length === 2);
 }
 
 async function nettoyer() {
@@ -349,6 +441,8 @@ async function nettoyer() {
         await prisma.leave.deleteMany({ where: { employeeId: s.id } });
         await prisma.onboardingTask.deleteMany({ where: { employeeId: s.id } });
         await prisma.notification.deleteMany({ where: { employeeId: s.id } });
+        await prisma.periodeCdd.deleteMany({ where: { employeeId: s.id } });
+        await prisma.situationEmployee.deleteMany({ where: { employeeId: s.id } });
     }
     await prisma.employee.updateMany({
         where: { managerId: { in: salaries.map((s) => s.id) } }, data: { managerId: null }

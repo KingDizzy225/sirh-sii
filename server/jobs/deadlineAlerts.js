@@ -3,6 +3,7 @@ const { runOnce, dayPeriod } = require('./runOnce');
 const { notifierRH } = require('../lib/notify');
 const { PAR_CODE: PIECES_PAR_CODE } = require('../lib/sousTraitance');
 const { decrire: decrireProcedure } = require('../controllers/procedureController');
+const cdd = require('../lib/cdd');
 
 const DAYS_AHEAD = parseInt(process.env.ALERT_DAYS_AHEAD || '30', 10);
 
@@ -136,6 +137,27 @@ async function scanDeadlines(referenceDate = new Date()) {
             );
         }
         summary.push(`${enCours.length} procédure(s) en cours dont ${retards} en retard`);
+
+        // 6. CDD exposés à une requalification
+        //
+        // L'alerte de fin de contrat, plus haut, ne savait pas qu'un
+        // renouvellement ferait dépasser le plafond, ni qu'un salarié
+        // travaillait encore après le terme.
+        const enCdd = await prisma.employee.findMany({
+            where: { status: { not: 'TERMINATED' }, contractType: { equals: 'CDD', mode: 'insensitive' } },
+            select: {
+                id: true, firstName: true, lastName: true, hireDate: true, contractEndDate: true,
+                contractType: true, status: true, periodesCdd: { orderBy: { debut: 'asc' } }
+            }
+        });
+        let exposes = 0;
+        for (const s of enCdd) {
+            const situation = cdd.bilan(s, s.periodesCdd, referenceDate);
+            if (!['DEPASSE', 'ECHU_EN_POSTE', 'SANS_TERME', 'PLAFOND_ATTEINT'].includes(situation.etat)) continue;
+            exposes++;
+            await notifyHR(`${s.firstName} ${s.lastName} — ${situation.message}`, 'Alerte', '/cdd');
+        }
+        summary.push(`${enCdd.length} CDD dont ${exposes} exposé(s) à une requalification`);
 
         return summary.join(', ') + ` (horizon ${DAYS_AHEAD} jours)`;
     });

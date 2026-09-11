@@ -119,6 +119,7 @@ model Employee {
   prets                Pret[]
   remises              RemiseDocument[]
   bulletinsRemplaces   BulletinRemplace[]
+  periodesCdd          PeriodeCdd[]
 }
 
 // ... (existing code)
@@ -1932,4 +1933,27 @@ model BulletinRemplace {
 
   @@index([employeeId, periode])
   @@map("bulletin_remplace")
+}
+
+/// Période d'un contrat à durée déterminée : le contrat initial, puis chaque
+/// renouvellement.
+///
+/// L'application ne connaissait que la date de fin d'un CDD, jamais depuis
+/// quand le salarié enchaînait les contrats : le plafond de durée, au-delà
+/// duquel le contrat risque d'être requalifié, ne pouvait pas être contrôlé.
+model PeriodeCdd {
+  id         String   @id @default(uuid())
+  employeeId String   @map("employee_id")
+  debut      DateTime
+  fin        DateTime
+  /// INITIAL | RENOUVELLEMENT
+  nature     String
+  motif      String?
+  creePar    String?  @map("cree_par")
+  creeLe     DateTime @default(now()) @map("cree_le")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, debut])
+  @@map("periode_cdd")
 }
