@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/authMiddleware');
-const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, getExplication, getPrimeAnciennete, exportSage, getDeclaration, getCloture, cloturer, reouvrir, getPreparation } = require('../controllers/payrollController');
+const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, getExplication, getPrimeAnciennete, exportSage, getDeclaration, getCloture, cloturer, reouvrir, getPreparation, getDeclarationAnnuelle } = require('../controllers/payrollController');
 const requireRole = require('../middleware/roleMiddleware');
 const { traceAccess, cibles } = require('../middleware/accessTrace');
 
@@ -18,6 +18,8 @@ router.get('/prime-anciennete', verifyToken, requireRole(['ADMIN', 'HR']), getPr
 // Placée avant `/:id` : sans cela, « declaration » serait pris pour un
 // identifiant de bulletin et la route ne serait jamais atteinte.
 router.get('/declaration', verifyToken, requireRole(['ADMIN', 'HR']), getDeclaration);
+// Cumuls de l'année pour la DISA et l'état des retenues d'ITS.
+router.get('/declaration-annuelle', verifyToken, requireRole(['ADMIN', 'HR']), getDeclarationAnnuelle);
 
 // Clôture mensuelle : un mois clôturé ne se relance plus. La réouverture, qui
 // ouvre la voie au bulletin rectificatif, est réservée à l'administration.

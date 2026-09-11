@@ -16,6 +16,7 @@ const apposition = require('../lib/apposition');
 const remuneration = require('../lib/remuneration');
 const cloture = require('../lib/cloture');
 const preparationPaie = require('../lib/preparationPaie');
+const declarationAnnuelle = require('../lib/declarationAnnuelle');
 
 // Une fiche de paie n'est lisible que par la RH/l'administration
 // ou par l'employé concerné lui-même.
@@ -1084,4 +1085,31 @@ const getPreparation = async (req, res) => {
     }
 };
 
-module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, getPrimeAnciennete, signPayroll, exportSage, getDeclaration, getCloture, cloturer, reouvrir, getPreparation };
+/**
+ * GET /api/payrolls/declaration-annuelle?annee=AAAA[&format=csv]
+ *
+ * Cumuls annuels par salarié pour la DISA et l'état des retenues d'ITS. Le
+ * fichier n'est pas produit tant qu'un défaut bloquant subsiste : déposé, il
+ * serait rejeté après l'échéance.
+ */
+const getDeclarationAnnuelle = async (req, res) => {
+    try {
+        const recap = await declarationAnnuelle.recapituler(req.query.annee);
+        if (req.query.format !== 'csv') return res.json(recap);
+
+        if (recap.bloquee) {
+            return res.status(409).json({
+                error: "Récapitulatif non exportable en l'état : corriger d'abord les points bloquants.",
+                anomalies: recap.anomalies.filter((a) => a.gravite === 'bloquante')
+            });
+        }
+        res.header('Content-Type', 'text/csv; charset=utf-8');
+        res.attachment(`recapitulatif_salaires_${recap.annee}.csv`);
+        res.send(declarationAnnuelle.versCsv(recap));
+    } catch (error) {
+        console.error('Erreur récapitulatif annuel :', error);
+        res.status(500).json({ error: 'Erreur lors du calcul du récapitulatif annuel.' });
+    }
+};
+
+module.exports = { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, getPayslip, getExplication, getPrimeAnciennete, signPayroll, exportSage, getDeclaration, getCloture, cloturer, reouvrir, getPreparation, getDeclarationAnnuelle };

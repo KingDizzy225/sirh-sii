@@ -112,6 +112,12 @@ export function Payroll() {
     const [declaration, setDeclaration] = useState(null);
     const [declarationEnCours, setDeclarationEnCours] = useState(false);
 
+    // Récapitulatif annuel (DISA, état des retenues d'ITS) : cumuls lus sur les
+    // bulletins de l'année, par salarié.
+    const [annee, setAnnee] = useState(() => new Date().getFullYear());
+    const [recapAnnuel, setRecapAnnuel] = useState(null);
+    const [recapEnCours, setRecapEnCours] = useState(false);
+
     // Compensation Campaign State
     const [campaignEmployees, setCampaignEmployees] = useState([]);
     // Enveloppe saisie par la RH. Elle valait 250 000 FCFA en dur, un montant
@@ -387,52 +393,46 @@ export function Payroll() {
         }
     };
 
-    const handleExportDISA = () => {
-        if (allPayrolls.length === 0) {
-            showNotification("Aucune donnée de paie à exporter pour la DISA.");
-            return;
+    const chargerRecapAnnuel = async () => {
+        setRecapEnCours(true);
+        try {
+            const { data } = await api.get(`/payrolls/declaration-annuelle?annee=${annee}`);
+            setRecapAnnuel(data && Array.isArray(data.lignes) ? data : null);
+        } catch {
+            setRecapAnnuel(null);
+        } finally {
+            setRecapEnCours(false);
         }
-        
-        // Les montants déclarés sont ceux du bulletin enregistré, pas un
-        // recalcul local : cet export appliquait 5,1 % et 10,9 % au salaire de
-        // base quand le serveur retenait 6,3 % sur le brut, si bien que la
-        // déclaration ne correspondait à aucun bulletin remis.
-        const incompletes = allPayrolls.filter(p => p.grossSalary == null).length;
+    };
 
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Num. CNPS (ou ID);Nom;Prénom;Date Embauche;Brut Mensuel(FCFA);Retenue CNPS(FCFA);Part Patronale(FCFA);Assiette ITS(FCFA);ITS(FCFA)\n";
+    useEffect(() => {
+        if (isHR && activeTab === 'declaration') chargerRecapAnnuel();
+    }, [isHR, activeTab, annee]);
 
-        allPayrolls.forEach((pay) => {
-            const hireDate = pay.employee?.hireDate ? new Date(pay.employee.hireDate).toLocaleDateString('fr-FR') : 'N/A';
-
-            const row = [
-                pay.employeeId || '',
-                pay.employee?.lastName || '',
-                pay.employee?.firstName || '',
-                hireDate,
-                Math.round(pay.grossSalary ?? pay.baseSalary ?? 0),
-                Math.round(pay.cnpsEmployee ?? 0),
-                Math.round(pay.employerContributions ?? 0),
-                Math.round(pay.taxableIncome ?? 0),
-                Math.round(pay.its ?? 0)
-            ].join(";");
-            csvContent += row + "\n";
-        });
-        
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Export_DISA_CNPS_${selectedMonth}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        // Une déclaration incomplète est pire qu'une déclaration absente : elle
-        // part chez l'organisme sans que personne ne sache qu'il y manque des
-        // lignes. Les fiches antérieures au détail des cotisations sortent avec
-        // des montants à zéro, il faut le dire.
-        showNotification(incompletes > 0
-            ? `Export DISA généré — ${incompletes} fiche(s) sans détail des cotisations, à relancer avant dépôt.`
-            : "Export Légal DISA (CNPS) Réussi !");
+    // Téléchargement direct : le client `api` remplace une erreur par une liste
+    // vide, ce qui produirait un fichier vide au lieu de dire pourquoi il est refusé.
+    const telechargerRecapAnnuel = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/payrolls/declaration-annuelle?annee=${annee}&format=csv`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('sirh_token')}` }
+            });
+            if (res.ok) {
+                const url = window.URL.createObjectURL(await res.blob());
+                const lien = document.createElement('a');
+                lien.href = url;
+                lien.setAttribute('download', `recapitulatif_salaires_${annee}.csv`);
+                document.body.appendChild(lien);
+                lien.click();
+                lien.remove();
+                window.URL.revokeObjectURL(url);
+                showNotification(`État annuel ${annee} téléchargé.`);
+            } else {
+                const detail = await res.json().catch(() => ({}));
+                showNotification(detail.error || `Export refusé (HTTP ${res.status}).`);
+            }
+        } catch {
+            showNotification("Le service est injoignable : l'état annuel n'a pas été produit.");
+        }
     };
 
     // Campaign Handlers
@@ -880,9 +880,6 @@ export function Payroll() {
                                     <Button variant="outline" size="sm" onClick={handleExportSage} className="border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 text-xs font-bold">
                                         <Download size={14} className="mr-1.5" /> Export Sage L100
                                     </Button>
-                                    <Button variant="outline" size="sm" onClick={handleExportDISA} className="border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 text-xs font-bold">
-                                        <Download size={14} className="mr-1.5" /> Export DISA (CNPS)
-                                    </Button>
                                     <Button variant="outline" size="sm" onClick={handleExportCSV} className="border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold">
                                         <Download size={14} className="mr-1.5" /> Export CSV (EVP)
                                     </Button>
@@ -960,10 +957,6 @@ export function Payroll() {
                                         onChange={(e) => setSelectedMonth(e.target.value)}
                                         className="border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700"
                                     />
-                                    <Button variant="outline" size="sm" onClick={handleExportDISA}
-                                        className="border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 text-xs font-bold">
-                                        <Download size={14} className="mr-1.5" /> Export DISA
-                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -1075,6 +1068,109 @@ export function Payroll() {
                                             CMU {formatCurrency(declaration.taux.cmuForfait)} par salarié.
                                             Ces taux doivent être confirmés par votre comptable.
                                         </p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                        <Card className="border-none shadow-sm bg-white">
+                            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <div>
+                                    <CardTitle className="text-sm font-bold text-slate-800">
+                                        Récapitulatif annuel des salaires — DISA et ITS
+                                    </CardTitle>
+                                    <CardDescription className="max-w-2xl">
+                                        Cumuls de l'année par salarié, lus sur les bulletins enregistrés.
+                                        {recapAnnuel?.avertissementFormat ? ` ${recapAnnuel.avertissementFormat}` : ''}
+                                    </CardDescription>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        min="2020"
+                                        max="2100"
+                                        value={annee}
+                                        onChange={(e) => setAnnee(parseInt(e.target.value, 10) || new Date().getFullYear())}
+                                        className="w-24 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700"
+                                        aria-label="Année déclarée"
+                                    />
+                                    <Button variant="outline" size="sm" onClick={telechargerRecapAnnuel}
+                                        disabled={!recapAnnuel || recapAnnuel.effectif === 0 || recapAnnuel.bloquee}
+                                        title={recapAnnuel?.bloquee ? 'Corriger les points bloquants avant export' : undefined}
+                                        className="border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 text-xs font-bold">
+                                        <Download size={14} className="mr-1.5" /> Exporter l'état annuel
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {recapEnCours && <p className="text-sm text-slate-500 py-6 text-center">Calcul en cours…</p>}
+                                {!recapEnCours && recapAnnuel && recapAnnuel.effectif === 0 && (
+                                    <p className="text-sm text-slate-500 py-6 text-center">Aucun bulletin enregistré en {recapAnnuel.annee}.</p>
+                                )}
+                                {!recapEnCours && recapAnnuel && recapAnnuel.effectif > 0 && (
+                                    <div className="space-y-5">
+                                        {recapAnnuel.anomalies.map((a, i) => (
+                                            <div key={i} className={cn("flex items-start gap-3 rounded-lg border p-3",
+                                                a.gravite === 'bloquante' ? "border-rose-200 bg-rose-50" : "border-amber-200 bg-amber-50")}>
+                                                <ShieldAlert size={16} className={cn("mt-0.5 shrink-0",
+                                                    a.gravite === 'bloquante' ? "text-rose-600" : "text-amber-600")} />
+                                                <div className="text-xs">
+                                                    <p className={cn("font-bold", a.gravite === 'bloquante' ? "text-rose-800" : "text-amber-800")}>{a.libelle}</p>
+                                                    <p className="text-slate-600 mt-0.5">{a.consequence} {a.remede}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        <div className="grid gap-4 md:grid-cols-4">
+                                            {[
+                                                { titre: 'Salaires bruts', valeur: formatCurrency(recapAnnuel.totaux.brut) },
+                                                { titre: 'CNPS (salarié + employeur)', valeur: formatCurrency(recapAnnuel.totaux.cnpsSalarie + recapAnnuel.totaux.cnpsPatronal) },
+                                                { titre: 'ITS retenu', valeur: formatCurrency(recapAnnuel.totaux.its) },
+                                                { titre: 'Salariés déclarés', valeur: recapAnnuel.effectif }
+                                            ].map(k => (
+                                                <div key={k.titre} className="rounded-xl border border-slate-200 p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{k.titre}</p>
+                                                    <p className="text-lg font-black text-slate-900 mt-1">{k.valeur}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="overflow-x-auto">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow className="bg-slate-50/30">
+                                                        <TableHead>Salarié</TableHead>
+                                                        <TableHead>N° CNPS</TableHead>
+                                                        <TableHead className="text-right">Mois</TableHead>
+                                                        <TableHead className="text-right">Brut</TableHead>
+                                                        <TableHead className="text-right">CNPS salarié</TableHead>
+                                                        <TableHead className="text-right">CNPS employeur</TableHead>
+                                                        <TableHead className="text-right">ITS</TableHead>
+                                                        <TableHead className="text-right">Net</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody className="text-xs">
+                                                    {recapAnnuel.lignes.map(l => (
+                                                        <TableRow key={l.employeeId} className={cn("font-semibold", !l.declarable && "bg-rose-50/50")}>
+                                                            <td className="p-3 font-bold text-slate-900">
+                                                                {l.nom} {l.prenoms}
+                                                                {!l.declarable && (
+                                                                    <span className="block text-[10px] font-normal text-rose-600">
+                                                                        À compléter : {l.manquants.join(', ')}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-3 text-slate-600">{l.numeroCnps || '—'}</td>
+                                                            <td className="p-3 text-right text-slate-600">{l.moisPayes}</td>
+                                                            <td className="p-3 text-right text-slate-700">{formatCurrency(l.brut)}</td>
+                                                            <td className="p-3 text-right text-slate-700">{formatCurrency(l.cnpsSalarie)}</td>
+                                                            <td className="p-3 text-right text-slate-700">{formatCurrency(l.cnpsPatronal)}</td>
+                                                            <td className="p-3 text-right text-slate-700">{formatCurrency(l.its)}</td>
+                                                            <td className="p-3 text-right text-slate-900 font-black">{formatCurrency(l.net)}</td>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
                                     </div>
                                 )}
                             </CardContent>
