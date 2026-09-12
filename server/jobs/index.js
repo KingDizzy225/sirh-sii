@@ -3,6 +3,7 @@ const { accrueMonthlyLeave } = require('./leaveAccrual');
 const { scanDeadlines } = require('./deadlineAlerts');
 const { relancerDemandesEnAttente } = require('./pendingReminders');
 const { detecterAnomaliesPointage } = require('./timeLogAnomalies');
+const { surveillerHeuresSup } = require('./heuresSupHebdo');
 const { celebrerLeJour } = require('./celebrations');
 const { envoyerRecapHebdomadaire } = require('./weeklyDigest');
 const { purgerCorbeille } = require('./purgeCorbeille');
@@ -36,6 +37,7 @@ const runAllDue = async () => {
     await safely('alertes d\'échéances', () => scanDeadlines());
     await safely('relance des demandes en attente', () => relancerDemandesEnAttente());
     await safely('anomalies de pointage', () => detecterAnomaliesPointage());
+    await safely('heures supplémentaires de la semaine', () => surveillerHeuresSup());
     await safely('célébrations du jour', () => celebrerLeJour());
     await safely('récapitulatif hebdomadaire', () => envoyerRecapHebdomadaire());
     await safely('purge de la corbeille', () => purgerCorbeille());
@@ -61,6 +63,12 @@ function startScheduledJobs() {
     // Alertes d'échéances : chaque jour à 07h00
     cron.schedule('0 7 * * *', () => {
         safely('alertes d\'échéances', () => scanDeadlines());
+    }, { timezone: TIMEZONE });
+
+    // Heures supplémentaires : le mercredi, quand la semaine peut encore être
+    // réorganisée, et le vendredi, avant le week-end où les majorations doublent.
+    cron.schedule('0 16 * * 3,5', () => {
+        safely('heures supplémentaires de la semaine', () => surveillerHeuresSup());
     }, { timezone: TIMEZONE });
 
     // Relance des demandes sans réponse : chaque jour à 08h00, à l'arrivée

@@ -1,6 +1,7 @@
 const prisma = require('../prismaClient');
 const { runOnce, dayPeriod } = require('./runOnce');
 const { notifierRH } = require('../lib/notify');
+const anomaliesPointage = require('../lib/anomaliesPointage');
 
 /**
  * Anomalies de pointage de la veille.
@@ -63,7 +64,74 @@ async function detecterAnomaliesPointage(referenceDate = new Date()) {
             }
         }
 
-        return `${parSalarie.size} salarié(s) pointant, ${sansSortie} sans sortie, ${horsZone} hors zone`;
+        // --- Recoupement des positions ---
+        //
+        // La distance au site était la seule chose regardée ; les pointages
+        // n'étaient jamais comparés entre eux.
+        const nomDe = new Map();
+        for (const p of pointages) {
+            if (p.employee) nomDe.set(p.employeeId, `${p.employee.firstName} ${p.employee.lastName}`);
+        }
+
+        let trajets = 0;
+        for (const [employeeId, journee] of parSalarie) {
+            for (const t of anomaliesPointage.trajetsImpossibles(journee)) {
+                trajets++;
+                await notifierRH(
+                    `Trajet impossible le ${dateLisible} : ${nomDe.get(employeeId)} — ${t.metres} m `
+                    + `en ${t.minutes} min, soit ${t.vitesseKmh} km/h entre deux pointages. `
+                    + 'Position erronée, ou pointage effectué par un tiers.',
+                    'Alerte',
+                    '/releve-heures'
+                );
+            }
+        }
+
+        let jumeles = 0;
+        for (const paire of anomaliesPointage.pointagesJumeles(pointages)) {
+            jumeles++;
+            const [a, b] = paire.employes.map((id) => nomDe.get(id) || 'salarié inconnu');
+            await notifierRH(
+                `Pointages jumelés le ${dateLisible} : ${a} et ${b} ont pointé à ${paire.secondes} s `
+                + `d'intervalle et à ${paire.metres} m l'un de l'autre. Deux téléphones ne donnent pas `
+                + 'la même position à ce point : vérifier qu\'un seul appareil n\'a pas servi deux fois.',
+                'Alerte',
+                '/releve-heures'
+            );
+        }
+
+        // Position rigoureusement identique, répétée : une fois par semaine
+        // suffit, sur quinze jours, sinon la même alerte reviendrait chaque jour.
+        let figees = 0;
+        if (referenceDate.getUTCDay() === 1) {
+            const quinzaine = new Date(referenceDate);
+            quinzaine.setDate(quinzaine.getDate() - 14);
+            const recents = await prisma.timeLog.findMany({
+                where: { timestamp: { gte: quinzaine, lte: fin } },
+                include: { employee: { select: { firstName: true, lastName: true } } }
+            });
+            const parPersonne = new Map();
+            for (const p of recents) {
+                if (!parPersonne.has(p.employeeId)) parPersonne.set(p.employeeId, []);
+                parPersonne.get(p.employeeId).push(p);
+                if (p.employee) nomDe.set(p.employeeId, `${p.employee.firstName} ${p.employee.lastName}`);
+            }
+            for (const [employeeId, liste] of parPersonne) {
+                for (const f of anomaliesPointage.positionsFigees(liste)) {
+                    figees++;
+                    await notifierRH(
+                        `Position figée : ${nomDe.get(employeeId)} a pointé ${f.occurrences} fois sur `
+                        + `${f.jours} jours à des coordonnées rigoureusement identiques. Un GPS réel varie `
+                        + 'de quelques mètres : position simulée, ou appareil laissé sur place.',
+                        'Info',
+                        '/releve-heures'
+                    );
+                }
+            }
+        }
+
+        return `${parSalarie.size} salarié(s) pointant, ${sansSortie} sans sortie, ${horsZone} hors zone, `
+            + `${trajets} trajet(s) impossible(s), ${jumeles} pointage(s) jumelé(s), ${figees} position(s) figée(s)`;
     });
 }
 
