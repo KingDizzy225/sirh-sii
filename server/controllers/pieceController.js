@@ -177,6 +177,54 @@ async function enregistrer({ employeeId, corps, fichier, user, parLaRh }) {
     });
 }
 
+const lecturePiece = require('../lib/lecturePiece');
+
+/**
+ * POST /api/pieces/lire — lecture d'une pièce photographiée.
+ *
+ * Le numéro et les dates se retapent à la main, pièce après pièce : c'est la
+ * saisie qu'on repousse, et une échéance non renseignée ne se relance jamais.
+ *
+ * Rien n'est enregistré ici. Le fichier envoyé pour lecture est effacé aussitôt
+ * — la pièce sera jointe au moment de l'enregistrement, par le formulaire.
+ */
+exports.lireParIA = async (req, res) => {
+    const fichier = req.file;
+    try {
+        if (!fichier) return res.status(400).json({ error: 'Aucun fichier fourni.' });
+
+        const { getGenerativeModel } = require('../lib/claudeAI');
+        const modele = getGenerativeModel();
+        if (!modele) {
+            return res.status(503).json({
+                error: "L'assistance par IA n'est pas disponible : saisir la pièce à la main.",
+                remede: "Vérifier l'état du service dans Paramètres › État des services."
+            });
+        }
+
+        const contenu = require('fs').readFileSync(fichier.path).toString('base64');
+        const resultat = await modele.generateContent([
+            lecturePiece.invite(),
+            { inlineData: { data: contenu, mimeType: fichier.mimetype } }
+        ]);
+        const reponse = await resultat.response;
+        const lecture = lecturePiece.interpreter(reponse.text());
+
+        res.json({
+            ...lecture.champs,
+            confiance: lecture.confiance,
+            avertissements: lecture.avertissements,
+            // La lecture propose ; elle ne vaut pas contrôle.
+            consigne: 'Vérifier chaque champ avant d’enregistrer : la pièce fait foi, pas la lecture.'
+        });
+    } catch (error) {
+        console.error('Erreur lecture de pièce :', error);
+        res.status(502).json({ error: `La lecture a échoué : ${error.message}. Saisir la pièce à la main.` });
+    } finally {
+        abandonner(fichier);
+    }
+};
+
 /** POST /api/pieces/employe/:employeeId — enregistrement par la RH. */
 exports.enregistrerParRh = async (req, res) => {
     try {

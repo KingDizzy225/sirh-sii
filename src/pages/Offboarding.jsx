@@ -35,6 +35,25 @@ export function Offboarding() {
     const [soldeEnCours, setSoldeEnCours] = useState(false);
     const [observations, setObservations] = useState('');
     const [messageSolde, setMessageSolde] = useState(null);
+
+    // Comparaison des scénarios, avant décision. Le décompte ci-dessous ne se
+    // calcule qu'une fois la sortie actée ; le choix, lui, se fait avant.
+    const [simulation, setSimulation] = useState(null);
+    const [simulationEnCours, setSimulationEnCours] = useState(false);
+
+    const simulerDepart = async () => {
+        if (!salarieSolde) return;
+        setSimulationEnCours(true);
+        try {
+            const res = await api.get(`/offboarding/${salarieSolde}/solde/simulation`);
+            setSimulation(Array.isArray(res?.data?.scenarios) ? res.data : null);
+        } catch (e) {
+            console.error('Simulation de départ indisponible', e);
+            setSimulation(null);
+        } finally {
+            setSimulationEnCours(false);
+        }
+    };
     const [pieceEnCours, setPieceEnCours] = useState(null);
 
     useEffect(() => {
@@ -330,13 +349,53 @@ export function Offboarding() {
                                 ))}
                             </select>
 
-                            <Button
-                                onClick={calculerSolde}
-                                disabled={!salarieSolde || soldeEnCours}
-                                className="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm"
-                            >
-                                {soldeEnCours ? 'Calcul…' : 'Calculer le décompte'}
-                            </Button>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Button
+                                    onClick={calculerSolde}
+                                    disabled={!salarieSolde || soldeEnCours}
+                                    className="bg-slate-900 hover:bg-slate-800 text-white text-sm"
+                                >
+                                    {soldeEnCours ? 'Calcul…' : 'Calculer le décompte'}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={simulerDepart}
+                                    disabled={!salarieSolde || simulationEnCours}
+                                    className="text-sm font-semibold"
+                                >
+                                    {simulationEnCours ? 'Simulation…' : 'Comparer les scénarios'}
+                                </Button>
+                            </div>
+
+                            {simulation && (
+                                <div className="space-y-2 pt-2 border-t border-slate-100">
+                                    <p className="text-xs text-slate-500">
+                                        Projection au {new Date(simulation.hypotheses.dateSortie).toLocaleDateString('fr-FR')} ·
+                                        salaire moyen {simulation.hypotheses.salaireMoyenReference.toLocaleString('fr-FR')} F ·
+                                        {' '}{simulation.salarie.ancienneteAnnees} an(s) d'ancienneté
+                                    </p>
+                                    {simulation.scenarios.map((s) => (
+                                        <div key={s.code} className={`rounded-lg border p-3 ${
+                                            s.applicable ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 opacity-60'}`}>
+                                            <div className="flex justify-between items-baseline gap-3">
+                                                <p className="text-sm font-bold text-slate-900">{s.libelle}</p>
+                                                <span className="font-mono font-black text-slate-900">
+                                                    {s.aVerser.toLocaleString('fr-FR')} F
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                                Coût employeur {s.coutEmployeur.toLocaleString('fr-FR')} F — {s.note}
+                                            </p>
+                                            {!s.applicable && (
+                                                <p className="text-[11px] text-slate-400 mt-0.5">Sans objet pour ce type de contrat.</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <ul className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-1 list-disc list-inside">
+                                        {simulation.avertissements.map((a, i) => <li key={i}>{a}</li>)}
+                                    </ul>
+                                </div>
+                            )}
 
                             {solde && (
                                 <div className="space-y-3 pt-2 border-t border-slate-100">

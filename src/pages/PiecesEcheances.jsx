@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import {
@@ -52,6 +52,13 @@ export function PiecesEcheances() {
     const [salaries, setSalaries] = useState([]);
     const [formulaire, setFormulaire] = useState(null);
 
+    // Lecture de la pièce photographiée. Le numéro et les dates se retapaient à
+    // la main, pièce après pièce — et une échéance non saisie n'est jamais
+    // relancée. Ce qui est lu est proposé, jamais enregistré tel quel.
+    const formulaireRef = useRef(null);
+    const [lecture, setLecture] = useState(null);
+    const [lectureEnCours, setLectureEnCours] = useState(false);
+
     const charger = useCallback(async () => {
         setChargement(true);
         try {
@@ -94,6 +101,45 @@ export function PiecesEcheances() {
             charger();
         } catch (err) {
             setMessage({ ton: 'alerte', texte: err.message || 'Contrôle impossible.' });
+        }
+    };
+
+    const lirePiece = async () => {
+        const fichier = formulaireRef.current?.elements?.fichier?.files?.[0];
+        if (!fichier) {
+            setMessage({ ton: 'alerte', texte: 'Joindre d’abord la photo ou le scan de la pièce.' });
+            return;
+        }
+        setLectureEnCours(true);
+        setLecture(null);
+        try {
+            const base = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const racine = base.endsWith('/api') ? base.slice(0, -4) : base;
+            const corps = new FormData();
+            corps.append('fichier', fichier);
+            const res = await fetch(`${racine}/api/pieces/lire`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: corps
+            });
+            if (res.ok) {
+                const donnees = await res.json();
+                setLecture(donnees);
+                // Le formulaire n'est pas contrôlé : les champs lus sont posés
+                // directement et restent modifiables. La pièce fait foi, pas la lecture.
+                const champs = formulaireRef.current.elements;
+                if (donnees.type) champs.type.value = donnees.type;
+                if (donnees.reference) champs.reference.value = donnees.reference;
+                if (donnees.delivreeLe) champs.delivreeLe.value = donnees.delivreeLe;
+                if (donnees.expireLe) champs.expireLe.value = donnees.expireLe;
+            } else {
+                const detail = await res.json().catch(() => ({}));
+                setMessage({ ton: 'alerte', texte: detail.error || 'Lecture impossible : saisir la pièce à la main.' });
+            }
+        } catch (err) {
+            setMessage({ ton: 'alerte', texte: err.message || 'Lecture impossible : saisir la pièce à la main.' });
+        } finally {
+            setLectureEnCours(false);
         }
     };
 
@@ -287,12 +333,12 @@ export function PiecesEcheances() {
                                     Enregistrée ici, la pièce est réputée contrôlée : vous l'avez sous les yeux.
                                 </CardDescription>
                             </div>
-                            <button onClick={() => setFormulaire(null)} className="text-slate-400 hover:text-slate-700" aria-label="Fermer">
+                            <button onClick={() => { setFormulaire(null); setLecture(null); }} className="text-slate-400 hover:text-slate-700" aria-label="Fermer">
                                 <X size={18} />
                             </button>
                         </CardHeader>
                         <CardContent>
-                            <form onSubmit={enregistrer} className="space-y-3">
+                            <form onSubmit={enregistrer} ref={formulaireRef} className="space-y-3">
                                 <select name="employeeId" required className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm">
                                     <option value="">Choisir un salarié…</option>
                                     {salaries.map((s) => (
@@ -330,6 +376,30 @@ export function PiecesEcheances() {
 
                                 <input type="file" name="fichier" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
                                        className="w-full text-sm" />
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button type="button" variant="outline" onClick={lirePiece} disabled={lectureEnCours}
+                                            className="text-xs font-bold">
+                                        <Upload size={14} className="mr-1.5" />
+                                        {lectureEnCours ? 'Lecture…' : 'Lire la pièce'}
+                                    </Button>
+                                    <span className="text-[11px] text-slate-500">
+                                        Remplit le type, la référence et les dates d'après la photo. À vérifier avant d'enregistrer.
+                                    </span>
+                                </div>
+
+                                {lecture && (
+                                    <div className="text-[11px] rounded-lg border border-sky-200 bg-sky-50 p-3 space-y-1">
+                                        <p className="text-sky-900 font-semibold">
+                                            Lecture {lecture.confiance === 'elevee' ? 'sûre'
+                                                : lecture.confiance === 'faible' ? 'peu sûre' : 'moyennement sûre'} —
+                                            {' '}{lecture.consigne}
+                                        </p>
+                                        {(lecture.avertissements || []).map((a, i) => (
+                                            <p key={i} className="text-amber-800">{a}</p>
+                                        ))}
+                                    </div>
+                                )}
 
                                 <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white">
                                     Enregistrer

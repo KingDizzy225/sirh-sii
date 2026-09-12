@@ -180,6 +180,28 @@ exports.attestationCessation = async (req, res) => {
  * document signé par le salarié ne peut pas reposer sur un calcul qui suivrait
  * la base au jour le jour.
  */
+const simulationDepart = require('../lib/simulationDepart');
+
+/**
+ * GET /api/offboarding/:employeeId/solde/simulation?date=AAAA-MM-JJ
+ *
+ * Ce que coûteraient une démission, un licenciement, une rupture négociée ou
+ * une fin de CDD pour le même salarié, à la même date. Le décompte de départ
+ * ne se calcule qu'une fois la sortie actée ; la décision, elle, se prend avant.
+ *
+ * Rien n'est enregistré : c'est une projection.
+ */
+exports.simulerDepart = async (req, res) => {
+    try {
+        const simulation = await simulationDepart.simuler(req.params.employeeId, { dateSortie: req.query.date });
+        if (!simulation) return res.status(404).json({ error: 'Salarié introuvable.' });
+        res.json(simulation);
+    } catch (error) {
+        console.error('Erreur simulation de départ :', error);
+        res.status(500).json({ error: 'Erreur lors de la simulation.' });
+    }
+};
+
 exports.arreterSolde = async (req, res) => {
     try {
         const { employeeId } = req.params;

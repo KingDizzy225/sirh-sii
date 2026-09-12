@@ -68,6 +68,9 @@ router.get('/employe/:employeeId', pieceController.getPiecesEmploye);
 router.get('/:id/fichier', pieceController.getFichier);
 
 // Enregistrement et contrôle : réservés à la RH.
+// Lecture d'une pièce photographiée : propose les champs, n'enregistre rien.
+router.post('/lire', requireRole(RH), televerser.single('fichier'), pieceController.lireParIA);
+
 router.post('/employe/:employeeId', requireRole(RH),
     televerser.single('fichier'), pieceController.enregistrerParRh);
 router.post('/:id/controle', requireRole(RH), pieceController.controler);

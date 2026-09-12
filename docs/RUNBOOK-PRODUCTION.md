@@ -644,6 +644,87 @@ correspond plus aux pointages : il garde le taux unique
 
 ---
 
+## Contrôles qui relisent la paie et l'effectif
+
+### Vraisemblance des bulletins
+
+Chaque bulletin du mois est comparé au passé du salarié — la **médiane** de ses
+six derniers nets, pour qu'un seul mois atypique ne déplace pas la référence —
+et à lui-même. Le contrôle s'exécute à l'ouverture de la clôture.
+
+**Bloquant** (la clôture est refusée) : net nul ou négatif, net supérieur au
+brut, deux bulletins sur le même mois, salarié payé après sa sortie ou avant son
+embauche, net multiplié par trois ou plus.
+
+**À viser** (la clôture reste possible en cochant « J'ai vérifié ces points ») :
+net en hausse de plus de 50 % ou en baisse de plus de 40 %, retenues dépassant
+la moitié du brut, plus de 60 heures supplémentaires, prime supérieure au
+salaire de base, salarié payé sans aucun pointage ni congé alors qu'il pointait
+les mois précédents.
+
+Seuils réglables : `VRAISEMBLANCE_HAUSSE_NET`, `VRAISEMBLANCE_BAISSE_NET`,
+`VRAISEMBLANCE_HAUSSE_BLOQUANTE`, `VRAISEMBLANCE_PART_RETENUES`,
+`VRAISEMBLANCE_HEURES_SUP`, `VRAISEMBLANCE_PRIME_SUR_BASE`,
+`VRAISEMBLANCE_MOIS_COMPARES`. Ce sont des repères, jamais des règles de droit.
+
+### Cohérence entre dossiers
+
+Écran *Dossiers administratifs*, carte « Cohérence entre dossiers ». La
+conformité ne regarde qu'un dossier à la fois ; ce contrôle regarde les dossiers
+**entre eux** :
+
+- même compte bancaire, même numéro CNPS, même matricule ou même téléphone chez
+  deux salariés — la comparaison ignore espaces et ponctuation, « CI93 0001 » et
+  « ci93-0001 » sont le même compte ;
+- date de sortie passée sur un dossier resté actif, donc encore payable ;
+- salarié payé sans aucune trace d'activité — ni pointage, ni congé, ni absence,
+  ni document — sur `SINCERITE_MOIS_SANS_ACTIVITE` mois (3 par défaut) ;
+- salarié payé sans coordonnées bancaires au dossier.
+
+Aucun de ces constats n'est une accusation : un ménage partage un compte, un
+sédentaire ne pointe jamais. Ils désignent ce qui mérite un regard.
+
+### Recoupement des pointages
+
+Ajouté au contrôle quotidien, qui ne voyait que la sortie oubliée et le hors-zone :
+
+| Constat | Ce qu'il signifie |
+|---|---|
+| Trajet impossible | Deux pointages qui supposeraient plus de `POINTAGE_VITESSE_MAX_KMH` (120 km/h). La précision GPS annoncée est retranchée avant de conclure |
+| Pointages jumelés | Deux salariés à moins de 3 m et 30 s l'un de l'autre : deux téléphones ne donnent pas la même position à ce point |
+| Position figée | Coordonnées rigoureusement identiques, quatre fois sur deux jours au moins. Cherché une fois par semaine, le lundi, pour ne pas répéter l'alerte |
+
+### Heures supplémentaires de la semaine en cours
+
+Deux passages par semaine, **mercredi et vendredi à 16 h** : qui a déjà dépassé
+la durée hebdomadaire, avec le détail par majoration et le coût déjà engagé.
+Seuil `HS_ALERTE_SEUIL_HEURES` (40 h par défaut). Arbitrer avant la fin du mois,
+plutôt que de constater la dépense à la préparation de la paie.
+
+### Lecture d'une pièce photographiée
+
+Écran *Titres & habilitations*, bouton **Lire la pièce** dans le formulaire
+d'enregistrement. Le fichier joint est lu par Claude, qui propose le type, la
+référence et les dates ; rien n'est enregistré, tout reste modifiable, et le
+fichier envoyé pour lecture est effacé aussitôt. Une date mal formée ou une
+nature hors catalogue n'est jamais devinée : le champ reste vide et l'écran le
+dit. Sans clé d'IA active, le bouton répond que la saisie reste manuelle.
+
+### Simulation de départ
+
+Écran *Départs*, bouton **Comparer les scénarios**. Pour un même salarié à une
+même date : démission, licenciement, rupture négociée, fin de CDD — indemnité
+compensatrice de congés, préavis, indemnité de licenciement, avances à déduire,
+et le coût employeur correspondant.
+
+Rien n'est enregistré : le décompte qui fait foi reste celui arrêté au départ.
+La durée de préavis (`PREAVIS_MOIS_DEFAUT`, 1 mois) varie selon la catégorie
+professionnelle et la convention applicable : **à confirmer avant de s'en servir
+dans une négociation**. Aucune prime de fin de CDD n'est appliquée par défaut
+(`CDD_PRIME_PRECARITE_TAUX`).
+
+---
+
 ## Récapitulatif annuel des salaires (DISA, ITS)
 
 Onglet *Déclarations sociales*, sous la déclaration du mois. Cumuls de l'année

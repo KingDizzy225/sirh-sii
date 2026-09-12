@@ -31,6 +31,8 @@ router.get('/:employeeId/certificat-travail', requireRole(RH), finContrat.certif
 router.get('/:employeeId/attestation-cessation', requireRole(RH), finContrat.attestationCessation);
 
 // Le reçu fait décharge : il n'est édité que depuis un décompte arrêté.
+// Projection avant décision : ce que coûterait chaque nature de départ.
+router.get('/:employeeId/solde/simulation', requireRole(RH), finContrat.simulerDepart);
 router.get('/:employeeId/solde/arrete', requireRole(RH), finContrat.lireArreteSolde);
 router.post('/:employeeId/solde/arreter', requireRole(RH), finContrat.arreterSolde);
 router.get('/:employeeId/solde/recu', requireRole(RH), finContrat.recuSolde);
