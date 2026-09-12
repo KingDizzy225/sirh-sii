@@ -34,14 +34,20 @@ export function Conformite() {
     const [message, setMessage] = useState(null);
     const [enCours, setEnCours] = useState(null);
     const [filtre, setFiltre] = useState('incomplets');
+    // Cohérence entre dossiers : la conformité ci-dessous ne regarde qu'un
+    // dossier à la fois et ne voit donc ni doublon, ni salarié payé sans
+    // aucune trace d'activité.
+    const [sincerite, setSincerite] = useState(null);
 
     const charger = useCallback(async () => {
-        const [c, t] = await Promise.all([
+        const [c, t, s] = await Promise.all([
             api.get('/employees/conformite').catch(() => ({ data: null })),
-            api.get('/employees/corbeille').catch(() => ({ data: null }))
+            api.get('/employees/corbeille').catch(() => ({ data: null })),
+            api.get('/employees/sincerite').catch(() => ({ data: null }))
         ]);
         setBilan(c?.data && Array.isArray(c.data.salaries) ? c.data : null);
         setCorbeille(t?.data && Array.isArray(t.data.dossiers) ? t.data : null);
+        setSincerite(s?.data && Array.isArray(s.data.controles) ? s.data : null);
     }, []);
 
     useEffect(() => { charger(); }, [charger]);
@@ -138,6 +144,54 @@ export function Conformite() {
                     </Card>
                 ))}
             </div>
+
+            {/* Cohérence entre dossiers */}
+            <Card className="border border-slate-200 shadow-sm bg-white">
+                <CardHeader className="p-5 border-b border-slate-100 bg-slate-50/50">
+                    <CardTitle className="text-base font-bold text-slate-900 flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-2">
+                            <Users size={18} className="text-slate-500" /> Cohérence entre dossiers
+                        </span>
+                        {sincerite && (
+                            <span className="text-xs font-medium text-slate-500">
+                                {sincerite.resume.alertes} alerte(s), {sincerite.resume.avertissements} point(s) à vérifier
+                            </span>
+                        )}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-5 space-y-3">
+                    {!sincerite && (
+                        <p className="text-sm text-slate-500">Contrôle indisponible pour l'instant.</p>
+                    )}
+                    {sincerite && sincerite.controles.length === 0 && (
+                        <p className="text-sm text-emerald-700">
+                            Aucun doublon, aucun salarié payé sans trace d'activité sur les
+                            {' '}{sincerite.fenetreMois} derniers mois.
+                        </p>
+                    )}
+                    {sincerite && sincerite.controles.map((c, i) => (
+                        <div key={i} className={`rounded-xl border p-4 ${c.gravite === 'alerte'
+                            ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+                            <div className="flex items-start gap-2.5">
+                                <AlertTriangle size={16} className={`mt-0.5 shrink-0 ${
+                                    c.gravite === 'alerte' ? 'text-red-600' : 'text-amber-600'}`} />
+                                <div className="min-w-0">
+                                    <p className={`text-sm font-bold ${
+                                        c.gravite === 'alerte' ? 'text-red-900' : 'text-amber-900'}`}>{c.libelle}</p>
+                                    <p className="text-xs text-slate-700 mt-0.5 leading-relaxed">{c.detail}</p>
+                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                        {c.salaries.map(s => (
+                                            <Badge key={s.id} variant="outline" className="text-[10px] font-semibold bg-white">
+                                                {s.nom}{s.service ? ` · ${s.service}` : ''}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
 
             {/* Mentions manquantes */}
             <Card className="border border-slate-200 shadow-sm bg-white">

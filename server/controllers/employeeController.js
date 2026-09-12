@@ -1,6 +1,7 @@
 const prisma = require('../prismaClient');
 const bcrypt = require('bcryptjs');
 const evenements = require('../lib/evenements');
+const sincerite = require('../lib/sincerite');
 const { construireTachesIntegration } = require('../data/onboardingTemplates');
 const { soldeOuverture } = require('../lib/conges');
 const dossier = require('../lib/dossier');
@@ -675,6 +676,22 @@ exports.initOnboardingTasks = async (req, res) => {
  * produit, mais pas opposable, et rien ne le signalait. Cet écran dit ce qui
  * manque, à qui, et ce que l'absence empêche.
  */
+/**
+ * GET /api/employees/sincerite
+ *
+ * Cohérence entre dossiers, là où la conformité ne regarde qu'un dossier à la
+ * fois : comptes bancaires partagés, numéros CNPS dupliqués, salariés payés
+ * sans aucune trace d'activité.
+ */
+exports.getSincerite = async (req, res) => {
+    try {
+        res.json(await sincerite.controler());
+    } catch (error) {
+        console.error('Erreur contrôle de sincérité :', error);
+        res.status(500).json({ error: 'Erreur lors du contrôle de sincérité.' });
+    }
+};
+
 exports.getConformite = async (req, res) => {
     try {
         // Les salariés sortis restent au registre mais ne sont plus déclarés :

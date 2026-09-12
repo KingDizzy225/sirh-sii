@@ -1,5 +1,6 @@
 const prisma = require('../prismaClient');
 const { intervalleMois } = require('./paie');
+const vraisemblance = require('./vraisemblance');
 
 /**
  * Clôture mensuelle de la paie.
@@ -100,7 +101,18 @@ async function controler(periode) {
         avertissements.push(`${sansPdf} bulletin(s) sans PDF : ils ne pourront pas être remis par lien.`);
     }
 
+    // Vraisemblance des bulletins eux-mêmes : la paie ne se relisait pas. Ce
+    // qui ne peut pas être vrai bloque ; ce qui est seulement inhabituel est
+    // porté à la connaissance de la RH, qui clôture en le sachant.
+    const verification = await vraisemblance.analyser(mois.libelle);
+    for (const c of verification.controles) {
+        const texte = `${c.nom} — ${c.libelle}. ${c.detail}`;
+        if (c.gravite === 'bloquante') bloquantes.push(texte);
+        else avertissements.push(texte);
+    }
+
     return {
+        vraisemblance: verification.resume,
         periode: mois.libelle,
         effectif: fiches.length,
         masseBrute: fiches.reduce((s, f) => s + (f.grossSalary || 0), 0),
