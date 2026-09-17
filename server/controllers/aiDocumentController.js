@@ -58,8 +58,9 @@ exports.generateAIDocument = async (req, res) => {
         pdfDoc.pipe(writeStream);
 
         // Header
-        const logoPath = path.join(__dirname, '..', '..', 'public', 'logo.png');
-        if (fs.existsSync(logoPath)) {
+        // Le logo saisi dans l'identité de l'entreprise, à défaut celui du dépôt.
+        const logoPath = require('../lib/identite').cheminLogo();
+        if (logoPath) {
             pdfDoc.image(logoPath, { fit: [150, 100], align: 'center' });
             pdfDoc.moveDown(2);
         } else {

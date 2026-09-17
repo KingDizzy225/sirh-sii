@@ -127,8 +127,9 @@ const generatePayslipPDF = async (payroll, employee, signatureOverride) => {
             const net = b.netSalary;
 
             // ---- LOGO ----
-            const logoPath = path.join(__dirname, '../../public/logo.png');
-            if (fs.existsSync(logoPath)) {
+            // Le logo saisi dans l'identité de l'entreprise, à défaut celui du dépôt.
+            const logoPath = require('../lib/identite').cheminLogo();
+            if (logoPath) {
                 doc.image(logoPath, 50, 40, { width: 100 });
             }
 

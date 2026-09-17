@@ -13,7 +13,7 @@ const PDFDocument = require('pdfkit');
  * étrangères aux anciennes.
  */
 
-const organisation = () => process.env.ORGANISATION_NAME || 'SII';
+const organisation = () => require('./identite').nom('SII');
 
 const dateFr = (v) => {
     if (!v) return '';

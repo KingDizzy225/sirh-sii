@@ -54,6 +54,23 @@ router.post('/badges/:jeton/remplacements', espaceSalarieController.proposer);
 router.post('/badges/:jeton/remplacements/:id/annuler', espaceSalarieController.annuler);
 router.post('/badges/:jeton/remplacements/:id/accepter', espaceSalarieController.reprendre);
 
+// Passations d'équipe en agence.
+const passationController = require('../controllers/passationController');
+router.get('/badges/:jeton/passations', passationController.espace);
+router.post('/badges/:jeton/passations', passationController.ecrire);
+router.post('/badges/:jeton/passations/:id/acquitter', passationController.acquitter);
+router.post('/badges/:jeton/passations/elements/:id/resoudre', passationController.resoudre);
+
+// Émargement des formations : QR projeté en salle, scan avec le badge.
+const emargementController = require('../controllers/emargementController');
+router.get('/emargements/:token/code', emargementController.code);
+router.post('/badges/:jeton/emarger', emargementController.emarger);
+
+// Identité de l'entreprise, lue par toutes les pages publiques.
+const identiteController = require('../controllers/identiteController');
+router.get('/identite', identiteController.lirePublic);
+router.get('/identite/logo', identiteController.logo);
+
 // Pré-accueil du futur salarié : la page, la photo de son responsable, ses pièces.
 const preAccueilController = require('../controllers/preAccueilController');
 const multer = require('multer');

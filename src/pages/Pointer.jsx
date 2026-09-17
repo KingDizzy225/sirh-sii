@@ -110,3 +110,63 @@ export function Pointer() {
         </div>
     );
 }
+
+/**
+ * Page ouverte par le scan du QR projeté pendant une formation.
+ * Même reconnaissance du téléphone que pour pointer : le badge.
+ */
+export function Emarger() {
+    const [params] = useSearchParams();
+    const [etat, setEtat] = useState({ phase: 'attente' });
+    const lance = useRef(false);
+
+    useEffect(() => {
+        if (lance.current) return;
+        lance.current = true;
+        const jeton = lireBadgeMemorise();
+        const session = params.get('s');
+        const code = params.get('c');
+        if (!session || !code) { setEtat({ phase: 'erreur', message: 'QR incomplet. Scannez à nouveau.' }); return; }
+        if (!jeton) { setEtat({ phase: 'sansBadge' }); return; }
+        fetch(`${API_URL}/api/public/badges/${jeton}/emarger`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session, code })
+        })
+            .then(async (res) => {
+                const corps = await res.json().catch(() => ({}));
+                if (res.ok && corps.action) setEtat({ phase: 'ok', ...corps });
+                else setEtat({ phase: res.status === 403 ? 'sansBadge' : 'erreur', message: corps.error || 'Émargement impossible.' });
+            })
+            .catch(() => setEtat({ phase: 'erreur', message: 'Pas de connexion. Scannez à nouveau.' }));
+    }, [params]);
+
+    if (etat.phase === 'attente') {
+        return <div className="min-h-screen bg-slate-900 flex items-center justify-center"><Loader2 className="w-12 h-12 animate-spin text-sky-400" /></div>;
+    }
+    if (etat.phase === 'sansBadge') {
+        return (
+            <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-8 text-center gap-4">
+                <IdCard className="w-16 h-16 text-sky-500" />
+                <h1 className="text-2xl font-bold text-slate-900">Téléphone non reconnu</h1>
+                <p className="text-slate-600 max-w-sm">{etat.message || "Ouvrez d'abord le lien de votre badge numérique sur ce téléphone, puis scannez à nouveau."}</p>
+            </div>
+        );
+    }
+    if (etat.phase === 'erreur') {
+        return (
+            <div className="min-h-screen bg-rose-600 text-white flex flex-col items-center justify-center p-8 text-center gap-4">
+                <ShieldX className="w-16 h-16" /><p className="text-xl max-w-sm">{etat.message}</p>
+            </div>
+        );
+    }
+    const depart = etat.action === 'DEPART';
+    return (
+        <div className={`min-h-screen text-white flex flex-col items-center justify-center p-8 text-center gap-5 ${depart ? 'bg-indigo-600' : 'bg-sky-600'}`}>
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 220 }}>
+                {depart ? <LogOut className="w-24 h-24" /> : <CheckCircle2 className="w-24 h-24" />}
+            </motion.div>
+            <h1 className="text-2xl font-bold">{etat.action === 'ARRIVEE' ? 'Présence enregistrée' : depart ? 'Départ enregistré' : 'Déjà enregistré'}</h1>
+            <p className="text-lg opacity-90">{etat.formation}</p>
+            <p className="text-xl">{etat.message}</p>
+        </div>
+    );
+}

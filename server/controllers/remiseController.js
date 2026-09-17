@@ -254,7 +254,7 @@ exports.consulter = async (req, res) => {
                 ? enregistrement.sourceType === 'BULLETIN_REMPLACE'
                 : undefined,
             expireLe: enregistrement.expireLe,
-            organisation: process.env.ORGANISATION_NAME || 'SIRH-SII'
+            organisation: require('../lib/identite').nom()
         });
     } catch (error) {
         console.error('Erreur consultation de remise :', error);

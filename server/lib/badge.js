@@ -58,7 +58,7 @@ const MOTIFS_PORTEUR = {
 /** Réponse au vérificateur : valide ou non, sans motif détaillé. */
 function pourVerificateur(badge, salarie, reference = new Date()) {
     const e = etat(badge, salarie, reference);
-    const organisation = process.env.ORGANISATION_NAME || 'SIRH-SII';
+    const organisation = require('./identite').nom();
     if (e !== 'VALIDE') {
         return { valide: false, organisation, verifieLe: reference.toISOString() };
     }
@@ -80,7 +80,7 @@ function pourPorteur(badge, salarie, reference = new Date()) {
     return {
         valide: true,
         etat: e,
-        organisation: process.env.ORGANISATION_NAME || 'SIRH-SII',
+        organisation: require('./identite').nom(),
         prenom: salarie.firstName,
         nom: salarie.lastName,
         fonction: salarie.positionTitle || null,

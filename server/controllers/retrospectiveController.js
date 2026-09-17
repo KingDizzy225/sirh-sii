@@ -133,7 +133,7 @@ exports.accueil = async (req, res) => {
             etat,
             prenom: lien.employee.firstName,
             annee: lien.annee,
-            organisation: process.env.ORGANISATION_NAME || 'SIRH-SII'
+            organisation: require('../lib/identite').nom()
         });
     } catch (erreur) {
         console.error('[RÉTROSPECTIVE] Accueil indisponible :', erreur.message);

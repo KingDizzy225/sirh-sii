@@ -904,6 +904,67 @@ l'accueille, lieu, heure, programme (une ligne par étape), mot d'accueil, pièc
   écrire, avec trois extraits signés du prénom, dans les 14 jours précédant la
   remise. Jamais en vitrine.
 
+## Passations, émargement, identité de l'entreprise, prévision des absences
+
+### Passations d'équipe (Pilotage RH → Passations d'équipe)
+
+Depuis son badge, rubrique **Passation**, le salarié écrit à la relève : un ou
+plusieurs points classés *incident*, *client à rappeler*, *consigne* ou
+*matériel*. L'équipe suivante touche **J'ai lu**, et coche chaque point réglé.
+
+- On écrit et on lit pour les agences où l'on a pointé ces 30 derniers jours.
+- La relève voit les passations des 36 dernières heures (`PASSATION_HEURES`),
+  plus les points restés ouverts jusqu'à 7 jours (`PASSATION_JOURS_REPORT`).
+- Les écrans **de salle du personnel** rattachés au site affichent les points
+  encore ouverts des 24 dernières heures. Jamais en vitrine.
+- L'écran RH compte, par agence et par catégorie, ce qui a été signalé et ce
+  qui reste ouvert. Il ne détecte pas qu'un même incident revient : il le montre.
+
+### Émargement des formations (Pilotage RH → Émargement des formations)
+
+1. **Ouvrir l'émargement** d'une session : l'écran à projeter s'ouvre.
+2. Les participants scannent le QR avec leur téléphone (badge ouvert au moins
+   une fois) : le premier scan vaut arrivée, un scan au moins 10 minutes plus
+   tard vaut départ (`EMARGEMENT_MINUTES_AVANT_DEPART`) ; le dernier fait foi.
+3. **Fermer** en fin de séance : le QR ne vaut plus rien.
+4. **Feuille** et **export CSV** : présents, absents, départs non émargés,
+   présents non inscrits, heures suivies (plafonnées à la durée prévue).
+
+**L'export est un état de contrôle, pas le formulaire du FDFP.** Le format de
+dépôt pour un remboursement reste à confirmer avec le cabinet ou le FDFP.
+
+### Identité de l'entreprise (Paramètres → onglet Profil de l'entreprise)
+
+Nom affiché, raison sociale, RCCM, coordonnées, logo (PNG, JPEG ou WebP, 2 Mo),
+couleur principale et secondaire. Repris par les écrans d'agence, badges,
+pré-accueil, bilans annuels, écran d'émargement, et le logo par les bulletins.
+
+- Cet onglet remplace un formulaire factice : logo perdu au rechargement,
+  raison sociale, RCCM et adresse pré-remplis d'exemples, rien d'enregistré.
+- Le nom saisi prime sur `ORGANISATION_NAME`, qui reste la valeur de repli.
+- Une couleur trop claire pour un texte blanc est signalée à l'enregistrement.
+- La lecture publique ne livre que nom, slogan, couleurs, logo et contacts ;
+  ni raison sociale ni RCCM.
+- Le logo est stocké dans `server/uploads/identite` (même disque persistant
+  que les autres fichiers). Les SVG sont refusés : servis publiquement, ils
+  pourraient porter du script.
+
+### Prévision des absences (Intelligence RH → Prévision des absences)
+
+Pour chaque site et chaque jour à venir : part de l'effectif habituel (salariés
+ayant pointé sur le site en 30 jours) disponible.
+
+- **Connu** : congés validés, fériés enregistrés, ponts signalés. Toujours
+  calculé.
+- **Estimé** : taux de présence médian observé par jour de semaine, seulement
+  après `PREVISION_SEMAINES_MIN` semaines (8) de pointages. Avant, la case
+  « estimation » reste vide et l'écran le dit : les chiffres sont un plancher.
+- Un site sans aucun pointage le dimanche est considéré fermé ce jour-là.
+- Seuils : tendu sous 70 % (`PREVISION_SEUIL_TENDU`), critique sous 50 %
+  (`PREVISION_SEUIL_CRITIQUE`).
+- **Alerte du lundi 07 h 30** : une notification RH par site ayant une journée
+  critique dans les 14 jours.
+
 ## Récapitulatif annuel des salaires (DISA, ITS)
 
 Onglet *Déclarations sociales*, sous la déclaration du mois. Cumuls de l'année

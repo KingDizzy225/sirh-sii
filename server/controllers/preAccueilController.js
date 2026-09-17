@@ -158,7 +158,7 @@ exports.accueil = async (req, res) => {
         res.set('Cache-Control', 'no-store');
         res.json({
             etat,
-            organisation: process.env.ORGANISATION_NAME || 'SIRH-SII',
+            organisation: require('../lib/identite').nom(),
             prenom: p.employee.firstName,
             fonction: p.employee.positionTitle || null,
             dateArrivee: p.employee.hireDate,

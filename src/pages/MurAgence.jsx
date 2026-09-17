@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Cake, Megaphone, Heart, Wallet, WifiOff, MonitorOff, BookHeart, ScanLine } from 'lucide-react';
+import { Users, Cake, Megaphone, Heart, Wallet, WifiOff, MonitorOff, BookHeart, ScanLine, ClipboardList } from 'lucide-react';
+import { useIdentite, logoUrl } from '../lib/identite.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -19,6 +20,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
  */
 
 const ROTATION_MS = 12000;
+const PASSATION_CATEGORIES = { INCIDENT: 'Incident', CLIENT: 'Client', CONSIGNE: 'Consigne', MATERIEL: 'Matériel' };
 const CODE_MS = 8000;
 const RAFRAICHISSEMENT_MS = 60000;
 
@@ -81,6 +83,7 @@ export function MurAgence() {
     const [horsLigne, setHorsLigne] = useState(false);
     const [maintenant, setMaintenant] = useState(new Date());
     const [indice, setIndice] = useState(0);
+    const identite = useIdentite();
 
     const charger = useCallback(async () => {
         try {
@@ -123,6 +126,7 @@ export function MurAgence() {
         if (contenu.annonces.length > 0) panneaux.push('annonces');
         if (contenu.kudos.length > 0) panneaux.push('kudos');
         if ((contenu.livresDor || []).length > 0) panneaux.push('livres');
+        if (contenu.passation) panneaux.push('passation');
     }
     const nombrePanneaux = panneaux.length;
 
@@ -154,9 +158,12 @@ export function MurAgence() {
     return (
         <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-orange-950 text-white flex flex-col p-12 select-none cursor-none">
             <header className="flex items-start justify-between mb-10">
-                <div>
-                    <p className="text-orange-400 text-2xl font-semibold uppercase tracking-[0.3em]">{contenu.organisation}</p>
-                    <h1 className="text-4xl font-bold mt-2">{contenu.site || contenu.nom}</h1>
+                <div className="flex items-center gap-6">
+                    {logoUrl(identite) && <img src={logoUrl(identite)} alt="" className="h-24 w-24 object-contain bg-white rounded-2xl p-2" />}
+                    <div>
+                        <p className="text-2xl font-semibold uppercase tracking-[0.3em]" style={{ color: identite.couleurPrincipale }}>{contenu.organisation}</p>
+                        <h1 className="text-4xl font-bold mt-2">{contenu.site || contenu.nom}</h1>
+                    </div>
                 </div>
                 <div className="text-right">
                     <p className="text-8xl font-black tabular-nums leading-none">{heure(maintenant)}</p>
@@ -253,6 +260,22 @@ export function MurAgence() {
                                     </motion.div>
                                 ))}
                             </div>
+                        </Panneau>
+                    )}
+                    {courant === 'passation' && (
+                        <Panneau key="passation" icone={ClipboardList} titre="Passation d'équipe" teinte="bg-sky-500/20 text-sky-300">
+                            <p className="text-2xl text-slate-300 mb-6">
+                                Laissé par {contenu.passation.auteur} à {new Date(contenu.passation.le).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — encore ouvert :
+                            </p>
+                            <ul className="space-y-4">
+                                {contenu.passation.elements.map((x, i) => (
+                                    <motion.li key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
+                                        className="rounded-2xl bg-white/10 px-6 py-4 text-3xl flex gap-4">
+                                        <span className="text-sky-300 text-xl uppercase tracking-widest shrink-0 w-44 pt-1">{PASSATION_CATEGORIES[x.categorie] || x.categorie}</span>
+                                        <span>{x.texte}</span>
+                                    </motion.li>
+                                ))}
+                            </ul>
                         </Panneau>
                     )}
                 </AnimatePresence>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ShieldX, Loader2, User, RotateCw, CalendarClock, Repeat, Check, X } from 'lucide-react';
+import { ShieldCheck, ShieldX, Loader2, User, RotateCw, CalendarClock, Repeat, Check, X, ClipboardList, Plus, Trash2, CheckCheck } from 'lucide-react';
 import { CLE_BADGE } from './Pointer';
+import { useIdentite, logoUrl, degradeMarque } from '../lib/identite.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -31,6 +32,7 @@ export function BadgeCarte() {
     const [badge, setBadge] = useState(null);
     const [erreur, setErreur] = useState(null);
     const [verso, setVerso] = useState(false);
+    const identite = useIdentite();
     const [maintenant, setMaintenant] = useState(new Date());
 
     useEffect(() => {
@@ -70,8 +72,11 @@ export function BadgeCarte() {
             <div className="w-full max-w-sm aspect-[5/8] [perspective:1200px]" onClick={() => setVerso((v) => !v)}>
                 <motion.div animate={{ rotateY: verso ? 180 : 0 }} transition={{ duration: 0.6 }}
                     className="relative w-full h-full [transform-style:preserve-3d] cursor-pointer">
-                    <div className="absolute inset-0 [backface-visibility:hidden] rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-orange-500 via-orange-600 to-slate-900 text-white p-8 flex flex-col">
-                        <p className="text-sm font-semibold uppercase tracking-[0.25em] opacity-90">{badge.organisation}</p>
+                    <div className="absolute inset-0 [backface-visibility:hidden] rounded-3xl overflow-hidden shadow-2xl text-white p-8 flex flex-col" style={{ background: degradeMarque(identite, 160) }}>
+                        <div className="flex items-center gap-3">
+                            {logoUrl(identite) && <img src={logoUrl(identite)} alt="" className="h-10 w-10 object-contain bg-white rounded-lg p-0.5" />}
+                            <p className="text-sm font-semibold uppercase tracking-[0.25em] opacity-90">{badge.organisation}</p>
+                        </div>
                         <p className="text-xs opacity-70 mt-1">Carte professionnelle</p>
                         <div className="flex-1 flex flex-col items-center justify-center gap-5">
                             <Photo jeton={jeton} disponible={badge.photo} taille="w-40 h-40" />
@@ -99,6 +104,7 @@ export function BadgeCarte() {
             </div>
             <p className="text-slate-400 text-sm flex items-center gap-2"><RotateCw className="w-4 h-4" /> Touchez la carte pour la retourner</p>
             <MesCreneaux jeton={jeton} />
+            <Passations jeton={jeton} />
         </div>
     );
 }
@@ -287,6 +293,143 @@ function MesCreneaux({ jeton }) {
                     </ul>
                 </section>
             )}
+        </div>
+    );
+}
+
+const CATEGORIES_PASSATION = { INCIDENT: 'Incident', CLIENT: 'Client à rappeler', CONSIGNE: 'Consigne', MATERIEL: 'Matériel' };
+const heureCourte = (d) => new Date(d).toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+
+/**
+ * Passation d'équipe, sous la carte : lire ce qu'a laissé l'équipe précédente,
+ * l'acquitter, régler un point, et écrire la sienne en partant.
+ */
+function Passations({ jeton }) {
+    const [donnees, setDonnees] = useState(null);
+    const [redaction, setRedaction] = useState(null);
+    const [message, setMessage] = useState(null);
+    const [envoi, setEnvoi] = useState(false);
+
+    const charger = React.useCallback(async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/public/badges/${jeton}/passations`);
+            const corps = await res.json().catch(() => null);
+            if (res.ok && corps && Array.isArray(corps.sites)) setDonnees(corps);
+        } catch { /* hors ligne */ }
+    }, [jeton]);
+
+    useEffect(() => { charger(); }, [charger]);
+
+    const acquitter = async (id) => {
+        await fetch(`${API_URL}/api/public/badges/${jeton}/passations/${id}/acquitter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+        charger();
+    };
+
+    const resoudre = async (id) => {
+        await fetch(`${API_URL}/api/public/badges/${jeton}/passations/elements/${id}/resoudre`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+        charger();
+    };
+
+    const envoyer = async () => {
+        setEnvoi(true);
+        setMessage(null);
+        try {
+            const elements = redaction.elements.filter((e) => e.texte.trim());
+            const res = await fetch(`${API_URL}/api/public/badges/${jeton}/passations`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workSiteId: redaction.workSiteId, elements })
+            });
+            const corps = await res.json().catch(() => ({}));
+            setMessage({ ok: res.ok, texte: corps.message || corps.error || 'Envoi impossible.' });
+            if (res.ok) { setRedaction(null); charger(); }
+        } catch {
+            setMessage({ ok: false, texte: 'Pas de connexion.' });
+        } finally {
+            setEnvoi(false);
+        }
+    };
+
+    if (!donnees || donnees.sites.length === 0) return null;
+
+    return (
+        <div className="w-full max-w-sm space-y-4">
+            {message && <p className={`text-sm rounded-xl px-4 py-3 ${message.ok ? 'bg-emerald-500/20 text-emerald-100' : 'bg-rose-500/20 text-rose-100'}`}>{message.texte}</p>}
+            {donnees.sites.map(({ site, passations, reportes }) => (
+                <section key={site.id} className="bg-white/5 rounded-2xl p-4 text-white space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h2 className="font-semibold flex items-center gap-2"><ClipboardList className="w-5 h-5 text-sky-400" /> Passation · {site.nom}</h2>
+                        {!redaction && (
+                            <button onClick={() => setRedaction({ workSiteId: site.id, elements: [{ categorie: 'CONSIGNE', texte: '' }] })}
+                                className="text-xs bg-sky-500 hover:bg-sky-400 rounded-lg px-3 py-1.5 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Écrire</button>
+                        )}
+                    </div>
+
+                    {redaction?.workSiteId === site.id && (
+                        <div className="bg-white/10 rounded-xl p-3 space-y-2">
+                            {redaction.elements.map((e, i) => (
+                                <div key={i} className="space-y-1">
+                                    <div className="flex gap-2">
+                                        <select value={e.categorie} onChange={(ev) => setRedaction((r) => ({ ...r, elements: r.elements.map((x, j) => (j === i ? { ...x, categorie: ev.target.value } : x)) }))}
+                                            className="bg-slate-800 rounded-lg px-2 py-1 text-sm flex-1">
+                                            {Object.entries(CATEGORIES_PASSATION).map(([code, libelle]) => <option key={code} value={code}>{libelle}</option>)}
+                                        </select>
+                                        {redaction.elements.length > 1 && (
+                                            <button onClick={() => setRedaction((r) => ({ ...r, elements: r.elements.filter((_, j) => j !== i) }))} className="p-1"><Trash2 className="w-4 h-4" /></button>
+                                        )}
+                                    </div>
+                                    <textarea rows={2} maxLength={500} value={e.texte} placeholder="Ce que l'équipe suivante doit savoir"
+                                        onChange={(ev) => setRedaction((r) => ({ ...r, elements: r.elements.map((x, j) => (j === i ? { ...x, texte: ev.target.value } : x)) }))}
+                                        className="w-full bg-slate-800 rounded-lg px-3 py-2 text-sm" />
+                                </div>
+                            ))}
+                            <div className="flex justify-between gap-2">
+                                {redaction.elements.length < 10 && (
+                                    <button onClick={() => setRedaction((r) => ({ ...r, elements: [...r.elements, { categorie: 'INCIDENT', texte: '' }] }))}
+                                        className="text-xs text-sky-300 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Autre point</button>
+                                )}
+                                <div className="flex gap-2 ml-auto">
+                                    <button onClick={() => setRedaction(null)} className="text-xs bg-white/15 rounded-lg px-3 py-1.5">Annuler</button>
+                                    <button disabled={envoi} onClick={envoyer} className="text-xs bg-sky-500 rounded-lg px-3 py-1.5">{envoi ? '…' : 'Transmettre'}</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {passations.length === 0 && reportes.length === 0 && <p className="text-sm text-slate-400">Rien de laissé récemment.</p>}
+
+                    {passations.map((p) => (
+                        <div key={p.id} className="bg-white/10 rounded-xl p-3">
+                            <div className="flex items-center justify-between text-xs text-slate-300 mb-2">
+                                <span className="capitalize">{p.auteur} · {heureCourte(p.creeLe)}</span>
+                                {p.acquitteeParMoi
+                                    ? <span className="flex items-center gap-1 text-emerald-300"><CheckCheck className="w-4 h-4" /> Lu</span>
+                                    : <button onClick={() => acquitter(p.id)} className="bg-emerald-500 text-white rounded-lg px-2 py-1">J'ai lu</button>}
+                            </div>
+                            <ul className="space-y-1.5">
+                                {p.elements.map((e) => (
+                                    <li key={e.id} className={`text-sm flex items-start justify-between gap-2 ${e.resoluLe ? 'opacity-50 line-through' : ''}`}>
+                                        <span><span className="text-sky-300 text-xs uppercase mr-1">{e.categorieLibelle}</span>{e.texte}</span>
+                                        {!e.resoluLe && <button onClick={() => resoudre(e.id)} title="Réglé" className="shrink-0 p-1"><Check className="w-4 h-4 text-emerald-300" /></button>}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+
+                    {reportes.length > 0 && (
+                        <div className="bg-amber-500/15 rounded-xl p-3">
+                            <p className="text-xs text-amber-200 mb-2">Toujours ouvert depuis les relèves précédentes</p>
+                            <ul className="space-y-1.5">
+                                {reportes.map((e) => (
+                                    <li key={e.id} className="text-sm flex items-start justify-between gap-2">
+                                        <span><span className="text-amber-200 text-xs uppercase mr-1">{e.categorieLibelle}</span>{e.texte}</span>
+                                        <button onClick={() => resoudre(e.id)} title="Réglé" className="shrink-0 p-1"><Check className="w-4 h-4 text-emerald-300" /></button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </section>
+            ))}
         </div>
     );
 }

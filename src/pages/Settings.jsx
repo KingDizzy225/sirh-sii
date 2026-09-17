@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { IdentiteEntreprise } from '../components/IdentiteEntreprise';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -10,7 +11,6 @@ import { useAuth } from '../context/AuthContext';
 export function Settings() {
     const [notification, setNotification] = useState(null);
     const [activeTab, setActiveTab] = useState('Integrations');
-    const [logoPath, setLogoPath] = useState(null);
     const { user } = useAuth();
     const [usersList, setUsersList] = useState([]);
     const [isFetchingUsers, setIsFetchingUsers] = useState(false);
@@ -50,14 +50,6 @@ export function Settings() {
 
     const handleDiscard = () => {
         showNotification('Modifications annulées');
-    };
-
-    const handleLogoUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setLogoPath(URL.createObjectURL(file));
-            showNotification('Logo mis à jour localement. N\'oubliez pas d\'enregistrer les modifications.');
-        }
     };
 
     const handleTabChange = (tabName) => {
@@ -342,84 +334,8 @@ export function Settings() {
                 {/* Settings Content Area */}
                 <div className="md:col-span-3 lg:col-span-4 space-y-6">
                     {activeTab === 'Company Profile' && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="space-y-6"
-                        >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Profil de l'Entreprise</CardTitle>
-                                    <CardDescription>Mettez à jour les détails de votre entreprise et les informations légales.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-
-                                    <div className="flex items-center gap-6">
-                                        <label htmlFor="logo-upload" className="cursor-pointer">
-                                            <div className="w-24 h-24 rounded bg-gradient-to-tr from-blue-100 to-indigo-100 border-2 border-dashed border-blue-300 flex items-center justify-center text-blue-600 font-bold text-sm hover:bg-blue-50 transition-colors overflow-hidden">
-                                                {logoPath ? <img src={logoPath} className="w-full h-full object-cover" alt="Logo" /> : "Transférer un Logo"}
-                                            </div>
-                                            <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                                        </label>
-                                        <div className="space-y-1">
-                                            <h4 className="text-sm font-medium text-slate-900">Logo de l'Entreprise</h4>
-                                            <p className="text-xs text-slate-500 max-w-sm">Utilisez une image carrée haute résolution (PNG ou JPG) de moins de 2 Mo. Utilisé pour les rapports et les emails.</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid gap-4 md:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none text-slate-700">Raison Sociale</label>
-                                            <Input defaultValue="SIIRH-SII Global Solutions Ltd." />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none text-slate-700">Numéro d'Immatriculation</label>
-                                            <Input defaultValue="RC-504930219" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none text-slate-700">Email de Support</label>
-                                            <Input defaultValue="hr-support@siirh-sii.com" type="email" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none text-slate-700">Devise par Défaut</label>
-                                            <Input defaultValue="FCFA" disabled className="bg-slate-50 text-slate-500" />
-                                        </div>
-                                    </div>
-
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Adresse du Siège</CardTitle>
-                                    <CardDescription>Configurez le siège principal pour le système.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium leading-none text-slate-700">Adresse Ligne 1</label>
-                                        <Input defaultValue="1204 Technology Drive" />
-                                    </div>
-                                    <div className="grid gap-4 md:grid-cols-3">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none text-slate-700">Ville</label>
-                                            <Input defaultValue="Abidjan" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none text-slate-700">État / Région</label>
-                                            <Input defaultValue="Lagunes" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none text-slate-700">Code Postal</label>
-                                            <Input defaultValue="01 BP 1234" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <div className="flex justify-end gap-3 mt-8">
-                                <Button variant="outline" onClick={handleDiscard}>Annuler les Modifications</Button>
-                                <Button onClick={handleSave}>Enregistrer la Configuration</Button>
-                            </div>
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                            <IdentiteEntreprise />
                         </motion.div>
                     )}
 

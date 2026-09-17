@@ -14,7 +14,7 @@ const PDFDocument = require('pdfkit');
  * affichait.
  */
 
-const organisation = () => process.env.ORGANISATION_NAME || "SII Côte d'Ivoire";
+const organisation = () => require('./identite').nom("SII Côte d'Ivoire");
 const ville = () => process.env.ORGANISATION_VILLE || 'Abidjan';
 
 const dateFr = (v) => {

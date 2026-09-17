@@ -118,7 +118,7 @@ function manifeste({
         methodeIdentification: methode,
         horodatage: new Date(horodatage).toISOString(),
         ip: ip || null,
-        organisation: organisation || process.env.ORGANISATION_NAME || 'SIRH-SII'
+        organisation: organisation || require('./identite').nom()
     };
     // Sérialisation stable : clés triées, aucun espace superflu.
     return JSON.stringify(contenu, Object.keys(contenu).sort());

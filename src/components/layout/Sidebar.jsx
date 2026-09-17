@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart} from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -73,6 +73,7 @@ const getAllNavItems = (t) => [
     { name: 'Jours fériés', path: '/jours-feries', icon: CalendarDays, domain: 'Pilotage RH', permission: 'employees:edit' },
     { name: 'Plannings & rotations', path: '/shifts', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
     { name: 'Remplacements', path: '/remplacements', icon: Repeat, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: "Passations d'équipe", path: '/passations', icon: ClipboardList, domain: 'Pilotage RH', permission: 'employees:edit' },
     { name: t('sidebar.payroll', 'Paie & bulletins'), path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     // Décisions d'augmentation, distinctes de l'exécution de la paie.
     { name: 'Décisions de rémunération', path: '/remunerations', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
@@ -83,6 +84,7 @@ const getAllNavItems = (t) => [
     { name: 'Budget & masse salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Délégations de validation', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: t('sidebar.learning', 'Formation'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
+    { name: 'Émargement des formations', path: '/emargements', icon: QrCode, domain: 'Pilotage RH', permission: 'employees:edit' },
     { name: 'Compétences & GPEC', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
     // Deux outils réellement distincts, dont les anciens noms suggéraient les
     // deux moitiés d'un même : l'un liste des modèles de tâches, l'autre
@@ -97,6 +99,7 @@ const getAllNavItems = (t) => [
     // ── INTELLIGENCE RH : ce qui se lit, jamais ce qui s'écrit ──
     { name: t('sidebar.analytics', 'Analyses RH'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Absentéisme', path: '/absenteisme', icon: Activity, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
+    { name: 'Prévision des absences', path: '/prevision-absences', icon: CalendarRange, domain: 'Intelligence RH', permission: 'employees:edit' },
     { name: 'Listes & exports', path: '/requeteur', icon: Grid, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Historique daté', path: '/historique', icon: History, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Équité salariale', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },

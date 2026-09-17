@@ -52,7 +52,7 @@ const imprimable = (v) => String(v == null ? '' : v)
 
 const fcfa = (n) => imprimable(`${Math.round(Number(n) || 0).toLocaleString('fr-FR')} FCFA`);
 
-const organisation = () => process.env.ORGANISATION_NAME || 'SIRH-SII';
+const organisation = () => require('./identite').nom();
 const ville = () => process.env.ORGANISATION_VILLE || 'Abidjan';
 
 /** Nature de rupture en clair. Le code interne n'a pas sa place sur un papier. */

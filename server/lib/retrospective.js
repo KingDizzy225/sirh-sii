@@ -88,7 +88,7 @@ function assembler({ salarie, annee, periode, pointages, conges, formations, kud
         annee,
         anneeComplete: periode.complete,
         arreteAu: periode.fin.toISOString().slice(0, 10),
-        organisation: process.env.ORGANISATION_NAME || 'SIRH-SII',
+        organisation: require('./identite').nom(),
         salarie: { prenom: salarie.firstName, fonction: salarie.positionTitle || null },
         arriveeCetteAnnee: embauche >= periode.debut && embauche <= periode.fin
             ? embauche.toISOString().slice(0, 10) : null,

@@ -50,7 +50,7 @@ exports.verifyDocument = async (req, res) => {
         res.status(200).json({
             valide: true,
             type: document.type,
-            organisation: process.env.ORGANISATION_NAME || 'SIRH-SII',
+            organisation: require('../lib/identite').nom(),
             emisLe: document.issuedAt,
             titulaire: document.employeeName,
             fonction: document.positionTitle,

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Lock, ChevronRight, ChevronLeft, Share2, Eye, EyeOff, Sparkles } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { useIdentite, degradeMarque } from '../lib/identite.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -34,12 +35,13 @@ function Compteur({ valeur, decimales = 0 }) {
     return <span className="tabular-nums">{nombre(Number(affiche.toFixed(decimales)))}</span>;
 }
 
-function Diapo({ fond, children }) {
+function Diapo({ fond, style, children }) {
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.04 }}
             transition={{ duration: 0.45 }}
-            className={`absolute inset-0 rounded-[2rem] p-8 flex flex-col justify-center text-white ${fond}`}
+            className={`absolute inset-0 rounded-[2rem] p-8 flex flex-col justify-center text-white ${fond || ''}`}
+            style={style}
         >
             {children}
         </motion.div>
@@ -49,10 +51,10 @@ function Diapo({ fond, children }) {
 const Grand = ({ children }) => <p className="text-7xl font-black leading-none my-4">{children}</p>;
 const Petit = ({ children }) => <p className="text-xl opacity-90 leading-snug">{children}</p>;
 
-function construireDiapos(b, montrerRemuneration, setMontrerRemuneration) {
+function construireDiapos(b, montrerRemuneration, setMontrerRemuneration, identite) {
     const diapos = [];
     diapos.push(
-        <Diapo key="intro" fond="bg-gradient-to-br from-orange-500 via-rose-500 to-purple-700">
+        <Diapo key="intro" style={{ background: degradeMarque(identite) }}>
             <Sparkles className="w-12 h-12 mb-6" />
             <p className="text-2xl opacity-90">Bonjour {b.salarie.prenom},</p>
             <p className="text-5xl font-black leading-tight mt-2">voici votre année {b.annee} chez {b.organisation}.</p>
@@ -154,7 +156,7 @@ function construireDiapos(b, montrerRemuneration, setMontrerRemuneration) {
     return diapos;
 }
 
-function CarteResume({ b }) {
+function CarteResume({ b, identite }) {
     const tuiles = [
         b.presence && ['jours pointés', b.presence.joursPointes],
         b.formations && ['h de formation', b.formations.heures],
@@ -163,7 +165,7 @@ function CarteResume({ b }) {
         ['an' + (b.anciennete.annees > 1 ? 's' : '') + " d'ancienneté", b.anciennete.annees]
     ].filter(Boolean);
     return (
-        <div className="w-full rounded-[2rem] p-8 bg-gradient-to-br from-orange-500 via-rose-500 to-purple-700 text-white">
+        <div className="w-full rounded-[2rem] p-8 text-white" style={{ background: degradeMarque(identite) }}>
             <p className="uppercase tracking-[0.25em] text-sm opacity-90">{b.organisation}</p>
             <p className="text-4xl font-black mt-2">Mon année {b.annee}</p>
             <p className="text-lg opacity-90">{b.salarie.prenom}{b.salarie.fonction ? ` · ${b.salarie.fonction}` : ''}</p>
@@ -189,6 +191,7 @@ export function MonAnnee() {
     const [indice, setIndice] = useState(0);
     const [montrerRemuneration, setMontrerRemuneration] = useState(false);
     const carteRef = useRef(null);
+    const identite = useIdentite();
 
     useEffect(() => {
         fetch(`${API_URL}/api/public/retrospectives/${token}`)
@@ -266,7 +269,7 @@ export function MonAnnee() {
         );
     }
 
-    const diapos = construireDiapos(bilan, montrerRemuneration, setMontrerRemuneration);
+    const diapos = construireDiapos(bilan, montrerRemuneration, setMontrerRemuneration, identite);
     const total = diapos.length + 1;
     const surResume = indice >= diapos.length;
 
@@ -282,7 +285,7 @@ export function MonAnnee() {
                     {surResume ? (
                         <motion.div key="resume" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
                             className="absolute inset-0 flex flex-col justify-center gap-4" onClick={(e) => e.stopPropagation()}>
-                            <div ref={carteRef}><CarteResume b={bilan} /></div>
+                            <div ref={carteRef}><CarteResume b={bilan} identite={identite} /></div>
                             <button onClick={partager} className="w-full rounded-xl bg-white text-slate-900 py-3 font-bold flex items-center justify-center gap-2">
                                 <Share2 className="w-5 h-5" /> Partager mon année
                             </button>

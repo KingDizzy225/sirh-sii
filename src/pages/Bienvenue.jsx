@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Loader2, User, MapPin, Clock, CheckCircle2, Upload, PartyPopper, CalendarDays } from 'lucide-react';
+import { useIdentite, logoUrl, degradeMarque } from '../lib/identite.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -31,6 +32,7 @@ export function Bienvenue() {
     const [envoi, setEnvoi] = useState(null);
     const [retour, setRetour] = useState(null);
     const [photoOk, setPhotoOk] = useState(true);
+    const identite = useIdentite();
 
     const charger = React.useCallback(async () => {
         try {
@@ -71,7 +73,8 @@ export function Bienvenue() {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            <header className="bg-gradient-to-br from-orange-500 via-rose-500 to-purple-700 text-white px-6 pt-10 pb-16 text-center">
+            <header className="text-white px-6 pt-10 pb-16 text-center" style={{ background: degradeMarque(identite) }}>
+                {logoUrl(identite) && <img src={logoUrl(identite)} alt="" className="h-16 w-16 object-contain bg-white rounded-2xl p-1 mx-auto mb-4" />}
                 <p className="uppercase tracking-[0.25em] text-sm opacity-90">{page.organisation}</p>
                 <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-black mt-3">
                     Bienvenue, {page.prenom} !

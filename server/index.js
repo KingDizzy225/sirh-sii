@@ -177,6 +177,13 @@ app.use('/api/retrospectives', verifyToken, require('./routes/retrospectiveRoute
 app.use('/api/remplacements', verifyToken, require('./routes/remplacementRoutes'));
 app.use('/api/preaccueil', verifyToken, require('./routes/preAccueilRoutes'));
 app.use('/api/livres-dor', verifyToken, require('./routes/livreDorRoutes'));
+app.use('/api/passations', verifyToken, require('./routes/passationRoutes'));
+app.use('/api/emargements', verifyToken, require('./routes/emargementRoutes'));
+app.use('/api/identite', verifyToken, require('./routes/identiteRoutes'));
+app.use('/api/previsions', verifyToken, require('./routes/previsionRoutes'));
+
+// L'identité de l'entreprise est lue partout de façon synchrone : on la charge dès le démarrage.
+require('./lib/identite').rafraichir();
 app.use('/api/simulations', verifyToken, simulationRoutes);
 app.use('/api/equity', verifyToken, require('./routes/equityRoutes'));
 app.use('/api/succession', verifyToken, require('./routes/successionRoutes'));

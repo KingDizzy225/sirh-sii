@@ -81,7 +81,7 @@ function prochainePaie(reference = new Date(), jourPaie = process.env.JOUR_PAIE)
 /**
  * Compose le contenu de l'écran. Fonction pure, pour être éprouvée sans base.
  */
-function composer({ ecran, etats, perimetre, salaries, annonces, kudos, livres = [], reference = new Date() }) {
+function composer({ ecran, etats, perimetre, salaries, annonces, kudos, livres = [], passations = [], reference = new Date() }) {
     const discret = ecran.visibleClientele;
     const dansPerimetre = (id) => !perimetre || perimetre.has(id);
 
@@ -91,7 +91,7 @@ function composer({ ecran, etats, perimetre, salaries, annonces, kudos, livres =
         .sort((a, b) => new Date(a[1].arrivee) - new Date(b[1].arrivee));
 
     return {
-        organisation: process.env.ORGANISATION_NAME || 'SIRH-SII',
+        organisation: require('./identite').nom(),
         nom: ecran.nom,
         site: ecran.workSite?.name || null,
         visibleClientele: discret,
@@ -137,6 +137,19 @@ function composer({ ecran, etats, perimetre, salaries, annonces, kudos, livres =
                     message: tronquer(m.message, 140)
                 }))
             })),
+        // Ce que l'équipe précédente a laissé et que personne n'a encore réglé.
+        // Jamais en vitrine : un incident d'agence ne se montre pas aux clients.
+        passation: discret || !passations.some((p) => p.elements.some((x) => !x.resoluLe))
+            ? null
+            : {
+                le: passations[0].creeLe,
+                auteur: presence.prenomInitiale(passations[0].auteur),
+                elements: passations
+                    .flatMap((p) => p.elements)
+                    .filter((x) => !x.resoluLe)
+                    .slice(0, 6)
+                    .map((x) => ({ categorie: x.categorie, texte: tronquer(x.texte, 160) }))
+            },
         // Le QR lui-même se demande à part, toutes les quelques secondes.
         pointage: Boolean(ecran.pointageActif && ecran.workSiteId)
     };
@@ -154,7 +167,9 @@ async function contenu(ecran, reference = new Date()) {
     const debutFenetreLivres = new Date(reference);
     debutFenetreLivres.setUTCDate(debutFenetreLivres.getUTCDate() - 1);
 
-    const [pointages, perimetreIds, salaries, annonces, kudos, livres] = await Promise.all([
+    const depuisPassations = new Date(reference.getTime() - 24 * 3600000);
+
+    const [pointages, perimetreIds, salaries, annonces, kudos, livres, passations] = await Promise.all([
         presence.pointagesDuJour(reference),
         ecran.workSiteId ? presence.salariesDuSite(ecran.workSiteId, reference) : null,
         prisma.employee.findMany({
@@ -184,6 +199,15 @@ async function contenu(ecran, reference = new Date()) {
                 _count: { select: { mots: { where: { masque: false } } } },
                 mots: { where: { masque: false }, orderBy: { creeLe: 'desc' }, take: 3, select: { auteur: true, message: true } }
             }
+        }),
+        ecran.visibleClientele || !ecran.workSiteId ? [] : prisma.passation.findMany({
+            where: { workSiteId: ecran.workSiteId, creeLe: { gte: depuisPassations } },
+            orderBy: { creeLe: 'desc' },
+            take: 3,
+            include: {
+                auteur: { select: { firstName: true, lastName: true } },
+                elements: { where: { resoluLe: null }, select: { categorie: true, texte: true, resoluLe: true } }
+            }
         })
     ]);
 
@@ -195,6 +219,7 @@ async function contenu(ecran, reference = new Date()) {
         annonces,
         kudos,
         livres,
+        passations,
         reference
     });
 }

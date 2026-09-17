@@ -134,7 +134,7 @@ exports.contribution = async (req, res) => {
             nombreMots: livre._count.mots,
             ouvert: livres.ouvertAuxMots(livre),
             messageMax: livres.MESSAGE_MAX,
-            organisation: process.env.ORGANISATION_NAME || 'SIRH-SII'
+            organisation: require('../lib/identite').nom()
         });
     } catch (erreur) {
         console.error("[LIVRE D'OR] Page indisponible :", erreur.message);
@@ -199,7 +199,7 @@ exports.remise = async (req, res) => {
             titre: livre.titre,
             occasion: livres.OCCASIONS[livre.occasion],
             prenom: livre.beneficiaire.firstName,
-            organisation: process.env.ORGANISATION_NAME || 'SIRH-SII',
+            organisation: require('../lib/identite').nom(),
             mots: livre.mots
         });
     } catch (erreur) {

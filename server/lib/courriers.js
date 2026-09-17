@@ -22,7 +22,7 @@ const PDFDocument = require('pdfkit');
  * foi, pas l'envoi.
  */
 
-const organisation = () => process.env.ORGANISATION_NAME || 'SIRH-SII';
+const organisation = () => require('./identite').nom();
 
 const dateFr = (v) => {
     const d = v ? new Date(v) : new Date();

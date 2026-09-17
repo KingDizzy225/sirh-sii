@@ -8,6 +8,7 @@ const { celebrerLeJour } = require('./celebrations');
 const { envoyerRecapHebdomadaire } = require('./weeklyDigest');
 const { purgerCorbeille } = require('./purgeCorbeille');
 const { appliquerRemunerations } = require('./remunerationEchue');
+const { alerterPrevisionAbsences } = require('./previsionAbsences');
 
 /**
  * Ordonnanceur des traitements RH récurrents.
@@ -42,6 +43,7 @@ const runAllDue = async () => {
     await safely('récapitulatif hebdomadaire', () => envoyerRecapHebdomadaire());
     await safely('purge de la corbeille', () => purgerCorbeille());
     await safely('décisions de rémunération échues', () => appliquerRemunerations());
+    await safely('prévision des absences', () => alerterPrevisionAbsences());
 };
 
 function startScheduledJobs() {
@@ -58,6 +60,11 @@ function startScheduledJobs() {
     // Acquisition des congés : le 1er de chaque mois à 02h00
     cron.schedule('0 2 1 * *', () => {
         safely('acquisition des congés', () => accrueMonthlyLeave());
+    }, { timezone: TIMEZONE });
+
+    // Prévision des absences : le lundi à 07h30, pour les deux semaines à venir
+    cron.schedule('30 7 * * 1', () => {
+        safely('prévision des absences', () => alerterPrevisionAbsences());
     }, { timezone: TIMEZONE });
 
     // Alertes d'échéances : chaque jour à 07h00

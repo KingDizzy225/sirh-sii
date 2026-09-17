@@ -127,6 +127,10 @@ model Employee {
   preAccueil           PreAccueil?             @relation("PreAccueilSalarie")
   preAccueilsEncadres  PreAccueil[]            @relation("PreAccueilResponsable")
   livresDor            LivreDor[]
+  passationsRedigees   Passation[]             @relation("PassationsRedigees")
+  elementsResolus      ElementPassation[]      @relation("ElementsPassationResolus")
+  acquittements        AcquittementPassation[]
+  emargements          Emargement[]
 }
 
 // ... (existing code)
@@ -392,6 +396,7 @@ model TrainingSession {
 
   participations TrainingParticipation[]
   modules        CourseModule[]
+  emargement     SessionEmargement?
 }
 
 model TrainingParticipation {
@@ -961,6 +966,7 @@ model WorkSite {
   timeLogs    TimeLog[]
   ecrans      EcranAgence[]
   preAccueils PreAccueil[]
+  passations  Passation[]
 }
 
 // ----------------------------------------------------
@@ -2136,4 +2142,105 @@ model MotLivreDor {
 
   @@index([livreId, creeLe])
   @@map("mot_livre_dor")
+}
+
+/// Passation d'équipe : ce que l'équipe qui part laisse à celle qui arrive.
+model Passation {
+  id         String   @id @default(uuid())
+  workSiteId String   @map("work_site_id")
+  auteurId   String   @map("auteur_id")
+  creeLe     DateTime @default(now()) @map("cree_le")
+
+  workSite      WorkSite                @relation(fields: [workSiteId], references: [id], onDelete: Cascade)
+  auteur        Employee                @relation("PassationsRedigees", fields: [auteurId], references: [id], onDelete: Cascade)
+  elements      ElementPassation[]
+  acquittements AcquittementPassation[]
+
+  @@index([workSiteId, creeLe])
+  @@map("passation")
+}
+
+model ElementPassation {
+  id          String    @id @default(uuid())
+  passationId String    @map("passation_id")
+  /// INCIDENT | CLIENT | CONSIGNE | MATERIEL
+  categorie   String
+  texte       String    @db.Text
+  resoluLe    DateTime? @map("resolu_le")
+  resoluParId String?   @map("resolu_par_id")
+
+  passation Passation @relation(fields: [passationId], references: [id], onDelete: Cascade)
+  resoluPar Employee? @relation("ElementsPassationResolus", fields: [resoluParId], references: [id], onDelete: SetNull)
+
+  @@index([passationId])
+  @@index([categorie, resoluLe])
+  @@map("element_passation")
+}
+
+model AcquittementPassation {
+  id          String   @id @default(uuid())
+  passationId String   @map("passation_id")
+  employeeId  String   @map("employee_id")
+  acquitteLe  DateTime @default(now()) @map("acquitte_le")
+
+  passation Passation @relation(fields: [passationId], references: [id], onDelete: Cascade)
+  employee  Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([passationId, employeeId])
+  @@map("acquittement_passation")
+}
+
+/// Émargement d'une session de formation : l'écran de la salle affiche un QR
+/// tournant, les participants le scannent à l'arrivée et au départ.
+model SessionEmargement {
+  id         String    @id @default(uuid())
+  sessionId  String    @unique @map("session_id")
+  token      String    @unique
+  secret     String?
+  ouverteLe  DateTime  @default(now()) @map("ouverte_le")
+  ouvertePar String?   @map("ouverte_par")
+  fermeeLe   DateTime? @map("fermee_le")
+
+  session     TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  emargements Emargement[]
+
+  @@map("session_emargement")
+}
+
+model Emargement {
+  id                  String    @id @default(uuid())
+  sessionEmargementId String    @map("session_emargement_id")
+  employeeId          String    @map("employee_id")
+  arriveeLe           DateTime  @map("arrivee_le")
+  departLe            DateTime? @map("depart_le")
+  /// Le participant figurait-il parmi les inscrits au moment de l'arrivée ?
+  inscrit             Boolean   @default(true)
+
+  sessionEmargement SessionEmargement @relation(fields: [sessionEmargementId], references: [id], onDelete: Cascade)
+  employee          Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionEmargementId, employeeId])
+  @@map("emargement")
+}
+
+/// Identité de l'entreprise : une seule ligne, lue par toutes les pages
+/// publiques et tous les documents produits.
+model IdentiteEntreprise {
+  id                String   @id @default("principale")
+  nomCommercial     String?  @map("nom_commercial")
+  raisonSociale     String?  @map("raison_sociale")
+  rccm              String?
+  adresse           String?
+  ville             String?
+  telephone         String?
+  email             String?
+  siteWeb           String?  @map("site_web")
+  slogan            String?
+  couleurPrincipale String   @default("#f97316") @map("couleur_principale")
+  couleurSecondaire String   @default("#7e22ce") @map("couleur_secondaire")
+  logoPath          String?  @map("logo_path")
+  majLe             DateTime @updatedAt @map("maj_le")
+  majPar            String?  @map("maj_par")
+
+  @@map("identite_entreprise")
 }

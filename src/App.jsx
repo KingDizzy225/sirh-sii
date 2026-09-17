@@ -12,7 +12,11 @@ import { BadgeCarte, BadgeVerification } from './pages/BadgePublic';
 import { MonAnnee } from './pages/MonAnnee';
 import { Retrospectives } from './pages/Retrospectives';
 import { CarteAgences } from './pages/CarteAgences';
-import { Pointer } from './pages/Pointer';
+import { Pointer, Emarger } from './pages/Pointer';
+import { EcranEmargement } from './pages/EcranEmargement';
+import { Passations } from './pages/Passations';
+import { Emargements } from './pages/Emargements';
+import { PrevisionAbsences } from './pages/PrevisionAbsences';
 import { Remplacements } from './pages/Remplacements';
 import { PreAccueil } from './pages/PreAccueil';
 import { Bienvenue } from './pages/Bienvenue';
@@ -146,6 +150,22 @@ const AppContent = () => {
       <Routes>
         <Route path="/badge/verifier/:jeton" element={<BadgeVerification />} />
         <Route path="/badge/:jeton" element={<BadgeCarte />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname === '/emarger') {
+    return (
+      <Routes>
+        <Route path="/emarger" element={<Emarger />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname.startsWith('/emargement/')) {
+    return (
+      <Routes>
+        <Route path="/emargement/:token" element={<EcranEmargement />} />
       </Routes>
     );
   }
@@ -448,6 +468,24 @@ const AppContent = () => {
             <Route path="/retrospectives" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Retrospectives />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/passations" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Passations />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/emargements" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Emargements />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/prevision-absences" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <PrevisionAbsences />
               </ProtectedRoute>
             } />
 

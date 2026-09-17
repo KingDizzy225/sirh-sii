@@ -34,7 +34,7 @@ exports.generateStaffRegister = async (req, res) => {
             `attachment; filename=registre_personnel_${new Date().toISOString().slice(0, 10)}.pdf`);
         doc.pipe(res);
 
-        const organisation = process.env.ORGANISATION_NAME || 'SIRH-SII';
+        const organisation = require('../lib/identite').nom();
         doc.fontSize(15).fillColor('#0f172a').text('REGISTRE UNIQUE DU PERSONNEL', { align: 'center' });
         doc.moveDown(0.3);
         doc.fontSize(9).fillColor('#475569')
