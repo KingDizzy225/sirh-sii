@@ -7,5 +7,6 @@ const ecranController = require('../controllers/ecranController');
 router.get('/', requireRole(['ADMIN', 'HR']), ecranController.lister);
 router.post('/', requireRole(['ADMIN', 'HR']), ecranController.creer);
 router.post('/:id/revoquer', requireRole(['ADMIN', 'HR']), ecranController.revoquer);
+router.post('/:id/pointage', requireRole(['ADMIN', 'HR']), ecranController.basculerPointage);
 
 module.exports = router;

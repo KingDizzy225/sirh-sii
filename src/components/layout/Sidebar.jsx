@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin} from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +34,7 @@ const getAllNavItems = (t) => [
     { name: 'Annonces', path: '/announcements', icon: Megaphone, domain: 'Accueil', permission: 'dashboard:view' },
     { name: "Écrans d'agence", path: '/ecrans', icon: Tv, domain: 'Accueil', permission: 'employees:edit' },
     { name: 'Mon année (bilans)', path: '/retrospectives', icon: Sparkles, domain: 'Accueil', permission: 'employees:edit' },
+    { name: "Livres d'or", path: '/livres-dor', icon: BookHeart, domain: 'Accueil', permission: 'employees:edit' },
 
     // ── EMPLOYÉS : le dossier du salarié, de l'embauche au départ ──
     { name: t('sidebar.employees', 'Répertoire des salariés'), path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
@@ -51,6 +52,7 @@ const getAllNavItems = (t) => [
     { name: 'Entretiens & évaluations', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Procédures & sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Intégration (onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
+    { name: 'Pré-accueil', path: '/pre-accueil', icon: DoorOpen, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Départs (offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Matériel attribué', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
     // « Flex-Workforce » ne disait pas de quoi il s'agissait.
@@ -70,6 +72,7 @@ const getAllNavItems = (t) => [
     { name: 'Carte des agences', path: '/carte-agences', icon: MapPin, domain: 'Pilotage RH', permission: 'employees:edit' },
     { name: 'Jours fériés', path: '/jours-feries', icon: CalendarDays, domain: 'Pilotage RH', permission: 'employees:edit' },
     { name: 'Plannings & rotations', path: '/shifts', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Remplacements', path: '/remplacements', icon: Repeat, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
     { name: t('sidebar.payroll', 'Paie & bulletins'), path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     // Décisions d'augmentation, distinctes de l'exécution de la paie.
     { name: 'Décisions de rémunération', path: '/remunerations', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },

@@ -12,6 +12,12 @@ import { BadgeCarte, BadgeVerification } from './pages/BadgePublic';
 import { MonAnnee } from './pages/MonAnnee';
 import { Retrospectives } from './pages/Retrospectives';
 import { CarteAgences } from './pages/CarteAgences';
+import { Pointer } from './pages/Pointer';
+import { Remplacements } from './pages/Remplacements';
+import { PreAccueil } from './pages/PreAccueil';
+import { Bienvenue } from './pages/Bienvenue';
+import { LivresDor } from './pages/LivresDor';
+import { LivreDorEcrire, LivreDorRemise } from './pages/LivreDorPublic';
 import { Header } from './components/layout/Header';
 import { Dashboard } from './pages/Dashboard';
 import { EmployeePortal } from './pages/EmployeePortal';
@@ -140,6 +146,31 @@ const AppContent = () => {
       <Routes>
         <Route path="/badge/verifier/:jeton" element={<BadgeVerification />} />
         <Route path="/badge/:jeton" element={<BadgeCarte />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname === '/pointer') {
+    return (
+      <Routes>
+        <Route path="/pointer" element={<Pointer />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname.startsWith('/bienvenue/')) {
+    return (
+      <Routes>
+        <Route path="/bienvenue/:token" element={<Bienvenue />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname.startsWith('/livre-dor/')) {
+    return (
+      <Routes>
+        <Route path="/livre-dor/remise/:jeton" element={<LivreDorRemise />} />
+        <Route path="/livre-dor/:jeton" element={<LivreDorEcrire />} />
       </Routes>
     );
   }
@@ -417,6 +448,24 @@ const AppContent = () => {
             <Route path="/retrospectives" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Retrospectives />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/remplacements" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <Remplacements />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/pre-accueil" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <PreAccueil />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/livres-dor" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <LivresDor />
               </ProtectedRoute>
             } />
 

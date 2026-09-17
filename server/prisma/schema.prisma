@@ -122,6 +122,11 @@ model Employee {
   periodesCdd          PeriodeCdd[]
   badges               BadgeSalarie[]
   retrospectives       RetrospectiveAnnuelle[]
+  remplacementsDemandes DemandeRemplacement[] @relation("RemplacementsDemandes")
+  remplacementsRepris   DemandeRemplacement[] @relation("RemplacementsRepris")
+  preAccueil           PreAccueil?             @relation("PreAccueilSalarie")
+  preAccueilsEncadres  PreAccueil[]            @relation("PreAccueilResponsable")
+  livresDor            LivreDor[]
 }
 
 // ... (existing code)
@@ -823,7 +828,8 @@ model ShiftSchedule {
   type       String   @default("Morning") // 'Morning', 'Night', 'Standby'
   createdAt  DateTime @default(now()) @map("created_at")
 
-  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee      Employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  remplacements DemandeRemplacement[]
 }
 
 // ----------------------------------------------------
@@ -952,8 +958,9 @@ model WorkSite {
   isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  timeLogs TimeLog[]
-  ecrans   EcranAgence[]
+  timeLogs    TimeLog[]
+  ecrans      EcranAgence[]
+  preAccueils PreAccueil[]
 }
 
 // ----------------------------------------------------
@@ -1977,6 +1984,10 @@ model EcranAgence {
   creePar              String?   @map("cree_par")
   derniereConsultation DateTime? @map("derniere_consultation")
   revoqueLe            DateTime? @map("revoque_le")
+  /// L'écran sert aussi de borne : il affiche un QR qui change toutes les
+  /// trente secondes, calculé à partir de ce secret.
+  pointageActif        Boolean   @default(false) @map("pointage_actif")
+  secretPointage       String?   @map("secret_pointage")
 
   workSite WorkSite? @relation(fields: [workSiteId], references: [id], onDelete: SetNull)
 
@@ -2031,4 +2042,98 @@ model RetrospectiveAnnuelle {
 
   @@unique([employeeId, annee])
   @@map("retrospective_annuelle")
+}
+
+/// Demande de remplacement sur un créneau de planning.
+///
+/// Le planning ne savait ni échanger ni remplacer : en boutique, ça se réglait
+/// par téléphone, et le planning finissait par dire qui aurait dû être là
+/// plutôt que qui l'était. Le salarié propose son créneau, un collègue du même
+/// service le reprend, un responsable valide — et c'est seulement là que le
+/// créneau change de titulaire.
+model DemandeRemplacement {
+  id           String    @id @default(uuid())
+  shiftId      String    @map("shift_id")
+  demandeurId  String    @map("demandeur_id")
+  remplacantId String?   @map("remplacant_id")
+  motif        String?   @db.Text
+  /// OUVERTE | ACCEPTEE | VALIDEE | REFUSEE | ANNULEE
+  statut       String    @default("OUVERTE")
+  creeLe       DateTime  @default(now()) @map("cree_le")
+  accepteeLe   DateTime? @map("acceptee_le")
+  decideeLe    DateTime? @map("decidee_le")
+  decideePar   String?   @map("decidee_par")
+  motifRefus   String?   @map("motif_refus") @db.Text
+
+  shift      ShiftSchedule @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  demandeur  Employee      @relation("RemplacementsDemandes", fields: [demandeurId], references: [id], onDelete: Cascade)
+  remplacant Employee?     @relation("RemplacementsRepris", fields: [remplacantId], references: [id], onDelete: SetNull)
+
+  @@index([statut, creeLe])
+  @@index([shiftId])
+  @@map("demande_remplacement")
+}
+
+/// Pré-accueil : ce que le futur salarié reçoit avant son premier jour.
+model PreAccueil {
+  id              String    @id @default(uuid())
+  token           String    @unique
+  employeeId      String    @unique @map("employee_id")
+  responsableId   String?   @map("responsable_id")
+  workSiteId      String?   @map("work_site_id")
+  heureArrivee    String?   @map("heure_arrivee")
+  programme       String?   @db.Text
+  motAccueil      String?   @map("mot_accueil") @db.Text
+  /// Codes des pièces demandées (voir lib/preAccueil.js).
+  piecesAttendues String[]  @default([]) @map("pieces_attendues")
+  creeLe          DateTime  @default(now()) @map("cree_le")
+  creePar         String?   @map("cree_par")
+  ouvertLe        DateTime? @map("ouvert_le")
+  ouvertures      Int       @default(0)
+
+  employee    Employee  @relation("PreAccueilSalarie", fields: [employeeId], references: [id], onDelete: Cascade)
+  responsable Employee? @relation("PreAccueilResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
+  workSite    WorkSite? @relation(fields: [workSiteId], references: [id], onDelete: SetNull)
+
+  @@map("pre_accueil")
+}
+
+/// Livre d'or : les mots des collègues, remis à la personne le jour venu.
+model LivreDor {
+  id                String    @id @default(uuid())
+  titre             String
+  /// RETRAITE | NAISSANCE | MARIAGE | ANCIENNETE | DEPART | AUTRE
+  occasion          String
+  beneficiaireId    String    @map("beneficiaire_id")
+  jetonContribution String    @unique @map("jeton_contribution")
+  jetonRemise       String    @unique @map("jeton_remise")
+  dateRemise        DateTime  @map("date_remise")
+  afficherMur       Boolean   @default(false) @map("afficher_mur")
+  creeLe            DateTime  @default(now()) @map("cree_le")
+  creePar           String?   @map("cree_par")
+  clotureLe         DateTime? @map("cloture_le")
+  remiseOuverteLe   DateTime? @map("remise_ouverte_le")
+
+  beneficiaire Employee      @relation(fields: [beneficiaireId], references: [id], onDelete: Cascade)
+  mots         MotLivreDor[]
+
+  @@index([dateRemise])
+  @@map("livre_dor")
+}
+
+model MotLivreDor {
+  id          String   @id @default(uuid())
+  livreId     String   @map("livre_id")
+  auteur      String
+  message     String   @db.Text
+  creeLe      DateTime @default(now()) @map("cree_le")
+  masque      Boolean  @default(false)
+  /// Empreinte de l'adresse IP, pas l'adresse : de quoi limiter les envois
+  /// répétés sans conserver une donnée d'identification.
+  empreinteIp String?  @map("empreinte_ip")
+
+  livre LivreDor @relation(fields: [livreId], references: [id], onDelete: Cascade)
+
+  @@index([livreId, creeLe])
+  @@map("mot_livre_dor")
 }

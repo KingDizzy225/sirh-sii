@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Tv, Copy, ExternalLink, Ban, Store, Coffee } from 'lucide-react';
+import { Tv, Copy, ExternalLink, Ban, Store, Coffee, ScanLine } from 'lucide-react';
 import { api, listeSure } from '../lib/api.js';
 
 /**
@@ -58,6 +58,16 @@ export function EcransAgence() {
             charger();
         } catch (err) {
             setMessage({ ton: 'alerte', texte: err.message || 'Désactivation impossible.' });
+        }
+    };
+
+    const basculerPointage = async (ecran) => {
+        try {
+            const res = await api.post(`/ecrans/${ecran.id}/pointage`, { actif: !ecran.pointageActif });
+            setMessage({ ton: 'ok', texte: res?.data?.message || 'Modifié.' });
+            charger();
+        } catch (err) {
+            setMessage({ ton: 'alerte', texte: err.message || 'Modification impossible.' });
         }
     };
 
@@ -140,7 +150,7 @@ export function EcransAgence() {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="text-left text-slate-500 border-b">
-                                        <th className="py-2 pr-4">Écran</th><th className="py-2 pr-4">Site</th><th className="py-2 pr-4">Mode</th>
+                                        <th className="py-2 pr-4">Écran</th><th className="py-2 pr-4">Site</th><th className="py-2 pr-4">Mode</th><th className="py-2 pr-4">Borne</th>
                                         <th className="py-2 pr-4">Dernier affichage</th><th className="py-2" />
                                     </tr>
                                 </thead>
@@ -150,6 +160,15 @@ export function EcransAgence() {
                                             <td className="py-3 pr-4 font-medium text-slate-800">{e.nom}</td>
                                             <td className="py-3 pr-4">{e.site?.nom || "Toute l'entreprise"}</td>
                                             <td className="py-3 pr-4">{e.visibleClientele ? 'Vitrine' : 'Personnel'}</td>
+                                            <td className="py-3 pr-4">
+                                                {!e.revoqueLe && (
+                                                    <button onClick={() => basculerPointage(e)} disabled={!e.site}
+                                                        title={e.site ? 'Afficher un QR de pointage qui change toutes les 30 secondes' : "Rattacher l'écran à un site pour pointer"}
+                                                        className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border ${e.pointageActif ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'border-slate-200 text-slate-500'} disabled:opacity-40`}>
+                                                        <ScanLine className="w-3.5 h-3.5" /> {e.pointageActif ? 'Pointage actif' : 'Activer'}
+                                                    </button>
+                                                )}
+                                            </td>
                                             <td className="py-3 pr-4">
                                                 {e.revoqueLe ? `Désactivé le ${dateHeure(e.revoqueLe)}` : (
                                                     <span className="flex items-center gap-2">

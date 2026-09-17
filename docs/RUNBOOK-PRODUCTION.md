@@ -834,6 +834,76 @@ hébergés et par les serveurs Whisper auto-hébergés.
   choix du service et de son lieu d'hébergement est à mentionner dans la
   déclaration à l'ARTCI.
 
+## Borne de pointage, remplacements, pré-accueil, livres d'or
+
+### Pointer sur l'écran d'agence
+
+Dans **Écrans d'agence**, colonne « Borne », cliquer **Activer** sur un écran
+rattaché à un site. La TV affiche en permanence un QR qui change toutes les
+30 secondes. Le salarié le scanne avec l'appareil photo de son téléphone : la
+première fois de la journée, c'est une arrivée ; la suivante, un départ.
+
+- **Préalable : le badge numérique.** Le téléphone est reconnu parce que le
+  salarié y a ouvert le lien de son badge au moins une fois. Sans badge, la page
+  lui demande de l'ouvrir d'abord. Navigation privée ou données effacées : il
+  suffit de rouvrir le lien du badge.
+- Un code est admis pendant sa fenêtre et la précédente (60 s au plus). Un
+  second scan dans les 2 minutes est ignoré (`POINTAGE_ECRAN_DOUBLON_MIN`).
+- La position du téléphone est demandée sans être exigée. Loin du site, le
+  pointage est **enregistré mais marqué hors périmètre**, et remonte dans les
+  anomalies de pointage.
+- **Limite connue** : une photo du QR relayée aussitôt par WhatsApp reste
+  possible dans la minute ; la position la trahit si le téléphone la donne. Et
+  quiconque détient le lien de l'écran peut lire le code à distance : ne pas
+  diffuser ce lien. En cas de doute, **Désactiver** puis **Activer** tire un
+  nouveau secret.
+
+### Bourse aux remplacements (Pilotage RH → Remplacements)
+
+Sous sa carte, le badge du salarié affiche ses créneaux des 14 prochains jours
+(`ESPACE_JOURS_CRENEAUX`) et ceux que ses collègues du **même service**
+cherchent à céder.
+
+1. Le titulaire touche **Me faire remplacer**.
+2. Le premier collègue du service qui touche **Je prends** l'emporte ; la RH
+   reçoit une notification.
+3. Un responsable **valide** : c'est seulement là que le créneau change de
+   titulaire. Il peut aussi **refuser**, avec un motif transmis aux deux.
+
+Garde-fous : on ne cède que son propre créneau, pas encore commencé, une seule
+demande à la fois ; le remplaçant ne doit pas travailler le même jour ; à la
+validation, tout est revérifié. Une demande non validée à l'heure du créneau
+est échue. Cet écran est ouvert aux responsables (neuvième écran de leur menu).
+
+### Pré-accueil (Employés → Pré-accueil)
+
+Tout salarié créé avec une date d'embauche à venir apparaît. **Préparer** : qui
+l'accueille, lieu, heure, programme (une ligne par étape), mot d'accueil, pièces
+à déposer. Puis envoyer le lien par WhatsApp.
+
+- La page affiche le compte à rebours, le responsable (avec sa photo si son
+  badge est valide et en porte une), la carte et l'itinéraire, le programme.
+- Les pièces déposées rejoignent les **documents du dossier** (déposant
+  « Pré-accueil ») ; le lien ne les renvoie jamais, il les coche comme reçues.
+- Le lien reste identique quand on modifie la préparation, et ferme 30 jours
+  après l'embauche.
+
+### Livres d'or (Accueil → Livres d'or)
+
+**Ouvrir** un livre (personne, occasion, titre, jour de remise), puis
+**Inviter** : le lien d'écriture part dans le groupe WhatsApp de l'équipe.
+
+- Qui écrit ne voit pas les autres mots. La personne les lit tous à partir du
+  jour de remise, par le lien **Remettre**.
+- On écrit jusqu'à la fin du jour de remise, ou jusqu'à **Clore**.
+- **Lire les mots** permet d'en masquer un avant la remise.
+- Limites : 600 caractères par mot, 5 mots par appareil
+  (`LIVRE_DOR_ENVOIS_PAR_ADRESSE`), 500 par livre (`LIVRE_DOR_MOTS_MAX`).
+  L'adresse n'est pas conservée, seulement une empreinte.
+- Case « écrans » cochée : les écrans **de salle du personnel** invitent à
+  écrire, avec trois extraits signés du prénom, dans les 14 jours précédant la
+  remise. Jamais en vitrine.
+
 ## Récapitulatif annuel des salaires (DISA, ITS)
 
 Onglet *Déclarations sociales*, sous la déclaration du mois. Cumuls de l'année

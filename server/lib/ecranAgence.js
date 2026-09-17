@@ -81,7 +81,7 @@ function prochainePaie(reference = new Date(), jourPaie = process.env.JOUR_PAIE)
 /**
  * Compose le contenu de l'écran. Fonction pure, pour être éprouvée sans base.
  */
-function composer({ ecran, etats, perimetre, salaries, annonces, kudos, reference = new Date() }) {
+function composer({ ecran, etats, perimetre, salaries, annonces, kudos, livres = [], reference = new Date() }) {
     const discret = ecran.visibleClientele;
     const dansPerimetre = (id) => !perimetre || perimetre.has(id);
 
@@ -124,7 +124,21 @@ function composer({ ecran, etats, perimetre, salaries, annonces, kudos, referenc
                     message: tronquer(k.message, 200),
                     categorie: k.category
                 })),
-        prochainePaie: discret ? null : prochainePaie(reference)
+        prochainePaie: discret ? null : prochainePaie(reference),
+        // Livres d'or ouverts : on invite à écrire, avec quelques mots déjà reçus.
+        livresDor: discret
+            ? []
+            : livres.slice(0, 3).map((l) => ({
+                titre: tronquer(l.titre, 90),
+                prenom: l.beneficiaire?.firstName || null,
+                nombreMots: l._count?.mots ?? l.mots?.length ?? 0,
+                extraits: (l.mots || []).slice(0, 3).map((m) => ({
+                    auteur: String(m.auteur).split(' ')[0],
+                    message: tronquer(m.message, 140)
+                }))
+            })),
+        // Le QR lui-même se demande à part, toutes les quelques secondes.
+        pointage: Boolean(ecran.pointageActif && ecran.workSiteId)
     };
 }
 
@@ -135,7 +149,12 @@ async function contenu(ecran, reference = new Date()) {
     const depuisKudos = new Date(reference);
     depuisKudos.setUTCDate(depuisKudos.getUTCDate() - JOURS_KUDOS);
 
-    const [pointages, perimetreIds, salaries, annonces, kudos] = await Promise.all([
+    const finFenetreLivres = new Date(reference);
+    finFenetreLivres.setUTCDate(finFenetreLivres.getUTCDate() + 14);
+    const debutFenetreLivres = new Date(reference);
+    debutFenetreLivres.setUTCDate(debutFenetreLivres.getUTCDate() - 1);
+
+    const [pointages, perimetreIds, salaries, annonces, kudos, livres] = await Promise.all([
         presence.pointagesDuJour(reference),
         ecran.workSiteId ? presence.salariesDuSite(ecran.workSiteId, reference) : null,
         prisma.employee.findMany({
@@ -155,6 +174,16 @@ async function contenu(ecran, reference = new Date()) {
                 sender: { select: { firstName: true, lastName: true } },
                 receiver: { select: { firstName: true, lastName: true } }
             }
+        }),
+        ecran.visibleClientele ? [] : prisma.livreDor.findMany({
+            where: { afficherMur: true, clotureLe: null, dateRemise: { gte: debutFenetreLivres, lte: finFenetreLivres } },
+            orderBy: { dateRemise: 'asc' },
+            take: 3,
+            include: {
+                beneficiaire: { select: { firstName: true } },
+                _count: { select: { mots: { where: { masque: false } } } },
+                mots: { where: { masque: false }, orderBy: { creeLe: 'desc' }, take: 3, select: { auteur: true, message: true } }
+            }
         })
     ]);
 
@@ -165,6 +194,7 @@ async function contenu(ecran, reference = new Date()) {
         salaries,
         annonces,
         kudos,
+        livres,
         reference
     });
 }

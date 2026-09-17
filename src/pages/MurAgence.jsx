@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Cake, Megaphone, Heart, Wallet, WifiOff, MonitorOff } from 'lucide-react';
+import { Users, Cake, Megaphone, Heart, Wallet, WifiOff, MonitorOff, BookHeart, ScanLine } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -19,11 +19,42 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
  */
 
 const ROTATION_MS = 12000;
+const CODE_MS = 8000;
 const RAFRAICHISSEMENT_MS = 60000;
 
 const heure = (d) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const dateLongue = (d) => d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 const jourAnniversaire = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+/**
+ * QR de pointage, en permanence dans un coin quand l'écran sert de borne.
+ * Il est redemandé toutes les huit secondes : un code vit trente secondes.
+ */
+function QrPointage({ token }) {
+    const [qr, setQr] = useState(null);
+    useEffect(() => {
+        let actif = true;
+        const charger = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/public/ecrans/${token}/code`, { cache: 'no-store' });
+                const corps = await res.json().catch(() => null);
+                if (actif && res.ok && corps?.qr) setQr(corps.qr);
+                else if (actif) setQr(null);
+            } catch { if (actif) setQr(null); }
+        };
+        charger();
+        const minuterie = setInterval(charger, CODE_MS);
+        return () => { actif = false; clearInterval(minuterie); };
+    }, [token]);
+
+    if (!qr) return null;
+    return (
+        <div className="absolute right-0 bottom-0 bg-white rounded-3xl p-5 shadow-2xl flex flex-col items-center gap-2 z-10">
+            <img src={qr} alt="" className="w-56 h-56" />
+            <p className="text-slate-900 text-xl font-bold flex items-center gap-2"><ScanLine className="w-6 h-6 text-orange-500" /> Pointez ici</p>
+        </div>
+    );
+}
 
 function Panneau({ icone: Icone, titre, teinte, children }) {
     return (
@@ -91,6 +122,7 @@ export function MurAgence() {
         if (contenu.anniversaires.length > 0) panneaux.push('anniversaires');
         if (contenu.annonces.length > 0) panneaux.push('annonces');
         if (contenu.kudos.length > 0) panneaux.push('kudos');
+        if ((contenu.livresDor || []).length > 0) panneaux.push('livres');
     }
     const nombrePanneaux = panneaux.length;
 
@@ -201,7 +233,30 @@ export function MurAgence() {
                             </div>
                         </Panneau>
                     )}
+                    {courant === 'livres' && (
+                        <Panneau key="livres" icone={BookHeart} titre="Livre d'or" teinte="bg-amber-500/20 text-amber-300">
+                            <div className="space-y-6">
+                                {contenu.livresDor.slice(0, 2).map((l, i) => (
+                                    <motion.div key={l.titre + i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }}
+                                        className="rounded-3xl bg-white/10 p-8">
+                                        <h3 className="text-4xl font-bold">{l.titre}</h3>
+                                        <p className="text-2xl text-amber-200 mt-2">
+                                            {l.nombreMots} mot{l.nombreMots > 1 ? 's' : ''} pour {l.prenom} — laissez le vôtre, le lien circule sur WhatsApp.
+                                        </p>
+                                        <div className="grid grid-cols-3 gap-4 mt-6">
+                                            {l.extraits.map((x, j) => (
+                                                <blockquote key={j} className="bg-white/10 rounded-2xl p-5 text-xl leading-snug">
+                                                    « {x.message} »<footer className="text-amber-300 mt-2 text-lg">— {x.auteur}</footer>
+                                                </blockquote>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </Panneau>
+                    )}
                 </AnimatePresence>
+                {contenu.pointage && <QrPointage token={token} />}
             </main>
 
             <footer className="flex items-center justify-between mt-8 text-2xl text-slate-400">

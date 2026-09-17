@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ShieldX, Loader2, User, RotateCw } from 'lucide-react';
+import { ShieldCheck, ShieldX, Loader2, User, RotateCw, CalendarClock, Repeat, Check, X } from 'lucide-react';
+import { CLE_BADGE } from './Pointer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -36,7 +37,11 @@ export function BadgeCarte() {
         fetch(`${API_URL}/api/public/badges/${jeton}`, { cache: 'no-store' })
             .then(async (res) => {
                 const corps = await res.json().catch(() => ({}));
-                if (res.ok && corps.valide) setBadge(corps);
+                if (res.ok && corps.valide) {
+                    setBadge(corps);
+                    // Le téléphone se souvient du badge : scanner l'écran d'agence suffira pour pointer.
+                    try { localStorage.setItem(CLE_BADGE, jeton); } catch { /* navigation privée */ }
+                }
                 else setErreur(corps.motif || corps.error || 'Badge indisponible.');
             })
             .catch(() => setErreur('Connexion impossible. Vérifiez le réseau et réessayez.'));
@@ -93,6 +98,7 @@ export function BadgeCarte() {
                 </motion.div>
             </div>
             <p className="text-slate-400 text-sm flex items-center gap-2"><RotateCw className="w-4 h-4" /> Touchez la carte pour la retourner</p>
+            <MesCreneaux jeton={jeton} />
         </div>
     );
 }
@@ -151,6 +157,135 @@ export function BadgeVerification() {
             </p>
             {!resultat.photo && (
                 <p className="text-sm opacity-80 max-w-sm">Aucune photo n'est enregistrée : demandez une pièce d'identité pour confirmer.</p>
+            )}
+        </div>
+    );
+}
+
+const jourCourt = (d) => new Date(d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+/**
+ * Créneaux du salarié et remplacements, sous la carte.
+ * Rien ne s'affiche si le salarié n'a aucun créneau et rien à reprendre.
+ */
+function MesCreneaux({ jeton }) {
+    const [espace, setEspace] = useState(null);
+    const [message, setMessage] = useState(null);
+    const [occupe, setOccupe] = useState(null);
+
+    const charger = React.useCallback(async () => {
+        try {
+            // Sans options : le serveur répond déjà « no-store ».
+            const res = await fetch(`${API_URL}/api/public/badges/${jeton}/espace`);
+            const corps = await res.json().catch(() => null);
+            if (res.ok && corps && Array.isArray(corps.creneaux)) setEspace(corps);
+        } catch { /* hors ligne : la carte reste utilisable */ }
+    }, [jeton]);
+
+    useEffect(() => { charger(); }, [charger]);
+
+    // Trois appels écrits en toutes lettres : la vérification des routes lit les
+    // adresses dans le code, et ne saurait pas lire un chemin assemblé.
+    const proposer = (shiftId, motif) => agir(() => fetch(`${API_URL}/api/public/badges/${jeton}/remplacements`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ shiftId, motif }) }), shiftId);
+    const retirer = (demandeId, shiftId) => agir(() => fetch(`${API_URL}/api/public/badges/${jeton}/remplacements/${demandeId}/annuler`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), shiftId);
+    const prendre = (demandeId) => agir(() => fetch(`${API_URL}/api/public/badges/${jeton}/remplacements/${demandeId}/accepter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }), demandeId);
+
+    const agir = async (appel, id) => {
+        setOccupe(id);
+        setMessage(null);
+        try {
+            const res = await appel();
+            const reponse = await res.json().catch(() => ({}));
+            setMessage({ ok: res.ok, texte: reponse.message || reponse.error || (res.ok ? 'Fait.' : 'Action impossible.') });
+            charger();
+        } catch {
+            setMessage({ ok: false, texte: 'Pas de connexion.' });
+        } finally {
+            setOccupe(null);
+        }
+    };
+
+    if (!espace || (espace.creneaux.length === 0 && espace.aReprendre.length === 0 && espace.mesReprises.length === 0)) return null;
+
+    const ETATS = {
+        OUVERTE: 'Proposé à vos collègues',
+        ACCEPTEE: 'Repris — en attente de validation',
+        REFUSEE: 'Remplacement refusé',
+        ECHUE: 'Trop tard pour remplacer'
+    };
+
+    return (
+        <div className="w-full max-w-sm space-y-4">
+            {message && (
+                <p className={`text-sm rounded-xl px-4 py-3 ${message.ok ? 'bg-emerald-500/20 text-emerald-100' : 'bg-rose-500/20 text-rose-100'}`}>{message.texte}</p>
+            )}
+
+            {espace.creneaux.length > 0 && (
+                <section className="bg-white/5 rounded-2xl p-4">
+                    <h2 className="text-white font-semibold flex items-center gap-2 mb-3"><CalendarClock className="w-5 h-5 text-orange-400" /> Mes prochains créneaux</h2>
+                    <ul className="space-y-2">
+                        {espace.creneaux.map((c) => (
+                            <li key={c.id} className="bg-white/10 rounded-xl p-3 text-white">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="capitalize">{jourCourt(c.date)} · {c.debut}–{c.fin}</span>
+                                    {!c.demande || c.demande.etat === 'REFUSEE' ? (
+                                        <button disabled={occupe === c.id} onClick={() => {
+                                            const motif = window.prompt('Pourquoi cherchez-vous un remplaçant ? (facultatif)') ?? null;
+                                            if (motif !== null) proposer(c.id, motif);
+                                        }} className="text-xs bg-orange-500 hover:bg-orange-400 rounded-lg px-3 py-1.5 flex items-center gap-1">
+                                            <Repeat className="w-3.5 h-3.5" /> Me faire remplacer
+                                        </button>
+                                    ) : ['OUVERTE', 'ACCEPTEE'].includes(c.demande.etat) ? (
+                                        <button disabled={occupe === c.id} onClick={() => retirer(c.demande.id, c.id)}
+                                            className="text-xs bg-white/15 rounded-lg px-3 py-1.5 flex items-center gap-1"><X className="w-3.5 h-3.5" /> Retirer</button>
+                                    ) : null}
+                                </div>
+                                {c.demande && (
+                                    <p className="text-xs text-slate-300 mt-1">
+                                        {ETATS[c.demande.etat] || c.demande.etat}{c.demande.remplacant ? ` · ${c.demande.remplacant}` : ''}
+                                        {c.demande.etat === 'REFUSEE' && c.demande.motifRefus ? ` : ${c.demande.motifRefus}` : ''}
+                                    </p>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
+            {espace.aReprendre.length > 0 && (
+                <section className="bg-white/5 rounded-2xl p-4">
+                    <h2 className="text-white font-semibold flex items-center gap-2 mb-3"><Repeat className="w-5 h-5 text-emerald-400" /> Créneaux à reprendre</h2>
+                    <ul className="space-y-2">
+                        {espace.aReprendre.map((d) => (
+                            <li key={d.id} className="bg-white/10 rounded-xl p-3 text-white flex items-center justify-between gap-2">
+                                <span>
+                                    <span className="capitalize block">{jourCourt(d.creneau.date)} · {d.creneau.debut}–{d.creneau.fin}</span>
+                                    <span className="text-xs text-slate-300">Pour {d.demandeur}{d.motif ? ` · ${d.motif}` : ''}</span>
+                                </span>
+                                {d.dejaOccupe ? (
+                                    <span className="text-xs text-slate-400">Vous travaillez ce jour-là</span>
+                                ) : (
+                                    <button disabled={occupe === d.id} onClick={() => prendre(d.id)}
+                                        className="text-xs bg-emerald-500 hover:bg-emerald-400 rounded-lg px-3 py-1.5 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Je prends</button>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
+            {espace.mesReprises.length > 0 && (
+                <section className="bg-white/5 rounded-2xl p-4 text-white">
+                    <h2 className="font-semibold mb-2">Mes remplacements</h2>
+                    <ul className="space-y-1 text-sm">
+                        {espace.mesReprises.map((d) => (
+                            <li key={d.id} className="capitalize">
+                                {jourCourt(d.creneau.date)} · {d.creneau.debut}–{d.creneau.fin} pour {d.demandeur} —{' '}
+                                <span className="normal-case">{d.etat === 'VALIDEE' ? 'validé' : 'en attente de validation'}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
             )}
         </div>
     );
