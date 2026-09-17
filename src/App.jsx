@@ -5,6 +5,13 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { Sidebar } from './components/layout/Sidebar';
+import { MurAgence } from './pages/MurAgence';
+import { EcransAgence } from './pages/EcransAgence';
+import { Badges } from './pages/Badges';
+import { BadgeCarte, BadgeVerification } from './pages/BadgePublic';
+import { MonAnnee } from './pages/MonAnnee';
+import { Retrospectives } from './pages/Retrospectives';
+import { CarteAgences } from './pages/CarteAgences';
 import { Header } from './components/layout/Header';
 import { Dashboard } from './pages/Dashboard';
 import { EmployeePortal } from './pages/EmployeePortal';
@@ -113,6 +120,34 @@ const AppContent = () => {
     return (
       <Routes>
         <Route path="/document/:token" element={<PublicDocument />} />
+      </Routes>
+    );
+  }
+
+  // Écran d'agence, badge et bilan annuel : ouverts par jeton, hors session.
+  // La TV de la boutique, le client qui scanne et le salarié qui ouvre son
+  // bilan n'ont pas de compte.
+  if (location.pathname.startsWith('/ecran/')) {
+    return (
+      <Routes>
+        <Route path="/ecran/:token" element={<MurAgence />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname.startsWith('/badge/')) {
+    return (
+      <Routes>
+        <Route path="/badge/verifier/:jeton" element={<BadgeVerification />} />
+        <Route path="/badge/:jeton" element={<BadgeCarte />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname.startsWith('/mon-annee/')) {
+    return (
+      <Routes>
+        <Route path="/mon-annee/:token" element={<MonAnnee />} />
       </Routes>
     );
   }
@@ -364,6 +399,30 @@ const AppContent = () => {
             <Route path="/prets" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Prets />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/ecrans" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <EcransAgence />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/badges" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Badges />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/retrospectives" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Retrospectives />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/carte-agences" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <CarteAgences />
               </ProtectedRoute>
             } />
 

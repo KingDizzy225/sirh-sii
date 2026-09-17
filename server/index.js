@@ -171,6 +171,9 @@ app.use('/api/prets', verifyToken, pretRoutes);
 app.use('/api/cdd', verifyToken, require('./routes/cddRoutes'));
 // Remise de documents aux salariés : la partie publique vit dans publicRoutes.
 app.use('/api/remises', verifyToken, remiseRoutes);
+app.use('/api/ecrans', verifyToken, require('./routes/ecranRoutes'));
+app.use('/api/badges', verifyToken, require('./routes/badgeRoutes'));
+app.use('/api/retrospectives', verifyToken, require('./routes/retrospectiveRoutes'));
 app.use('/api/simulations', verifyToken, simulationRoutes);
 app.use('/api/equity', verifyToken, require('./routes/equityRoutes'));
 app.use('/api/succession', verifyToken, require('./routes/successionRoutes'));

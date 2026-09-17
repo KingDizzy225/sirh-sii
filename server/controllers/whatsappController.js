@@ -1,6 +1,8 @@
 const prisma = require('../prismaClient');
 const { getPublicAppUrl, getPublicApiUrl } = require('../lib/publicUrl');
 const passerelle = require('../lib/whatsapp');
+const transcription = require('../lib/transcription');
+const comprehension = require('../lib/comprehension');
 
 /**
  * Guichet RH par WhatsApp.
@@ -131,6 +133,67 @@ async function traiterCommande(message, salarie) {
     return AIDE;
 }
 
+const iaDisponible = () => Boolean((process.env.ANTHROPIC_API_KEY || '').trim());
+
+/**
+ * Répond à un message libre.
+ *
+ * Une commande tapée (« !solde ») s'exécute telle quelle. Une phrase est
+ * d'abord traduite en commande par Claude, puis exécutée par le même chemin :
+ * les contrôles ne changent pas selon la manière de demander. Sans IA, ou si
+ * elle échoue, le salarié reçoit l'aide comme avant — jamais un silence.
+ */
+async function repondre(texte, salarie) {
+    const t = String(texte || '').trim();
+    if (!salarie || t.startsWith('!') || !iaDisponible()) return traiterCommande(t, salarie);
+    try {
+        const { commande, message } = comprehension.versCommande(await comprehension.interpreter(t));
+        if (commande) return traiterCommande(commande, salarie);
+        if (message) return message;
+    } catch (erreur) {
+        console.error('[WHATSAPP] Compréhension indisponible :', erreur.message);
+    }
+    return traiterCommande(t, salarie);
+}
+
+/**
+ * Note vocale : identification, transcription, puis même chemin qu'un texte.
+ *
+ * Le salarié est identifié avant toute transcription : un numéro inconnu ne
+ * coûte rien et ne fait sortir aucune voix vers le service de transcription.
+ * @returns {Promise<{reponse: string, transcrit: string|null}>}
+ */
+async function repondreAuVocal(message) {
+    const salarie = await trouverSalarie(message.de);
+    if (!salarie) return { reponse: await traiterCommande('', null), transcrit: null };
+
+    if (!transcription.configuree()) {
+        return {
+            reponse: "Les messages vocaux ne sont pas encore activés sur ce guichet. " +
+                     "Écrivez votre demande, par exemple : « combien de jours de congé me reste-t-il ? »\n\n" + AIDE,
+            transcrit: null
+        };
+    }
+
+    let texte;
+    try {
+        const media = await passerelle.telechargerMedia(message.audio.id, transcription.TAILLE_MAX_OCTETS);
+        texte = await transcription.transcrire(media.contenu, media.typeMime);
+    } catch (erreur) {
+        console.error('[WHATSAPP] Vocal non transcrit :', erreur.message);
+        return {
+            reponse: /trop long/i.test(erreur.message)
+                ? 'Votre message vocal est trop long. Envoyez un message plus court, ou écrivez votre demande.'
+                : "Je n'ai pas pu écouter votre message vocal. Réessayez, ou écrivez votre demande.",
+            transcrit: null
+        };
+    }
+
+    // Répéter ce qui a été entendu : une date mal comprise se corrige aussitôt.
+    const reponse = await repondre(texte, salarie);
+    return { reponse: `🎙️ J'ai compris : « ${texte.slice(0, 300)} »\n\n${reponse}`, transcrit: texte };
+}
+
 exports.executeCommand = async (req, res) => {
     const { phoneNumber, message } = req.body;
     let reply;
@@ -138,7 +201,7 @@ exports.executeCommand = async (req, res) => {
 
     try {
         const salarie = await trouverSalarie(phoneNumber);
-        reply = await traiterCommande(message, salarie);
+        reply = await repondre(message, salarie);
     } catch (error) {
         console.error('Error in WhatsApp gateway:', error);
         reply = "Une erreur est survenue lors du traitement de votre demande. Réessayez plus tard.";
@@ -254,15 +317,18 @@ exports.recevoirWebhook = async (req, res) => {
         }
 
         let reponse;
+        let transcrit = null;
         let statut = 'SUCCESS';
         try {
-            if (!message.texte) {
-                // Photos, audio, pièces jointes : le guichet ne les traite pas,
-                // et le dire vaut mieux qu'un silence.
-                reponse = "Ce guichet ne comprend que les messages écrits.\n\n" + AIDE;
+            if (message.audio) {
+                ({ reponse, transcrit } = await repondreAuVocal(message));
+            } else if (!message.texte) {
+                // Photos, pièces jointes : le guichet ne les traite pas, et le
+                // dire vaut mieux qu'un silence.
+                reponse = "Ce guichet comprend les messages écrits et les notes vocales, pas les fichiers.\n\n" + AIDE;
             } else {
                 const salarie = await trouverSalarie(message.de);
-                reponse = await traiterCommande(message.texte, salarie);
+                reponse = await repondre(message.texte, salarie);
             }
         } catch (erreur) {
             console.error('[WHATSAPP] Traitement en échec :', erreur.message);
@@ -280,6 +346,8 @@ exports.recevoirWebhook = async (req, res) => {
         await prisma.whatsappLog.update({
             where: { messageId: message.id },
             data: {
+                // La transcription remplace « [audio] » : la RH lit ce qui a été entendu.
+                ...(transcrit ? { command: `🎙️ ${transcrit}` } : {}),
                 response: reponse,
                 status: envoi.remis ? statut : 'ERROR',
                 delivered: envoi.remis
@@ -293,6 +361,8 @@ exports.recevoirWebhook = async (req, res) => {
  * Sans lui, un guichet à moitié configuré — qui reçoit mais ne répond pas —
  * passerait pour un guichet en service.
  */
+exports._interne = { repondre, repondreAuVocal };
+
 exports.getConfiguration = (req, res) => {
     const etat = passerelle.etatConfiguration();
     res.json({
@@ -303,6 +373,9 @@ exports.getConfiguration = (req, res) => {
         urlWebhookMotif: getPublicApiUrl()
             ? null
             : "Adresse de l'API inconnue : définir PUBLIC_API_URL sur le serveur.",
-        commandes: AIDE
+        commandes: AIDE,
+        // Le vocal dépend d'un service de transcription distinct de Claude.
+        vocal: transcription.etatConfiguration(),
+        langageNaturel: iaDisponible()
     });
 };

@@ -725,6 +725,115 @@ dans une négociation**. Aucune prime de fin de CDD n'est appliquée par défaut
 
 ---
 
+## Écrans d'agence, badges, bilans annuels, carte, vocal
+
+Cinq fonctions tournées vers le terrain. Trois s'ouvrent **sans session, par
+un lien à jeton** : l'écran d'une TV, la carte professionnelle d'un salarié et
+son bilan annuel. Un lien se révoque d'un clic ; aucun ne donne accès à
+l'application.
+
+### Écrans d'agence (Accueil → Écrans d'agence)
+
+Créer un écran, choisir le site et le mode, puis ouvrir le lien sur la TV et
+passer le navigateur en plein écran (F11). La page se rafraîchit seule chaque
+minute et garde son contenu si le réseau tombe.
+
+| Mode | Affiche |
+|---|---|
+| Salle du personnel | prénoms et initiale des présents, anniversaires de la semaine (sans l'année), remerciements, annonces, prochaine paie |
+| Visible de la clientèle | nombre de présents, annonces de catégorie « Événement » — aucun nom |
+
+- Les présents d'un site sont ceux dont le dernier pointage du jour est une
+  arrivée sur ce site. Un salarié qui ne pointe pas n'apparaît pas.
+- La prochaine paie ne s'affiche que si `JOUR_PAIE` (1 à 31) est défini.
+  Sans lui, aucun compte à rebours.
+- La colonne « Dernier affichage » dit si la TV est encore allumée (point vert :
+  moins de dix minutes).
+- TV volée ou lien divulgué : **Désactiver**, puis créer un nouvel écran.
+
+Réglages : `ECRAN_JOURS_ANNONCES` (30), `ECRAN_JOURS_KUDOS` (14).
+
+### Badges numériques (Employés → Badges numériques)
+
+**Émettre** avec une photo d'identité, puis envoyer le lien au salarié
+(bouton WhatsApp, qui ouvre WhatsApp sur le poste de la RH — aucune
+configuration WhatsApp n'est requise). Le salarié ajoute la page à l'écran
+d'accueil de son téléphone.
+
+- La carte se retourne : le verso porte un QR qui mène à une **vérification
+  servie en direct** par le serveur, avec la photo enregistrée et l'heure. Une
+  capture d'écran de la carte ne remplace pas ce scan.
+- Le vérificateur voit nom, fonction et photo, rien d'autre. Un badge qui n'est
+  plus valide ne dit pas pourquoi.
+- Le badge **s'éteint seul** au départ du salarié (statut sorti ou date de
+  sortie échue) ; sa photo cesse aussi d'être servie.
+- Renouveler annule l'ancien badge. Perte ou vol : **Annuler** avec un motif.
+- Validité : `BADGE_VALIDITE_MOIS` (12).
+- Les photos sont stockées dans `server/uploads/badges` : elles relèvent du
+  même disque persistant que les autres pièces téléversées.
+
+### « Mon année » (Accueil → Mon année)
+
+**Produire les liens manquants** crée un lien par salarié actif, puis
+**WhatsApp** l'envoie. Le salarié saisit sa date de naissance et découvre son
+année en diapositives, puis une carte résumé à partager.
+
+- Rien n'est figé : le bilan est recalculé à chaque ouverture. Produits en
+  décembre, les liens montrent l'année complète s'ils sont ouverts en janvier.
+- Rubriques : jours pointés, congés accordés (comptés l'année où ils
+  commencent), formations terminées, remerciements reçus et envoyés, points,
+  ancienneté et cap franchi. **Une rubrique sans donnée n'apparaît pas.**
+- L'évolution de la rémunération est masquée tant que le salarié ne la demande
+  pas, et ne figure jamais sur l'image partagée.
+- Pas de date de naissance au dossier, pas de lien : on ne saurait pas qui
+  l'ouvre. Cinq dates fausses bloquent le lien (`REMISE_ECHECS_MAX`).
+- Validité : jusqu'au 30 juin de l'année suivante. Annuler un lien permet d'en
+  produire un nouveau.
+
+### Carte des agences (Pilotage RH → Carte des agences)
+
+Chaque site actif, coloré selon son état : **ouvert** (quelqu'un est pointé),
+**personne sur place** (on y pointe d'habitude, personne n'est arrivé), **aucun
+pointage récent** (rien depuis trente jours). La taille de la pastille suit le
+nombre de présents. Cliquer un site affiche qui est sur place et depuis quand.
+
+- Les sites sans coordonnées ne peuvent pas figurer : les déclarer avec leur
+  latitude et longitude.
+- Les postes vacants ne sont pas sur la carte : une offre d'emploi n'est
+  rattachée à aucun site.
+- Les fonds de carte viennent d'OpenStreetMap (attribution affichée).
+
+### Notes vocales et langage courant sur WhatsApp
+
+**Langage courant.** Avec `ANTHROPIC_API_KEY`, un salarié peut écrire
+« combien de congés il me reste ? » ou « je veux poser du 5 au 9 octobre ».
+Claude traduit la phrase en commande (`!solde`, `!paie`, `!conge`), et la
+commande s'exécute avec ses contrôles habituels : solde suffisant, demande
+laissée en attente de validation. Claude ne valide rien.
+
+**Notes vocales. Claude n'écoute pas l'audio** : il faut un service de
+transcription en amont. L'adaptateur parle le format `POST /audio/transcriptions`
+(multipart, réponse `{ "text": … }`), proposé par plusieurs fournisseurs
+hébergés et par les serveurs Whisper auto-hébergés.
+
+| Variable | Rôle |
+|---|---|
+| `TRANSCRIPTION_URL` | adresse complète du point d'entrée |
+| `TRANSCRIPTION_API_KEY` | clé du service |
+| `TRANSCRIPTION_MODEL` | modèle chez ce fournisseur (défaut `whisper-1`) |
+| `TRANSCRIPTION_LANGUE` | défaut `fr` |
+| `VOCAL_TAILLE_MAX_OCTETS` | défaut 5 Mo |
+
+- Le numéro est identifié **avant** la transcription : un inconnu ne coûte rien
+  et sa voix ne sort pas.
+- La réponse commence par « 🎙️ J'ai compris : « … » » : une date mal entendue
+  se voit tout de suite. Le journal du guichet garde la transcription.
+- Sans service configuré, le salarié est invité à écrire. L'écran « Guichet
+  WhatsApp » affiche l'état des deux fonctions.
+- **Donnée personnelle** : la voix quitte l'entreprise vers ce fournisseur. Le
+  choix du service et de son lieu d'hébergement est à mentionner dans la
+  déclaration à l'ARTCI.
+
 ## Récapitulatif annuel des salaires (DISA, ITS)
 
 Onglet *Déclarations sociales*, sous la déclaration du mois. Cumuls de l'année

@@ -97,7 +97,11 @@ function extraireMessages(corps) {
                     texte: message.text?.body
                         || message.button?.text
                         || message.interactive?.list_reply?.title
-                        || null
+                        || null,
+                    // Note vocale : l'identifiant du fichier chez Meta, à télécharger.
+                    audio: message.audio?.id
+                        ? { id: message.audio.id, typeMime: message.audio.mime_type || 'audio/ogg' }
+                        : null
                 });
             }
         }
@@ -149,4 +153,30 @@ async function envoyerMessage(numero, texte) {
     }
 }
 
-module.exports = { etatConfiguration, signatureValide, extraireMessages, envoyerMessage, VERSION_API };
+/**
+ * Télécharge un média reçu (note vocale).
+ *
+ * Meta ne livre pas le fichier dans la notification : il donne un identifiant,
+ * qu'on échange contre une adresse temporaire, elle-même protégée par le jeton.
+ * @returns {Promise<{contenu: Buffer, typeMime: string}>}
+ */
+async function telechargerMedia(mediaId, tailleMax = 5 * 1024 * 1024) {
+    const { token } = config();
+    if (!token) throw new Error('WHATSAPP_TOKEN absent : média inaccessible.');
+    const entetes = { Authorization: `Bearer ${token}` };
+
+    const meta = await fetch(`https://graph.facebook.com/${VERSION_API}/${encodeURIComponent(mediaId)}`, {
+        headers: entetes, signal: AbortSignal.timeout(15000)
+    });
+    if (!meta.ok) throw new Error(`Média introuvable chez Meta (HTTP ${meta.status}).`);
+    const description = await meta.json();
+    if (Number(description.file_size) > tailleMax) throw new Error('Message vocal trop long.');
+
+    const fichier = await fetch(description.url, { headers: entetes, signal: AbortSignal.timeout(30000) });
+    if (!fichier.ok) throw new Error(`Téléchargement du média refusé (HTTP ${fichier.status}).`);
+    const contenu = Buffer.from(await fichier.arrayBuffer());
+    if (contenu.length > tailleMax) throw new Error('Message vocal trop long.');
+    return { contenu, typeMime: description.mime_type || 'audio/ogg' };
+}
+
+module.exports = { etatConfiguration, signatureValide, extraireMessages, envoyerMessage, telechargerMedia, VERSION_API };

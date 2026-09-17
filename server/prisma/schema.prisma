@@ -120,6 +120,8 @@ model Employee {
   remises              RemiseDocument[]
   bulletinsRemplaces   BulletinRemplace[]
   periodesCdd          PeriodeCdd[]
+  badges               BadgeSalarie[]
+  retrospectives       RetrospectiveAnnuelle[]
 }
 
 // ... (existing code)
@@ -951,6 +953,7 @@ model WorkSite {
   createdAt    DateTime @default(now()) @map("created_at")
 
   timeLogs TimeLog[]
+  ecrans   EcranAgence[]
 }
 
 // ----------------------------------------------------
@@ -1956,4 +1959,76 @@ model PeriodeCdd {
 
   @@index([employeeId, debut])
   @@map("periode_cdd")
+}
+
+/// Écran d'agence : une page plein écran, affichée sur une TV ou une tablette.
+///
+/// Elle s'ouvre sans session — un écran de boutique ne se connecte pas — et
+/// c'est le jeton qui vaut autorisation. Il se révoque d'un clic si la TV est
+/// volée ou le lien divulgué. Un écran visible de la clientèle n'affiche aucun
+/// nom : la vitrine d'une agence n'a pas à dire qui travaille ce jour-là.
+model EcranAgence {
+  id                   String    @id @default(uuid())
+  token                String    @unique
+  nom                  String
+  workSiteId           String?   @map("work_site_id")
+  visibleClientele     Boolean   @default(true) @map("visible_clientele")
+  creeLe               DateTime  @default(now()) @map("cree_le")
+  creePar              String?   @map("cree_par")
+  derniereConsultation DateTime? @map("derniere_consultation")
+  revoqueLe            DateTime? @map("revoque_le")
+
+  workSite WorkSite? @relation(fields: [workSiteId], references: [id], onDelete: SetNull)
+
+  @@map("ecran_agence")
+}
+
+/// Badge numérique : la carte professionnelle, sur le téléphone du salarié.
+///
+/// Deux jetons, parce que deux personnes s'en servent. Le porteur ouvre sa
+/// carte par un lien qui lui est propre ; le QR affiché sur la carte porte un
+/// autre jeton, qui ne permet que de vérifier. Celui qui scanne ne peut donc
+/// pas s'approprier la carte.
+model BadgeSalarie {
+  id                   String    @id @default(uuid())
+  employeeId           String    @map("employee_id")
+  jetonPorteur         String    @unique @map("jeton_porteur")
+  jetonVerification    String    @unique @map("jeton_verification")
+  photoPath            String?   @map("photo_path")
+  emisLe               DateTime  @default(now()) @map("emis_le")
+  emisPar              String?   @map("emis_par")
+  expireLe             DateTime  @map("expire_le")
+  revoqueLe            DateTime? @map("revoque_le")
+  revoqueMotif         String?   @map("revoque_motif")
+  verifications        Int       @default(0)
+  derniereVerification DateTime? @map("derniere_verification")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, emisLe])
+  @@map("badge_salarie")
+}
+
+/// « Mon année chez SII » : le lien vers la rétrospective d'un salarié.
+///
+/// Le contenu n'est pas stocké : il est recalculé à chaque ouverture depuis la
+/// base, pour qu'une correction apportée au dossier s'y reflète. Seul le lien
+/// l'est, avec les mêmes garde-fous qu'une remise de document.
+model RetrospectiveAnnuelle {
+  id         String    @id @default(uuid())
+  token      String    @unique
+  employeeId String    @map("employee_id")
+  annee      Int
+  creeLe     DateTime  @default(now()) @map("cree_le")
+  creePar    String?   @map("cree_par")
+  expireLe   DateTime  @map("expire_le")
+  ouvertLe   DateTime? @map("ouvert_le")
+  ouvertures Int       @default(0)
+  echecs     Int       @default(0)
+  revoqueeLe DateTime? @map("revoquee_le")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, annee])
+  @@map("retrospective_annuelle")
 }

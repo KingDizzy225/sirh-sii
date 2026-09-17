@@ -150,6 +150,28 @@ export function WhatsappGateway() {
                                             : "Aucune réponse ne part : le salarié écrirait sans jamais recevoir de retour."}
                                     </p>
                                 </div>
+                                <div className={`p-4 rounded-xl border ${config.langageNaturel ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50'}`}>
+                                    <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                        {config.langageNaturel ? <ShieldCheck size={15} className="text-emerald-600" /> : <ShieldAlert size={15} className="text-slate-400" />}
+                                        Demandes en langage courant
+                                    </p>
+                                    <p className="text-xs text-slate-600 mt-1">
+                                        {config.langageNaturel
+                                            ? "« Combien de congés il me reste ? » est compris par Claude et exécuté comme la commande correspondante."
+                                            : "Clé Anthropic absente : seules les commandes (!solde, !paie, !conge) sont comprises."}
+                                    </p>
+                                </div>
+                                <div className={`p-4 rounded-xl border ${config.vocal?.active ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50'}`}>
+                                    <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                        {config.vocal?.active ? <ShieldCheck size={15} className="text-emerald-600" /> : <ShieldAlert size={15} className="text-slate-400" />}
+                                        Notes vocales
+                                    </p>
+                                    <p className="text-xs text-slate-600 mt-1">
+                                        {config.vocal?.active
+                                            ? `Les vocaux sont transcrits (modèle ${config.vocal.modele}), puis traités comme un message écrit. La réponse répète ce qui a été compris.`
+                                            : `Service de transcription non configuré (${(config.vocal?.variablesManquantes || []).join(', ') || 'variables absentes'}). Claude ne lit pas l'audio : il faut un service de transcription en amont. Le salarié qui envoie un vocal est invité à écrire.`}
+                                    </p>
+                                </div>
                             </div>
 
                             {partiel && (
