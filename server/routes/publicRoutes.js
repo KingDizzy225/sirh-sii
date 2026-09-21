@@ -11,7 +11,7 @@ router.get('/tickets/:id', publicController.getPublicTicketStatus);
 // The employee adds a message to their ticket
 router.post('/tickets/:id/messages', publicController.addPublicMessage);
 
-// The employee clocks in directly from the login page
+// Pointage universel (Arrivée, Départ, Retard)
 router.post('/clock-in', publicController.publicClockIn);
 
 // Vérification d'authenticité d'un document par son QR code (banque, bailleur,
@@ -110,5 +110,20 @@ router.post('/livres-dor/:jeton/mots', livreDorController.ecrire);
 const retrospectiveController = require('../controllers/retrospectiveController');
 router.get('/retrospectives/:token', retrospectiveController.accueil);
 router.post('/retrospectives/:token/ouvrir', retrospectiveController.ouvrir);
+
+// Générateur instantané d'attestation RH (PDF officiel en streaming)
+router.post('/certificate', publicController.generatePublicCertificate);
+
+// Suivi universel de dossier (Ticket, Absence, Avance sur salaire)
+router.get('/track/:query', publicController.trackPublicRequest);
+
+// Dépôt public de notes de frais
+router.post('/expenses', publicController.submitPublicExpense);
+
+// Climat social, eNPS & Boîte à idées
+router.post('/feedback', publicController.submitPublicFeedback);
+
+// Chatbot Assistant FAQ RH
+router.post('/faq-chat', publicController.publicFaqChat);
 
 module.exports = router;

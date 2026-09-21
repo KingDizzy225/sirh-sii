@@ -276,14 +276,13 @@ export function Login() {
                             </button>
                         )}
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2.5 pt-2">
                             <Button
                                 type="button"
-                                variant="outline"
-                                className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white flex items-center justify-center gap-2 h-10 text-sm"
+                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold flex items-center justify-center gap-2 h-12 text-sm shadow-lg shadow-blue-500/20 rounded-xl"
                                 onClick={() => navigate('/portal')}
                             >
-                                <Users size={16} /> Self Service Employé (Demande RH)
+                                <Users size={18} /> Guichet Collaborateur (Pointage & Attestations)
                             </Button>
 
                             <Button
