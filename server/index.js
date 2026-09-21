@@ -187,6 +187,11 @@ app.use('/api/virements', verifyToken, require('./routes/virementRoutes'));
 app.use('/api/delegues', verifyToken, require('./routes/delegueRoutes'));
 app.use('/api/stages', verifyToken, require('./routes/stageRoutes'));
 app.use('/api/avantages', verifyToken, require('./routes/avantageRoutes'));
+app.use('/api/rappels', verifyToken, require('./routes/rappelRoutes'));
+app.use('/api/prime-annuelle', verifyToken, require('./routes/primeAnnuelleRoutes'));
+app.use('/api/provisions', verifyToken, require('./routes/provisionRoutes'));
+app.use('/api/astreintes', verifyToken, require('./routes/astreinteRoutes'));
+app.use('/api/bilan-social', verifyToken, require('./routes/bilanSocialRoutes'));
 
 // L'identité de l'entreprise est lue partout de façon synchrone : on la charge dès le démarrage.
 require('./lib/identite').rafraichir();

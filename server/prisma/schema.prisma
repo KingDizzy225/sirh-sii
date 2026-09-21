@@ -33,13 +33,13 @@ model Employee {
   // Dossier administratif. Ces mentions sont exigées par la déclaration CNPS et
   // par le registre unique du personnel : sans elles, le registre s'imprime
   // mais n'est pas recevable, et la déclaration est rejetée après dépôt.
-  matricule     String?  @unique // matricule interne, unique dans l'entreprise
-  cnpsNumber    String?  @map("cnps_number")
-  bankName      String?  @map("bank_name")
-  bankAccount   String?  @map("bank_account")
+  matricule     String? @unique // matricule interne, unique dans l'entreprise
+  cnpsNumber    String? @map("cnps_number")
+  bankName      String? @map("bank_name")
+  bankAccount   String? @map("bank_account")
   // Nombre d'enfants à charge de moins de 14 ans : entre dans le calcul du
   // congé supplémentaire (voir lib/conges.js), pas dans la paie.
-  childrenCount Int      @default(0) @map("children_count")
+  childrenCount Int     @default(0) @map("children_count")
 
   /// Rémunération de référence, en FCFA.
   ///
@@ -52,7 +52,7 @@ model Employee {
   baseSalary          Float?    @map("base_salary")
   salaryEffectiveFrom DateTime? @map("salary_effective_from")
 
-  salaryChanges SalaryChange[]
+  salaryChanges      SalaryChange[]
   delegationsDonnees DelegationValidation[] @relation("Titulaire")
   delegationsRecues  DelegationValidation[] @relation("Suppleant")
 
@@ -72,77 +72,80 @@ model Employee {
   trialPeriodEndDate DateTime? @map("trial_period_end_date")
 
   // Relations
-  manager              Employee?               @relation("Hierarchy", fields: [managerId], references: [id], onDelete: Cascade)
-  subordinates         Employee[]              @relation("Hierarchy")
-  payrolls             Payroll[]
-  leaves               Leave[]
-  skills               EmployeeSkill[]
-  supportTickets       SupportTicket[]         @relation("SupportTickets")
-  assets               AssetAssignment[]
-  participations       TrainingParticipation[]
-  performanceGoals     PerformanceGoal[]       @relation("GoalOwner")
-  performanceReviews   PerformanceReview[]     @relation("ReviewSubject")
-  performanceFeedbacks PerformanceFeedback[]   @relation("FeedbackSubject")
-  documents            EmployeeDocument[]      @relation("EmployeeDocs")
-  notifications        Notification[]          @relation("EmployeeNotifications")
-  expenses             Expense[]
-  advances             SalaryAdvance[]
-  medicalVisits        MedicalVisit[]
-  points               EmployeePoints?
-  pointEvents          PointEvent[]
-  talentProfile        TalentProfile?          @relation("EmployeeTalent")
-  offboardingTasks     OffboardingTask[]
-  onboardingTasks      OnboardingTask[]
-  shifts               ShiftSchedule[]
-  benefits             EmployeeBenefit[]
-  timeLogs             TimeLog[]
-  absences             Absence[]               @relation("EmployeeAbsences")
-  careerHistory        CareerHistory[]
-  disciplinaryRecords  DisciplinaryRecord[]
-  kudosSent            Kudo[]                  @relation("SentKudos")
-  kudosReceived        Kudo[]                  @relation("ReceivedKudos")
-  orgNodes             OrgSimulationNode[]     @relation("EmployeeOrgNodes")
-  successors           Successor[]             @relation("EmployeeSuccessors")
-  retentionActions     RetentionAction[]       @relation("EmployeeRetention")
-  referrals            Referral[]              @relation("EmployeeReferrals")
-  mentorRelations      MentorshipRelation[]    @relation("MentorEmployee")
-  menteeRelations      MentorshipRelation[]    @relation("MenteeEmployee")
-  medicalRecords       MedicalRecord[]
-  workAccidents        WorkAccident[]
-  issuedDocuments      IssuedDocument[]
-  exitInterview        ExitInterview?
-  procedures           Procedure[]
-  jobDescriptions      JobDescription[]
-  situations           SituationEmployee[]
-  soldeToutCompte      SoldeToutCompte?
-  pieces               PieceSalarie[]
-  prets                Pret[]
-  remises              RemiseDocument[]
-  bulletinsRemplaces   BulletinRemplace[]
-  periodesCdd          PeriodeCdd[]
-  badges               BadgeSalarie[]
-  retrospectives       RetrospectiveAnnuelle[]
-  remplacementsDemandes DemandeRemplacement[] @relation("RemplacementsDemandes")
-  remplacementsRepris   DemandeRemplacement[] @relation("RemplacementsRepris")
-  preAccueil           PreAccueil?             @relation("PreAccueilSalarie")
-  preAccueilsEncadres  PreAccueil[]            @relation("PreAccueilResponsable")
-  livresDor            LivreDor[]
+  manager               Employee?               @relation("Hierarchy", fields: [managerId], references: [id], onDelete: Cascade)
+  subordinates          Employee[]              @relation("Hierarchy")
+  payrolls              Payroll[]
+  leaves                Leave[]
+  skills                EmployeeSkill[]
+  supportTickets        SupportTicket[]         @relation("SupportTickets")
+  assets                AssetAssignment[]
+  participations        TrainingParticipation[]
+  performanceGoals      PerformanceGoal[]       @relation("GoalOwner")
+  performanceReviews    PerformanceReview[]     @relation("ReviewSubject")
+  performanceFeedbacks  PerformanceFeedback[]   @relation("FeedbackSubject")
+  documents             EmployeeDocument[]      @relation("EmployeeDocs")
+  notifications         Notification[]          @relation("EmployeeNotifications")
+  expenses              Expense[]
+  advances              SalaryAdvance[]
+  medicalVisits         MedicalVisit[]
+  points                EmployeePoints?
+  pointEvents           PointEvent[]
+  talentProfile         TalentProfile?          @relation("EmployeeTalent")
+  offboardingTasks      OffboardingTask[]
+  onboardingTasks       OnboardingTask[]
+  shifts                ShiftSchedule[]
+  benefits              EmployeeBenefit[]
+  timeLogs              TimeLog[]
+  absences              Absence[]               @relation("EmployeeAbsences")
+  careerHistory         CareerHistory[]
+  disciplinaryRecords   DisciplinaryRecord[]
+  kudosSent             Kudo[]                  @relation("SentKudos")
+  kudosReceived         Kudo[]                  @relation("ReceivedKudos")
+  orgNodes              OrgSimulationNode[]     @relation("EmployeeOrgNodes")
+  successors            Successor[]             @relation("EmployeeSuccessors")
+  retentionActions      RetentionAction[]       @relation("EmployeeRetention")
+  referrals             Referral[]              @relation("EmployeeReferrals")
+  mentorRelations       MentorshipRelation[]    @relation("MentorEmployee")
+  menteeRelations       MentorshipRelation[]    @relation("MenteeEmployee")
+  medicalRecords        MedicalRecord[]
+  workAccidents         WorkAccident[]
+  issuedDocuments       IssuedDocument[]
+  exitInterview         ExitInterview?
+  procedures            Procedure[]
+  jobDescriptions       JobDescription[]
+  situations            SituationEmployee[]
+  soldeToutCompte       SoldeToutCompte?
+  pieces                PieceSalarie[]
+  prets                 Pret[]
+  remises               RemiseDocument[]
+  bulletinsRemplaces    BulletinRemplace[]
+  periodesCdd           PeriodeCdd[]
+  badges                BadgeSalarie[]
+  retrospectives        RetrospectiveAnnuelle[]
+  remplacementsDemandes DemandeRemplacement[]   @relation("RemplacementsDemandes")
+  remplacementsRepris   DemandeRemplacement[]   @relation("RemplacementsRepris")
+  preAccueil            PreAccueil?             @relation("PreAccueilSalarie")
+  preAccueilsEncadres   PreAccueil[]            @relation("PreAccueilResponsable")
+  livresDor             LivreDor[]
   /// Catégorie et échelon de la convention collective : c'est d'eux que
   /// dépend le salaire minimum opposable.
-  categorieConvention String? @map("categorie_convention")
-  echelonConvention   String? @map("echelon_convention")
+  categorieConvention   String?                 @map("categorie_convention")
+  echelonConvention     String?                 @map("echelon_convention")
   /// Prime de transport mensuelle, reprise à chaque paie.
-  primeTransport      Float?  @map("prime_transport")
+  primeTransport        Float?                  @map("prime_transport")
 
-  avantages            AvantageNature[]
-  mandats              MandatDelegue[]
-  conventionStage      ConventionStage?        @relation("StagiaireConvention")
-  stagiairesEncadres   ConventionStage[]       @relation("TuteurStage")
-  lignesVirement       LigneVirement[]
-  passationsRedigees   Passation[]             @relation("PassationsRedigees")
-  elementsResolus      ElementPassation[]      @relation("ElementsPassationResolus")
-  acquittements        AcquittementPassation[]
-  emargements          Emargement[]
+  avantages          AvantageNature[]
+  rappels            RappelSalaire[]
+  primesAnnuelles    PrimeAnnuelle[]
+  astreintes         Astreinte[]
+  mandats            MandatDelegue[]
+  conventionStage    ConventionStage?        @relation("StagiaireConvention")
+  stagiairesEncadres ConventionStage[]       @relation("TuteurStage")
+  lignesVirement     LigneVirement[]
+  passationsRedigees Passation[]             @relation("PassationsRedigees")
+  elementsResolus    ElementPassation[]      @relation("ElementsPassationResolus")
+  acquittements      AcquittementPassation[]
+  emargements        Emargement[]
 }
 
 // ... (existing code)
@@ -168,35 +171,35 @@ model Kudo {
 // ----------------------------------------------------
 
 model Payroll {
-  id                    String    @id @default(uuid())
-  employeeId            String    @map("employee_id")
+  id                    String   @id @default(uuid())
+  employeeId            String   @map("employee_id")
   period                DateTime // Représente le mois de paie (ex: 2026-01-01)
-  baseSalary            Float     @map("base_salary")
-  bonus                 Float     @default(0)
-  deductions            Float     @default(0)
-  overtimeHours         Float     @default(0) @map("overtime_hours")
+  baseSalary            Float    @map("base_salary")
+  bonus                 Float    @default(0)
+  deductions            Float    @default(0)
+  overtimeHours         Float    @default(0) @map("overtime_hours")
   /// Heures supplémentaires ventilées par majoration : { h15, h50, h75, h100 }.
   ///
   /// Un taux unique de 15 % s'appliquait à toutes les heures, y compris de
   /// nuit, du dimanche ou au-delà de la 46e heure. Nul quand les heures ont
   /// été saisies en un seul total, qui garde alors le taux unique.
-  heuresSupDetail       Json?     @map("heures_sup_detail")
-  leaveDays             Float     @default(0) @map("leave_days")
-  employerContributions Float     @default(0) @map("employer_contributions")
-  employeeContributions Float     @default(0) @map("employee_contributions")
-  netSalary             Float     @default(0) @map("net_salary")
+  heuresSupDetail       Json?    @map("heures_sup_detail")
+  leaveDays             Float    @default(0) @map("leave_days")
+  employerContributions Float    @default(0) @map("employer_contributions")
+  employeeContributions Float    @default(0) @map("employee_contributions")
+  netSalary             Float    @default(0) @map("net_salary")
 
   // Décomposition du bulletin. Ces montants étaient recalculés à la volée par
   // chaque consommateur, avec des formules divergentes ; les enregistrer fige
   // le bulletin tel qu'il a été remis au salarié et rend les déclarations
   // sociales vérifiables. Nuls sur les fiches antérieures à leur ajout.
-  grossSalary    Float? @map("gross_salary")
-  overtimeAmount Float? @map("overtime_amount")
-  leaveDeduction Float? @map("leave_deduction")
-  cnpsEmployee   Float? @map("cnps_employee")
-  cmu            Float?
-  taxableIncome  Float? @map("taxable_income")
-  its            Float?
+  grossSalary             Float?    @map("gross_salary")
+  overtimeAmount          Float?    @map("overtime_amount")
+  leaveDeduction          Float?    @map("leave_deduction")
+  cnpsEmployee            Float?    @map("cnps_employee")
+  cmu                     Float?
+  taxableIncome           Float?    @map("taxable_income")
+  its                     Float?
   /// Prime d'ancienneté, en FCFA.
   ///
   /// Due au-delà de deux ans par la convention collective, elle était absente
@@ -206,20 +209,31 @@ model Payroll {
   ///
   /// Colonne distincte et non fondue dans `bonus` : elle doit figurer sur son
   /// propre poste au bulletin.
-  primeAnciennete Float? @map("prime_anciennete")
+  primeAnciennete         Float?    @map("prime_anciennete")
   /// Prime de transport versée, et sa part imposable au-delà du plafond.
-  primeTransport           Float? @map("prime_transport")
-  primeTransportImposable  Float? @map("prime_transport_imposable")
+  primeTransport          Float?    @map("prime_transport")
+  primeTransportImposable Float?    @map("prime_transport_imposable")
   /// Avantages en nature : leur valeur entre dans l'assiette mais n'est pas
   /// versée en espèces — elle se retranche donc du net à payer.
-  avantagesNature          Float? @map("avantages_nature")
-  avantagesNatureDetail    Json?  @map("avantages_nature_detail")
-  pdfPath               String?   @map("pdf_path")
-  signature             String? // Base64 signature
-  signedAt              DateTime? @map("signed_at")
-  status                String    @default("DRAFT") // 'DRAFT', 'APPROVED', 'PAID'
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  avantagesNature         Float?    @map("avantages_nature")
+  avantagesNatureDetail   Json?     @map("avantages_nature_detail")
+  /// Rappel de salaire porté par ce bulletin, et la période qu'il couvre.
+  ///
+  /// Colonne distincte de `bonus` : un rappel n'est pas une prime, il répare
+  /// un mois passé, et le salarié doit pouvoir lire lequel.
+  rappelSalaire           Float?    @map("rappel_salaire")
+  rappelDetail            Json?     @map("rappel_detail")
+  /// Prime de fin d'année (treizième mois) versée sur ce bulletin.
+  primeAnnuelle           Float?    @map("prime_annuelle")
+  /// Indemnité d'astreinte : la disponibilité, non l'intervention — celle-ci
+  /// relève des heures supplémentaires.
+  indemniteAstreinte      Float?    @map("indemnite_astreinte")
+  pdfPath                 String?   @map("pdf_path")
+  signature               String? // Base64 signature
+  signedAt                DateTime? @map("signed_at")
+  status                  String    @default("DRAFT") // 'DRAFT', 'APPROVED', 'PAID'
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
@@ -330,19 +344,19 @@ model AssetAssignment {
 /// simple commodité : sans chaînage, qui peut écrire dans la base peut
 /// réécrire l'histoire.
 model AuditLog {
-  id        String   @id @default(uuid())
+  id                  String   @id @default(uuid())
   /// Rang dans la chaîne. Nul pour les lignes antérieures au chaînage.
-  numero              Int?    @unique
+  numero              Int?     @unique
   empreinte           String?
-  empreintePrecedente String? @map("empreinte_precedente")
-  userId    String   @map("user_id") // ID de l'utilisateur qui a fait l'action
-  action    String // PUT, PATCH, DELETE
-  tableName String   @map("table_name")
-  recordId  String   @map("record_id")
-  oldData   String?  @map("old_data") // JSON en string
-  newData   String?  @map("new_data") // JSON en string
-  ipAddress String?  @map("ip_address")
-  createdAt DateTime @default(now()) @map("created_at")
+  empreintePrecedente String?  @map("empreinte_precedente")
+  userId              String   @map("user_id") // ID de l'utilisateur qui a fait l'action
+  action              String // PUT, PATCH, DELETE
+  tableName           String   @map("table_name")
+  recordId            String   @map("record_id")
+  oldData             String?  @map("old_data") // JSON en string
+  newData             String?  @map("new_data") // JSON en string
+  ipAddress           String?  @map("ip_address")
+  createdAt           DateTime @default(now()) @map("created_at")
 }
 
 // ----------------------------------------------------
@@ -379,22 +393,22 @@ model User {
 }
 
 model Applicant {
-  id          String   @id @default(uuid())
-  jobOfferId  String   @map("job_offer_id")
-  firstName   String   @map("first_name")
-  lastName    String   @map("last_name")
+  id          String    @id @default(uuid())
+  jobOfferId  String    @map("job_offer_id")
+  firstName   String    @map("first_name")
+  lastName    String    @map("last_name")
   email       String
   phone       String?
   status      String // 'Applied', 'Screening', 'Interview', 'Offered', 'Hired', 'Rejected'
-  matchScore  Int      @default(0) @map("match_score") // Score de correspondance (ex: 85)
-  source      String   @default("LinkedIn")
+  matchScore  Int       @default(0) @map("match_score") // Score de correspondance (ex: 85)
+  source      String    @default("LinkedIn")
   // Chemin du CV téléversé. Le contrôleur l'écrivait déjà alors que le champ
   // n'existait pas : toute candidature depuis le site carrière échouait.
-  resumeUrl   String?  @map("resume_url")
+  resumeUrl   String?   @map("resume_url")
   // Expérience déclarée par le candidat, transmise par le formulaire de
   // candidature et écrite par le contrôleur alors que la colonne manquait.
   experience  String?
-  appliedDate DateTime @default(now()) @map("applied_date")
+  appliedDate DateTime  @default(now()) @map("applied_date")
   /// Date de passage au statut « recrutée ».
   ///
   /// Le délai de recrutement s'affichait au tableau de bord sous la forme de
@@ -543,13 +557,13 @@ model EmployeeDocument {
   // mécanisme qui n'existait pas.
   //
   // Le jeton ci-dessous est ce mécanisme : aléatoire, à usage unique, daté.
-  signatureToken   String?   @unique @map("signature_token")
-  tokenExpiresAt   DateTime? @map("token_expires_at")
-  signatureRequestedBy String? @map("signature_requested_by")
+  signatureToken       String?   @unique @map("signature_token")
+  tokenExpiresAt       DateTime? @map("token_expires_at")
+  signatureRequestedBy String?   @map("signature_requested_by")
 
-  signedAt   DateTime? @map("signed_at")
-  signedBy   String?   @map("signed_by")
-  signedIp   String?   @map("signed_ip")
+  signedAt DateTime? @map("signed_at")
+  signedBy String?   @map("signed_by")
+  signedIp String?   @map("signed_ip")
 
   /// Empreinte SHA-256 du document au moment de la signature. Sans elle, rien
   /// ne relie la signature au contenu signé : une image apposée sur un PDF neuf
@@ -559,8 +573,8 @@ model EmployeeDocument {
   /// Le certificat est un fichier distinct. La signature écrasait auparavant le
   /// document par une page de certificat seule : après signature, le contrat
   /// n'était plus attaché au dossier.
-  certificatePath String? @map("certificate_path")
-  employee Employee @relation("EmployeeDocs", fields: [employeeId], references: [id], onDelete: Cascade)
+  certificatePath String?  @map("certificate_path")
+  employee        Employee @relation("EmployeeDocs", fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 // ----------------------------------------------------
@@ -588,8 +602,8 @@ model IssuedDocument {
   revokedReason String?   @map("revoked_reason")
 
   // Instantané des mentions portées sur le document
-  employeeName  String  @map("employee_name")
-  positionTitle String? @map("position_title")
+  employeeName  String    @map("employee_name")
+  positionTitle String?   @map("position_title")
   department    String?
   hireDate      DateTime? @map("hire_date")
 
@@ -630,9 +644,9 @@ model Signataire {
   /// à côté de la signature.
   cachetImage    String? @map("cachet_image") @db.Text
 
-  actif     Boolean  @default(true)
+  actif     Boolean @default(true)
   /// Signataire proposé par défaut à l'émission.
-  parDefaut Boolean  @default(false) @map("par_defaut")
+  parDefaut Boolean @default(false) @map("par_defaut")
 
   creePar   String?  @map("cree_par")
   createdAt DateTime @default(now()) @map("created_at")
@@ -655,7 +669,7 @@ model ExitInterview {
   departureType  String   @map("departure_type") // 'Démission', 'Licenciement', 'Fin de CDD', 'Rupture période essai', 'Retraite', 'Autre'
   primaryReason  String   @map("primary_reason") // 'Rémunération', 'Évolution', 'Management', 'Charge de travail', 'Projet personnel', 'Mobilité géographique', 'Autre'
   wouldRecommend Boolean? @map("would_recommend")
-  satisfaction   Int?     // 1 à 5
+  satisfaction   Int? // 1 à 5
   whatWorked     String?  @map("what_worked")
   whatToImprove  String?  @map("what_to_improve")
   comments       String?
@@ -671,11 +685,11 @@ model ExitInterview {
 // pour une période donnée, ce qui rend les traitements rejouables sans risque
 // de double application (un rattrapage a lieu à chaque réveil du serveur).
 model ScheduledJobRun {
-  id        String   @id @default(uuid())
-  jobName   String   @map("job_name") // ex: 'LEAVE_ACCRUAL'
-  period    String // ex: '2026-09' pour un traitement mensuel, '2026-09-04' pour un quotidien
-  runAt     DateTime @default(now()) @map("run_at")
-  details   String? // résumé lisible de ce qui a été traité
+  id      String   @id @default(uuid())
+  jobName String   @map("job_name") // ex: 'LEAVE_ACCRUAL'
+  period  String // ex: '2026-09' pour un traitement mensuel, '2026-09-04' pour un quotidien
+  runAt   DateTime @default(now()) @map("run_at")
+  details String? // résumé lisible de ce qui a été traité
 
   @@unique([jobName, period])
   @@map("scheduled_job_run")
@@ -920,17 +934,17 @@ model Subcontractor {
 /// Une attestation n'a de valeur qu'à sa date. Une pièce périmée vaut une pièce
 /// absente — et c'est celle-là que personne ne voit passer.
 model SubcontractorDocument {
-  id             String   @id @default(uuid())
-  subcontractorId String  @map("subcontractor_id")
+  id              String    @id @default(uuid())
+  subcontractorId String    @map("subcontractor_id")
   /// CNPS | FISCAL | RCCM | ASSURANCE | PERSONNEL | AUTRE
-  type           String
-  reference      String?
-  issuedAt       DateTime? @map("issued_at")
-  expiresAt      DateTime? @map("expires_at")
-  filePath       String?   @map("file_path")
-  note           String?   @db.Text
-  createdBy      String?   @map("created_by")
-  createdAt      DateTime  @default(now()) @map("created_at")
+  type            String
+  reference       String?
+  issuedAt        DateTime? @map("issued_at")
+  expiresAt       DateTime? @map("expires_at")
+  filePath        String?   @map("file_path")
+  note            String?   @db.Text
+  createdBy       String?   @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   subcontractor Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
 
@@ -969,7 +983,7 @@ model TimeLog {
   // du réseau. Si la requête atteint le serveur mais que la réponse se perd —
   // le cas ordinaire d'une liaison de chantier — l'appareil la croit échouée et
   // la renvoie. Sans cette clé, la journée du salarié compterait deux entrées.
-  clientRef  String?  @unique @map("client_ref")
+  clientRef String? @unique @map("client_ref")
 
   // Géolocalisation du pointage (facultatif : null si le GPS n'était pas disponible)
   latitude        Float?
@@ -1163,32 +1177,32 @@ model JobDescription {
   // sans rattachement au salarié : les fiches continuaient d'être écrites dans
   // un traitement de texte. Les rubriques ci-dessous reprennent exactement la
   // trame en usage dans l'entreprise, rubrique pour rubrique.
-  employeeId             String?   @map("employee_id")
-  salarieNom             String?   @map("salarie_nom")
-  direction              String?
-  lieu                   String?
-  categorie              String?
-  superieurHierarchique  String?   @map("superieur_hierarchique")
-  dateDebut              DateTime? @map("date_debut")
+  employeeId            String?   @map("employee_id")
+  salarieNom            String?   @map("salarie_nom")
+  direction             String?
+  lieu                  String?
+  categorie             String?
+  superieurHierarchique String?   @map("superieur_hierarchique")
+  dateDebut             DateTime? @map("date_debut")
 
-  mission                String?   @db.Text
+  mission               String? @db.Text
   /// Listes de la fiche : tâches, moyens, compétences, risques.
-  taches                 Json?
-  relationsInterne       String?   @map("relations_interne") @db.Text
-  relationsExterne       String?   @map("relations_externe") @db.Text
-  rapportsDestinataires  String?   @map("rapports_destinataires") @db.Text
-  rapportsFrequences     String?   @map("rapports_frequences") @db.Text
-  moyensTechniques       Json?     @map("moyens_techniques")
-  savoir                 Json?
-  savoirFaire            Json?     @map("savoir_faire")
-  savoirEtre             Json?     @map("savoir_etre")
-  formation              String?   @db.Text
-  risquesPoste           Json?     @map("risques_poste")
-  risquesMateriel        Json?     @map("risques_materiel")
+  taches                Json?
+  relationsInterne      String? @map("relations_interne") @db.Text
+  relationsExterne      String? @map("relations_externe") @db.Text
+  rapportsDestinataires String? @map("rapports_destinataires") @db.Text
+  rapportsFrequences    String? @map("rapports_frequences") @db.Text
+  moyensTechniques      Json?   @map("moyens_techniques")
+  savoir                Json?
+  savoirFaire           Json?   @map("savoir_faire")
+  savoirEtre            Json?   @map("savoir_etre")
+  formation             String? @db.Text
+  risquesPoste          Json?   @map("risques_poste")
+  risquesMateriel       Json?   @map("risques_materiel")
 
   /// Visas de la fiche : DE, DRH, AG. Chacun peut porter la signature d'un
   /// signataire enregistré, ou rester vierge pour une signature manuscrite.
-  visas                  Json?
+  visas Json?
 
   employee Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
 
@@ -1297,13 +1311,13 @@ model WhatsappLog {
   // Identifiant du message chez l'opérateur. WhatsApp réémet un message tant
   // qu'il n'a pas reçu d'accusé : sans cette clé unique, une demande de congé
   // serait enregistrée plusieurs fois.
-  messageId   String?  @unique @map("message_id")
+  messageId String? @unique @map("message_id")
   // 'ENTRANT' (message du salarié) ou 'SIMULATION' (essai depuis l'écran RH) :
   // un essai ne doit pas se lire comme un message réellement reçu.
-  direction   String   @default("ENTRANT")
+  direction String  @default("ENTRANT")
   // Vrai si la réponse est effectivement partie chez l'opérateur. Une réponse
   // calculée mais non remise laisse le salarié sans nouvelle.
-  delivered   Boolean  @default(false)
+  delivered Boolean @default(false)
 
   @@index([createdAt])
 }
@@ -1367,16 +1381,16 @@ model TaskTemplate {
 }
 
 model TaskTemplateItem {
-  id          String  @id @default(uuid())
-  templateId  String  @map("template_id")
-  title       String
+  id           String  @id @default(uuid())
+  templateId   String  @map("template_id")
+  title        String
   /// Équipe responsable : c'est elle qui structure le tableau des tâches.
-  assignedTo  String
+  assignedTo   String
   /// Décalage en jours par rapport à la date d'arrivée ou de départ.
   /// Négatif pour ce qui doit être fait avant.
-  relativeDays Int    @default(0) @map("relative_days")
-  description String?
-  position    Int     @default(0)
+  relativeDays Int     @default(0) @map("relative_days")
+  description  String?
+  position     Int     @default(0)
 
   template TaskTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -1403,7 +1417,7 @@ model WorkAccident {
 
   // Arrêt de travail prescrit, en jours. Détermine le taux de gravité et
   // conditionne la déclaration.
-  daysOff     Int      @default(0) @map("days_off")
+  daysOff Int @default(0) @map("days_off")
 
   declaredToCnps   Boolean   @default(false) @map("declared_to_cnps")
   declaredAt       DateTime? @map("declared_at")
@@ -1452,16 +1466,13 @@ model ClimateSurvey {
 model SurveyResponse {
   id         String   @id @default(uuid())
   surveyId   String   @map("survey_id")
-  score      Int      // 0 to 10
+  score      Int // 0 to 10
   feedback   String?  @db.Text
   department String?
   createdAt  DateTime @default(now()) @map("created_at")
 
   survey ClimateSurvey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
 }
-
-
-
 
 // ----------------------------------------------------
 // CORBEILLE — RESTAURATION DES SUPPRESSIONS
@@ -1475,24 +1486,24 @@ model SurveyResponse {
 /// geste sans annuler tout le reste de la journée. L'instantané est donc pris
 /// côté application, et permet de reconstituer le dossier.
 model DeletedEmployee {
-  id            String    @id @default(uuid())
-  employeeId    String    @map("employee_id")
-  firstName     String    @map("first_name")
-  lastName      String    @map("last_name")
+  id            String @id @default(uuid())
+  employeeId    String @map("employee_id")
+  firstName     String @map("first_name")
+  lastName      String @map("last_name")
   email         String
   department    String
-  positionTitle String    @map("position_title")
+  positionTitle String @map("position_title")
 
   /// Dossier complet : l'enregistrement Employee et toutes ses lignes liées,
   /// table par table. Sert de source unique à la restauration.
-  snapshot      Json
+  snapshot     Json
   /// Nombre de lignes liées capturées, affiché avant restauration.
-  relatedCount  Int       @default(0) @map("related_count")
+  relatedCount Int  @default(0) @map("related_count")
 
-  deletedAt     DateTime  @default(now()) @map("deleted_at")
-  deletedBy     String?   @map("deleted_by")
-  restoredAt    DateTime? @map("restored_at")
-  restoredBy    String?   @map("restored_by")
+  deletedAt  DateTime  @default(now()) @map("deleted_at")
+  deletedBy  String?   @map("deleted_by")
+  restoredAt DateTime? @map("restored_at")
+  restoredBy String?   @map("restored_by")
 
   @@index([deletedAt])
   @@map("deleted_employees")
@@ -1510,21 +1521,21 @@ model DeletedEmployee {
 /// conteste : convocation non remise, entretien tenu le jour même, lettre sans
 /// motif. Cette procédure retient chaque étape, sa date, et sa preuve.
 model Procedure {
-  id         String    @id @default(uuid())
-  employeeId String    @map("employee_id")
+  id         String  @id @default(uuid())
+  employeeId String  @map("employee_id")
   type       String // LICENCIEMENT | SANCTION | RUPTURE_ESSAI | DEMISSION
-  motif      String    @db.Text
+  motif      String  @db.Text
   /// EN_COURS | CLOTUREE | ABANDONNEE
-  statut     String    @default("EN_COURS")
+  statut     String  @default("EN_COURS")
   /// Issue consignée à la clôture : sanction retenue, rupture effective, abandon.
-  issue      String?   @db.Text
+  issue      String? @db.Text
 
-  ouvertePar String    @map("ouverte_par")
-  ouverteLe  DateTime  @default(now()) @map("ouverte_le")
-  clotureeLe DateTime? @map("cloturee_le")
-  clotureePar String?  @map("cloturee_par")
+  ouvertePar  String    @map("ouverte_par")
+  ouverteLe   DateTime  @default(now()) @map("ouverte_le")
+  clotureeLe  DateTime? @map("cloturee_le")
+  clotureePar String?   @map("cloturee_par")
 
-  employee Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   etapes   ProcedureEtape[]
 
   @@index([statut, type])
@@ -1533,13 +1544,13 @@ model Procedure {
 
 /// Étape d'une procédure, avec le délai qui la sépare de la précédente.
 model ProcedureEtape {
-  id          String    @id @default(uuid())
-  procedureId String    @map("procedure_id")
+  id          String  @id @default(uuid())
+  procedureId String  @map("procedure_id")
   ordre       Int
   code        String
   libelle     String
-  attendu     String    @db.Text
-  obligatoire Boolean   @default(true)
+  attendu     String  @db.Text
+  obligatoire Boolean @default(true)
 
   /// Délai minimal, en jours, depuis l'étape précédente. Franchir une étape
   /// avant ce délai est le vice de forme le plus fréquent : l'application le
@@ -1549,11 +1560,11 @@ model ProcedureEtape {
   delaiMaxJours Float?  @map("delai_max_jours")
   motifDelai    String? @map("motif_delai") @db.Text
 
-  faiteLe   DateTime? @map("faite_le")
-  faitePar  String?   @map("faite_par")
-  note      String?   @db.Text
+  faiteLe  DateTime? @map("faite_le")
+  faitePar String?   @map("faite_par")
+  note     String?   @db.Text
   /// Preuve de remise : décharge signée, accusé de réception.
-  preuve    String?   @db.Text
+  preuve   String?   @db.Text
 
   procedure Procedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
 
@@ -1646,17 +1657,17 @@ model SalaryChange {
 /// demandes s'arrêtent. C'est le reproche le plus courant fait aux SIRH en
 /// exploitation, et le moins coûteux à corriger.
 model DelegationValidation {
-  id          String   @id @default(uuid())
-  titulaireId String   @map("titulaire_id")
-  suppleantId String   @map("suppleant_id")
+  id          String    @id @default(uuid())
+  titulaireId String    @map("titulaire_id")
+  suppleantId String    @map("suppleant_id")
   /// CONGES | DEPENSES | TOUT
-  portee      String   @default("TOUT")
+  portee      String    @default("TOUT")
   debut       DateTime
   fin         DateTime
   motif       String?
-  creePar     String?  @map("cree_par")
+  creePar     String?   @map("cree_par")
   revoqueeLe  DateTime? @map("revoquee_le")
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   titulaire Employee @relation("Titulaire", fields: [titulaireId], references: [id], onDelete: Cascade)
   suppleant Employee @relation("Suppleant", fields: [suppleantId], references: [id], onDelete: Cascade)
@@ -1683,17 +1694,17 @@ model DelegationValidation {
 /// situations reprises lors de la mise en place valent ce que vaut l'hypothèse
 /// « inchangé depuis l'embauche », et cela doit rester lisible.
 model SituationEmployee {
-  id         String    @id @default(uuid())
-  employeeId String    @map("employee_id")
+  id         String @id @default(uuid())
+  employeeId String @map("employee_id")
 
   effectiveFrom DateTime  @map("effective_from")
   /// Nul tant que la situation est en cours.
   effectiveTo   DateTime? @map("effective_to")
 
-  positionTitle String?  @map("position_title")
+  positionTitle String? @map("position_title")
   department    String?
-  managerId     String?  @map("manager_id")
-  contractType  String?  @map("contract_type")
+  managerId     String? @map("manager_id")
+  contractType  String? @map("contract_type")
   status        String?
 
   motif  String? @db.Text
@@ -1722,25 +1733,25 @@ model SituationEmployee {
 /// arrêté est possible — une erreur se corrige — mais révoque alors les reçus
 /// déjà émis, dont le QR signalera l'invalidité.
 model SoldeToutCompte {
-  id         String   @id @default(uuid())
+  id         String @id @default(uuid())
   /// Un seul arrêté par salarié : un départ n'a qu'un solde.
-  employeeId String   @unique @map("employee_id")
+  employeeId String @unique @map("employee_id")
 
   arreteLe   DateTime @default(now()) @map("arrete_le")
   arretePar  String?  @map("arrete_par")
   dateSortie DateTime @map("date_sortie")
 
   /// Net arrêté, en FCFA. Dupliqué hors du détail pour être interrogeable.
-  netArrete  Float    @map("net_arrete")
+  netArrete    Float   @map("net_arrete")
   /// Décompte complet tel qu'il a été arrêté, conservé au caractère près.
-  detail     String   @db.Text
+  detail       String  @db.Text
   observations String? @db.Text
 
   /// Date de remise effective au salarié, quand elle est consignée.
-  remisLe    DateTime? @map("remis_le")
+  remisLe DateTime? @map("remis_le")
 
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
@@ -1761,8 +1772,8 @@ model SoldeToutCompte {
 ///   - le **contrôle**, porté par `statut` : une pièce déposée par le salarié
 ///     lui-même vaut A_CONTROLER jusqu'à ce que la RH la valide.
 model PieceSalarie {
-  id         String   @id @default(uuid())
-  employeeId String   @map("employee_id")
+  id         String @id @default(uuid())
+  employeeId String @map("employee_id")
 
   /// PERMIS | APTITUDE | HABILITATION | CARTE_PRO | SEJOUR | AUTRE
   type       String
@@ -1772,8 +1783,8 @@ model PieceSalarie {
   /// sans échéance ne serait jamais relancée et paraîtrait valide indéfiniment.
   expireLe   DateTime? @map("expire_le")
 
-  filePath   String?  @map("file_path")
-  note       String?  @db.Text
+  filePath String? @map("file_path")
+  note     String? @db.Text
 
   /// VALIDE | A_CONTROLER | REFUSEE
   statut       String    @default("A_CONTROLER")
@@ -1831,8 +1842,8 @@ model JourFerie {
 /// créer cinq avances fictives dont plus rien ne disait qu'elles n'en
 /// formaient qu'une.
 model Pret {
-  id         String   @id @default(uuid())
-  employeeId String   @map("employee_id")
+  id         String @id @default(uuid())
+  employeeId String @map("employee_id")
 
   montant    Float
   motif      String?
@@ -1840,15 +1851,15 @@ model Pret {
   /// arrêté au moment de l'accord et non recalculé à chaque paie.
   mensualite Float
 
-  accordeLe  DateTime @default(now()) @map("accorde_le")
-  accordePar String?  @map("accorde_par")
+  accordeLe   DateTime  @default(now()) @map("accorde_le")
+  accordePar  String?   @map("accorde_par")
   /// EN_COURS | SOLDE | ANNULE
-  statut     String   @default("EN_COURS")
-  annuleLe   DateTime? @map("annule_le")
-  annuleMotif String?  @map("annule_motif")
+  statut      String    @default("EN_COURS")
+  annuleLe    DateTime? @map("annule_le")
+  annuleMotif String?   @map("annule_motif")
 
-  echeances  EcheancePret[]
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  echeances EcheancePret[]
+  employee  Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId, statut])
   @@map("pret")
@@ -1894,24 +1905,24 @@ model EcheancePret {
 ///   - chaque ouverture et chaque téléchargement sont **datés**, afin que la RH
 ///     puisse dire quand le document a été retiré — ou qu'il ne l'a pas été.
 model RemiseDocument {
-  id         String   @id @default(uuid())
-  token      String   @unique
-  employeeId String   @map("employee_id")
+  id         String @id @default(uuid())
+  token      String @unique
+  employeeId String @map("employee_id")
 
   /// BULLETIN | DOCUMENT | ATTESTATION — d'où vient le fichier remis.
-  sourceType String   @map("source_type")
+  sourceType String @map("source_type")
   /// Identifiant dans la table d'origine (Payroll, EmployeeDocument…).
-  sourceId   String   @map("source_id")
+  sourceId   String @map("source_id")
   /// Intitulé montré au salarié, figé à la remise : renommer la source plus
   /// tard ne doit pas changer ce qu'il a reçu.
   titre      String
 
-  remisLe    DateTime  @default(now()) @map("remis_le")
-  remisPar   String?   @map("remis_par")
-  expireLe   DateTime  @map("expire_le")
+  remisLe  DateTime @default(now()) @map("remis_le")
+  remisPar String?  @map("remis_par")
+  expireLe DateTime @map("expire_le")
 
   /// Contrôle demandé à l'ouverture. AUCUNE | NAISSANCE
-  verification String  @default("NAISSANCE")
+  verification String @default("NAISSANCE")
 
   ouvertLe        DateTime? @map("ouvert_le")
   telechargeLe    DateTime? @map("telecharge_le")
@@ -2349,19 +2360,19 @@ model GrilleConvention {
 /// Chaque banque a le sien. Le jour où elle remet sa spécification, c'est
 /// cette description qu'on modifie — pas le programme.
 model FormatVirement {
-  id          String   @id @default(uuid())
-  nom         String   @unique
+  id         String   @id @default(uuid())
+  nom        String   @unique
   /// CSV | FIXE
-  type        String   @default("CSV")
-  separateur  String   @default(";")
-  extension   String   @default("csv")
+  type       String   @default("CSV")
+  separateur String   @default(";")
+  extension  String   @default("csv")
   /// Colonnes : [{ champ, titre, largeur?, alignement?, format? }]
-  colonnes    Json
-  entete      Json?
-  pied        Json?
-  actif       Boolean  @default(true)
-  creeLe      DateTime @default(now()) @map("cree_le")
-  creePar     String?  @map("cree_par")
+  colonnes   Json
+  entete     Json?
+  pied       Json?
+  actif      Boolean  @default(true)
+  creeLe     DateTime @default(now()) @map("cree_le")
+  creePar    String?  @map("cree_par")
 
   lots LotVirement[]
 
@@ -2370,22 +2381,22 @@ model FormatVirement {
 
 /// Lot de virements : l'ordre de paiement remis à la banque.
 model LotVirement {
-  id            String    @id @default(uuid())
-  periode       String
+  id           String    @id @default(uuid())
+  periode      String
   /// PREPARE | EMIS | ANNULE
-  statut        String    @default("PREPARE")
-  formatId      String?   @map("format_id")
-  formatNom     String    @map("format_nom")
-  nombreLignes  Int       @map("nombre_lignes")
-  montantTotal  Float     @map("montant_total")
+  statut       String    @default("PREPARE")
+  formatId     String?   @map("format_id")
+  formatNom    String    @map("format_nom")
+  nombreLignes Int       @map("nombre_lignes")
+  montantTotal Float     @map("montant_total")
   /// Empreinte du fichier remis : de quoi prouver qu'il n'a pas changé après coup.
-  empreinte     String?
-  creeLe        DateTime  @default(now()) @map("cree_le")
-  creePar       String?   @map("cree_par")
-  emisLe        DateTime? @map("emis_le")
-  emisPar       String?   @map("emis_par")
-  annuleLe      DateTime? @map("annule_le")
-  annuleMotif   String?   @map("annule_motif") @db.Text
+  empreinte    String?
+  creeLe       DateTime  @default(now()) @map("cree_le")
+  creePar      String?   @map("cree_par")
+  emisLe       DateTime? @map("emis_le")
+  emisPar      String?   @map("emis_par")
+  annuleLe     DateTime? @map("annule_le")
+  annuleMotif  String?   @map("annule_motif") @db.Text
 
   format FormatVirement? @relation(fields: [formatId], references: [id], onDelete: SetNull)
   lignes LigneVirement[]
@@ -2455,13 +2466,13 @@ model MandatDelegue {
 /// Réunion mensuelle avec les délégués : la tenir est une obligation, en
 /// garder trace aussi.
 model ReunionDelegues {
-  id           String   @id @default(uuid())
-  date         DateTime
-  objet        String
-  compteRendu  String?  @map("compte_rendu") @db.Text
-  presents     Json?
-  creeLe       DateTime @default(now()) @map("cree_le")
-  creePar      String?  @map("cree_par")
+  id          String   @id @default(uuid())
+  date        DateTime
+  objet       String
+  compteRendu String?  @map("compte_rendu") @db.Text
+  presents    Json?
+  creeLe      DateTime @default(now()) @map("cree_le")
+  creePar     String?  @map("cree_par")
 
   @@index([date])
   @@map("reunion_delegues")
@@ -2473,21 +2484,142 @@ model ReunionDelegues {
 /// son tuteur est désigné, et il ne compte pas dans l'effectif qui déclenche
 /// l'élection des délégués.
 model ConventionStage {
-  id                    String   @id @default(uuid())
-  employeeId            String   @unique @map("employee_id")
-  ecole                 String?
-  niveau                String?
-  tuteurId              String?  @map("tuteur_id")
-  debut                 DateTime
-  fin                   DateTime
-  gratificationMensuelle Float   @default(0) @map("gratification_mensuelle")
-  objet                 String?  @db.Text
-  creeLe                DateTime @default(now()) @map("cree_le")
-  creePar               String?  @map("cree_par")
+  id                     String   @id @default(uuid())
+  employeeId             String   @unique @map("employee_id")
+  ecole                  String?
+  niveau                 String?
+  tuteurId               String?  @map("tuteur_id")
+  debut                  DateTime
+  fin                    DateTime
+  gratificationMensuelle Float    @default(0) @map("gratification_mensuelle")
+  objet                  String?  @db.Text
+  creeLe                 DateTime @default(now()) @map("cree_le")
+  creePar                String?  @map("cree_par")
 
   employee Employee  @relation("StagiaireConvention", fields: [employeeId], references: [id], onDelete: Cascade)
   tuteur   Employee? @relation("TuteurStage", fields: [tuteurId], references: [id], onDelete: SetNull)
 
   @@index([fin])
   @@map("convention_stage")
+}
+
+/// Rappel de salaire : ce qui était dû et n'a pas été versé.
+///
+/// Une augmentation signée en juin avec effet en mars ne produisait rien :
+/// l'écart des mois écoulés était saisi à la main dans le champ « prime »,
+/// sans détail, sans trace de la période couverte, et donc invérifiable au
+/// contrôle comme devant le salarié.
+///
+/// Les lignes portent le détail mois par mois — ancien montant, nouveau,
+/// écart — tel qu'il a été calculé au moment de l'établissement du rappel.
+/// Elles ne sont pas recalculées ensuite : un rappel versé doit rester ce
+/// qui a été versé.
+model RappelSalaire {
+  id           String    @id @default(uuid())
+  employeeId   String    @map("employee_id")
+  motif        String
+  dateEffet    DateTime  @map("date_effet")
+  periodeDebut DateTime  @map("periode_debut")
+  periodeFin   DateTime  @map("periode_fin")
+  lignes       Json
+  total        Float
+  /// A_VERSER, VERSE, ANNULE
+  statut       String    @default("A_VERSER")
+  payrollId    String?   @map("payroll_id")
+  verseLe      DateTime? @map("verse_le")
+  creeLe       DateTime  @default(now()) @map("cree_le")
+  creePar      String?   @map("cree_par")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, statut])
+  @@map("rappel_salaire")
+}
+
+/// Prime de fin d'année (treizième mois), telle qu'arrêtée pour un exercice.
+///
+/// Elle se provisionne mois par mois — sinon décembre surprend la trésorerie —
+/// et se proratise pour qui est arrivé ou parti en cours d'année. Le montant
+/// enregistré ici est celui décidé ; la provision, elle, se recalcule.
+model PrimeAnnuelle {
+  id               String    @id @default(uuid())
+  employeeId       String    @map("employee_id")
+  annee            Int
+  /// Salaire de référence retenu pour le calcul.
+  base             Float
+  /// Mois de présence comptés dans l'exercice, sur douze.
+  moisComptes      Float     @map("mois_comptes")
+  montant          Float
+  /// A_VERSER, VERSE, ANNULE
+  statut           String    @default("A_VERSER")
+  /// Paie sur laquelle la prime doit être portée.
+  periodeVersement DateTime? @map("periode_versement")
+  payrollId        String?   @map("payroll_id")
+  verseLe          DateTime? @map("verse_le")
+  creeLe           DateTime  @default(now()) @map("cree_le")
+  creePar          String?   @map("cree_par")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, annee])
+  @@index([statut])
+  @@map("prime_annuelle")
+}
+
+/// Arrêté de provision : la dette sociale figée à une date.
+///
+/// Les soldes de congés étaient tenus en jours et jamais valorisés. Ce que
+/// l'entreprise devrait si tout le monde partait demain n'apparaissait donc
+/// nulle part — ni au budget, ni devant le commissaire aux comptes.
+///
+/// L'arrêté conserve le détail par salarié tel qu'il était à la date retenue,
+/// puisque c'est ce détail qui sera opposé plus tard.
+model ArreteProvision {
+  id           String   @id @default(uuid())
+  arreteAu     DateTime @map("arrete_au")
+  lignes       Json
+  totalConges  Float    @map("total_conges")
+  totalCharges Float    @map("total_charges")
+  salaries     Int
+  note         String?  @db.Text
+  creeLe       DateTime @default(now()) @map("cree_le")
+  creePar      String?  @map("cree_par")
+
+  @@index([arreteAu])
+  @@map("arrete_provision")
+}
+
+/// Période d'astreinte : rester joignable et pouvoir intervenir.
+///
+/// Le planning d'équipe couvrait les tournées, pas l'astreinte — qui n'est ni
+/// du temps de travail effectif ni du repos, et qui se compense. Sans trace,
+/// la compensation se négociait de mémoire, et la couverture réelle des nuits
+/// et des week-ends n'était connue de personne.
+model Astreinte {
+  id            String   @id @default(uuid())
+  employeeId    String   @map("employee_id")
+  debut         DateTime
+  fin           DateTime
+  /// SEMAINE, WEEKEND, FERIE, NUIT
+  type          String
+  site          String?
+  /// Compensation due, en FCFA. Aucun forfait n'est inventé : il vient du
+  /// paramétrage ou de la saisie.
+  compensation  Float    @default(0)
+  /// Nombre d'interventions effectives pendant l'astreinte. Une intervention
+  /// est du travail effectif : elle relève des heures supplémentaires, pas de
+  /// l'indemnité d'astreinte.
+  interventions Int      @default(0)
+  commentaire   String?  @db.Text
+  /// PLANIFIEE, EFFECTUEE, PAYEE, ANNULEE
+  statut        String   @default("PLANIFIEE")
+  payrollId     String?  @map("payroll_id")
+  creeLe        DateTime @default(now()) @map("cree_le")
+  creePar       String?  @map("cree_par")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([debut])
+  @@index([employeeId, statut])
+  @@map("astreinte")
 }

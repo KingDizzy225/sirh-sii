@@ -9,6 +9,9 @@ const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
 const { calculerPaie, decomposer, intervalleMois, TAUX } = require('../lib/paie');
 const grille = require('../lib/grille');
+const rappel = require('../lib/rappel');
+const primeAnnuelle = require('../lib/primeAnnuelle');
+const astreinte = require('../lib/astreinte');
 const paie = require('../lib/paie');
 const explication = require('../lib/explication');
 const { salaireConnu } = require('../lib/demographie');
@@ -490,8 +493,32 @@ const runPayroll = async (req, res) => {
                 select: { type: true, montantMensuel: true }
             });
 
+            /**
+             * Rappels, prime de fin d'année et astreintes dus sur cette paie.
+             *
+             * Comme l'échéance de prêt, ils sont lus ici et non transmis par
+             * l'appelant : un rappel établi en juin doit partir sur la paie de
+             * juin sans que personne n'ait à s'en souvenir. Les éléments déjà
+             * portés par le bulletin de cette période sont repris à la
+             * relance, sans quoi une paie rectifiée les ferait disparaître.
+             */
+            const bulletinExistant = await prisma.payroll.findFirst({
+                where: { employeeId: employee.id, period: new Date(p.period) },
+                select: { id: true }
+            });
+            const rappelsDus = await rappel.aVerser(employee.id, bulletinExistant?.id || null);
+            const primesDues = await primeAnnuelle.aVerser(employee.id, p.period, bulletinExistant?.id || null);
+            const astreintesDues = await astreinte.aPayer(employee.id, p.period, bulletinExistant?.id || null);
+
+            const lignesRappel = rappelsDus.flatMap((r) => (Array.isArray(r.lignes) ? r.lignes : []));
+            const montantPrimeAnnuelle = primesDues.reduce((s, x) => s + (x.montant || 0), 0);
+            const montantAstreintes = astreintesDues.reduce((s, x) => s + (x.compensation || 0), 0);
+
             const bulletin = calculerPaie({
                 baseSalary: p.baseSalary,
+                rappelDetail: lignesRappel,
+                primeAnnuelle: montantPrimeAnnuelle,
+                indemniteAstreinte: montantAstreintes,
                 primeTransport: p.primeTransport ?? employee.primeTransport ?? 0,
                 avantagesNature: Array.isArray(p.avantagesNature)
                     ? p.avantagesNature
@@ -525,27 +552,20 @@ const runPayroll = async (req, res) => {
                 }
             });
 
+            /**
+             * Colonnes écrites par `colonnesBulletin`, et non énumérées ici.
+             *
+             * Elles l'étaient, et la liste a pris du retard sur le calcul : la
+             * prime de transport et les avantages en nature entraient dans le
+             * brut et dans le net sans être enregistrés. Le bulletin remis
+             * était juste, son explication muette, et les déclarations
+             * annuelles ne pouvaient plus retrouver d'où venait l'écart.
+             */
             let pr = await prisma.payroll.create({
                 data: {
                     employeeId: employee.id,
                     period: new Date(p.period),
-                    baseSalary: bulletin.baseSalary,
-                    bonus: bulletin.bonus,
-                    deductions: bulletin.deductions,
-                    overtimeHours: bulletin.overtimeHours,
-                    heuresSupDetail: bulletin.heuresSupDetail,
-                    leaveDays: bulletin.leaveDays,
-                    overtimeAmount: bulletin.overtimeAmount,
-                    leaveDeduction: bulletin.leaveDeduction,
-                    grossSalary: bulletin.grossSalary,
-                    cnpsEmployee: bulletin.cnpsEmployee,
-                    cmu: bulletin.cmu,
-                    taxableIncome: bulletin.taxableIncome,
-                    its: bulletin.its,
-                    primeAnciennete: bulletin.primeAnciennete,
-                    employerContributions: bulletin.employerContributions,
-                    employeeContributions: bulletin.employeeContributions,
-                    netSalary: bulletin.netSalary,
+                    ...paie.colonnesBulletin(bulletin),
                     status: 'APPROVED'
                 }
             });
@@ -573,6 +593,31 @@ const runPayroll = async (req, res) => {
                         where: { id: echeanceDue.pret.id }, data: { statut: 'SOLDE' }
                     });
                 }
+            }
+
+            /**
+             * Les éléments portés sont marqués versés et rattachés au bulletin
+             * qui les porte. Le rattachement est réécrit plutôt qu'ajouté :
+             * une paie relancée repasse ici, et rien ne doit être versé deux
+             * fois.
+             */
+            if (rappelsDus.length > 0) {
+                await prisma.rappelSalaire.updateMany({
+                    where: { id: { in: rappelsDus.map((r) => r.id) } },
+                    data: { statut: 'VERSE', payrollId: pr.id, verseLe: new Date() }
+                });
+            }
+            if (primesDues.length > 0) {
+                await prisma.primeAnnuelle.updateMany({
+                    where: { id: { in: primesDues.map((x) => x.id) } },
+                    data: { statut: 'VERSE', payrollId: pr.id, verseLe: new Date() }
+                });
+            }
+            if (astreintesDues.length > 0) {
+                await prisma.astreinte.updateMany({
+                    where: { id: { in: astreintesDues.map((x) => x.id) } },
+                    data: { statut: 'PAYEE', payrollId: pr.id }
+                });
             }
 
             const pdfPath = await generatePayslipPDF({ ...pr }, employee);

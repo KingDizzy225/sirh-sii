@@ -233,7 +233,28 @@ function totalAvantages(avantages) {
     };
 }
 
-function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leaveDays, deductions, hireDate, periode, primeTransport, avantagesNature } = {}) {
+/**
+ * Rappel de salaire : le détail mois par mois et son total.
+ *
+ * Il entre dans le brut comme un élément ordinaire — c'est du salaire, dû
+ * plus tôt — mais il garde sa ligne et sa période : « prime : 180 000 » ne
+ * dit pas au salarié ce qu'on lui rattrape, ni au contrôle sur quels mois.
+ */
+function totalRappel(lignes) {
+    if (!Array.isArray(lignes)) return { total: 0, detail: undefined };
+    const detail = lignes
+        .map((l) => ({
+            periode: String(l?.periode || ''),
+            ecart: Math.round(nombre(l?.ecart ?? l?.montant, 0) * 100) / 100
+        }))
+        .filter((l) => l.periode && l.ecart !== 0);
+    return {
+        total: Math.round(detail.reduce((s, l) => s + l.ecart, 0) * 100) / 100,
+        detail: detail.length ? detail : undefined
+    };
+}
+
+function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leaveDays, deductions, hireDate, periode, primeTransport, avantagesNature, rappelDetail, rappelSalaire, primeAnnuelle, indemniteAstreinte } = {}) {
     const base = nombre(baseSalary, 0);
     const primes = nombre(bonus, 0);
     const ventilation = normaliserVentilation(heuresSupDetail);
@@ -270,11 +291,19 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leave
     const transport = ventilerTransport(primeTransport);
     const avantages = totalAvantages(avantagesNature);
 
+    // Un rappel se transmet soit détaillé, soit en montant seul ; le détail
+    // prime, parce qu'il est vérifiable.
+    const rappelDetaille = totalRappel(rappelDetail);
+    const rappel = rappelDetaille.detail ? rappelDetaille.total : nombre(rappelSalaire, 0);
+    const primeAnnee = Math.max(nombre(primeAnnuelle, 0), 0);
+    const astreinte = Math.max(nombre(indemniteAstreinte, 0), 0);
+
     // Le brut porte tout ce qui est soumis : la part exonérée du transport en
     // est donc exclue, et les avantages en nature y figurent bien qu'ils ne
     // soient pas versés.
     const brut = Math.max(
-        base + montantHeuresSup - retenueAbsence + primes + primeAnciennete + transport.imposable + avantages.total,
+        base + montantHeuresSup - retenueAbsence + primes + primeAnciennete + transport.imposable + avantages.total
+        + rappel + primeAnnee + astreinte,
         0
     );
 
@@ -305,6 +334,10 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leave
         primeTransportImposable: transport.imposable,
         avantagesNature: avantages.total,
         avantagesNatureDetail: avantages.detail,
+        rappelSalaire: rappel,
+        rappelDetail: rappelDetaille.detail,
+        primeAnnuelle: primeAnnee,
+        indemniteAstreinte: astreinte,
         anciennete: {
             ...anciennete,
             active: PRIME_ANCIENNETE_ACTIVE,
@@ -342,7 +375,8 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leave
  */
 const CHAMPS_BULLETIN = [
     'baseSalary', 'bonus', 'primeAnciennete', 'primeTransport', 'primeTransportImposable',
-    'avantagesNature', 'avantagesNatureDetail', 'overtimeHours', 'heuresSupDetail', 'overtimeAmount',
+    'avantagesNature', 'avantagesNatureDetail', 'rappelSalaire', 'rappelDetail',
+    'primeAnnuelle', 'indemniteAstreinte', 'overtimeHours', 'heuresSupDetail', 'overtimeAmount',
     'leaveDays', 'leaveDeduction', 'grossSalary', 'cnpsEmployee', 'cmu',
     'taxableIncome', 'its', 'deductions', 'employeeContributions',
     'employerContributions', 'netSalary'
@@ -401,6 +435,6 @@ function intervalleMois(libelle) {
 module.exports = {
     calculerPaie, calculerITS, decomposer, intervalleMois, normaliserVentilation,
     anneesAnciennete, calculerPrimeAnciennete, colonnesBulletin, CHAMPS_BULLETIN,
-    ventilerTransport, totalAvantages,
+    ventilerTransport, totalAvantages, totalRappel,
     TAUX, TRANCHES_ITS, PRIME_ANCIENNETE_ACTIVE
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus} from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +56,7 @@ const getAllNavItems = (t) => [
     { name: 'Pré-accueil', path: '/pre-accueil', icon: DoorOpen, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Stagiaires & apprentis', path: '/stages', icon: GraduationCap, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Délégués du personnel', path: '/delegues', icon: Vote, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Astreintes', path: '/astreintes', icon: PhoneCall, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Départs (offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Matériel attribué', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
     // « Flex-Workforce » ne disait pas de quoi il s'agissait.
@@ -83,6 +84,10 @@ const getAllNavItems = (t) => [
     { name: 'Virements des salaires', path: '/virements', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Grille conventionnelle', path: '/grille', icon: Scale, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Transport & avantages', path: '/avantages', icon: Bus, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Rappels de salaire', path: '/rappels', icon: History, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: "Prime de fin d'année", path: '/prime-annuelle', icon: Gift, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Provision congés', path: '/provisions', icon: Scale, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Bilan social', path: '/bilan-social', icon: FileBarChart, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Prêts au personnel', path: '/prets', icon: Landmark, domain: 'Pilotage RH', permission: 'payroll:view' },
     // Le seul accès proposé aux notes de frais était un onglet de la paie qui
     // affichait six notes inventées, et dont la validation n'enregistrait rien.

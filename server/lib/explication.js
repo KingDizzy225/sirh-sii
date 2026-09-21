@@ -106,6 +106,41 @@ function composition(bulletin) {
         });
     }
 
+    if (arrondir(d.rappelSalaire) > 0) {
+        const detail = Array.isArray(d.rappelDetail) ? d.rappelDetail : [];
+        const mois = detail.map((l) => l.periode).filter(Boolean);
+        lignes.push({
+            libelle: 'Rappel de salaire',
+            montant: arrondir(d.rappelSalaire),
+            sens: 'credit',
+            explication: (mois.length
+                ? `Régularisation portant sur ${mois.length} mois (${mois.join(', ')}). `
+                : 'Régularisation de mois écoulés. ')
+                + "C'est du salaire dû plus tôt : il entre dans le brut du mois où il est versé."
+        });
+    }
+
+    if (arrondir(d.primeAnnuelle) > 0) {
+        lignes.push({
+            libelle: "Prime de fin d'année",
+            montant: arrondir(d.primeAnnuelle),
+            sens: 'credit',
+            explication: "Treizième mois, calculé au prorata de votre présence dans l'année. "
+                + 'Il entre dans le brut, et donc dans les cotisations.'
+        });
+    }
+
+    if (arrondir(d.indemniteAstreinte) > 0) {
+        lignes.push({
+            libelle: "Indemnité d'astreinte",
+            montant: arrondir(d.indemniteAstreinte),
+            sens: 'credit',
+            explication: "Compensation des périodes où vous deviez rester joignable. "
+                + 'Les interventions effectuées pendant une astreinte sont, elles, du travail effectif '
+                + 'et relèvent des heures supplémentaires.'
+        });
+    }
+
     if (arrondir(d.leaveDeduction) > 0) {
         lignes.push({
             libelle: 'Absences',

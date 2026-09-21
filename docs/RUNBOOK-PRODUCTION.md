@@ -1121,6 +1121,88 @@ gratification. Elle la traite comme une rémunération ordinaire — cotisations
 impôt — et l'écran le dit. Si votre cabinet retient une exonération, ajustez
 en conséquence.
 
+## Rappels, treizième mois, provisions, astreintes, bilan social
+
+### Rappels de salaire (Pilotage RH → Rappels de salaire)
+
+Une décision rétroactive — augmentation signée en juin avec effet au 1er mars —
+ne produisait rien : l'écart des mois écoulés se saisissait à la main dans le
+champ « prime », sans période ni détail.
+
+L'écran calcule avant d'enregistrer. Pour chaque mois couvert, il reprend le
+bulletin, remplace le seul salaire de base par celui qui aurait dû s'appliquer
+et refait le brut — heures supplémentaires et prime d'ancienneté comprises,
+puisqu'elles en dépendent. **Simulez d'abord** : le bouton « Calculer sans
+enregistrer » montre le détail mois par mois.
+
+Le rappel part automatiquement sur la prochaine paie du salarié, sur sa propre
+ligne du bulletin. Un mois sans bulletin enregistré ne produit pas un rappel de
+zéro : il est signalé, parce qu'il n'y a rien à rattraper — il y a une paie à
+faire.
+
+**Ce qui reste à trancher** : le rappel est cotisé au taux du mois où il est
+versé. Si votre cabinet impose un rattachement aux mois d'origine, le montant
+reste juste mais sa ventilation fiscale devra être revue.
+
+### Prime de fin d'année (Pilotage RH → Prime de fin d'année)
+
+`PRIME_FIN_ANNEE_FRACTION` porte la règle : `1` pour un treizième mois entier,
+`0.5` pour un demi. **Tant qu'elle n'est pas posée, rien n'est calculé** — le
+treizième mois n'est pas une obligation légale générale en Côte d'Ivoire, il
+tient à votre convention collective ou à un usage de l'entreprise.
+
+Deux choses sur le même écran, à ne pas confondre :
+
+- La **provision** se recalcule à chaque consultation et dit ce que l'exercice
+  a déjà engagé. Elle existe pour que décembre ne surprenne pas la trésorerie.
+- L'**arrêté** fige les montants dus, au prorata des mois de présence, et c'est
+  lui qui part sur la paie du mois configuré (`PRIME_FIN_ANNEE_MOIS`, décembre
+  par défaut). Ré-arrêter un exercice met à jour les primes non versées et
+  laisse les autres intactes.
+
+### Provision pour congés payés (Pilotage RH → Provision congés)
+
+Ce que l'entreprise devrait si tout le monde partait demain. Les soldes étaient
+tenus en jours et jamais valorisés ; c'est pourtant une dette exigible, payée
+au départ dans le solde de tout compte.
+
+**Méthode** : brut moyen des douze derniers bulletins ÷ jours ouvrés du mois,
+multiplié par le solde, charges patronales comprises. Une convention peut
+retenir une autre assiette — le chiffre porte sa méthode pour qu'un comptable
+puisse la discuter plutôt que la deviner.
+
+Le bouton « Arrêter » fige le détail par salarié à une date. C'est ce détail
+figé qui fait foi ensuite, pas le calcul du jour.
+
+### Astreintes (Employés → Astreintes)
+
+Planning ouvert aux responsables, compensation réservée aux RH. Deux choses
+s'affichent avant le planning, parce qu'elles sont le vrai sujet : les **jours
+sans aucune couverture**, et les **enchaînements** — chevauchements et repos
+trop courts entre deux astreintes d'un même salarié (`ASTREINTE_REPOS_JOURS`).
+
+Les forfaits viennent de `ASTREINTE_FORFAITS` ; sans paramétrage, le montant se
+saisit période par période. Une astreinte constatée part sur la paie du mois,
+sur sa propre ligne.
+
+**Une intervention n'est pas une astreinte.** Être appelé et travailler est du
+temps de travail effectif : cela relève des heures supplémentaires, avec leurs
+majorations, **en plus** de l'indemnité. Les interventions sont comptées ici
+pour ce qu'elles disent de la charge, jamais payées au forfait.
+
+### Bilan social (Pilotage RH → Bilan social)
+
+Effectifs, mouvements, absentéisme, formation, sécurité, rémunérations : toutes
+ces données existaient, aucune n'était rassemblée. Chaque indicateur porte sa
+définition, parce qu'un effectif « moyen » et un effectif « à fin d'exercice »
+ne donnent pas le même nombre, et qu'un taux d'absentéisme change du simple au
+double selon qu'on y compte les congés payés.
+
+**Ce n'est pas un formulaire réglementaire** : aucun gabarit de branche n'est
+reproduit. Les réserves affichées en tête disent ce qui empêche de lire
+certains chiffres — un écart de rémunération demande des salaires connus dans
+les deux groupes, une masse salariale demande des bulletins.
+
 ## Récapitulatif annuel des salaires (DISA, ITS)
 
 Onglet *Déclarations sociales*, sous la déclaration du mois. Cumuls de l'année

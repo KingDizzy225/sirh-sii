@@ -23,6 +23,11 @@ import { Virements } from './pages/Virements';
 import { Delegues } from './pages/Delegues';
 import { Stages } from './pages/Stages';
 import { Avantages } from './pages/Avantages';
+import { Rappels } from './pages/Rappels';
+import { PrimeAnnuelle } from './pages/PrimeAnnuelle';
+import { ProvisionConges } from './pages/ProvisionConges';
+import { Astreintes } from './pages/Astreintes';
+import { BilanSocial } from './pages/BilanSocial';
 import { Remplacements } from './pages/Remplacements';
 import { PreAccueil } from './pages/PreAccueil';
 import { Bienvenue } from './pages/Bienvenue';
@@ -504,6 +509,38 @@ const AppContent = () => {
             <Route path="/avantages" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Avantages />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/rappels" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Rappels />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/prime-annuelle" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <PrimeAnnuelle />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/provisions" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <ProvisionConges />
+              </ProtectedRoute>
+            } />
+
+            {/* Le planning d'astreinte est aussi celui des responsables : ils
+                inscrivent leurs équipes, la compensation reste aux RH. */}
+            <Route path="/astreintes" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <Astreintes />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/bilan-social" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <BilanSocial />
               </ProtectedRoute>
             } />
 
