@@ -34,7 +34,7 @@ export function Leaves() {
     const isManagerOrAdmin = userRole === 'MANAGER' || userRole === 'ADMIN' || userRole === 'HR';
     const currentUserFullName = user?.name || '';
 
-    const [activeTab, setActiveTab] = useState('my-leaves');
+    const [activeTab, setActiveTab] = useState(isManagerOrAdmin ? 'approvals' : 'calendar');
     const [leaveRequests, setLeaveRequests] = useState([]);
     const [employeesList, setEmployeesList] = useState([]);
     const [notification, setNotification] = useState(null);
@@ -402,20 +402,14 @@ END:VCALENDAR`;
 
             {/* Tabs Navigation */}
             <div className="flex space-x-1 bg-slate-200/50 p-1 rounded-lg w-max mb-6">
-                <button
-                    onClick={() => setActiveTab('my-leaves')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'my-leaves' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
-                >
-                    <User size={16} /> Mes Absences
-                </button>
                 {isManagerOrAdmin && (
                     <button
                         onClick={() => setActiveTab('approvals')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'approvals' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
                     >
-                        <Check size={16} /> Approbations Équipe
+                        <Check size={16} /> Demandes & Approbations
                         {pendingApprovals.length > 0 && (
-                            <span className="ml-1.5 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingApprovals.length}</span>
+                            <span className="ml-1.5 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{pendingApprovals.length}</span>
                         )}
                     </button>
                 )}
@@ -423,7 +417,13 @@ END:VCALENDAR`;
                     onClick={() => setActiveTab('calendar')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'calendar' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
                 >
-                    <CalendarIcon size={16} /> Calendrier
+                    <CalendarIcon size={16} /> Planning Calendrier
+                </button>
+                <button
+                    onClick={() => setActiveTab('my-leaves')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'my-leaves' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
+                >
+                    <User size={16} /> Mes Demandes Personnelles
                 </button>
             </div>
 

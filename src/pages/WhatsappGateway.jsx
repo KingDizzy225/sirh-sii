@@ -335,7 +335,6 @@ export function WhatsappGateway() {
                             <CardTitle className="text-base font-bold text-slate-900 flex items-center justify-between">
                                 <span>Journal d'Activité des Commandes & Campagnes</span>
                                 <Button variant="outline" size="sm" onClick={fetchLogs} className="gap-1 text-xs">
->>>>>>> 23098c5 (feat: Add DISA/Tax declarations, HR Command Center, WhatsApp broadcast, and AI interview questions)
                                     <RefreshCw size={12} /> Actualiser
                                 </Button>
                             </CardTitle>

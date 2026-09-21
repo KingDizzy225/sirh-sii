@@ -274,12 +274,10 @@ const AppContent = () => {
           <ErrorBoundary>
           <Routes>
             {/* Redirect root based on role */}
-            <Route path="/" element={
-              user.role === 'EMPLOYEE' ? <Navigate to="/my-space" replace /> : <Dashboard />
-            } />
+            <Route path="/" element={<Dashboard />} />
             
-            {/* Everyone can view their space */}
-            <Route path="/my-space" element={<EmployeePortal />} />
+            {/* Redirect legacy /my-space to root */}
+            <Route path="/my-space" element={<Navigate to="/" replace />} />
 
             {/* Employee Accessible Routes (Self-Service) */}
             <Route path="/leaves" element={<Leaves />} />

@@ -30,98 +30,58 @@ import { LanguageSwitcher } from '../LanguageSwitcher';
 const getAllNavItems = (t) => [
     // ── ACCUEIL ──
     { name: t('sidebar.dashboard', 'Vue d\'ensemble'), path: '/', icon: Home, domain: 'Accueil', permission: 'dashboard:view' },
-    { name: 'Tableau de tâches', path: '/task-board', icon: CheckSquare, domain: 'Accueil', permission: 'dashboard:view' },
-    { name: 'Annonces', path: '/announcements', icon: Megaphone, domain: 'Accueil', permission: 'dashboard:view' },
-    { name: "Écrans d'agence", path: '/ecrans', icon: Tv, domain: 'Accueil', permission: 'employees:edit' },
-    { name: 'Mon année (bilans)', path: '/retrospectives', icon: Sparkles, domain: 'Accueil', permission: 'employees:edit' },
-    { name: "Livres d'or", path: '/livres-dor', icon: BookHeart, domain: 'Accueil', permission: 'employees:edit' },
+    { name: 'Command Center & Tâches', path: '/task-board', icon: CheckSquare, domain: 'Accueil', permission: 'dashboard:view' },
+    { name: 'Annonces & Communication', path: '/announcements', icon: Megaphone, domain: 'Accueil', permission: 'dashboard:view' },
 
     // ── EMPLOYÉS : le dossier du salarié, de l'embauche au départ ──
     { name: t('sidebar.employees', 'Répertoire des salariés'), path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
-    { name: 'Dossiers & corbeille', path: '/conformite', icon: ShieldCheck, domain: 'Employés', permission: 'employees:edit' },
-    { name: "Droit d'accès", path: '/droit-acces', icon: FileSearch, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Titres & habilitations', path: '/pieces', icon: IdCard, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Badges numériques', path: '/badges', icon: IdCard, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Dossiers & Conformité', path: '/conformite', icon: ShieldCheck, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Titres & Habilitations', path: '/pieces', icon: IdCard, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Badges Numériques', path: '/badges', icon: IdCard, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Fiches de poste', path: '/fiches-poste', icon: ClipboardList, domain: 'Employés', permission: 'employees:edit' },
-    // Rédige une fiche avec l'assistant ; « Fiches de poste » les conserve.
-    { name: 'Rédiger une fiche (IA)', path: '/job-studio', icon: Sparkles, domain: 'Employés', permission: 'recruitment:view' },
     { name: 'Contrats de travail', path: '/contracts', icon: FileText, domain: 'Employés', permission: 'employees:edit' },
-    // Durée cumulée et renouvellements : la seule alerte portait sur la date de fin.
-    { name: 'Suivi des CDD', path: '/cdd', icon: ClipboardList, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Organigramme', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
-    { name: 'Simulateur d\'organisation', path: '/org-simulation', icon: Rocket, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Entretiens & évaluations', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },
-    { name: 'Procédures & sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Intégration (onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
-    { name: 'Pré-accueil', path: '/pre-accueil', icon: DoorOpen, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Stagiaires & apprentis', path: '/stages', icon: GraduationCap, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Délégués du personnel', path: '/delegues', icon: Vote, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Astreintes', path: '/astreintes', icon: PhoneCall, domain: 'Employés', permission: 'employees:edit', manager: true },
-    { name: 'Départs (offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Matériel attribué', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
-    // « Flex-Workforce » ne disait pas de quoi il s'agissait.
-    { name: 'Prestataires & sous-traitance', path: '/subcontractors', icon: Building, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Médecine du travail', path: '/medical-hub', icon: Stethoscope, domain: 'Employés', permission: 'employees:edit' },
-    { name: 'Accidents & sécurité', path: '/hse', icon: Shield, domain: 'Employés', permission: 'employees:edit' },
-    { name: t('sidebar.recruitment', 'Recrutement'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
-    { name: 'Cooptation', path: '/referrals', icon: UserPlus, domain: 'Employés', permission: 'recruitment:view' },
-    { name: 'Sourcing assisté (IA)', path: '/ai-sourcing', icon: BrainCircuit, domain: 'Employés', permission: 'recruitment:view' },
+    { name: 'Organigramme Entreprise', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
+    { name: 'Entretiens & Évaluations', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },
+    { name: 'Procédures & Sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
+    { name: 'Délégués du Personnel', path: '/delegues', icon: Vote, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Astreintes & Gardes', path: '/astreintes', icon: PhoneCall, domain: 'Employés', permission: 'employees:edit', manager: true },
+    { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Matériel & Équipements', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Prestataires & Intérim', path: '/subcontractors', icon: Building, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Santé & Médecine Travail', path: '/medical-hub', icon: Stethoscope, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Sécurité & Accidents (HSE)', path: '/hse', icon: Shield, domain: 'Employés', permission: 'employees:edit' },
+    { name: t('sidebar.recruitment', 'Recrutement & ATS'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
 
-    // ── PILOTAGE RH : les processus qui tournent tous les mois ──
-    { name: 'Congés & absences', path: '/leaves', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
-    // Absences ponctuelles, retards et demandes. Cet écran figurait deux fois,
-    // sous « Absences & Retards » et sous « Temps, Absences & Demandes ».
-    { name: 'Retards & demandes', path: '/timesheet', icon: AlertTriangle, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
-    { name: 'Relevé des pointages', path: '/releve-heures', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
-    { name: 'Carte des agences', path: '/carte-agences', icon: MapPin, domain: 'Pilotage RH', permission: 'employees:edit' },
-    { name: 'Jours fériés', path: '/jours-feries', icon: CalendarDays, domain: 'Pilotage RH', permission: 'employees:edit' },
-    { name: 'Plannings & rotations', path: '/shifts', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
-    { name: 'Remplacements', path: '/remplacements', icon: Repeat, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
-    { name: "Passations d'équipe", path: '/passations', icon: ClipboardList, domain: 'Pilotage RH', permission: 'employees:edit' },
-    { name: t('sidebar.payroll', 'Paie & bulletins'), path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
-    // Décisions d'augmentation, distinctes de l'exécution de la paie.
-    { name: 'Décisions de rémunération', path: '/remunerations', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Virements des salaires', path: '/virements', icon: Banknote, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Grille conventionnelle', path: '/grille', icon: Scale, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Transport & avantages', path: '/avantages', icon: Bus, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Rappels de salaire', path: '/rappels', icon: History, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: "Prime de fin d'année", path: '/prime-annuelle', icon: Gift, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Provision congés', path: '/provisions', icon: Scale, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Bilan social', path: '/bilan-social', icon: FileBarChart, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Prêts au personnel', path: '/prets', icon: Landmark, domain: 'Pilotage RH', permission: 'payroll:view' },
-    // Le seul accès proposé aux notes de frais était un onglet de la paie qui
-    // affichait six notes inventées, et dont la validation n'enregistrait rien.
-    { name: 'Notes de frais', path: '/expenses', icon: Receipt, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Budget & masse salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },
-    { name: 'Délégations de validation', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
-    { name: t('sidebar.learning', 'Formation'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
-    { name: 'Émargement des formations', path: '/emargements', icon: QrCode, domain: 'Pilotage RH', permission: 'employees:edit' },
-    { name: 'Compétences & GPEC', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
-    // Deux outils réellement distincts, dont les anciens noms suggéraient les
-    // deux moitiés d'un même : l'un liste des modèles de tâches, l'autre
-    // déclenche des traitements planifiés.
-    { name: 'Modèles de tâches', path: '/workflow-builder', icon: Workflow, domain: 'Pilotage RH', permission: 'dashboard:view' },
-    { name: 'Traitements planifiés', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
-    { name: 'Règles internes', path: '/policy-rules', icon: BookOpen, domain: 'Pilotage RH', permission: 'dashboard:view' },
-    { name: 'Documents', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
-    { name: 'Signataires', path: '/signataires', icon: PenTool, domain: 'Pilotage RH', permission: 'documents:view_company' },
-    { name: 'Guichet WhatsApp', path: '/whatsapp-bot', icon: MessageSquare, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    // ── PILOTAGE RH : processus mensuels & gestion opérationnelle ──
+    { name: 'Congés & Absences', path: '/leaves', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Relevé des Pointages', path: '/releve-heures', icon: Clock, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Plannings & Shifts', path: '/shifts', icon: CalendarRange, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Jours Fériés & Calendrier', path: '/jours-feries', icon: CalendarDays, domain: 'Pilotage RH', permission: 'employees:edit' },
+    { name: 'Carte des Agences & Sites', path: '/carte-agences', icon: MapPin, domain: 'Pilotage RH', permission: 'employees:edit' },
+    { name: "Passations d'Équipe", path: '/passations', icon: ClipboardList, domain: 'Pilotage RH', permission: 'employees:edit' },
+    { name: t('sidebar.payroll', 'Paie & Déclarations'), path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Grille Salariale Convention', path: '/grille', icon: Scale, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Avantages & Primes', path: '/avantages', icon: Bus, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Prêts au Personnel', path: '/prets', icon: Landmark, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Budget & Masse Salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Délégations de Signature', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: t('sidebar.learning', 'Plan de Formation'), path: '/learning', icon: GraduationCap, domain: 'Pilotage RH', permission: 'learning:view' },
+    { name: 'Compétences & Matrice 9-Box', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
+    { name: 'Processus & Workflows', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Règlement Intérieur & Politiques', path: '/policy-rules', icon: BookOpen, domain: 'Pilotage RH', permission: 'dashboard:view' },
+    { name: 'Documents & Signatures', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
+    { name: 'Diffusion WhatsApp RH', path: '/whatsapp-bot', icon: MessageSquare, domain: 'Pilotage RH', permission: 'dashboard:view' },
 
-    // ── INTELLIGENCE RH : ce qui se lit, jamais ce qui s'écrit ──
-    { name: t('sidebar.analytics', 'Analyses RH'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
-    { name: 'Absentéisme', path: '/absenteisme', icon: Activity, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
-    { name: 'Prévision des absences', path: '/prevision-absences', icon: CalendarRange, domain: 'Intelligence RH', permission: 'employees:edit' },
-    { name: 'Listes & exports', path: '/requeteur', icon: Grid, domain: 'Intelligence RH', permission: 'dashboard:view' },
-    { name: 'Historique daté', path: '/historique', icon: History, domain: 'Intelligence RH', permission: 'dashboard:view' },
-    { name: 'Équité salariale', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
-    { name: 'Simulateur de masse salariale', path: '/payroll-simulation', icon: Calculator, domain: 'Intelligence RH', permission: 'payroll:view' },
-    { name: 'Risque de départ', path: '/retention-center', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
-    { name: 'Santé d\'équipe', path: '/team-health', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view' },
-    // Absorbe l'ancien écran « Qualité de vie (QVT) », qui ne faisait que lire
-    // la même liste d'enquêtes sans permettre d'en créer ni d'y répondre.
-    { name: 'Baromètre social & eNPS', path: '/climate-surveys', icon: Inbox, domain: 'Intelligence RH', permission: 'dashboard:view' },
-    { name: 'Diversité & inclusion', path: '/dei-dashboard', icon: Users, domain: 'Intelligence RH', permission: 'dashboard:view' },
-    { name: 'Signalements', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' }
+    // ── INTELLIGENCE RH : Analyses, simulations et reporting ──
+    { name: t('sidebar.analytics', 'Tableaux de Bord RH'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
+    { name: 'Bilan Social Légal', path: '/bilan-social', icon: FileBarChart, domain: 'Intelligence RH', permission: 'payroll:view' },
+    { name: 'Générateur de Listes & Requêtes', path: '/requeteur', icon: Grid, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Audit & Historique Daté', path: '/historique', icon: History, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Équité Hommes / Femmes', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Climat Social & Baromètre', path: '/climate-surveys', icon: Inbox, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: Users, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Canal d\'Alerte & Éthique', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' }
 ];
 
 
