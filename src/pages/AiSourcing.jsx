@@ -272,6 +272,22 @@ function AiSourcingContent() {
                                                     ))}
                                                 </div>
                                             </div>
+
+                                            {res?.interviewQuestions && res.interviewQuestions.length > 0 && (
+                                                <div className="space-y-2 bg-indigo-50/70 p-3.5 rounded-xl border border-indigo-100 mt-2">
+                                                    <p className="text-[10px] font-black text-indigo-800 uppercase tracking-widest flex items-center gap-1.5">
+                                                        <BrainCircuit size={13} className="text-indigo-600" /> Questions d'Entretien Ciblées (IA)
+                                                    </p>
+                                                    <ul className="space-y-1.5 text-xs text-slate-700 font-medium">
+                                                        {res.interviewQuestions.map((q, qIdx) => (
+                                                            <li key={qIdx} className="flex items-start gap-1.5">
+                                                                <span className="text-indigo-600 font-bold shrink-0">Q{qIdx + 1}:</span>
+                                                                <span className="leading-snug text-slate-700">{q}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="pt-6 mt-auto border-t border-slate-100 flex gap-2">

@@ -1,7 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/authMiddleware');
-const { getPayrolls, getMyPayrolls, runPayroll, downloadPayslip, signPayroll, getPayslip, getExplication, getPrimeAnciennete, exportSage, getDeclaration, getCloture, cloturer, reouvrir, getPreparation, getDeclarationAnnuelle } = require('../controllers/payrollController');
+const { 
+    getPayrolls, 
+    getMyPayrolls, 
+    runPayroll, 
+    downloadPayslip, 
+    signPayroll, 
+    getPayslip, 
+    getExplication, 
+    getPrimeAnciennete, 
+    exportSage, 
+    exportDISA,
+    exportTaxSummary,
+    getDeclaration, 
+    getCloture, 
+    cloturer, 
+    reouvrir, 
+    getPreparation, 
+    getDeclarationAnnuelle 
+} = require('../controllers/payrollController');
 const requireRole = require('../middleware/roleMiddleware');
 const { traceAccess, cibles } = require('../middleware/accessTrace');
 
@@ -9,6 +27,8 @@ const { traceAccess, cibles } = require('../middleware/accessTrace');
 router.get('/', verifyToken, requireRole(['ADMIN', 'HR']), getPayrolls);
 router.post('/run', verifyToken, requireRole(['ADMIN', 'HR']), runPayroll);
 router.get('/export/sage', verifyToken, requireRole(['ADMIN', 'HR']), exportSage);
+router.get('/export/disa', verifyToken, requireRole(['ADMIN', 'HR']), exportDISA);
+router.get('/export/tax-summary', verifyToken, requireRole(['ADMIN', 'HR']), exportTaxSummary);
 
 // Ce que la prime d'ancienneté coûterait si elle était activée. Déclaré avec
 // les routes fixes : placé après /:id, il serait pris pour un identifiant.

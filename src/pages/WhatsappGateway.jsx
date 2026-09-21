@@ -37,6 +37,27 @@ export function WhatsappGateway() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [copie, setCopie] = useState(false);
+    const [broadcastMsg, setBroadcastMsg] = useState('');
+    const [broadcastTarget, setBroadcastTarget] = useState('ALL');
+    const [broadcastLoading, setBroadcastLoading] = useState(false);
+
+    const handleBroadcast = async () => {
+        if (!broadcastMsg.trim()) return;
+        setBroadcastLoading(true);
+        try {
+            await api.post('/whatsapp/broadcast', {
+                campaignTitle: 'Alerte RH',
+                message: broadcastMsg.trim(),
+                targetAudience: broadcastTarget
+            });
+            setBroadcastMsg('');
+            chargerLogs();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setBroadcastLoading(false);
+        }
+    };
 
     const chargerLogs = useCallback(async () => {
         const res = await api.get('/whatsapp/logs').catch(() => ({ data: null }));
@@ -238,11 +259,83 @@ export function WhatsappGateway() {
                         </CardContent>
                     </Card>
 
+                    {/* Campagnes de Diffusion Collective (Broadcast) */}
+                    <Card className="border border-blue-200 shadow-sm bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/30">
+                        <CardHeader className="p-5 border-b border-blue-100 flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <Send size={18} className="text-blue-600" /> Diffusion Collective (Broadcast WhatsApp & SMS)
+                                </CardTitle>
+                                <CardDescription className="text-xs text-slate-500 mt-0.5">
+                                    Envoyez une alerte générale ou un communiqué à tous les collaborateurs ou par département.
+                                </CardDescription>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-5 space-y-4">
+                            {/* Modèles d'annonces */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700">Modèles d'annonces rapides</label>
+                                <div className="grid grid-cols-3 gap-2 text-left">
+                                    {[
+                                        { title: "📢 Bulletins de paie disponibles", text: "Bonjour à tous, vos fiches de paie du mois sont dès à présent disponibles au guichet collaborateur. Tapez !paie pour recevoir votre PDF." },
+                                        { title: "🏥 Visite Médicale Obligatoire", text: "Rappel RH : La campagne de visite médicale annuelle a débuté. Veuillez confirmer votre disponibilité auprès de l'infirmerie." },
+                                        { title: "🌴 Fermeture Pont & Férié", text: "Chers collaborateurs, l'entreprise sera fermée ce vendredi à l'occasion du pont officiel. Reprise normale lundi à 8h." }
+                                    ].map((m, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setBroadcastMsg(m.text)}
+                                            className="p-2.5 rounded-xl border border-blue-100 bg-white hover:bg-blue-50/80 transition-all text-left text-xs font-medium text-slate-700 group hover:border-blue-300"
+                                        >
+                                            {tpl.title}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-700">Message à diffuser *</label>
+                                <textarea
+                                    value={broadcastMsg}
+                                    onChange={e => setBroadcastMsg(e.target.value)}
+                                    placeholder="Rédigez votre communiqué officiel..."
+                                    className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs h-24 outline-none focus:border-blue-500 font-medium"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between pt-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-slate-500">Cible :</span>
+                                    <select
+                                        value={broadcastTarget}
+                                        onChange={e => setBroadcastTarget(e.target.value)}
+                                        className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none"
+                                    >
+                                        <option value="ALL">Tous les Collaborateurs</option>
+                                        <option value="Tech / IT">Tech / IT</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Opérations">Opérations</option>
+                                        <option value="Finance">Finance & RH</option>
+                                    </select>
+                                </div>
+                                <Button
+                                    onClick={handleBroadcast}
+                                    disabled={broadcastLoading || !broadcastMsg.trim()}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold h-10 px-5 rounded-xl flex items-center gap-1.5 shadow-md shadow-blue-500/20"
+                                >
+                                    <Send size={14} /> Diffuser la Campagne
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Command Audit Log */}
                     <Card className="border border-slate-200 shadow-sm bg-white">
                         <CardHeader className="p-5 border-b border-slate-100">
                             <CardTitle className="text-base font-bold text-slate-900 flex items-center justify-between">
-                                <span>Journal des messages</span>
-                                <Button variant="outline" size="sm" onClick={chargerLogs} className="gap-1 text-xs">
+                                <span>Journal d'Activité des Commandes & Campagnes</span>
+                                <Button variant="outline" size="sm" onClick={fetchLogs} className="gap-1 text-xs">
+>>>>>>> 23098c5 (feat: Add DISA/Tax declarations, HR Command Center, WhatsApp broadcast, and AI interview questions)
                                     <RefreshCw size={12} /> Actualiser
                                 </Button>
                             </CardTitle>
@@ -269,6 +362,11 @@ export function WhatsappGateway() {
                                                 {log.status === 'ERROR' ? 'Échec' : log.delivered ? 'Remis' : 'Non remis'}
                                             </Badge>
                                         </div>
+                                        {log.status === 'BROADCAST_SENT' && (
+                                            <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">
+                                                Campagne Diffusée
+                                            </Badge>
+                                        )}
                                     </div>
                                 )) : (
                                     <div className="p-6 text-center text-slate-400 text-xs">Aucun message enregistré</div>

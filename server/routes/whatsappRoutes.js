@@ -12,5 +12,6 @@ router.post('/webhook', whatsappController.recevoirWebhook);
 router.get('/configuration', verifyToken, whatsappController.getConfiguration);
 router.post('/command', verifyToken, whatsappController.executeCommand);
 router.get('/logs', verifyToken, whatsappController.getLogs);
+router.post('/broadcast', verifyToken, whatsappController.broadcastMessage);
 
 module.exports = router;

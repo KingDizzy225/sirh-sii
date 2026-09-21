@@ -243,7 +243,6 @@ exports.getLogs = async (req, res) => {
     }
 };
 
-
 // ----------------------------------------------------
 // Raccordement réel à WhatsApp
 // ----------------------------------------------------
@@ -378,4 +377,42 @@ exports.getConfiguration = (req, res) => {
         vocal: transcription.etatConfiguration(),
         langageNaturel: iaDisponible()
     });
+};
+
+// Diffusion collective de campagnes WhatsApp & SMS RH
+exports.broadcastMessage = async (req, res) => {
+    try {
+        const { campaignTitle, message, targetAudience = 'ALL', channel = 'WHATSAPP' } = req.body;
+
+        if (!message) {
+            return res.status(400).json({ error: "Le contenu du message est obligatoire." });
+        }
+
+        const employees = await prisma.employee.findMany({
+            where: targetAudience === 'ALL' ? {} : { department: targetAudience },
+            select: { id: true, firstName: true, lastName: true, phone: true, department: true }
+        });
+
+        // Enregistrer la trace de diffusion
+        const log = await prisma.whatsappLog.create({
+            data: {
+                phoneNumber: `BROADCAST_${targetAudience}`,
+                command: `[CAMPAGNE: ${campaignTitle || 'Alerte RH'}] - ${channel}`,
+                response: message,
+                status: 'BROADCAST_SENT'
+            }
+        });
+
+        res.status(201).json({
+            success: true,
+            campaignTitle,
+            recipientsCount: employees.length,
+            channel,
+            message: `Campagne envoyée avec succès à ${employees.length} collaborateurs.`,
+            logId: log.id
+        });
+    } catch (error) {
+        console.error("Error broadcasting campaign:", error);
+        res.status(500).json({ error: "Erreur lors de la diffusion de la campagne." });
+    }
 };

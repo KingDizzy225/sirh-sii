@@ -531,6 +531,8 @@ export function Payroll() {
                     { id: 'declaration', label: 'Déclarations Sociales', icon: Landmark, hidden: !isHR },
                     { id: 'campaign', label: "Simulation d'augmentations", icon: PiggyBank, hidden: !isHR },
                     { id: 'advances', label: 'Avances sur Salaire', icon: Banknote, hidden: !isHR },
+                    { id: 'expenses', label: 'Notes de Frais', icon: Receipt, hidden: !isHR },
+                    { id: 'declarations', label: 'Déclarations Fiscales (CI)', icon: Calculator, hidden: !isHR },
                 ].map(tab => {
                     if (tab.hidden) return null;
                     const Icon = tab.icon;
@@ -1434,6 +1436,209 @@ export function Payroll() {
                     </div>
                 )}
 
+                {/* 6. NOTES DE FRAIS */}
+                {isHR && activeTab === 'expenses' && (
+                    <div className="space-y-6">
+                        {/* KPIs */}
+                        <div className="grid gap-4 md:grid-cols-4">
+                            {[
+                                { label: 'En Attente', count: expensesData.filter(e => e.status === 'pending').length, amount: expensesData.filter(e => e.status === 'pending').reduce((s, e) => s + e.amount, 0), color: 'amber', icon: Clock },
+                                { label: 'Approuvées', count: expensesData.filter(e => e.status === 'approved').length, amount: expensesData.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0), color: 'emerald', icon: CheckCheck },
+                                { label: 'Rejetées', count: expensesData.filter(e => e.status === 'rejected').length, amount: 0, color: 'rose', icon: XCircle },
+                                { label: 'Total Mois', count: expensesData.length, amount: expensesData.reduce((s, e) => s + e.amount, 0), color: 'indigo', icon: Receipt },
+                            ].map(kpi => (
+                                <Card key={kpi.label} className="border-none shadow-sm bg-white">
+                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                        <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest">{kpi.label}</CardTitle>
+                                        <kpi.icon className={`h-4 w-4 text-${kpi.color}-500`} />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className={`text-2xl font-black text-${kpi.color}-600`}>{kpi.count}</div>
+                                        {kpi.amount > 0 && <p className="text-xs text-slate-400 mt-1">{formatCurrency(kpi.amount)}</p>}
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+
+                        <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                            <CardHeader className="py-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div>
+                                    <CardTitle className="text-sm font-bold text-slate-800">Notes de Frais Professionnels</CardTitle>
+                                    <CardDescription>Validez et remboursez les frais professionnels soumis par les collaborateurs via le portail employé.</CardDescription>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                    <Filter size={14} className="text-slate-400" />
+                                    <select
+                                        value={expensesFilter}
+                                        onChange={e => setExpensesFilter(e.target.value)}
+                                        className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    >
+                                        <option value="all">Tous</option>
+                                        <option value="pending">En attente</option>
+                                        <option value="approved">Approuvées</option>
+                                        <option value="rejected">Rejetées</option>
+                                    </select>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-0 overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50/30">
+                                            <TableHead>Réf.</TableHead>
+                                            <TableHead>Employé</TableHead>
+                                            <TableHead>Catégorie</TableHead>
+                                            <TableHead>Description</TableHead>
+                                            <TableHead>Montant</TableHead>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Justificatif</TableHead>
+                                            <TableHead>Statut</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="text-xs">
+                                        {expensesData
+                                            .filter(e => expensesFilter === 'all' || e.status === expensesFilter)
+                                            .map(exp => (
+                                            <TableRow key={exp.id} className="hover:bg-slate-50/30 font-semibold">
+                                                <td className="p-4 font-mono text-indigo-700 font-bold">{exp.id}</td>
+                                                <td className="p-4 font-bold text-slate-800">{exp.employee}</td>
+                                                <td className="p-4">
+                                                    <Badge variant="outline" className="text-[10px] font-bold border-slate-200 text-slate-600">{exp.category}</Badge>
+                                                </td>
+                                                <td className="p-4 text-slate-500 max-w-[180px] truncate">{exp.description}</td>
+                                                <td className="p-4 font-black text-slate-900">{formatCurrency(exp.amount)}</td>
+                                                <td className="p-4 text-slate-400">{new Date(exp.date).toLocaleDateString('fr-FR')}</td>
+                                                <td className="p-4">
+                                                    {exp.receipt
+                                                        ? <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">✓ Fourni</Badge>
+                                                        : <Badge className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">✗ Manquant</Badge>
+                                                    }
+                                                </td>
+                                                <td className="p-4">
+                                                    <Badge className={cn(
+                                                        'text-[10px] font-bold border',
+                                                        exp.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                        exp.status === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                                        'bg-amber-50 text-amber-700 border-amber-200'
+                                                    )}>
+                                                        {exp.status === 'approved' ? 'Approuvée' : exp.status === 'rejected' ? 'Rejetée' : 'En attente'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    {exp.status === 'pending' && (
+                                                        <div className="flex gap-1.5 justify-end">
+                                                            <Button
+                                                                onClick={() => handleExpenseAction(exp.id, 'approved')}
+                                                                disabled={!exp.receipt}
+                                                                size="sm"
+                                                                className="h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg disabled:opacity-40"
+                                                            >
+                                                                <CheckCheck size={12} className="mr-1" /> Valider
+                                                            </Button>
+                                                            <Button
+                                                                onClick={() => handleExpenseAction(exp.id, 'rejected')}
+                                                                size="sm"
+                                                                className="h-7 px-2.5 bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-bold rounded-lg"
+                                                            >
+                                                                <XCircle size={12} className="mr-1" /> Rejeter
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {exp.status !== 'pending' && <span className="text-slate-300 text-[10px] font-bold">Traité</span>}
+                                                </td>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
+                {/* 7. DÉCLARATIONS FISCALES & SOCIALES (COTE D'IVOIRE) */}
+                {activeTab === 'declarations' && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            {/* DISA CNPS */}
+                            <Card className="border-slate-200 shadow-md bg-gradient-to-br from-blue-900 to-indigo-950 text-white rounded-2xl overflow-hidden flex flex-col justify-between">
+                                <CardHeader className="p-6">
+                                    <Badge className="w-fit bg-blue-500/20 text-blue-300 border-blue-400/30 text-xs font-bold mb-3">
+                                        CNPS Côte d'Ivoire
+                                    </Badge>
+                                    <CardTitle className="text-xl font-black text-white">DISA Annuelle</CardTitle>
+                                    <CardDescription className="text-blue-200/80 text-xs mt-2">
+                                        Déclaration Individuelle des Salaires Annuels conforme au format officiel de la Caisse Nationale de Prévoyance Sociale.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-6 pt-0 space-y-4">
+                                    <div className="p-3 bg-white/10 rounded-xl text-xs space-y-1">
+                                        <p>• Cotisations Salariales (6.3%)</p>
+                                        <p>• Cotisations Patronales (7.7%)</p>
+                                        <p>• Prestations Familiales & AT</p>
+                                    </div>
+                                    <Button 
+                                        onClick={() => window.open(`${API_URL}/api/payrolls/export/disa?token=${token}`, '_blank')}
+                                        className="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold h-12 rounded-xl shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        <Download size={18} /> Télécharger DISA (CSV/Excel)
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            {/* FDFP & ITS DGI */}
+                            <Card className="border-slate-200 shadow-md bg-gradient-to-br from-emerald-900 to-teal-950 text-white rounded-2xl overflow-hidden flex flex-col justify-between">
+                                <CardHeader className="p-6">
+                                    <Badge className="w-fit bg-emerald-500/20 text-emerald-300 border-emerald-400/30 text-xs font-bold mb-3">
+                                        DGI & FDFP
+                                    </Badge>
+                                    <CardTitle className="text-xl font-black text-white">ITS & FDFP Mensuel</CardTitle>
+                                    <CardDescription className="text-emerald-200/80 text-xs mt-2">
+                                        État récapitulatif fiscal de l'Impôt sur Traitements et Salaires et des contributions FDFP (Taxe d'apprentissage 0.4% + Formation continue 0.6%).
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-6 pt-0 space-y-4">
+                                    <div className="p-3 bg-white/10 rounded-xl text-xs space-y-1">
+                                        <p>• Impôt ITS progressif CI</p>
+                                        <p>• Taxe Apprentissage FDFP (0.4%)</p>
+                                        <p>• Formation Continue FDFP (0.6%)</p>
+                                    </div>
+                                    <Button 
+                                        onClick={() => window.open(`${API_URL}/api/payrolls/export/tax-summary?token=${token}`, '_blank')}
+                                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold h-12 rounded-xl shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        <Download size={18} /> Télécharger État DGI (CSV)
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            {/* Sage Paie & Comptabilité */}
+                            <Card className="border-slate-200 shadow-md bg-gradient-to-br from-purple-900 to-slate-950 text-white rounded-2xl overflow-hidden flex flex-col justify-between">
+                                <CardHeader className="p-6">
+                                    <Badge className="w-fit bg-purple-500/20 text-purple-300 border-purple-400/30 text-xs font-bold mb-3">
+                                        Comptabilité
+                                    </Badge>
+                                    <CardTitle className="text-xl font-black text-white">Sage Ligne 100</CardTitle>
+                                    <CardDescription className="text-purple-200/80 text-xs mt-2">
+                                        Format d'intégration bancaire et comptable pour le logiciel Sage Paie (Rubriques 1000, 2000, 4000).
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-6 pt-0 space-y-4">
+                                    <div className="p-3 bg-white/10 rounded-xl text-xs space-y-1">
+                                        <p>• Codes rubriques standardisés</p>
+                                        <p>• Journal des écritures de paie</p>
+                                        <p>• Intégration comptable directe</p>
+                                    </div>
+                                    <Button 
+                                        onClick={handleExportSage}
+                                        className="w-full bg-purple-500 hover:bg-purple-400 text-white font-bold h-12 rounded-xl shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        <Download size={18} /> Exporter Sage PNM
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                )}
             </div>
         
             {/* Lien de remise produit.
