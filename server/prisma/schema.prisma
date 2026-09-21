@@ -127,6 +127,18 @@ model Employee {
   preAccueil           PreAccueil?             @relation("PreAccueilSalarie")
   preAccueilsEncadres  PreAccueil[]            @relation("PreAccueilResponsable")
   livresDor            LivreDor[]
+  /// Catégorie et échelon de la convention collective : c'est d'eux que
+  /// dépend le salaire minimum opposable.
+  categorieConvention String? @map("categorie_convention")
+  echelonConvention   String? @map("echelon_convention")
+  /// Prime de transport mensuelle, reprise à chaque paie.
+  primeTransport      Float?  @map("prime_transport")
+
+  avantages            AvantageNature[]
+  mandats              MandatDelegue[]
+  conventionStage      ConventionStage?        @relation("StagiaireConvention")
+  stagiairesEncadres   ConventionStage[]       @relation("TuteurStage")
+  lignesVirement       LigneVirement[]
   passationsRedigees   Passation[]             @relation("PassationsRedigees")
   elementsResolus      ElementPassation[]      @relation("ElementsPassationResolus")
   acquittements        AcquittementPassation[]
@@ -195,6 +207,13 @@ model Payroll {
   /// Colonne distincte et non fondue dans `bonus` : elle doit figurer sur son
   /// propre poste au bulletin.
   primeAnciennete Float? @map("prime_anciennete")
+  /// Prime de transport versée, et sa part imposable au-delà du plafond.
+  primeTransport           Float? @map("prime_transport")
+  primeTransportImposable  Float? @map("prime_transport_imposable")
+  /// Avantages en nature : leur valeur entre dans l'assiette mais n'est pas
+  /// versée en espèces — elle se retranche donc du net à payer.
+  avantagesNature          Float? @map("avantages_nature")
+  avantagesNatureDetail    Json?  @map("avantages_nature_detail")
   pdfPath               String?   @map("pdf_path")
   signature             String? // Base64 signature
   signedAt              DateTime? @map("signed_at")
@@ -2284,4 +2303,191 @@ model ExecutionSonde {
 
   @@index([lanceeLe])
   @@map("execution_sonde")
+}
+
+/// Avantage en nature accordé à un salarié : logement, véhicule, domesticité…
+///
+/// Sa valeur entre dans l'assiette des cotisations et de l'impôt, mais n'est
+/// pas versée : le salarié la reçoit en nature. Aucun barème n'est inscrit en
+/// dur — les montants sont ceux que l'employeur retient, sous sa responsabilité.
+model AvantageNature {
+  id             String    @id @default(uuid())
+  employeeId     String    @map("employee_id")
+  /// LOGEMENT | VEHICULE | DOMESTICITE | ELECTRICITE | EAU | NOURRITURE | AUTRE
+  type           String
+  montantMensuel Float     @map("montant_mensuel")
+  debut          DateTime
+  fin            DateTime?
+  note           String?   @db.Text
+  creeLe         DateTime  @default(now()) @map("cree_le")
+  creePar        String?   @map("cree_par")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, debut])
+  @@map("avantage_nature")
+}
+
+/// Grille de la convention collective : le minimum opposable par catégorie.
+model GrilleConvention {
+  id             String   @id @default(uuid())
+  convention     String
+  categorie      String
+  echelon        String   @default("—")
+  salaireMinimum Float    @map("salaire_minimum")
+  ordre          Int      @default(0)
+  actif          Boolean  @default(true)
+  creeLe         DateTime @default(now()) @map("cree_le")
+  creePar        String?  @map("cree_par")
+
+  @@unique([convention, categorie, echelon])
+  @@map("grille_convention")
+}
+
+/// Format de fichier attendu par la banque, décrit plutôt que codé.
+///
+/// Chaque banque a le sien. Le jour où elle remet sa spécification, c'est
+/// cette description qu'on modifie — pas le programme.
+model FormatVirement {
+  id          String   @id @default(uuid())
+  nom         String   @unique
+  /// CSV | FIXE
+  type        String   @default("CSV")
+  separateur  String   @default(";")
+  extension   String   @default("csv")
+  /// Colonnes : [{ champ, titre, largeur?, alignement?, format? }]
+  colonnes    Json
+  entete      Json?
+  pied        Json?
+  actif       Boolean  @default(true)
+  creeLe      DateTime @default(now()) @map("cree_le")
+  creePar     String?  @map("cree_par")
+
+  lots LotVirement[]
+
+  @@map("format_virement")
+}
+
+/// Lot de virements : l'ordre de paiement remis à la banque.
+model LotVirement {
+  id            String    @id @default(uuid())
+  periode       String
+  /// PREPARE | EMIS | ANNULE
+  statut        String    @default("PREPARE")
+  formatId      String?   @map("format_id")
+  formatNom     String    @map("format_nom")
+  nombreLignes  Int       @map("nombre_lignes")
+  montantTotal  Float     @map("montant_total")
+  /// Empreinte du fichier remis : de quoi prouver qu'il n'a pas changé après coup.
+  empreinte     String?
+  creeLe        DateTime  @default(now()) @map("cree_le")
+  creePar       String?   @map("cree_par")
+  emisLe        DateTime? @map("emis_le")
+  emisPar       String?   @map("emis_par")
+  annuleLe      DateTime? @map("annule_le")
+  annuleMotif   String?   @map("annule_motif") @db.Text
+
+  format FormatVirement? @relation(fields: [formatId], references: [id], onDelete: SetNull)
+  lignes LigneVirement[]
+
+  @@index([periode, creeLe])
+  @@map("lot_virement")
+}
+
+model LigneVirement {
+  id         String  @id @default(uuid())
+  lotId      String  @map("lot_id")
+  employeeId String  @map("employee_id")
+  payrollId  String? @map("payroll_id")
+  nom        String
+  banque     String?
+  compte     String
+  montant    Float
+  reference  String
+
+  lot      LotVirement @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  employee Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+  @@map("ligne_virement")
+}
+
+/// Élection des délégués du personnel.
+model Scrutin {
+  id           String   @id @default(uuid())
+  date         DateTime
+  tour         Int      @default(1)
+  /// UNIQUE | CADRES | AGENTS | OUVRIERS
+  college      String   @default("UNIQUE")
+  inscrits     Int
+  votants      Int
+  observations String?  @db.Text
+  creeLe       DateTime @default(now()) @map("cree_le")
+  creePar      String?  @map("cree_par")
+
+  mandats MandatDelegue[]
+
+  @@index([date])
+  @@map("scrutin")
+}
+
+/// Mandat d'un délégué du personnel, titulaire ou suppléant.
+model MandatDelegue {
+  id                String    @id @default(uuid())
+  employeeId        String    @map("employee_id")
+  scrutinId         String?   @map("scrutin_id")
+  college           String    @default("UNIQUE")
+  /// TITULAIRE | SUPPLEANT
+  qualite           String    @default("TITULAIRE")
+  debut             DateTime
+  fin               DateTime
+  finAnticipeeLe    DateTime? @map("fin_anticipee_le")
+  finAnticipeeMotif String?   @map("fin_anticipee_motif")
+  creeLe            DateTime  @default(now()) @map("cree_le")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  scrutin  Scrutin? @relation(fields: [scrutinId], references: [id], onDelete: SetNull)
+
+  @@index([fin])
+  @@map("mandat_delegue")
+}
+
+/// Réunion mensuelle avec les délégués : la tenir est une obligation, en
+/// garder trace aussi.
+model ReunionDelegues {
+  id           String   @id @default(uuid())
+  date         DateTime
+  objet        String
+  compteRendu  String?  @map("compte_rendu") @db.Text
+  presents     Json?
+  creeLe       DateTime @default(now()) @map("cree_le")
+  creePar      String?  @map("cree_par")
+
+  @@index([date])
+  @@map("reunion_delegues")
+}
+
+/// Convention de stage ou contrat d'apprentissage.
+///
+/// Un stagiaire n'est pas un salarié : sa gratification n'est pas un salaire,
+/// son tuteur est désigné, et il ne compte pas dans l'effectif qui déclenche
+/// l'élection des délégués.
+model ConventionStage {
+  id                    String   @id @default(uuid())
+  employeeId            String   @unique @map("employee_id")
+  ecole                 String?
+  niveau                String?
+  tuteurId              String?  @map("tuteur_id")
+  debut                 DateTime
+  fin                   DateTime
+  gratificationMensuelle Float   @default(0) @map("gratification_mensuelle")
+  objet                 String?  @db.Text
+  creeLe                DateTime @default(now()) @map("cree_le")
+  creePar               String?  @map("cree_par")
+
+  employee Employee  @relation("StagiaireConvention", fields: [employeeId], references: [id], onDelete: Cascade)
+  tuteur   Employee? @relation("TuteurStage", fields: [tuteurId], references: [id], onDelete: SetNull)
+
+  @@index([fin])
+  @@map("convention_stage")
 }

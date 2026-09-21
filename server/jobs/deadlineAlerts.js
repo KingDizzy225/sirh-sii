@@ -4,6 +4,7 @@ const { notifierRH } = require('../lib/notify');
 const { PAR_CODE: PIECES_PAR_CODE } = require('../lib/sousTraitance');
 const { decrire: decrireProcedure } = require('../controllers/procedureController');
 const cdd = require('../lib/cdd');
+const delegues = require('../lib/delegues');
 
 const DAYS_AHEAD = parseInt(process.env.ALERT_DAYS_AHEAD || '30', 10);
 
@@ -158,6 +159,31 @@ async function scanDeadlines(referenceDate = new Date()) {
             await notifyHR(`${s.firstName} ${s.lastName} — ${situation.message}`, 'Alerte', '/cdd');
         }
         summary.push(`${enCdd.length} CDD dont ${exposes} exposé(s) à une requalification`);
+
+        // 7. Délégués du personnel
+        //
+        // Un mandat s'achève sans bruit, et l'obligation d'organiser le scrutin
+        // se découvre au contrôle. Les manques sont déjà calculés pour l'écran ;
+        // il suffisait de les faire remonter.
+        const situationDelegues = await delegues.situation(referenceDate);
+        for (const manque of situationDelegues.manques) {
+            await notifyHR(manque.texte, manque.code === 'REUNION_ABSENTE' ? 'Info' : 'Alerte', '/delegues');
+        }
+        summary.push(`délégués : ${situationDelegues.manques.length} point(s) à traiter`);
+
+        // 8. Conventions de stage arrivant à terme
+        const stages = await prisma.conventionStage.findMany({
+            where: { fin: { gte: referenceDate, lte: horizon }, employee: { status: { not: 'TERMINATED' } } },
+            include: { employee: { select: { firstName: true, lastName: true } } }
+        });
+        for (const convention of stages) {
+            await notifyHR(
+                `Le stage de ${convention.employee.firstName} ${convention.employee.lastName} s'achève le ${formatDate(convention.fin)}. `
+                + "Prévoir l'attestation de fin de stage, ou l'embauche.",
+                'Info', '/stages'
+            );
+        }
+        summary.push(`${stages.length} stage(s) à leur terme`);
 
         return summary.join(', ') + ` (horizon ${DAYS_AHEAD} jours)`;
     });

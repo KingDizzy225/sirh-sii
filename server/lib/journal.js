@@ -124,7 +124,14 @@ async function verifier({ depuisNumero = 0, limite = 100000 } = {}) {
         attendu = ligne.numero + 1;
     }
 
-    const ancrages = await prisma.ancrageAudit.findMany({ orderBy: { ancreLe: 'desc' }, take: 50 });
+    // Les ancrages antérieurs à la plage examinée ne s'y vérifient pas : les
+    // contrôler quand même ferait porter à cette vérification le poids de
+    // lignes qu'on n'a pas lues.
+    const ancrages = await prisma.ancrageAudit.findMany({
+        where: { numero: { gt: depuisNumero } },
+        orderBy: { ancreLe: 'desc' },
+        take: 50
+    });
     const rompus = [];
     for (const ancrage of ancrages) {
         const ligne = await prisma.auditLog.findUnique({ where: { numero: ancrage.numero }, select: { empreinte: true } });

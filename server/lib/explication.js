@@ -82,6 +82,30 @@ function composition(bulletin) {
         });
     }
 
+    if (arrondir(d.primeTransport) > 0) {
+        const imposable = arrondir(d.primeTransportImposable);
+        lignes.push({
+            libelle: 'Prime de transport',
+            montant: arrondir(d.primeTransport),
+            sens: 'credit',
+            explication: imposable > 0
+                ? `Exonérée jusqu'à ${paie.TAUX.transportPlafondExonere} FCFA ; ${imposable} FCFA au-delà entrent dans le brut.`
+                : "Versée sans cotisation ni impôt : elle n'entre pas dans le brut."
+        });
+    }
+
+    if (arrondir(d.avantagesNature) > 0) {
+        const detail = Array.isArray(d.avantagesNatureDetail) ? d.avantagesNatureDetail : [];
+        lignes.push({
+            libelle: 'Avantages en nature',
+            montant: arrondir(d.avantagesNature),
+            sens: 'credit',
+            explication: (detail.length ? `${detail.map((a) => a.type.toLowerCase()).join(', ')}. ` : '')
+                + "Vous les recevez en nature, pas en argent : leur valeur entre dans le brut pour les cotisations, "
+                + 'puis se retranche du net à payer.'
+        });
+    }
+
     if (arrondir(d.leaveDeduction) > 0) {
         lignes.push({
             libelle: 'Absences',

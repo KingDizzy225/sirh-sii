@@ -1046,6 +1046,81 @@ DATABASE_URL="postgresql://…/sirh_ecole" npm run anonymiser -- --confirmer --m
   WhatsApp, notifications.
 - **Ne copiez pas `uploads/`** : les fichiers, eux, ne sont pas anonymisés.
 
+## Transport, avantages, grille, virements, délégués, stages
+
+### Prime de transport et avantages en nature (Pilotage RH → Transport & avantages)
+
+Le bulletin ne connaissait qu'une ligne « primes », fourre-tout.
+
+| Élément | Traitement |
+|---|---|
+| Prime de transport | exonérée jusqu'à `TRANSPORT_PLAFOND_EXONERE` (30 000 par défaut) ; l'excédent entre dans le brut |
+| Avantages en nature | entrent entièrement dans le brut, puis **se retranchent du net à payer** — reçus en nature, pas en argent |
+
+- La prime se saisit une fois par salarié ; les avantages ont une date de début
+  et, le cas échéant, de fin. La paie les reprend d'elle-même chaque mois.
+- **À faire confirmer par le cabinet** : le plafond d'exonération et la valeur
+  retenue pour chaque avantage. L'application n'inscrit aucun barème : les
+  montants sont ceux que l'employeur retient, sous sa responsabilité.
+- Le bulletin explique désormais ces deux lignes au salarié.
+
+### Grille conventionnelle (Pilotage RH → Grille conventionnelle)
+
+Saisir la grille (convention, catégorie, échelon, minimum), puis affecter une
+catégorie à chaque salarié. L'écran liste les salaires sous le minimum, et la
+paie les signale parmi les écarts — sans bloquer : une régularisation peut être
+en cours, mais elle ne passe plus inaperçue.
+
+- Le **minimum légal** se déclare par `SMIG_MENSUEL`. Non posé, seuls les
+  salariés dotés d'une catégorie sont contrôlés ; l'écran le dit.
+- Le plus élevé des deux minima l'emporte.
+- Retirer une ligne ne l'efface pas : un minimum passé explique un salaire passé.
+
+### Virements des salaires (Pilotage RH → Virements des salaires)
+
+1. Choisir la période : l'écran annonce les virements et les salariés écartés
+   (sans compte bancaire, net nul, bulletin déjà payé), et signale deux
+   salariés sur un même compte.
+2. **Préparer le lot**, puis **Fichier** : le fichier est produit et son
+   empreinte figée — de quoi prouver que ce qui a été remis à la banque est
+   bien ce que l'application a produit.
+3. **Marquer émis** : c'est **le seul endroit** où un bulletin passe à « payé ».
+4. **Annuler** (avec motif) rend les bulletins à l'état approuvé. Prévenez la
+   banque si le fichier lui a déjà été remis.
+
+**Le format n'est pas codé, il est décrit** : colonnes, ordre, séparateur,
+largeurs, en-tête, pied. À défaut, un CSV générique sort. Le jour où la banque
+remet sa spécification, elle se saisit — le programme ne change pas.
+
+### Délégués du personnel (Employés → Délégués du personnel)
+
+Scrutins, mandats, réunions, et les manques à traiter : absence de délégués
+au-delà du seuil, mandats proches du terme, réunion trop ancienne. Les alertes
+partent avec les échéances quotidiennes.
+
+| Variable | Rôle |
+|---|---|
+| `DELEGUES_SEUIL_EFFECTIF` | effectif déclenchant l'obligation (11 par défaut, **à confirmer**) |
+| `DELEGUES_DUREE_MANDAT_MOIS` | durée du mandat (24 par défaut) |
+| `DELEGUES_PREAVIS_JOURS` | préavis de renouvellement (90) |
+| `DELEGUES_BAREME` | nombre de délégués par tranche, fixé par arrêté — **non renseigné par défaut** |
+
+Sans barème, l'application suit les mandats sans annoncer combien de délégués
+vous devez avoir : un chiffre inventé serait pris pour vrai. Les stagiaires et
+apprentis ne comptent pas dans l'effectif retenu.
+
+### Stagiaires et apprentis (Employés → Stagiaires & apprentis)
+
+Convention (école, niveau, tuteur, dates, gratification) rattachée à un
+salarié déjà créé. Le type de contrat devient `STAGE` ou `APPRENTISSAGE`, le
+terme alimente les alertes d'échéance, et l'intéressé sort de l'effectif des
+délégués.
+
+**Ce que l'application ne tranche pas** : le régime social et fiscal de la
+gratification. Elle la traite comme une rémunération ordinaire — cotisations et
+impôt — et l'écran le dit. Si votre cabinet retient une exonération, ajustez
+en conséquence.
+
 ## Récapitulatif annuel des salaires (DISA, ITS)
 
 Onglet *Déclarations sociales*, sous la déclaration du mois. Cumuls de l'année

@@ -182,6 +182,11 @@ app.use('/api/emargements', verifyToken, require('./routes/emargementRoutes'));
 app.use('/api/identite', verifyToken, require('./routes/identiteRoutes'));
 app.use('/api/previsions', verifyToken, require('./routes/previsionRoutes'));
 app.use('/api/sonde', verifyToken, require('./routes/sondeRoutes'));
+app.use('/api/grille', verifyToken, require('./routes/grilleRoutes'));
+app.use('/api/virements', verifyToken, require('./routes/virementRoutes'));
+app.use('/api/delegues', verifyToken, require('./routes/delegueRoutes'));
+app.use('/api/stages', verifyToken, require('./routes/stageRoutes'));
+app.use('/api/avantages', verifyToken, require('./routes/avantageRoutes'));
 
 // L'identité de l'entreprise est lue partout de façon synchrone : on la charge dès le démarrage.
 require('./lib/identite').rafraichir();

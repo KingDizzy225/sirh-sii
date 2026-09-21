@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
 const { calculerPaie, decomposer, intervalleMois, TAUX } = require('../lib/paie');
+const grille = require('../lib/grille');
 const paie = require('../lib/paie');
 const explication = require('../lib/explication');
 const { salaireConnu } = require('../lib/demographie');
@@ -371,6 +372,8 @@ const runPayroll = async (req, res) => {
         const employeeIds = payrolls.map(p => p.employeeId);
         const employees = await prisma.employee.findMany({ where: { id: { in: employeeIds } } });
         const employeeMap = employees.reduce((acc, emp) => { acc[emp.id] = emp; return acc; }, {});
+        // Grille lue une fois pour toute la paie, pas une fois par bulletin.
+        const grilleEnVigueur = await grille.indexer();
         
         const ecarts = [];
         const auteur = req.user?.name || req.user?.email || null;
@@ -420,6 +423,26 @@ const runPayroll = async (req, res) => {
             p.baseSalary = transmis != null ? transmis : reference.montant;
 
             /**
+             * Minimum conventionnel.
+             *
+             * Un salaire sous le minimum de sa catégorie ne se voyait qu'au
+             * contrôle de l'inspection, avec les rappels. Il est signalé ici,
+             * au même endroit que les écarts de rémunération : la paie n'est
+             * pas bloquée — une régularisation peut être en cours — mais elle
+             * ne passe plus sans que personne ne l'ait vu.
+             */
+            const conformite = grille.controler(employee, p.baseSalary, grilleEnVigueur);
+            if (!conformite.conforme) {
+                ecarts.push({
+                    employeeId: employee.id,
+                    nom: `${employee.lastName} ${employee.firstName}`.trim(),
+                    reference: conformite.minimum,
+                    transmis: p.baseSalary,
+                    motif: conformite.motif
+                });
+            }
+
+            /**
              * Échéance de prêt due sur cette période.
              *
              * Elle s'ajoute aux retenues du bulletin. Sans cette lecture, un
@@ -449,8 +472,30 @@ const runPayroll = async (req, res) => {
             // part patronale au lieu des retenues du salarié : sur un brut de
             // 500 000 FCFA, la base enregistrait 425 000 quand le bulletin
             // remis au salarié affichait 393 325.
+            /**
+             * Prime de transport et avantages en nature.
+             *
+             * Ils tiennent au contrat, pas à la saisie du mois : le montant
+             * vient de la fiche du salarié et des avantages en cours à la
+             * période, sauf si la paie en fournit un explicitement. Sans cette
+             * lecture, une prime de transport accordée une fois devrait être
+             * ressaisie chaque mois — et serait oubliée.
+             */
+            const avantagesEnCours = await prisma.avantageNature.findMany({
+                where: {
+                    employeeId: employee.id,
+                    debut: { lte: new Date(p.period) },
+                    OR: [{ fin: null }, { fin: { gte: new Date(p.period) } }]
+                },
+                select: { type: true, montantMensuel: true }
+            });
+
             const bulletin = calculerPaie({
                 baseSalary: p.baseSalary,
+                primeTransport: p.primeTransport ?? employee.primeTransport ?? 0,
+                avantagesNature: Array.isArray(p.avantagesNature)
+                    ? p.avantagesNature
+                    : avantagesEnCours.map((a) => ({ type: a.type, montant: a.montantMensuel })),
                 bonus: p.bonus,
                 overtimeHours: p.overtimeHours,
                 // Ventilation par majoration, quand elle est connue (pointages).

@@ -70,7 +70,17 @@ const TAUX = {
      */
     primeAncienneteTaux: nombre(process.env.PRIME_ANCIENNETE_TAUX, 0.01),
     primeAncienneteSeuilAnnees: nombre(process.env.PRIME_ANCIENNETE_SEUIL_ANNEES, 2),
-    primeAnciennetePlafondAnnees: nombre(process.env.PRIME_ANCIENNETE_PLAFOND_ANNEES, 25)
+    primeAnciennetePlafondAnnees: nombre(process.env.PRIME_ANCIENNETE_PLAFOND_ANNEES, 25),
+
+    /**
+     * Part de la prime de transport exonérée de cotisations et d'impôt.
+     *
+     * Le montant retenu ici est celui couramment appliqué en Côte d'Ivoire.
+     * **Il est à confirmer par le cabinet** : un plafond dépassé se rattrape
+     * au contrôle, avec les majorations. Au-delà, l'excédent est traité comme
+     * un élément ordinaire du salaire.
+     */
+    transportPlafondExonere: nombre(process.env.TRANSPORT_PLAFOND_EXONERE, 30000)
 };
 
 /**
@@ -192,7 +202,38 @@ function normaliserVentilation(detail) {
     return somme > 0 ? v : null;
 }
 
-function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leaveDays, deductions, hireDate, periode } = {}) {
+/**
+ * Prime de transport : part exonérée et part imposable.
+ *
+ * Versée en espèces, elle ne subit ni cotisation ni impôt jusqu'au plafond.
+ * Au-delà, l'excédent rejoint l'assiette comme n'importe quelle prime.
+ */
+function ventilerTransport(montant, plafond = TAUX.transportPlafondExonere) {
+    const verse = Math.max(nombre(montant, 0), 0);
+    const exonere = Math.min(verse, Math.max(plafond, 0));
+    return { verse, exonere, imposable: Math.round((verse - exonere) * 100) / 100 };
+}
+
+/**
+ * Avantages en nature : leur valeur entre dans l'assiette, mais n'est pas
+ * versée. Elle s'ajoute donc au brut et se retranche du net à payer — sans
+ * quoi le bulletin promettrait en espèces un logement déjà occupé.
+ *
+ * Aucun barème n'est inscrit ici : les montants sont ceux que l'employeur
+ * retient, sous sa responsabilité, salarié par salarié.
+ */
+function totalAvantages(avantages) {
+    if (!Array.isArray(avantages)) return { total: 0, detail: undefined };
+    const detail = avantages
+        .map((a) => ({ type: String(a?.type || 'AUTRE'), montant: Math.max(nombre(a?.montant ?? a?.montantMensuel, 0), 0) }))
+        .filter((a) => a.montant > 0);
+    return {
+        total: detail.reduce((s, a) => s + a.montant, 0),
+        detail: detail.length ? detail : undefined
+    };
+}
+
+function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leaveDays, deductions, hireDate, periode, primeTransport, avantagesNature } = {}) {
     const base = nombre(baseSalary, 0);
     const primes = nombre(bonus, 0);
     const ventilation = normaliserVentilation(heuresSupDetail);
@@ -226,7 +267,16 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leave
     const anciennete = calculerPrimeAnciennete(base, hireDate, periode ? new Date(periode) : new Date());
     const primeAnciennete = PRIME_ANCIENNETE_ACTIVE ? anciennete.montant : 0;
 
-    const brut = Math.max(base + montantHeuresSup - retenueAbsence + primes + primeAnciennete, 0);
+    const transport = ventilerTransport(primeTransport);
+    const avantages = totalAvantages(avantagesNature);
+
+    // Le brut porte tout ce qui est soumis : la part exonérée du transport en
+    // est donc exclue, et les avantages en nature y figurent bien qu'ils ne
+    // soient pas versés.
+    const brut = Math.max(
+        base + montantHeuresSup - retenueAbsence + primes + primeAnciennete + transport.imposable + avantages.total,
+        0
+    );
 
     const cnpsSalarie = brut * TAUX.cnpsSalarie;
     const cmu = brut > 0 ? TAUX.cmuForfait : 0;
@@ -242,12 +292,19 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leave
     // salaires élevés.
     const cotisationsPatronales = brut * TAUX.cnpsPatronal;
 
-    const net = brut - cotisationsSalariales - retenuesDiverses;
+    // Net à payer : le brut moins les retenues, plus la part exonérée du
+    // transport (versée sans cotisation), moins les avantages en nature (déjà
+    // reçus autrement qu'en argent).
+    const net = brut - cotisationsSalariales - retenuesDiverses + transport.exonere - avantages.total;
 
     return {
         baseSalary: base,
         bonus: primes,
         primeAnciennete,
+        primeTransport: transport.verse,
+        primeTransportImposable: transport.imposable,
+        avantagesNature: avantages.total,
+        avantagesNatureDetail: avantages.detail,
         anciennete: {
             ...anciennete,
             active: PRIME_ANCIENNETE_ACTIVE,
@@ -284,7 +341,8 @@ function calculerPaie({ baseSalary, bonus, overtimeHours, heuresSupDetail, leave
  * l'appelant n'ait pas à connaître la liste.
  */
 const CHAMPS_BULLETIN = [
-    'baseSalary', 'bonus', 'primeAnciennete', 'overtimeHours', 'heuresSupDetail', 'overtimeAmount',
+    'baseSalary', 'bonus', 'primeAnciennete', 'primeTransport', 'primeTransportImposable',
+    'avantagesNature', 'avantagesNatureDetail', 'overtimeHours', 'heuresSupDetail', 'overtimeAmount',
     'leaveDays', 'leaveDeduction', 'grossSalary', 'cnpsEmployee', 'cmu',
     'taxableIncome', 'its', 'deductions', 'employeeContributions',
     'employerContributions', 'netSalary'
@@ -343,5 +401,6 @@ function intervalleMois(libelle) {
 module.exports = {
     calculerPaie, calculerITS, decomposer, intervalleMois, normaliserVentilation,
     anneesAnciennete, calculerPrimeAnciennete, colonnesBulletin, CHAMPS_BULLETIN,
+    ventilerTransport, totalAvantages,
     TAUX, TRANCHES_ITS, PRIME_ANCIENNETE_ACTIVE
 };
