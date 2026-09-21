@@ -8,6 +8,10 @@ Prévoir un créneau où personne n'utilise l'application.
 
 ---
 
+> **Vous reprenez l'exploitation ?** Commencez par
+> [PASSATION-IT.md](PASSATION-IT.md) : ce qu'il faut réclamer avant de
+> toucher à quoi que ce soit, et dans quel ordre reprendre le service.
+
 ## Avant le jour J
 
 ### Deux décisions à arrêter
