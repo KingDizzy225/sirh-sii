@@ -52,7 +52,18 @@ function bareme() {
  */
 function attendus(effectif, table = bareme()) {
     if (!table || table.length === 0) return null;
-    const tranche = table.find((t) => effectif <= t.jusqua);
+    // Une tranche ouverte s'écrit `jusqua: null` — « et au-delà ». La comparer
+    // telle quelle échoue en silence, puisque `n <= null` est faux : un
+    // effectif au-dessus de la dernière borne chiffrée ressortirait « barème
+    // muet » alors que le barème le couvre précisément. On borne donc ici,
+    // sans compter sur l'appelant pour l'avoir fait.
+    const bornees = table
+        .map((t) => ({
+            ...t,
+            jusqua: t.jusqua === null || t.jusqua === undefined ? Infinity : Number(t.jusqua)
+        }))
+        .sort((a, b) => a.jusqua - b.jusqua);
+    const tranche = bornees.find((t) => effectif <= t.jusqua);
     return tranche ? { titulaires: tranche.titulaires, suppleants: tranche.suppleants } : null;
 }
 
