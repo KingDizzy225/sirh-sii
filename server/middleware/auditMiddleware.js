@@ -1,4 +1,4 @@
-const prisma = require('../prismaClient');
+const journal = require('../lib/journal');
 
 /**
  * Middleware d'Audit (Piste d'audit / Audit Trail)
@@ -44,16 +44,14 @@ const auditLog = (req, res, next) => {
                 const newData = req.body ? { ...req.body } : {};
                 if (newData.password) delete newData.password;
 
-                prisma.auditLog.create({
-                    data: {
-                        userId: userId,
-                        action: req.method,
-                        tableName: tableName,
-                        recordId: recordId,
-                        newData: JSON.stringify(newData),
-                        ipAddress: req.ip || req.headers['x-forwarded-for'] || 'unknown',
-                    }
-                }).catch(err => console.error("Erreur AuditLog (non bloquante):", err));
+                journal.ecrireSansAttendre({
+                    userId,
+                    action: req.method,
+                    tableName,
+                    recordId,
+                    newData: JSON.stringify(newData),
+                    ipAddress: req.ip || req.headers['x-forwarded-for'] || 'unknown'
+                });
             } catch (e) {
                 console.error("Erreur critique AuditLog post-finish:", e);
             }

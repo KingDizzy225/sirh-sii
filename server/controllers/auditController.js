@@ -70,3 +70,35 @@ exports.getMyAccessTrace = async (req, res) => {
         res.status(500).json({ error: "Erreur lors de la lecture des consultations." });
     }
 };
+
+/**
+ * État de la chaîne du journal.
+ *
+ * Un journal qu'on peut réécrire ne prouve rien. Cet écran dit, en une phrase,
+ * si la chaîne est intacte — et où elle rompt, sinon.
+ */
+exports.integrite = async (req, res) => {
+    try {
+        const journal = require('../lib/journal');
+        res.json(await journal.verifier());
+    } catch (erreur) {
+        console.error('[JOURNAL] Vérification impossible :', erreur.message);
+        res.status(500).json({ error: 'Vérification du journal impossible.' });
+    }
+};
+
+/** Fige la dernière empreinte : à recopier hors de la base. */
+exports.ancrer = async (req, res) => {
+    try {
+        const journal = require('../lib/journal');
+        const ancrage = await journal.ancrer(req.user?.name || req.user?.email || 'inconnu');
+        if (!ancrage) return res.status(409).json({ error: "Le journal ne comporte encore aucune ligne chaînée." });
+        res.json({
+            ancrage,
+            message: "Ancrage créé. Recopiez le numéro et l'empreinte hors de l'application — un ancrage qui ne vit que dans la base ne prouve rien contre qui la détient."
+        });
+    } catch (erreur) {
+        console.error('[JOURNAL] Ancrage impossible :', erreur.message);
+        res.status(500).json({ error: 'Ancrage impossible.' });
+    }
+};

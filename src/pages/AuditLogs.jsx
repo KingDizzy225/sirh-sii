@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card';
-import { ShieldAlert, User, Clock, Database, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { ShieldAlert, User, Clock, Database, ChevronLeft, ChevronRight, Activity, ShieldCheck, Anchor, Copy } from 'lucide-react';
 import { api } from '../lib/api';
 
 export function AuditLogs() {
@@ -10,10 +10,37 @@ export function AuditLogs() {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [chaine, setChaine] = useState(null);
+    const [messageChaine, setMessageChaine] = useState(null);
 
     useEffect(() => {
         fetchLogs();
     }, [page]);
+
+    // État de la chaîne : c'est lui qui distingue un journal d'une simple liste.
+    const verifierChaine = React.useCallback(async () => {
+        try {
+            const { data } = await api.get('/audit/integrite');
+            setChaine(data && typeof data.intacte === 'boolean' ? data : null);
+        } catch (err) {
+            console.error('Vérification de la chaîne impossible', err);
+        }
+    }, []);
+
+    useEffect(() => { verifierChaine(); }, [verifierChaine]);
+
+    const ancrer = async () => {
+        try {
+            const { data } = await api.post('/audit/ancrer', {});
+            const ancrage = data?.ancrage;
+            setMessageChaine(ancrage
+                ? `Ancrage n° ${ancrage.numero} : ${ancrage.empreinte}`
+                : data?.message || 'Ancrage créé.');
+            verifierChaine();
+        } catch (err) {
+            setMessageChaine(err.message || 'Ancrage impossible.');
+        }
+    };
 
     const fetchLogs = async () => {
         setLoading(true);
@@ -58,9 +85,44 @@ export function AuditLogs() {
                         <Activity className="text-indigo-600" />
                         Piste d'Audit (Audit Trail)
                     </h2>
-                    <p className="text-slate-500 text-sm mt-1">Journalisation immuable de toutes les modifications système.</p>
+                    <p className="text-slate-500 text-sm mt-1">Journal chaîné : les modifications et les consultations, dans un ordre qu'on ne peut pas réécrire sans que cela se voie.</p>
                 </div>
             </div>
+
+            {chaine && (
+                <Card className={`mb-6 border ${chaine.intacte ? 'border-emerald-200 bg-emerald-50/50' : 'border-rose-300 bg-rose-50'}`}>
+                    <CardContent className="p-4 flex flex-wrap items-start justify-between gap-4">
+                        <div className="flex gap-3">
+                            {chaine.intacte
+                                ? <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                                : <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />}
+                            <div className="text-sm">
+                                <p className={`font-semibold ${chaine.intacte ? 'text-emerald-800' : 'text-rose-800'}`}>
+                                    {chaine.intacte
+                                        ? `Chaîne intacte sur ${chaine.chainees} écriture(s)`
+                                        : chaine.rupture
+                                            ? `Chaîne rompue à la ligne ${chaine.rupture.numero} (${chaine.rupture.motif})`
+                                            : `${chaine.ancrages.rompus.length} ancrage(s) ne correspondent plus au journal`}
+                                </p>
+                                <p className="text-slate-600 mt-1">
+                                    Chaque ligne porte l'empreinte de la précédente : une ligne effacée ou modifiée en base se voit.
+                                    {chaine.nonChainees > 0 && ` ${chaine.nonChainees} ligne(s) antérieure(s) au chaînage ne sont pas vérifiables.`}
+                                    {chaine.ancrages.verifies > 0 && ` ${chaine.ancrages.verifies} ancrage(s) contrôlé(s).`}
+                                </p>
+                                {messageChaine && (
+                                    <p className="mt-2 font-mono text-xs break-all text-slate-700 flex items-start gap-2">
+                                        <Copy className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {messageChaine}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        <button onClick={ancrer} title="Fige la dernière empreinte : à recopier hors de l'application"
+                            className="flex items-center gap-2 text-sm border rounded-lg px-3 py-2 bg-white hover:bg-slate-50">
+                            <Anchor className="w-4 h-4" /> Ancrer maintenant
+                        </button>
+                    </CardContent>
+                </Card>
+            )}
 
             <Card className="border-slate-100 shadow-sm">
                 <CardHeader className="bg-slate-900 text-white rounded-t-xl">

@@ -17,6 +17,7 @@ import { EcranEmargement } from './pages/EcranEmargement';
 import { Passations } from './pages/Passations';
 import { Emargements } from './pages/Emargements';
 import { PrevisionAbsences } from './pages/PrevisionAbsences';
+import { DroitAcces } from './pages/DroitAcces';
 import { Remplacements } from './pages/Remplacements';
 import { PreAccueil } from './pages/PreAccueil';
 import { Bienvenue } from './pages/Bienvenue';
@@ -468,6 +469,12 @@ const AppContent = () => {
             <Route path="/retrospectives" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <Retrospectives />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/droit-acces" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <DroitAcces />
               </ProtectedRoute>
             } />
 

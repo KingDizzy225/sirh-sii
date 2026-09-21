@@ -969,6 +969,83 @@ ayant pointé sur le site en 30 jours) disponible.
 - **Alerte du lundi 07 h 30** : une notification RH par site ayant une journée
   critique dans les 14 jours.
 
+## Journal chaîné, droit d'accès, sonde, base école
+
+### Le journal d'audit se contrôle lui-même (Paramètres → Journal d'audit)
+
+Chaque écriture porte l'empreinte de la précédente. Un bandeau annonce
+« chaîne intacte sur N écritures », ou nomme la ligne où elle rompt.
+
+- **Ce que ça protège** : une ligne effacée ou modifiée directement en base se
+  voit. Sur un serveur administré en interne, c'est ce qui distingue un journal
+  d'une commodité.
+- **Ce que ça ne protège pas** : qui détient la base peut recalculer toute la
+  chaîne. D'où **l'ancrage** : « Ancrer maintenant » fige le dernier rang et
+  son empreinte. **Recopiez-les hors de l'application** — registre papier,
+  courriel d'archive. Un ancrage qui ne vit que dans la base ne prouve rien.
+- Un ancrage automatique a lieu **chaque lundi à 02 h 30**, avec contrôle de la
+  chaîne ; une rupture déclenche une alerte RH.
+- Les lignes antérieures à la mise en place du chaînage ne portent pas
+  d'empreinte : elles sont comptées à part, ni vérifiables ni suspectes.
+- Correctif inclus : les traces des congés et des talents n'étaient **jamais
+  enregistrées** — le code employait des noms de colonnes que Prisma refuse, et
+  l'erreur était avalée.
+
+### Droit d'accès (Employés → Droit d'accès)
+
+Choisir la personne, puis **PDF** (à lui remettre) ou **JSON** (le détail).
+L'export rassemble dossier, contrat, rémunération, bulletins, congés, absences,
+pointages, formations, documents, pièces, badges, prêts, avances,
+remerciements, carrière, procédures, dates de visites médicales, notifications,
+et la liste des consultations de son dossier.
+
+- Les **fichiers** ne sont pas incorporés : seule leur liste figure, et ils se
+  remettent par lien.
+- Les **conclusions du médecin du travail** en sont exclues : seules les dates
+  et l'aptitude figurent, leur communication relevant de lui.
+- L'extraction est elle-même tracée dans le journal (`EXPORT_DOSSIER`).
+- Fondement : loi ivoirienne n° 2013-450. Le délai de réponse court dès la
+  demande : produire le dossier prend désormais une minute.
+
+### Sonde de bout en bout (Paramètres → État des services)
+
+Chaque nuit à 03 h, l'application s'éprouve elle-même : base, migrations
+appliquées, scellement (elle scelle puis vérifie un document jetable), dernier
+document réellement émis, chaîne du journal, écriture sur le disque des dépôts,
+âge et taille de la dernière sauvegarde, IA, WhatsApp, courriel.
+
+| Variable | Effet |
+|---|---|
+| `SAUVEGARDE_DESTINATION` | sans elle, la sauvegarde n'est pas jugée |
+| `SONDE_SAUVEGARDE_AGE_MAX_H` | âge admis, 30 h par défaut |
+| `SONDE_EMAIL_DESTINATAIRE` | boîte de contrôle ; sans elle, l'envoi n'est pas éprouvé |
+
+Un défaut déclenche une alerte RH. « Lancer maintenant » (administrateur) coûte
+un appel d'IA et un courriel : à utiliser après une intervention, pas en boucle.
+Un service non configuré est dit **absent**, jamais en panne — la distinction
+évite de chercher une panne là où il n'y a qu'un réglage manquant.
+
+### Base école anonymisée
+
+Pour former la RH et laisser l'équipe informatique éprouver une mise à jour,
+sans copier les salaires réels sur des postes de travail.
+
+```bash
+# 1. restaurer une sauvegarde dans une base nommée « ecole »
+# 2. l'anonymiser
+DATABASE_URL="postgresql://…/sirh_ecole" npm run anonymiser -- --confirmer --mot-de-passe="Ecole2026!"
+```
+
+- Le script **refuse toute base** dont le nom ne comporte pas « ecole »,
+  « test », « essai », « demo » ou « anonym », et ne fait rien sans
+  `--confirmer`.
+- Anonymisés : identités, contacts, adresses, dates de naissance (décalées),
+  matricules, numéros CNPS, coordonnées bancaires, salaires (bruités à ±10 %,
+  ordre de grandeur conservé), messages libres.
+- Supprimés : journal d'audit, documents scellés, liens de remise, journal
+  WhatsApp, notifications.
+- **Ne copiez pas `uploads/`** : les fichiers, eux, ne sont pas anonymisés.
+
 ## Récapitulatif annuel des salaires (DISA, ITS)
 
 Onglet *Déclarations sociales*, sous la déclaration du mois. Cumuls de l'année

@@ -7,7 +7,7 @@
  */
 
 // Import the real Prisma client
-const prisma = require('../prismaClient');
+const journal = require('../lib/journal');
 
 // We no longer need the mock db object
 
@@ -75,25 +75,21 @@ const auditTrailMiddleware = async (req, res, next) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
 
             // Enregistrer asynchrone après le succès
+            // Ces champs portaient des noms à la mode SQL (user_id, table_name…)
+            // que Prisma refuse : aucune de ces traces n'a jamais été écrite,
+            // l'erreur étant avalée par le catch qui suivait.
             const auditPayload = {
-                data: {
-                    user_id: userId,
-                    action: req.method, // PUT, PATCH, DELETE
-                    table_name: resource,
-                    record_id: targetId,
-                    old_data: oldData ? JSON.stringify(oldData) : null,
-                    new_data: newData ? JSON.stringify(newData) : null,
-                    ip_address: req.ip,
-                    created_at: new Date().toISOString()
-                }
+                userId,
+                action: req.method, // PUT, PATCH, DELETE
+                tableName: resource,
+                recordId: targetId,
+                oldData: oldData ? JSON.stringify(oldData) : null,
+                newData: newData ? JSON.stringify(newData) : null,
+                ipAddress: req.ip
             };
 
             // Ne pas bloquer la réponse client, exécuter en tâche de fond
-            prisma.auditLog.create(auditPayload).then(() => {
-                console.log(`[AUDIT TRAIL] Trace enregistrée pour ${resource}/${targetId}`);
-            }).catch(err => {
-                console.error("[AUDIT ERROR] Échec de l'enregistrement de l'audit:", err);
-            });
+            journal.ecrireSansAttendre(auditPayload);
         }
 
         // Appeler la fonction originale

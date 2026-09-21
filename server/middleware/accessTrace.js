@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const journal = require('../lib/journal');
 const { hasRole } = require('./roleMiddleware');
 
 /**
@@ -42,19 +43,17 @@ function traceAccess(typeRessource, resoudreCible) {
                 });
                 if (lecteurEmploye && lecteurEmploye.id === cibleId) return;
 
-                await prisma.auditLog.create({
-                    data: {
-                        userId: lecteur.id || 'INCONNU',
-                        action: 'CONSULT',
-                        tableName: typeRessource,
-                        recordId: cibleId,
-                        newData: JSON.stringify({
-                            consultePar: lecteur.email,
-                            role: lecteur.role || null,
-                            chemin: req.originalUrl.split('?')[0]
-                        }),
-                        ipAddress: req.ip || req.headers['x-forwarded-for'] || 'inconnue'
-                    }
+                await journal.ecrire({
+                    userId: lecteur.id || 'INCONNU',
+                    action: 'CONSULT',
+                    tableName: typeRessource,
+                    recordId: cibleId,
+                    newData: JSON.stringify({
+                        consultePar: lecteur.email,
+                        role: lecteur.role || null,
+                        chemin: req.originalUrl.split('?')[0]
+                    }),
+                    ipAddress: req.ip || req.headers['x-forwarded-for'] || 'inconnue'
                 });
             } catch (err) {
                 // Une trace manquée ne doit jamais dégrader le service rendu

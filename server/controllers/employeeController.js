@@ -941,3 +941,43 @@ exports.getEffectifA = async (req, res) => {
         res.status(500).json({ error: "Erreur lors de la lecture de l'effectif." });
     }
 };
+
+/**
+ * Dossier complet d'un salarié, pour répondre à un droit d'accès.
+ *
+ * L'export est lui-même une opération sensible : il est tracé dans le journal,
+ * comme toute consultation du dossier.
+ */
+exports.dossierComplet = async (req, res) => {
+    try {
+        const dossierSalarie = require('../lib/dossierSalarie');
+        const journal = require('../lib/journal');
+        const dossier = await dossierSalarie.rassembler(req.params.id);
+        if (!dossier) return res.status(404).json({ error: 'Salarié introuvable.' });
+
+        journal.ecrireSansAttendre({
+            userId: req.user?.id || req.user?.email || 'INCONNU',
+            action: 'EXPORT_DOSSIER',
+            tableName: 'Employee',
+            recordId: req.params.id,
+            newData: JSON.stringify({ format: req.query.format === 'pdf' ? 'pdf' : 'json', parEmail: req.user?.email || null }),
+            ipAddress: req.ip
+        });
+
+        const nom = dossier.identite.nom.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+        if (req.query.format === 'pdf') {
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="dossier-${nom}.pdf"`);
+            const doc = dossierSalarie.versPdf(dossier);
+            doc.pipe(res);
+            doc.end();
+            return;
+        }
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="dossier-${nom}.json"`);
+        res.send(JSON.stringify(dossier, null, 2));
+    } catch (erreur) {
+        console.error('[DOSSIER] Export impossible :', erreur.message);
+        res.status(500).json({ error: 'Export du dossier impossible.' });
+    }
+};

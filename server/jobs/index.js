@@ -9,6 +9,8 @@ const { envoyerRecapHebdomadaire } = require('./weeklyDigest');
 const { purgerCorbeille } = require('./purgeCorbeille');
 const { appliquerRemunerations } = require('./remunerationEchue');
 const { alerterPrevisionAbsences } = require('./previsionAbsences');
+const { ancrerJournal } = require('./ancrageJournal');
+const { sonderLaNuit } = require('./sondeNuit');
 
 /**
  * Ordonnanceur des traitements RH récurrents.
@@ -44,6 +46,8 @@ const runAllDue = async () => {
     await safely('purge de la corbeille', () => purgerCorbeille());
     await safely('décisions de rémunération échues', () => appliquerRemunerations());
     await safely('prévision des absences', () => alerterPrevisionAbsences());
+    await safely("ancrage du journal d'audit", () => ancrerJournal());
+    await safely('sonde de bout en bout', () => sonderLaNuit());
 };
 
 function startScheduledJobs() {
@@ -60,6 +64,16 @@ function startScheduledJobs() {
     // Acquisition des congés : le 1er de chaque mois à 02h00
     cron.schedule('0 2 1 * *', () => {
         safely('acquisition des congés', () => accrueMonthlyLeave());
+    }, { timezone: TIMEZONE });
+
+    // Sonde de bout en bout : chaque nuit à 03h00, après les sauvegardes
+    cron.schedule('0 3 * * *', () => {
+        safely('sonde de bout en bout', () => sonderLaNuit());
+    }, { timezone: TIMEZONE });
+
+    // Ancrage du journal d'audit : le lundi à 02h30, avant l'activité du jour
+    cron.schedule('30 2 * * 1', () => {
+        safely("ancrage du journal d'audit", () => ancrerJournal());
     }, { timezone: TIMEZONE });
 
     // Prévision des absences : le lundi à 07h30, pour les deux semaines à venir

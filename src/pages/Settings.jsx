@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { IdentiteEntreprise } from '../components/IdentiteEntreprise';
+import { Sonde } from '../components/Sonde';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -739,6 +740,8 @@ export function Settings() {
                     )}
 
                     {activeTab === 'Services' && (
+                      <div className="space-y-6">
+                        <Sonde />
                         <Card className="border-none shadow-sm">
                             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div>
@@ -811,6 +814,7 @@ export function Settings() {
                                 )}
                             </CardContent>
                         </Card>
+                      </div>
                     )}
 
                     {activeTab === 'Integrations' && (

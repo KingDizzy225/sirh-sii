@@ -303,8 +303,19 @@ model AssetAssignment {
 // 7. COMPLIANCE (AUDIT TRAIL)
 // ----------------------------------------------------
 
+/// Journal des écritures et des consultations.
+///
+/// Les lignes sont chaînées : chacune porte l'empreinte de la précédente. Une
+/// ligne effacée ou retouchée rompt la chaîne, et la rupture se voit. Sur un
+/// serveur administré en interne, c'est ce qui distingue un journal d'une
+/// simple commodité : sans chaînage, qui peut écrire dans la base peut
+/// réécrire l'histoire.
 model AuditLog {
   id        String   @id @default(uuid())
+  /// Rang dans la chaîne. Nul pour les lignes antérieures au chaînage.
+  numero              Int?    @unique
+  empreinte           String?
+  empreintePrecedente String? @map("empreinte_precedente")
   userId    String   @map("user_id") // ID de l'utilisateur qui a fait l'action
   action    String // PUT, PATCH, DELETE
   tableName String   @map("table_name")
@@ -2243,4 +2254,34 @@ model IdentiteEntreprise {
   majPar            String?  @map("maj_par")
 
   @@map("identite_entreprise")
+}
+
+/// Ancrage périodique du journal : la dernière empreinte connue, datée.
+///
+/// Le chaînage détecte une retouche ; l'ancrage empêche de refaire toute la
+/// chaîne après coup. Recalculer un journal entier reste possible à qui
+/// détient la base — pas de recalculer les ancrages déjà recopiés ailleurs.
+model AncrageAudit {
+  id        String   @id @default(uuid())
+  numero    Int
+  empreinte String
+  ancreLe   DateTime @default(now()) @map("ancre_le")
+  ancrePar  String?  @map("ancre_par")
+
+  @@index([ancreLe])
+  @@map("ancrage_audit")
+}
+
+/// Exécution de la sonde de bout en bout.
+model ExecutionSonde {
+  id           String   @id @default(uuid())
+  lanceeLe     DateTime @default(now()) @map("lancee_le")
+  dureeMs      Int      @map("duree_ms")
+  ok           Boolean
+  echecs       Int      @default(0)
+  resultats    Json
+  declenchePar String?  @map("declenche_par")
+
+  @@index([lanceeLe])
+  @@map("execution_sonde")
 }

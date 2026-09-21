@@ -20,7 +20,8 @@
     "test:paie": "node tests/paie.test.js",
     "test:ecritures": "node tests/ecritures.test.js",
     "test:conges": "node tests/conges.test.js",
-    "test:exploitation": "node tests/exploitation.test.js"
+    "test:exploitation": "node tests/exploitation.test.js",
+    "anonymiser": "node scripts/anonymiser.js"
   },
   "keywords": [],
   "author": "",

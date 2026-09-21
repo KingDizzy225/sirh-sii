@@ -181,6 +181,7 @@ app.use('/api/passations', verifyToken, require('./routes/passationRoutes'));
 app.use('/api/emargements', verifyToken, require('./routes/emargementRoutes'));
 app.use('/api/identite', verifyToken, require('./routes/identiteRoutes'));
 app.use('/api/previsions', verifyToken, require('./routes/previsionRoutes'));
+app.use('/api/sonde', verifyToken, require('./routes/sondeRoutes'));
 
 // L'identité de l'entreprise est lue partout de façon synchrone : on la charge dès le démarrage.
 require('./lib/identite').rafraichir();

@@ -29,6 +29,9 @@ router.get('/register/pdf', requireRole(...HR_ROLES), registerController.generat
 // Contrôle de complétude des dossiers, placé avec les routes nommées pour la
 // même raison : « conformite » ne doit pas être pris pour un identifiant.
 router.get('/conformite', requireRole(...HR_ROLES), employeeController.getConformite);
+
+// Droit d'accès : tout ce que la base sait d'une personne, en JSON ou en PDF.
+router.get('/:id/dossier', requireRole(...HR_ROLES), employeeController.dossierComplet);
 // Cohérence entre dossiers : doublons, salariés payés sans trace d'activité.
 router.get('/sincerite', requireRole(...HR_ROLES), employeeController.getSincerite);
 
