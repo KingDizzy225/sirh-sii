@@ -44,6 +44,20 @@ const BOX_LABELS = {
 
 const TARGET_ROLES = [
     {
+        title: 'Chargée de Clientèle Senior',
+        requirements: {
+            'Gestion de la Relation Client (CRM)': 4,
+            'Communication Orale': 4,
+            'Communication Écrite': 4,
+            'Négociation de Contrats B2B/B2C': 3,
+            'Service Client / SAV': 4,
+            'Intelligence Émotionnelle': 4,
+            'Gestion du Stress': 3,
+            'Résolution de Problèmes': 3,
+            'Anglais (Professionnel courant)': 3
+        }
+    },
+    {
         title: 'Développeur Front-End Senior',
         requirements: {
             'Développement Front-End (React, Vue, Angular)': 4,
@@ -75,24 +89,76 @@ const TARGET_ROLES = [
     }
 ];
 
+export const JULIE_KONAN_MOCK = {
+    id: 'julie-konan-demo',
+    firstName: 'Julie',
+    lastName: 'Konan',
+    name: 'Julie Konan',
+    email: 'julie.konan@sii-ci.com',
+    phone: '+225 07 08 09 10 11',
+    positionTitle: 'Chargée de Clientèle',
+    role: 'Employee',
+    department: 'Commercial & Relation Client',
+    status: 'ACTIVE',
+    gender: 'Féminin',
+    birthDate: '1994-08-20',
+    hireDate: '2022-03-15',
+    address: 'Abidjan, Cocody Riviera Palmeraie',
+    matricule: 'EMP-2022-042',
+    cnpsNumber: 'CNPS-84920194',
+    bankName: 'Société Générale CI',
+    bankAccount: 'CI059 01001 12345678901 45',
+    childrenCount: 1,
+    annualLeaveBalance: 24,
+    nationality: 'Ivoirienne',
+    manager: { firstName: 'Armand', lastName: 'Kouassi', positionTitle: 'Directeur Commercial' },
+    skills: [
+        { id: 'jk-s1', skillName: 'Gestion de la Relation Client (CRM)', proficiencyLevel: 'Expert', category: 'Vente, Marketing & Commerce' },
+        { id: 'jk-s2', skillName: 'Communication Orale', proficiencyLevel: 'Expert', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s3', skillName: 'Communication Écrite', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s4', skillName: 'Négociation de Contrats B2B/B2C', proficiencyLevel: 'Avancé', category: 'Vente, Marketing & Commerce' },
+        { id: 'jk-s5', skillName: 'Service Client / SAV', proficiencyLevel: 'Expert', category: 'Vente, Marketing & Commerce' },
+        { id: 'jk-s6', skillName: 'Intelligence Émotionnelle', proficiencyLevel: 'Expert', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s7', skillName: 'Gestion du Stress', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s8', skillName: 'Résolution de Problèmes', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s9', skillName: 'Anglais (Professionnel courant)', proficiencyLevel: 'Intermédiaire', category: 'Langues' }
+    ],
+    equipment: [
+        { id: 'eq-jk1', name: 'MacBook Pro 14" M2', serialNumber: 'MBP-2022-991', assignedDate: '2022-03-16' },
+        { id: 'eq-jk2', name: 'Casque Jabra Evolve2 65', serialNumber: 'JBR-7712', assignedDate: '2022-03-16' }
+    ]
+};
+
+const JULIE_KONAN_TALENT = {
+    id: 'julie-konan-demo',
+    employeeId: 'julie-konan-demo',
+    name: 'Julie Konan',
+    position: 'Chargée de Clientèle',
+    department: 'Commercial & Relation Client',
+    potential: 'High',
+    performance: 'High',
+    flightRisk: 'Low',
+    readiness: 'Prêt maintenant'
+};
+
 export function SkillsMatrix() {
     const { token } = useAuth();
     const [activeTab, setActiveTab] = useState('matrix');
     const [notification, setNotification] = useState(null);
 
     // Dynamic Lists from Backend
-    const [employees, setEmployees] = useState([]);
-    const [talents, setTalents] = useState([]);
+    const [employees, setEmployees] = useState([JULIE_KONAN_MOCK]);
+    const [talents, setTalents] = useState([JULIE_KONAN_TALENT]);
     const [gpecMap, setGpecMap] = useState([]);
     const [gpecGaps, setGpecGaps] = useState([]);
     const [skillDefinitions, setSkillDefinitions] = useState([]);
     const [successionPlans, setSuccessionPlans] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Selected Employee Detail (Tab 1)
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
-    const [selectedEmployeeDetails, setSelectedEmployeeDetails] = useState(null);
-    const [compareRole, setCompareRole] = useState(TARGET_ROLES[0].title);
+    // Selected Employee Detail (Tab 1) - Default to Julie Konan for presentation
+    const [selectedEmployee, setSelectedEmployee] = useState(JULIE_KONAN_MOCK);
+    const [selectedEmployeeDetails, setSelectedEmployeeDetails] = useState(JULIE_KONAN_MOCK);
+    const [compareRole, setCompareRole] = useState('Chargée de Clientèle Senior');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSkillFilter, setSelectedSkillFilter] = useState('');
     const [minLevelFilter, setMinLevelFilter] = useState(3);
@@ -128,19 +194,55 @@ export function SkillsMatrix() {
                 fetch(`${API_URL}/api/succession`, { headers }).then(r => r.ok ? r.json() : [])
             ]);
 
-            setEmployees(empData);
-            setTalents(talentData);
-            setGpecMap(mapData);
-            setGpecGaps(gapsData);
-            setSkillDefinitions(defsData);
-            setSuccessionPlans(successionData);
+            // Inject Julie Konan at top of employees list
+            const rawEmps = Array.isArray(empData) ? empData : [];
+            const hasJulie = rawEmps.some(e => e.id === 'julie-konan-demo' || `${e.firstName} ${e.lastName}`.toLowerCase().includes('julie konan'));
+            const finalEmployees = hasJulie ? rawEmps : [JULIE_KONAN_MOCK, ...rawEmps];
 
-            // Select first employee by default if available
-            if (empData.length > 0 && !selectedEmployee) {
-                setSelectedEmployee(empData[0]);
+            // Inject Julie Konan into talents (9-Box grid)
+            const rawTalents = Array.isArray(talentData) ? talentData : [];
+            const hasJulieTalent = rawTalents.some(t => t.id === 'julie-konan-demo' || (t.name && t.name.toLowerCase().includes('julie konan')));
+            const finalTalents = hasJulieTalent ? rawTalents : [JULIE_KONAN_TALENT, ...rawTalents];
+
+            // Add Commercial & Relation Client to GPEC Map
+            let finalMap = Array.isArray(mapData) ? [...mapData] : [];
+            if (!finalMap.some(d => d.dept === 'Commercial & Relation Client')) {
+                finalMap.unshift({
+                    dept: 'Commercial & Relation Client',
+                    skills: [
+                        { skill: 'Gestion de la Relation Client (CRM)', count: 1, avgLevel: 4 },
+                        { skill: 'Communication Orale', count: 1, avgLevel: 4 },
+                        { skill: 'Service Client / SAV', count: 1, avgLevel: 4 },
+                        { skill: 'Intelligence Émotionnelle', count: 1, avgLevel: 4 },
+                        { skill: 'Communication Écrite', count: 1, avgLevel: 3 },
+                        { skill: 'Négociation de Contrats B2B/B2C', count: 1, avgLevel: 3 },
+                        { skill: 'Gestion du Stress', count: 1, avgLevel: 3 },
+                        { skill: 'Résolution de Problèmes', count: 1, avgLevel: 3 },
+                        { skill: 'Anglais (Professionnel courant)', count: 1, avgLevel: 2 }
+                    ]
+                });
+            }
+
+            setEmployees(finalEmployees);
+            setTalents(finalTalents);
+            setGpecMap(finalMap);
+            setGpecGaps(gapsData || []);
+            setSkillDefinitions(defsData || []);
+            setSuccessionPlans(successionData || []);
+
+            // Keep Julie Konan selected by default
+            if (!selectedEmployee || selectedEmployee.id === 'julie-konan-demo') {
+                setSelectedEmployee(JULIE_KONAN_MOCK);
+                setSelectedEmployeeDetails(JULIE_KONAN_MOCK);
+                setCompareRole('Chargée de Clientèle Senior');
             }
         } catch (err) {
             console.error("Error loading talents & GPEC data", err);
+            setEmployees([JULIE_KONAN_MOCK]);
+            setTalents([JULIE_KONAN_TALENT]);
+            setSelectedEmployee(JULIE_KONAN_MOCK);
+            setSelectedEmployeeDetails(JULIE_KONAN_MOCK);
+            setCompareRole('Chargée de Clientèle Senior');
         } finally {
             setIsLoading(false);
         }
@@ -156,6 +258,10 @@ export function SkillsMatrix() {
     useEffect(() => {
         const fetchEmployeeDetails = async () => {
             if (!selectedEmployee) return;
+            if (selectedEmployee.id === 'julie-konan-demo') {
+                setSelectedEmployeeDetails(JULIE_KONAN_MOCK);
+                return;
+            }
             try {
                 const res = await fetch(`${API_URL}/api/employees/${selectedEmployee.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
@@ -268,6 +374,10 @@ export function SkillsMatrix() {
 
         const targetEmp = talents.find(t => t.id === employeeId);
         if (targetEmp) {
+            if (employeeId === 'julie-konan-demo') {
+                notify(`9-Box mis à jour pour ${targetEmp.name} !`);
+                return;
+            }
             try {
                 const res = await fetch(`${API_URL}/api/talents/${employeeId}`, {
                     method: 'PUT',
@@ -300,6 +410,11 @@ export function SkillsMatrix() {
             t.id === id ? { ...t, [field]: value } : t
         ));
 
+        if (id === 'julie-konan-demo') {
+            notify(`Mise à jour effectuée pour ${targetEmp.name}`);
+            return;
+        }
+
         try {
             const res = await fetch(`${API_URL}/api/talents/${id}`, {
                 method: 'PUT',
@@ -315,10 +430,10 @@ export function SkillsMatrix() {
                 })
             });
             if (res.ok) {
-                notify(`${field === 'flightRisk' ? 'Risque de rétention' : 'Préparation'} mis à jour.`);
+                notify(`Mise à jour effectuée pour ${targetEmp.name}`);
             }
         } catch (err) {
-            console.error("Error updating talent profile fields", err);
+            console.error("Error updating talent field", err);
         }
     };
 
@@ -815,11 +930,15 @@ export function SkillsMatrix() {
                                                                     "Afin de promouvoir {selectedEmployeeDetails.firstName} au poste de {compareRole}, l'IA recommande les parcours de formation suivants :"
                                                                 </p>
                                                                 <div className="space-y-2">
-                                                                    {[
+                                                                    {(selectedEmployeeDetails.id === 'julie-konan-demo' ? [
+                                                                        "Masterclass Négociation Grands Comptes & Appels d'Offres Stratégiques (B2B)",
+                                                                        "Atelier Rédaction Commerciale d'Excellence & Synthèse Décisionnelle",
+                                                                        "Certification Anglais Business - Niveau Avancé C1 (Relations Multinationales)"
+                                                                    ] : [
                                                                         "Atelier d'excellence technique avancée",
                                                                         "Coaching individuel en soft-skills & collaboration",
                                                                         "Certification métier validante (niveau 4)"
-                                                                    ].map((rec, i) => (
+                                                                    ]).map((rec, i) => (
                                                                         <div key={i} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/5 text-[11px] font-semibold text-slate-200">
                                                                             <span className="text-emerald-400">✓</span> {rec}
                                                                         </div>
@@ -829,8 +948,14 @@ export function SkillsMatrix() {
                                                             <div className="bg-white/5 rounded-xl p-4 border border-white/5 flex flex-col justify-between">
                                                                 <div>
                                                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Potentiel Impact de matching</div>
-                                                                    <div className="text-3xl font-black text-indigo-400 mt-1">+35%</div>
-                                                                    <p className="text-[10px] text-slate-400 font-bold mt-1">Si les formations préconisées sont validées.</p>
+                                                                    <div className="text-3xl font-black text-indigo-400 mt-1">
+                                                                        {selectedEmployeeDetails.id === 'julie-konan-demo' ? '100%' : '+35%'}
+                                                                    </div>
+                                                                    <p className="text-[10px] text-slate-400 font-bold mt-1">
+                                                                        {selectedEmployeeDetails.id === 'julie-konan-demo'
+                                                                            ? "Adéquation totale (100%) au grade Senior après validation des 3 modules."
+                                                                            : "Si les formations préconisées sont validées."}
+                                                                    </p>
                                                                 </div>
                                                                 <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 mt-4 rounded-lg border border-indigo-500/20">
                                                                     Inscrire au plan de formation

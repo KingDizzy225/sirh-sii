@@ -43,22 +43,71 @@ const LIBELLES_DOCUMENT = {
     RECU_SOLDE_TOUT_COMPTE: 'Reçu pour solde de tout compte'
 };
 
+const JULIE_KONAN_FULL_PROFILE = {
+    id: 'julie-konan-demo',
+    firstName: 'Julie',
+    lastName: 'Konan',
+    name: 'Julie Konan',
+    email: 'julie.konan@sii-ci.com',
+    phone: '+225 07 08 09 10 11',
+    positionTitle: 'Chargée de Clientèle',
+    role: 'Employee',
+    department: 'Commercial & Relation Client',
+    status: 'ACTIVE',
+    gender: 'Féminin',
+    birthDate: '1994-08-20',
+    hireDate: '2022-03-15',
+    address: 'Abidjan, Cocody Riviera Palmeraie',
+    matricule: 'EMP-2022-042',
+    cnpsNumber: 'CNPS-84920194',
+    bankName: 'Société Générale CI',
+    bankAccount: 'CI059 01001 12345678901 45',
+    childrenCount: 1,
+    annualLeaveBalance: 24,
+    nationality: 'Ivoirienne',
+    manager: { firstName: 'Armand', lastName: 'Kouassi', positionTitle: 'Directeur Commercial' },
+    skills: [
+        { id: 'jk-s1', skillName: 'Gestion de la Relation Client (CRM)', proficiencyLevel: 'Expert', category: 'Vente, Marketing & Commerce' },
+        { id: 'jk-s2', skillName: 'Communication Orale', proficiencyLevel: 'Expert', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s3', skillName: 'Communication Écrite', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s4', skillName: 'Négociation de Contrats B2B/B2C', proficiencyLevel: 'Avancé', category: 'Vente, Marketing & Commerce' },
+        { id: 'jk-s5', skillName: 'Service Client / SAV', proficiencyLevel: 'Expert', category: 'Vente, Marketing & Commerce' },
+        { id: 'jk-s6', skillName: 'Intelligence Émotionnelle', proficiencyLevel: 'Expert', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s7', skillName: 'Gestion du Stress', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s8', skillName: 'Résolution de Problèmes', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
+        { id: 'jk-s9', skillName: 'Anglais (Professionnel courant)', proficiencyLevel: 'Intermédiaire', category: 'Langues' }
+    ],
+    equipment: [
+        { id: 'eq-jk1', name: 'MacBook Pro 14" M2', serialNumber: 'MBP-2022-991', assignedDate: '2022-03-16' },
+        { id: 'eq-jk2', name: 'Casque Jabra Evolve2 65', serialNumber: 'JBR-7712', assignedDate: '2022-03-16' }
+    ]
+};
+
 export function EmployeeProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
     
-    const [employee, setEmployee] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [employee, setEmployee] = useState(id === 'julie-konan-demo' ? JULIE_KONAN_FULL_PROFILE : null);
+    const [loading, setLoading] = useState(id === 'julie-konan-demo' ? false : true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('competences');
-    const [personnelDocs, setPersonnelDocs] = useState([]);
+    const [personnelDocs, setPersonnelDocs] = useState(id === 'julie-konan-demo' ? [
+        { id: 'doc-1', title: 'Contrat de Travail CDI - Chargée de Clientèle', type: 'Contrat', createdAt: '2022-03-15T09:00:00.000Z', fileUrl: '#' },
+        { id: 'doc-2', title: 'Diplôme Master Marketing & Relation Client', type: 'Diplôme', createdAt: '2022-03-15T09:00:00.000Z', fileUrl: '#' },
+        { id: 'doc-3', title: 'Carte Nationale d\'Identité (CNI)', type: 'Identité', createdAt: '2022-03-15T09:00:00.000Z', fileUrl: '#' },
+        { id: 'doc-4', title: 'Attestation d\'Assurance & Visite Médicale d\'Embauche', type: 'Médical', createdAt: '2022-03-20T10:00:00.000Z', fileUrl: '#' }
+    ] : []);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [uploadForm, setUploadForm] = useState({ title: '', type: 'Contrat' });
     const [uploadFile, setUploadFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [careerHistory, setCareerHistory] = useState([]);
-    const [timelineEvents, setTimelineEvents] = useState([]);
+    const [timelineEvents, setTimelineEvents] = useState(id === 'julie-konan-demo' ? [
+        { id: 'tl-1', eventDate: '2024-01-10', type: 'PROMOTION', description: 'Nomination au rang de Chargée de Clientèle Senior (Lead Portefeuille Grands Comptes)', previousValue: 'Chargée de Clientèle Junior', newValue: 'Chargée de Clientèle Senior' },
+        { id: 'tl-2', eventDate: '2023-06-20', type: 'FORMATION', description: 'Certification Négociation Commerciale Complexe & CRM Salesforce', previousValue: '-', newValue: 'Certifiée' },
+        { id: 'tl-3', eventDate: '2022-03-15', type: 'INTEGRATION', description: 'Entrée en fonction chez SII Côte d\'Ivoire', previousValue: '-', newValue: 'CDI' }
+    ] : []);
     const [disciplinaryRecords, setDisciplinaryRecords] = useState([]);
     const [showDisciplinaryModal, setShowDisciplinaryModal] = useState(false);
     const [disciplinaryForm, setDisciplinaryForm] = useState({ date: new Date().toISOString().split('T')[0], type: 'Warning', reason: '', sanction: '' });
@@ -73,6 +122,7 @@ export function EmployeeProfile() {
 
     // Registre des attestations émises pour ce collaborateur
     const fetchIssuedDocs = async () => {
+        if (id === 'julie-konan-demo') return;
         try {
             const res = await fetch(`${API_URL}/api/documents/issued/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -110,6 +160,23 @@ export function EmployeeProfile() {
 
     useEffect(() => {
         const fetchEmployee = async () => {
+            if (id === 'julie-konan-demo') {
+                setEmployee(JULIE_KONAN_FULL_PROFILE);
+                setPersonnelDocs([
+                    { id: 'doc-1', title: 'Contrat de Travail CDI - Chargée de Clientèle', type: 'Contrat', createdAt: '2022-03-15T09:00:00.000Z', fileUrl: '#' },
+                    { id: 'doc-2', title: 'Diplôme Master Marketing & Relation Client', type: 'Diplôme', createdAt: '2022-03-15T09:00:00.000Z', fileUrl: '#' },
+                    { id: 'doc-3', title: 'Carte Nationale d\'Identité (CNI)', type: 'Identité', createdAt: '2022-03-15T09:00:00.000Z', fileUrl: '#' },
+                    { id: 'doc-4', title: 'Attestation d\'Assurance & Visite Médicale d\'Embauche', type: 'Médical', createdAt: '2022-03-20T10:00:00.000Z', fileUrl: '#' }
+                ]);
+                setTimelineEvents([
+                    { id: 'tl-1', eventDate: '2024-01-10', type: 'PROMOTION', description: 'Nomination au rang de Chargée de Clientèle Senior (Lead Portefeuille Grands Comptes)', previousValue: 'Chargée de Clientèle Junior', newValue: 'Chargée de Clientèle Senior' },
+                    { id: 'tl-2', eventDate: '2023-06-20', type: 'FORMATION', description: 'Certification Négociation Commerciale Complexe & CRM Salesforce', previousValue: '-', newValue: 'Certifiée' },
+                    { id: 'tl-3', eventDate: '2022-03-15', type: 'INTEGRATION', description: 'Entrée en fonction chez SII Côte d\'Ivoire', previousValue: '-', newValue: 'CDI' }
+                ]);
+                setDisciplinaryRecords([]);
+                setLoading(false);
+                return;
+            }
             try {
                 const res = await fetch(`${API_URL}/api/employees/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -293,7 +360,7 @@ export function EmployeeProfile() {
     const radarData = employee?.skills?.length > 0 
         ? employee.skills.map(s => ({
             subject: s.skillName || 'Inconnu',
-            A: s.proficiencyLevel === 'Expert' ? 90 : s.proficiencyLevel === 'Intermédiaire' ? 60 : 30,
+            A: s.proficiencyLevel === 'Expert' ? 95 : s.proficiencyLevel === 'Avancé' ? 80 : s.proficiencyLevel === 'Intermédiaire' ? 60 : 35,
             fullMark: 100,
         }))
         : [

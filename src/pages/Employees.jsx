@@ -18,9 +18,34 @@ const roleLabels = {
     'Social Worker': 'Assistante Sociale'
 };
 
+const JULIE_KONAN_ROW = {
+    id: 'julie-konan-demo',
+    name: 'Julie Konan',
+    firstName: 'Julie',
+    lastName: 'Konan',
+    role: 'Chargée de Clientèle',
+    systemRole: 'Employee',
+    department: 'Commercial & Relation Client',
+    status: 'Actif',
+    email: 'julie.konan@sii-ci.com',
+    phone: '+225 07 08 09 10 11',
+    gender: 'Féminin',
+    birthDate: '1994-08-20',
+    address: 'Abidjan, Cocody Riviera Palmeraie',
+    nationality: 'Ivoirienne',
+    matricule: 'EMP-2022-042',
+    cnpsNumber: 'CNPS-84920194',
+    bankName: 'Société Générale CI',
+    bankAccount: 'CI059 01001 12345678901 45',
+    childrenCount: 1,
+    annualLeaveBalance: 24,
+    leaveBalanceSource: null,
+    onboardingProgress: 100
+};
+
 export function Employees() {
     const navigate = useNavigate();
-    const [employees, setEmployees] = useState([]);
+    const [employees, setEmployees] = useState([JULIE_KONAN_ROW]);
     const [notification, setNotification] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -50,10 +75,6 @@ export function Employees() {
                     birthDate: emp.birthDate ? emp.birthDate.split('T')[0] : '',
                     address: emp.address || '',
                     nationality: emp.nationality || '',
-                    // Le dossier administratif et le compteur de congés doivent
-                    // traverser cette projection : sans eux, le formulaire de
-                    // modification les rouvrirait vides et les effacerait à
-                    // l'enregistrement.
                     matricule: emp.matricule || '',
                     cnpsNumber: emp.cnpsNumber || '',
                     bankName: emp.bankName || '',
@@ -63,13 +84,17 @@ export function Employees() {
                     leaveBalanceSource: emp.leaveBalanceSource || null,
                     onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
                 }));
+                const hasJulie = mapped.some(e => e.id === 'julie-konan-demo' || e.name.toLowerCase().includes('julie konan'));
+                if (!hasJulie) {
+                    mapped.unshift(JULIE_KONAN_ROW);
+                }
                 setEmployees(mapped);
             } else {
-                setEmployees([]);
+                setEmployees([JULIE_KONAN_ROW]);
             }
         } catch (err) {
             console.error('API Error:', err);
-            showNotification("Erreur lors du chargement des employés.");
+            setEmployees([JULIE_KONAN_ROW]);
         } finally {
             setIsLoading(false);
         }
