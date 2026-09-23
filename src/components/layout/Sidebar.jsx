@@ -63,6 +63,7 @@ const getAllNavItems = (t) => [
     { name: 'Mutuelle Santé & Ayants Droit', path: '/mutuelle-sante', icon: HeartHandshake, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Sécurité & Accidents (HSE)', path: '/hse', icon: Shield, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Comité Santé & Sécurité (CSST)', path: '/csst-comite', icon: ShieldCheck, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Enquêtes Accidents & CNPS', path: '/enquetes-accidents', icon: ShieldAlert, domain: 'Employés', permission: 'employees:edit' },
     { name: t('sidebar.recruitment', 'Recrutement & ATS'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
 
     // ── PILOTAGE RH : processus mensuels & gestion opérationnelle ──
