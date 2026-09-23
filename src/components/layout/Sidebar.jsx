@@ -153,14 +153,14 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
                             to={item.path}
                             onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
                             className={cn(
-                                'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all group mb-1',
+                                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all group mb-1',
                                 isActive
-                                    ? 'bg-blue-50 text-blue-700 font-bold border-l-4 border-primary shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent'
+                                    ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-xs'
+                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
                             )}
                         >
                             <item.icon
-                                className={cn('h-5 w-5', isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600')}
+                                className={cn('h-4.5 w-4.5 transition-colors', isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600')}
                             />
                             {item.name}
                         </Link>

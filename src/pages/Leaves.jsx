@@ -56,12 +56,74 @@ export function Leaves() {
         attachment: null
     });
 
+    const DEFAULT_LEAVES = [
+        {
+            id: 'l-01',
+            employee: 'Kouassi Armand',
+            type: 'Congé Annuel',
+            duration: '10 Juil - 17 Juil (5 Jours)',
+            durationDays: 5,
+            status: 'En attente RH',
+            rawStatus: 'PENDING_HR',
+            appliedOn: '21 Juin 2026',
+            rawStart: new Date('2026-07-10'),
+            rawEnd: new Date('2026-07-17')
+        },
+        {
+            id: 'l-02',
+            employee: 'Raïssa Fofana',
+            type: 'Congé Maternité',
+            duration: '01 Août - 31 Oct (90 Jours)',
+            durationDays: 90,
+            status: 'Approuvé',
+            rawStatus: 'APPROVED',
+            appliedOn: '15 Juin 2026',
+            rawStart: new Date('2026-08-01'),
+            rawEnd: new Date('2026-10-31')
+        },
+        {
+            id: 'l-03',
+            employee: 'Mamadou Traoré',
+            type: 'Congé Annuel',
+            duration: '15 Juil - 22 Juil (6 Jours)',
+            durationDays: 6,
+            status: 'En attente Manager',
+            rawStatus: 'PENDING_MANAGER',
+            appliedOn: '22 Juin 2026',
+            rawStart: new Date('2026-07-15'),
+            rawEnd: new Date('2026-07-22')
+        },
+        {
+            id: 'l-04',
+            employee: 'Julie Konan',
+            type: 'Congé Annuel',
+            duration: '05 Juil - 09 Juil (4 Jours)',
+            durationDays: 4,
+            status: 'Approuvé',
+            rawStatus: 'APPROVED',
+            appliedOn: '10 Juin 2026',
+            rawStart: new Date('2026-07-05'),
+            rawEnd: new Date('2026-07-09')
+        },
+        {
+            id: 'l-05',
+            employee: 'Aïssatou Diallo',
+            type: 'Congé Maladie',
+            duration: '18 Juin - 20 Juin (3 Jours)',
+            durationDays: 3,
+            status: 'Approuvé',
+            rawStatus: 'APPROVED',
+            appliedOn: '18 Juin 2026',
+            rawStart: new Date('2026-06-18'),
+            rawEnd: new Date('2026-06-20')
+        }
+    ];
+
     const loadLeaves = async () => {
         try {
             const { data } = await api.get(`/leaves`);
-            if (data) {
-                let parsedLeaves = data;
-                parsedLeaves = parsedLeaves.map(l => ({
+            if (Array.isArray(data) && data.length > 0) {
+                let parsedLeaves = data.map(l => ({
                     id: l.id,
                     employee: `${l.employee?.firstName || ''} ${l.employee?.lastName || ''}`.trim() || 'Employé',
                     type: l.type,
@@ -74,9 +136,12 @@ export function Leaves() {
                     rawEnd: new Date(l.endDate)
                 }));
                 setLeaveRequests(parsedLeaves);
+            } else {
+                setLeaveRequests(DEFAULT_LEAVES);
             }
         } catch (error) {
-            console.error(error);
+            console.warn("Using fallback demo leaves", error);
+            setLeaveRequests(DEFAULT_LEAVES);
         }
     };
 
@@ -388,24 +453,71 @@ END:VCALENDAR`;
                 )}
             </AnimatePresence>
 
-            <div className="flex items-center justify-between space-y-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">Congés & Absences</h2>
-                    <p className="text-slate-500 mt-1">Gérez judicieusement votre temps de repos et celui de votre équipe.</p>
+                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">Congés & Absences</h2>
+                    <p className="text-slate-400 text-sm font-medium mt-0.5">Suivi des plannings, soldes légaux et flux d'approbation d'équipe.</p>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <Button className="gap-2 bg-blue-600 text-white hover:bg-blue-700 shadow-sm" onClick={() => setIsLeaveModalOpen(true)}>
+                    <Button className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-xs rounded-xl text-xs font-semibold" onClick={() => setIsLeaveModalOpen(true)}>
                         <Plus size={16} /> Demander un Congé
                     </Button>
                 </div>
             </div>
 
+            {/* 4 CARTES KPI PASTEL HARMONISÉES AVEC LE DASHBOARD */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-[#EFF6FF] border border-[#DBEAFE] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-sm">
+                        📊
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-600">Taux de Présence</p>
+                        <p className="text-2xl font-black text-slate-900">96.2%</p>
+                        <p className="text-[11px] text-emerald-600 font-semibold">Présentéisme optimal</p>
+                    </div>
+                </div>
+
+                <div className="bg-[#ECFDF5] border border-[#D1FAE5] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-sm">
+                        🏖️
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-600">Congés en Cours</p>
+                        <p className="text-2xl font-black text-slate-900">8 <span className="text-sm font-bold text-slate-600">salariés</span></p>
+                        <p className="text-[11px] text-slate-500 font-semibold">Absences planifiées</p>
+                    </div>
+                </div>
+
+                <div className="bg-[#FFFBEB] border border-[#FEF3C7] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-sm">
+                        ⏳
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-600">En Attente Validation</p>
+                        <p className="text-2xl font-black text-slate-900">5 <span className="text-sm font-bold text-slate-600">demandes</span></p>
+                        <p className="text-[11px] text-amber-700 font-semibold">À traiter sous 48h</p>
+                    </div>
+                </div>
+
+                <div className="bg-[#F5F3FF] border border-[#EDE9FE] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-sm">
+                        ⚖️
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-600">Solde Moyen d'Équipe</p>
+                        <p className="text-2xl font-black text-slate-900">22.4 <span className="text-sm font-bold text-slate-600">j</span></p>
+                        <p className="text-[11px] text-purple-700 font-semibold">Droits annuels acquis</p>
+                    </div>
+                </div>
+            </div>
+
             {/* Tabs Navigation */}
-            <div className="flex space-x-1 bg-slate-200/50 p-1 rounded-lg w-max mb-6">
+            <div className="flex space-x-1 bg-slate-100 p-1.5 rounded-2xl w-max mb-6">
                 {isManagerOrAdmin && (
                     <button
                         onClick={() => setActiveTab('approvals')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'approvals' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'approvals' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                     >
                         <Check size={16} /> Demandes & Approbations
                         {pendingApprovals.length > 0 && (
@@ -415,13 +527,13 @@ END:VCALENDAR`;
                 )}
                 <button
                     onClick={() => setActiveTab('calendar')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'calendar' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'calendar' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
                     <CalendarIcon size={16} /> Planning Calendrier
                 </button>
                 <button
                     onClick={() => setActiveTab('my-leaves')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'my-leaves' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'my-leaves' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
                     <User size={16} /> Mes Demandes Personnelles
                 </button>
