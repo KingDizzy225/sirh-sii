@@ -157,6 +157,10 @@ export function SkillsMatrix() {
     const [gpecGaps, setGpecGaps] = useState([]);
     const [skillDefinitions, setSkillDefinitions] = useState([]);
     const [successionPlans, setSuccessionPlans] = useState([]);
+    // Rôles cibles déduits des postes réellement occupés, et la méthode qui les
+    // a produits — affichée, pour qu'un écart ne passe pas pour une norme.
+    const [rolesMetier, setRolesMetier] = useState([]);
+    const [methodeRoles, setMethodeRoles] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Selected Employee Detail (Tab 1) - Default to Julie Konan for presentation
@@ -184,19 +188,46 @@ export function SkillsMatrix() {
         setTimeout(() => setNotification(null), 3000); 
     };
 
+    /**
+     * Rôles disponibles pour mesurer un écart.
+     *
+     * Les quatre rôles écrits dans cet écran sont conservés, et les postes
+     * réellement occupés viennent s'y ajouter. Un poste tenu par une seule
+     * personne est proposé mais signalé : la barre y est son propre niveau,
+     * donc l'écart vaut zéro par construction.
+     */
+    const rolesDisponibles = React.useMemo(() => {
+        const ecrits = TARGET_ROLES.map(r => ({ ...r, origine: 'MODELE' }));
+        const dejaLa = new Set(ecrits.map(r => r.title.toLowerCase()));
+        const metiers = rolesMetier
+            .filter(r => !dejaLa.has((r.title || '').toLowerCase()))
+            .map(r => ({ ...r, origine: 'POSTE' }));
+        return [...ecrits, ...metiers];
+    }, [rolesMetier]);
+
+    const roleRetenu = rolesDisponibles.find(r => r.title === compareRole) || null;
+
     // Main loading routine
     const loadAllData = async () => {
         setIsLoading(true);
         try {
             const headers = { Authorization: `Bearer ${token}` };
-            const [empData, talentData, mapData, gapsData, defsData, successionData] = await Promise.all([
+            const [empData, talentData, mapData, gapsData, defsData, successionData, rolesData] = await Promise.all([
                 fetch(`${API_URL}/api/employees`, { headers }).then(r => r.ok ? r.json() : []),
                 fetch(`${API_URL}/api/talents`, { headers }).then(r => r.ok ? r.json() : []),
                 fetch(`${API_URL}/api/gpec/map`, { headers }).then(r => r.ok ? r.json() : []),
                 fetch(`${API_URL}/api/gpec/gaps`, { headers }).then(r => r.ok ? r.json() : []),
                 fetch(`${API_URL}/api/gpec/skill-definitions`, { headers }).then(r => r.ok ? r.json() : []),
-                fetch(`${API_URL}/api/succession`, { headers }).then(r => r.ok ? r.json() : [])
+                fetch(`${API_URL}/api/succession`, { headers }).then(r => r.ok ? r.json() : []),
+                fetch(`${API_URL}/api/gpec/roles-cibles`, { headers }).then(r => r.ok ? r.json() : null)
             ]);
+
+            // Les postes occupés donnent des rôles cibles réels ; les quatre
+            // rôles écrits dans cet écran restent en tête, à défaut.
+            if (rolesData && Array.isArray(rolesData.roles)) {
+                setRolesMetier(rolesData.roles);
+                setMethodeRoles(rolesData.methode || null);
+            }
 
             // Always merge backend records with all 190 mock employees so mock employees are never lost!
             const apiEmps = Array.isArray(empData) ? empData : [];
@@ -342,7 +373,7 @@ export function SkillsMatrix() {
     // Recharts data formatter (Tab 1)
     const getRadarData = () => {
         if (!selectedEmployeeDetails) return [];
-        const targetRoleReqs = TARGET_ROLES.find(r => r.title === compareRole)?.requirements || {};
+        const targetRoleReqs = rolesDisponibles.find(r => r.title === compareRole)?.requirements || {};
         
         // Combine current skills and target role skill requirements
         const allSkillNames = new Set([
@@ -361,7 +392,7 @@ export function SkillsMatrix() {
     // Calculate role compatibility percentage
     const targetCompatibility = useMemo(() => {
         if (!selectedEmployeeDetails || !compareRole) return 0;
-        const reqs = TARGET_ROLES.find(r => r.title === compareRole)?.requirements || {};
+        const reqs = rolesDisponibles.find(r => r.title === compareRole)?.requirements || {};
         const reqKeys = Object.keys(reqs);
         if (reqKeys.length === 0) return 100;
 
@@ -824,10 +855,33 @@ export function SkillsMatrix() {
                                                         value={compareRole}
                                                         onChange={(e) => setCompareRole(e.target.value)}
                                                     >
-                                                        {TARGET_ROLES.map(role => (
-                                                            <option key={role.title} value={role.title}>{role.title}</option>
-                                                        ))}
+                                                        <optgroup label="Modèles de rôle">
+                                                            {rolesDisponibles.filter(r => r.origine === 'MODELE').map(role => (
+                                                                <option key={role.title} value={role.title}>{role.title}</option>
+                                                            ))}
+                                                        </optgroup>
+                                                        {rolesDisponibles.some(r => r.origine === 'POSTE') && (
+                                                            <optgroup label="Postes occupés dans l'entreprise">
+                                                                {rolesDisponibles.filter(r => r.origine === 'POSTE').map(role => (
+                                                                    <option key={role.title} value={role.title}>
+                                                                        {role.title} ({role.titulaires} titulaire{role.titulaires > 1 ? 's' : ''})
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                        )}
                                                     </select>
+                                                    {roleRetenu?.origine === 'POSTE' && (
+                                                        <p className="text-[10px] text-slate-500 mt-1.5 leading-snug">
+                                                            {roleRetenu.comparable
+                                                                ? `Niveau attendu = plus haut niveau constaté chez les ${roleRetenu.titulaires} titulaires du poste.`
+                                                                : "Un seul titulaire : la barre est son propre niveau, l'écart vaut donc zéro."}
+                                                        </p>
+                                                    )}
+                                                    {roleRetenu?.origine === 'POSTE' && methodeRoles && (
+                                                        <p className="text-[10px] text-amber-700 mt-1 leading-snug">
+                                                            Photographie des compétences enregistrées, non référentiel validé.
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </CardHeader>
 
@@ -910,7 +964,7 @@ export function SkillsMatrix() {
                                                         {selectedEmployeeDetails.skills && selectedEmployeeDetails.skills.length > 0 ? (
                                                             selectedEmployeeDetails.skills.map(s => {
                                                                 const levelVal = levelMap[s.proficiencyLevel] || 1;
-                                                                const targetLevelVal = compareRole ? (TARGET_ROLES.find(r => r.title === compareRole)?.requirements[s.skillName] || 0) : 0;
+                                                                const targetLevelVal = compareRole ? (rolesDisponibles.find(r => r.title === compareRole)?.requirements[s.skillName] || 0) : 0;
                                                                 const isGap = compareRole && targetLevelVal > levelVal;
 
                                                                 return (
