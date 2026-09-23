@@ -146,6 +146,19 @@ export function BilanSocial() {
                     </Card>
 
                     <Card>
+                        <CardHeader><CardTitle>Emploi de travailleurs handicapés</CardTitle></CardHeader>
+                        <CardContent className="divide-y pt-0">
+                            <Indicateur libelle="Salariés reconnus" valeur={nombre(d.handicap.salaries)}
+                                definition={d.definitions.travailleursHandicapes} />
+                            <Indicateur libelle="Taux d'emploi" valeur={pct(d.handicap.tauxPct)} />
+                            <Indicateur libelle="Quota déclaré" valeur={pct(d.handicap.quotaPct)}
+                                precision={d.handicap.quotaPct == null
+                                    ? "Aucun quota n'est déclaré : le taux est rendu sans verdict de conformité."
+                                    : (d.handicap.conforme ? 'Atteint' : 'Non atteint')} />
+                        </CardContent>
+                    </Card>
+
+                    <Card>
                         <CardHeader><CardTitle>Rémunérations</CardTitle></CardHeader>
                         <CardContent className="divide-y pt-0">
                             <Indicateur libelle="Masse salariale brute" valeur={argent(d.remuneration.masseSalarialeBrute)}

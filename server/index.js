@@ -192,6 +192,9 @@ app.use('/api/prime-annuelle', verifyToken, require('./routes/primeAnnuelleRoute
 app.use('/api/provisions', verifyToken, require('./routes/provisionRoutes'));
 app.use('/api/astreintes', verifyToken, require('./routes/astreinteRoutes'));
 app.use('/api/bilan-social', verifyToken, require('./routes/bilanSocialRoutes'));
+app.use('/api/retraites', verifyToken, require('./routes/retraiteRoutes'));
+app.use('/api/missions', verifyToken, require('./routes/missionRoutes'));
+app.use('/api/indemnites-journalieres', verifyToken, require('./routes/indemniteJournaliereRoutes'));
 
 // L'identité de l'entreprise est lue partout de façon synchrone : on la charge dès le démarrage.
 require('./lib/identite').rafraichir();

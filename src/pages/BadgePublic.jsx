@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ShieldX, Loader2, User, RotateCw, CalendarClock, Repeat, Check, X, ClipboardList, Plus, Trash2, CheckCheck } from 'lucide-react';
+import { ShieldCheck, ShieldX, Loader2, User, RotateCw, CalendarClock, Repeat, Check, X, ClipboardList, Plus, Trash2, CheckCheck, Wallet, FileText, AlarmClock, PhoneCall, Download, ChevronDown } from 'lucide-react';
 import { CLE_BADGE } from './Pointer';
 import { useIdentite, logoUrl, degradeMarque } from '../lib/identite.js';
 
@@ -104,6 +104,7 @@ export function BadgeCarte() {
             </div>
             <p className="text-slate-400 text-sm flex items-center gap-2"><RotateCw className="w-4 h-4" /> Touchez la carte pour la retourner</p>
             <MesCreneaux jeton={jeton} />
+            <MonDossier jeton={jeton} />
             <Passations jeton={jeton} />
         </div>
     );
@@ -174,6 +175,190 @@ const jourCourt = (d) => new Date(d).toLocaleDateString('fr-FR', { weekday: 'sho
  * Créneaux du salarié et remplacements, sous la carte.
  * Rien ne s'affiche si le salarié n'a aucun créneau et rien à reprendre.
  */
+const fcfa = (n) => (n == null ? '—' : new Intl.NumberFormat('fr-CI').format(Math.round(n)) + ' F');
+const mois = (d) => new Date(d).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+/** Bloc repliable : sur un téléphone, tout déplier d'emblée noierait le reste. */
+function Bloc({ titre, icone: Icone, resume, enfants, ouvertParDefaut = false }) {
+    const [ouvert, setOuvert] = useState(ouvertParDefaut);
+    return (
+        <section className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+            <button onClick={() => setOuvert((v) => !v)}
+                className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left">
+                <span className="flex items-center gap-2 text-white font-semibold">
+                    <Icone className="w-4 h-4 opacity-80" /> {titre}
+                </span>
+                <span className="flex items-center gap-2 text-slate-300 text-sm">
+                    {resume}
+                    <ChevronDown className={`w-4 h-4 transition-transform ${ouvert ? 'rotate-180' : ''}`} />
+                </span>
+            </button>
+            {ouvert && <div className="px-4 pb-4">{enfants}</div>}
+        </section>
+    );
+}
+
+/**
+ * Le dossier du salarié : ses droits, ses bulletins expliqués, ses échéances,
+ * ses astreintes, et ses attestations.
+ *
+ * Le portail lui permettait de demander sans rien lui montrer : il remplissait
+ * une demande de congés sans connaître son solde, et recevait un bulletin dont
+ * l'explication restait de l'autre côté du guichet.
+ */
+function MonDossier({ jeton }) {
+    const [dossier, setDossier] = useState(null);
+
+    useEffect(() => {
+        let vivant = true;
+        (async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/public/badges/${jeton}/dossier`);
+                const corps = await res.json().catch(() => null);
+                if (vivant && res.ok && corps && corps.droits) setDossier(corps);
+            } catch { /* hors ligne : la carte reste utilisable */ }
+        })();
+        return () => { vivant = false; };
+    }, [jeton]);
+
+    if (!dossier) return null;
+
+    const d = dossier.droits;
+    const echeancesProches = (dossier.echeances || []).filter((e) => e.dans === null || e.dans <= 180);
+
+    return (
+        <div className="w-full flex flex-col items-center gap-3">
+            <Bloc titre="Mes droits" icone={Wallet} ouvertParDefaut
+                resume={`${d.conges.solde} jour(s)`}
+                enfants={
+                    <div className="space-y-3 text-sm text-slate-200">
+                        <div>
+                            <p className="font-semibold text-white">{d.conges.solde} jour(s) de congés</p>
+                            {d.conges.valeurJour != null && (
+                                <p className="text-slate-400 text-xs">
+                                    soit environ {fcfa(d.conges.solde * d.conges.valeurJour)} — {fcfa(d.conges.valeurJour)} par jour
+                                </p>
+                            )}
+                            {d.conges.detail && (
+                                <ul className="mt-1 text-xs text-slate-400 space-y-0.5">
+                                    <li>Acquis cette année : {d.conges.detail.acquis} jour(s)</li>
+                                    {d.conges.detail.majorationAnciennete > 0 && (
+                                        <li>Majoration d'ancienneté : +{d.conges.detail.majorationAnciennete}</li>
+                                    )}
+                                    {d.conges.detail.majorationEnfants > 0 && (
+                                        <li>Majoration pour enfants : +{d.conges.detail.majorationEnfants}</li>
+                                    )}
+                                    <li>Pris cette année : {d.conges.joursPris} jour(s)</li>
+                                </ul>
+                            )}
+                        </div>
+                        {d.anciennete.annees > 0 && (
+                            <p>
+                                Ancienneté : {d.anciennete.annees} an(s)
+                                {d.anciennete.montantMensuel > 0 && (
+                                    <span className="text-slate-400">
+                                        {' '}— prime de {fcfa(d.anciennete.montantMensuel)} par mois
+                                        {!d.anciennete.active && ' (non versée à ce jour)'}
+                                    </span>
+                                )}
+                            </p>
+                        )}
+                        {d.primeFinAnnee.parametree && d.primeFinAnnee.acquis != null && (
+                            <p>
+                                Prime de fin d'année {d.primeFinAnnee.annee} : {fcfa(d.primeFinAnnee.acquis)} acquis
+                                <span className="text-slate-400"> ({d.primeFinAnnee.moisComptes} mois de présence)</span>
+                            </p>
+                        )}
+                        {d.rappels.length > 0 && d.rappels.map((r) => (
+                            <p key={r.id} className="text-amber-300">
+                                Rappel à venir : {fcfa(r.total)} — {r.motif}
+                            </p>
+                        ))}
+                    </div>
+                } />
+
+            {dossier.bulletins.length > 0 && (
+                <Bloc titre="Mes bulletins" icone={FileText}
+                    resume={mois(dossier.bulletins[0].periode)}
+                    enfants={
+                        <div className="space-y-4">
+                            {dossier.bulletins.map((b) => (
+                                <div key={b.id} className="text-sm">
+                                    <p className="font-semibold text-white">
+                                        {mois(b.periode)} — net {fcfa(b.net)}
+                                    </p>
+                                    <ul className="mt-1 space-y-0.5 text-xs">
+                                        {b.lignes.map((l, i) => (
+                                            <li key={`${b.id}-${i}`} className="flex justify-between gap-3">
+                                                <span className="text-slate-300">{l.libelle}</span>
+                                                <span className={l.sens === 'debit' ? 'text-rose-300' : 'text-slate-200'}>
+                                                    {l.sens === 'debit' ? '−' : ''}{fcfa(l.montant)}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    {!b.complet && (
+                                        <p className="text-xs text-amber-300 mt-1">
+                                            Ce bulletin est antérieur au détail enregistré : certaines lignes manquent.
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    } />
+            )}
+
+            {echeancesProches.length > 0 && (
+                <Bloc titre="Mes échéances" icone={AlarmClock}
+                    resume={`${echeancesProches.length}`}
+                    enfants={
+                        <ul className="space-y-1 text-sm text-slate-200">
+                            {echeancesProches.map((e) => (
+                                <li key={e.code}>
+                                    {e.libelle} — <span className="text-slate-400">{date(e.date)}</span>
+                                    {e.precision && <span className="text-slate-400"> · {e.precision}</span>}
+                                </li>
+                            ))}
+                        </ul>
+                    } />
+            )}
+
+            {dossier.astreintes.length > 0 && (
+                <Bloc titre="Mes astreintes" icone={PhoneCall}
+                    resume={`${dossier.astreintes.length}`}
+                    enfants={
+                        <ul className="space-y-1 text-sm text-slate-200">
+                            {dossier.astreintes.map((a) => (
+                                <li key={a.id}>
+                                    {date(a.debut)} → {date(a.fin)} · {a.type}
+                                    {a.compensation > 0 && <span className="text-slate-400"> — {fcfa(a.compensation)}</span>}
+                                </li>
+                            ))}
+                        </ul>
+                    } />
+            )}
+
+            <Bloc titre="Mes attestations" icone={Download} resume="Immédiat"
+                enfants={
+                    <div className="space-y-2 text-sm">
+                        <p className="text-slate-400 text-xs">
+                            Signées et scellées à l'émission : le document porte un QR qu'une banque ou une
+                            administration peut vérifier en ligne.
+                        </p>
+                        <a href={`${API_URL}/api/public/badges/${jeton}/attestation/TRAVAIL`}
+                            className="block rounded-lg bg-white/10 px-3 py-2 text-white hover:bg-white/20">
+                            Attestation de travail
+                        </a>
+                        <a href={`${API_URL}/api/public/badges/${jeton}/attestation/SALAIRE`}
+                            className="block rounded-lg bg-white/10 px-3 py-2 text-white hover:bg-white/20">
+                            Attestation de salaire
+                        </a>
+                    </div>
+                } />
+        </div>
+    );
+}
+
 function MesCreneaux({ jeton }) {
     const [espace, setEspace] = useState(null);
     const [message, setMessage] = useState(null);

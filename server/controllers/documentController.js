@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { getPublicAppUrl } = require('../lib/publicUrl');
 const apposition = require('../lib/apposition');
+const attestation = require('../lib/attestation');
 
 exports.uploadDocument = async (req, res) => {
     try {
@@ -211,79 +212,27 @@ exports.generateAttestation = async (req, res) => {
             return res.status(403).json({ error: "Accès interdit : attestation d'un autre employé." });
         }
         const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
-
         if (!employee) {
             return res.status(404).json({ error: 'Employé introuvable' });
         }
 
-        // Enregistrement du document au registre : c'est ce jeton, aléatoire et
-        // non devinable, que le QR code encodera et qu'un tiers pourra vérifier.
-        const token = crypto.randomBytes(24).toString('hex');
-        const issued = await prisma.issuedDocument.create({
-            data: {
-                token,
-                type: 'ATTESTATION_TRAVAIL',
-                employeeId: employee.id,
-                issuedByEmail: req.user && req.user.email ? req.user.email : null,
-                employeeName: `${employee.firstName} ${employee.lastName}`,
-                positionTitle: employee.positionTitle || employee.role,
-                department: employee.department,
-                hireDate: employee.hireDate
-            }
-        });
-
-        // Signataire habilité : l'attestation sortait sans signature, et devait
-        // donc être imprimée, signée à la main puis rescannée avant d'être
-        // remise. Elle est désormais signée et scellée à l'émission.
+        // Le corps du document vit dans `lib/attestation` : le salarié l'émet
+        // aussi depuis son badge, et les deux chemins doivent produire le même
+        // document, scellé de la même façon.
+        const type = String(req.query.type || 'TRAVAIL').toUpperCase() === 'SALAIRE' ? 'SALAIRE' : 'TRAVAIL';
+        const registre = await attestation.enregistrer(
+            employee, type, req.user && req.user.email ? req.user.email : null);
         const signataire = await apposition.choisirSignataire(req.query.signataireId);
+        const salaire = type === 'SALAIRE' ? await attestation.elementsSalaire(employee.id) : null;
 
         const pdfDoc = new PDFDocument({ margin: 50 });
-        const fileName = `Attestation_${employee.lastName}_${Date.now()}.pdf`;
-
+        const fileName = `${type === 'SALAIRE' ? 'Attestation_salaire' : 'Attestation'}_${employee.lastName}_${Date.now()}.pdf`;
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-
         pdfDoc.pipe(res);
 
-        // Header
-        pdfDoc.fontSize(24).fillColor('#2563eb').text('SIRH-SII', { align: 'center' });
-        pdfDoc.moveDown();
-        pdfDoc.fontSize(16).fillColor('#0f172a').text('ATTESTATION DE TRAVAIL', { align: 'center', underline: true });
-        pdfDoc.moveDown(2);
-
-        const formatDate = (date) => {
-            const d = new Date(date);
-            return isNaN(d.getTime()) ? 'Non précisée' : d.toLocaleDateString('fr-FR');
-        };
-
-        // Body
-        pdfDoc.fontSize(12).fillColor('#333333').text(`Nous soussignés, la direction de SIRH-SII,`);
-        pdfDoc.moveDown();
-        pdfDoc.text(`Certifions par la présente que M./Mme ${employee.firstName} ${employee.lastName},`);
-        pdfDoc.text(`Exerce la fonction de ${employee.positionTitle || employee.role} au sein du département ${employee.department}.`);
-        pdfDoc.text(`Date d'embauche : ${formatDate(employee.hireDate)}.`);
-        pdfDoc.moveDown();
-        pdfDoc.text(`Cette attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.`);
-        
-        pdfDoc.moveDown(4);
-        pdfDoc.text(`Fait numériquement, le ${formatDate(new Date())}`);
-        pdfDoc.moveDown(3);
-
-        // QR de vérification, signature du signataire habilité et sceau
-        // cryptographique. Le QR renvoie vers une page publique confirmant
-        // l'authenticité, sans exposer d'information sensible.
-        await apposition.apposer(pdfDoc, {
-            signataire,
-            registre: issued,
-            employe: employee,
-            typeDocument: 'Attestation de travail'
-        });
-
-        pdfDoc.fontSize(7).fillColor('#94a3b8')
-            .text(`Référence : ${issued.token.slice(0, 12).toUpperCase()}`, 400, 700);
-
+        await attestation.composer(pdfDoc, { employe: employee, type, signataire, registre, salaire });
         pdfDoc.end();
-
     } catch (error) {
         console.error("Error generating attestation PDF:", error);
         if (!res.headersSent) {

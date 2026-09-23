@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile, BookCheck, Leaf, Compass } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile, BookCheck, Leaf, Compass, Hourglass, Plane, HandCoins } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +42,7 @@ const getAllNavItems = (t) => [
     { name: 'Kiosque Attestations Express', path: '/kiosque-attestations', icon: QrCode, domain: 'Employés', permission: 'dashboard:view' },
     { name: 'Périodes d\'Essai & Titularisation', path: '/periodes-essai', icon: Clock, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Organigramme Entreprise', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
-    { name: 'Entretiens, Évaluations & OKR', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },
+    { name: 'Entretiens, Évaluations & OKR', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Bilans de Carrière (2 & 6 ans)', path: '/bilans-carriere', icon: BookOpen, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Simulateur Carrière & Évolution IA', path: '/simulateur-carriere-ia', icon: Compass, domain: 'Employés', permission: 'dashboard:view', manager: true },
     { name: 'Plan de Succession & Postes Clés', path: '/plan-succession', icon: Award, domain: 'Employés', permission: 'employees:edit', manager: true },
@@ -50,7 +50,10 @@ const getAllNavItems = (t) => [
     { name: 'Délégués & Doléances Salariés', path: '/doleances-delegues', icon: Vote, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Procédures & Sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Astreintes & Gardes', path: '/astreintes', icon: PhoneCall, domain: 'Employés', permission: 'employees:edit', manager: true },
-    { name: 'Départs & Entretiens de Sortie', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit', manager: true },
+    { name: 'Départs à la Retraite', path: '/retraites', icon: Hourglass, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Ordres de Mission & Per Diem', path: '/missions', icon: Plane, domain: 'Employés', permission: 'employees:edit', manager: true },
+    { name: 'Indemnités Journalières CNPS', path: '/indemnites-journalieres', icon: HandCoins, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Départs & Entretiens de Sortie', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Équipements & Flotte Mobile', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Santé, Médecine & Mutuelle', path: '/mutuelle-sante', icon: HeartHandshake, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Sécurité, CSST & Accidents CNPS', path: '/enquetes-accidents', icon: ShieldAlert, domain: 'Employés', permission: 'employees:edit' },
@@ -79,7 +82,7 @@ const getAllNavItems = (t) => [
     { name: 'Diffusion WhatsApp RH', path: '/whatsapp-bot', icon: MessageSquare, domain: 'Pilotage RH', permission: 'dashboard:view' },
 
     // ── INTELLIGENCE RH : Analyses, reporting et climat social ──
-    { name: t('sidebar.analytics', 'Tableaux de Bord RH'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
+    { name: t('sidebar.analytics', 'Tableaux de Bord RH'), path: '/analytics', icon: BarChart, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Bilan Social Légal', path: '/bilan-social', icon: FileBarChart, domain: 'Intelligence RH', permission: 'payroll:view' },
     { name: 'Générateur de Listes & Requêtes', path: '/requeteur', icon: Grid, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Audit & Historique Daté', path: '/historique', icon: History, domain: 'Intelligence RH', permission: 'dashboard:view' },

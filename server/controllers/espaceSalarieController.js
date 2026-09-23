@@ -4,6 +4,10 @@ const pointage = require('../lib/pointageEcran');
 const remplacement = require('../lib/remplacement');
 const presence = require('../lib/presence');
 const { notifierSalarie, notifierRH } = require('../lib/notify');
+const espacePersonnel = require('../lib/espacePersonnel');
+const attestation = require('../lib/attestation');
+const apposition = require('../lib/apposition');
+const PDFDocument = require('pdfkit');
 
 /**
  * Ce que le salarié fait depuis son téléphone, reconnu par son badge.
@@ -270,6 +274,74 @@ exports.reprendre = async (req, res) => {
     } catch (erreur) {
         console.error('[REMPLACEMENT] Reprise impossible :', erreur.message);
         res.status(500).json({ error: 'Reprise impossible.' });
+    }
+};
+
+// ── Ce que le salarié voit de son propre dossier ──────────────────────────
+
+/**
+ * Droits acquis, bulletins expliqués, échéances et astreintes.
+ *
+ * Un seul appel plutôt que quatre : le badge s'ouvre sur un téléphone, souvent
+ * en 3G, et quatre allers-retours pour une page se paient en secondes.
+ */
+exports.monDossier = async (req, res) => {
+    try {
+        const salarie = await porteur(req.params.jeton);
+        if (!salarie) return refuserBadge(res);
+
+        const [droits, bulletins, echeances, astreintes] = await Promise.all([
+            espacePersonnel.droits(salarie.id),
+            espacePersonnel.bulletins(salarie.id, req.query.bulletins),
+            espacePersonnel.echeances(salarie.id),
+            espacePersonnel.astreintes(salarie.id)
+        ]);
+
+        res.set('Cache-Control', 'no-store');
+        res.json({
+            prenom: salarie.firstName,
+            droits,
+            bulletins,
+            echeances,
+            astreintes,
+            attestations: Object.entries(attestation.TYPES).map(([code, t]) => ({ code, libelle: t.libelle }))
+        });
+    } catch (erreur) {
+        console.error('[ESPACE] Dossier indisponible :', erreur.message);
+        res.status(500).json({ error: 'Votre dossier est momentanément indisponible.' });
+    }
+};
+
+/**
+ * Attestation émise par le salarié lui-même.
+ *
+ * Elle était une demande adressée aux ressources humaines, traitée à la main,
+ * pour un document que l'application sait produire, signer et sceller seule.
+ * Le registre garde qui l'a émise : ici, l'intéressé depuis son badge.
+ */
+exports.attestation = async (req, res) => {
+    try {
+        const salarie = await porteur(req.params.jeton);
+        if (!salarie) return refuserBadge(res);
+
+        const type = String(req.params.type || 'TRAVAIL').toUpperCase() === 'SALAIRE' ? 'SALAIRE' : 'TRAVAIL';
+        const employe = await prisma.employee.findUnique({ where: { id: salarie.id } });
+
+        const registre = await attestation.enregistrer(employe, type, 'PORTAIL_SALARIE');
+        const signataire = await apposition.choisirSignataire();
+        const salaire = type === 'SALAIRE' ? await attestation.elementsSalaire(employe.id) : null;
+
+        const pdfDoc = new PDFDocument({ margin: 50 });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition',
+            `attachment; filename=Attestation_${type.toLowerCase()}_${employe.lastName}.pdf`);
+        pdfDoc.pipe(res);
+
+        await attestation.composer(pdfDoc, { employe, type, signataire, registre, salaire });
+        pdfDoc.end();
+    } catch (erreur) {
+        console.error('[ESPACE] Attestation impossible :', erreur.message);
+        if (!res.headersSent) res.status(500).json({ error: "L'attestation n'a pas pu être produite." });
     }
 };
 

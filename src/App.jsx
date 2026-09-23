@@ -28,6 +28,9 @@ import { PrimeAnnuelle } from './pages/PrimeAnnuelle';
 import { ProvisionConges } from './pages/ProvisionConges';
 import { Astreintes } from './pages/Astreintes';
 import { BilanSocial } from './pages/BilanSocial';
+import { Retraites } from './pages/Retraites';
+import { Missions } from './pages/Missions';
+import { IndemnitesJournalieres } from './pages/IndemnitesJournalieres';
 import { Remplacements } from './pages/Remplacements';
 import { PreAccueil } from './pages/PreAccueil';
 import { Bienvenue } from './pages/Bienvenue';
@@ -566,6 +569,26 @@ const AppContent = () => {
             <Route path="/bilan-social" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <BilanSocial />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/retraites" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <Retraites />
+              </ProtectedRoute>
+            } />
+
+            {/* Les responsables demandent une mission pour leur équipe ;
+                autoriser et solder restent aux RH, côté serveur. */}
+            <Route path="/missions" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <Missions />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/indemnites-journalieres" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <IndemnitesJournalieres />
               </ProtectedRoute>
             } />
 

@@ -50,6 +50,8 @@ router.get('/badges/:jeton/photo', badgeController.photo);
 const espaceSalarieController = require('../controllers/espaceSalarieController');
 router.post('/badges/:jeton/pointer', espaceSalarieController.pointer);
 router.get('/badges/:jeton/espace', espaceSalarieController.espace);
+router.get('/badges/:jeton/dossier', espaceSalarieController.monDossier);
+router.get('/badges/:jeton/attestation/:type', espaceSalarieController.attestation);
 router.post('/badges/:jeton/remplacements', espaceSalarieController.proposer);
 router.post('/badges/:jeton/remplacements/:id/annuler', espaceSalarieController.annuler);
 router.post('/badges/:jeton/remplacements/:id/accepter', espaceSalarieController.reprendre);

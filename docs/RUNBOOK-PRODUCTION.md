@@ -1121,6 +1121,111 @@ gratification. Elle la traite comme une rémunération ordinaire — cotisations
 impôt — et l'écran le dit. Si votre cabinet retient une exonération, ajustez
 en conséquence.
 
+## Retraite, missions, indemnités CNPS, travailleurs handicapés
+
+### Départs à la retraite (Employés → Départs à la retraite)
+
+L'application connaissait toutes les dates de naissance et n'en tirait rien.
+L'écran annonce les départs à venir sur 12, 24 ou 60 mois, et signale en rouge
+ceux dont l'âge est **déjà dépassé** — ce n'est pas une erreur de saisie, c'est
+un départ qui aurait dû être préparé. `RETRAITE_AGE` porte l'âge retenu.
+
+Le point le plus lourd est ailleurs : un salarié partant à la retraite
+ressortait du décompte de départ avec **zéro** indemnité, puisque seul le
+licenciement en ouvrait une. L'allocation de fin de carrière a son propre
+barème (`RETRAITE_BAREME_ALLOCATION`, même forme que celui du licenciement) et
+figure désormais sur sa propre ligne du décompte. **Sans barème déclaré, le
+reçu pour solde de tout compte est bloqué** : mieux vaut pas de reçu qu'un reçu
+signé amputé de son poste le plus lourd.
+
+### Ordres de mission (Employés → Ordres de mission)
+
+Les notes de frais remboursaient après coup ; rien ne consignait qui avait
+autorisé le déplacement. Un ordre de mission se demande, s'autorise ou se
+refuse avec motif — les deux décisions sont journalisées —, puis se constate et
+se solde au retour. Les responsables demandent pour leur équipe ; autoriser et
+solder restent aux RH.
+
+`MISSION_PER_DIEM` porte les forfaits par zone (LOCALE, INTERIEUR, ETRANGER).
+Sans paramétrage, l'ordre vaut quand même : l'autorisation écrite est déjà
+l'essentiel, et le montant se saisit.
+
+**Le per diem n'est pas un remboursement** : il couvre le séjour au forfait,
+les frais réels justifiés restent des notes de frais. L'écran met en tête les
+avances des missions effectuées et non soldées — de l'argent sorti que personne
+ne réclame.
+
+### Indemnités journalières CNPS (Pilotage RH → Indemnités CNPS)
+
+Pendant un congé de maternité ou un arrêt pour accident du travail, l'employeur
+avance le salaire et la CNPS rembourse. L'avance était faite chaque fois, la
+créance jamais ouverte.
+
+L'écran liste d'abord les **arrêts sans créance ouverte**, tirés des congés de
+maternité approuvés et des accidents du travail avec jours d'arrêt. Chacun
+s'ouvre en créance, se dépose (avec sa référence), puis s'encaisse. Un
+remboursement inférieur à la demande est signalé plutôt qu'enregistré en
+silence, et un arrêt trop ancien pour être déposé (`CNPS_IJ_DELAI_JOURS`) est
+marqué forclos au lieu d'être masqué.
+
+**L'application ne calcule pas le droit** : le taux, les plafonds et la durée
+indemnisable relèvent du régime CNPS. Avec `CNPS_TAUX_IJ`, elle estime à partir
+des bulletins **précédant** l'arrêt — les prendre pendant ferait baisser la
+référence, donc la créance. Estimation, demande et encaissement restent trois
+montants distincts, qui ne s'additionnent jamais.
+
+### Travailleurs handicapés
+
+La fiche salarié porte la reconnaissance, sa date et l'aménagement de poste.
+C'est une donnée sensible : elle sert au décompte et à l'aménagement, pas aux
+écrans ordinaires.
+
+Le bilan social en tire le taux d'emploi. Cet indicateur existait auparavant sur
+le tableau de bord de diversité sous forme d'un pourcentage écrit en dur, sans
+aucune donnée derrière — il avait été retiré, il revient sur une base réelle.
+`QUOTA_TRAVAILLEURS_HANDICAPES` déclare le quota applicable ; sans lui,
+l'application rend le taux constaté et **ne prononce aucun verdict de
+conformité**.
+
+## Ce que le salarié voit de son dossier
+
+Les salariés n'ont pas de compte : leur badge numérique les identifie. La page
+du badge (`/badge/<jeton>`) porte donc, sous la carte, ce qu'ils peuvent
+consulter d'eux-mêmes. Les blocs sont repliés par défaut — le badge s'ouvre sur
+un téléphone, souvent en 3G.
+
+**Mes droits** — solde de congés opposable (celui que la paie décompte), sa
+décomposition (acquis, majorations d'ancienneté et pour enfants, jours pris),
+la valeur d'une journée, l'ancienneté, la prime de fin d'année acquise à ce
+jour et les rappels à venir. Le salarié remplissait jusqu'ici une demande de
+congés sans connaître son solde.
+
+**Mes bulletins** — les trois derniers, expliqués ligne par ligne.
+L'explication existait, réservée aux comptes RH : le salarié recevait le PDF et
+l'explication restait de l'autre côté du guichet. Elle compte d'autant plus
+depuis que le bulletin porte le rappel, le transport, les avantages en nature,
+l'astreinte et le treizième mois.
+
+**Mes échéances** — terme du contrat, validité de la visite médicale,
+échéances de prêt restantes. **L'avis du médecin du travail n'en fait pas
+partie** : seule la date de validité sort, jamais la conclusion ni les
+restrictions.
+
+**Mes astreintes** — les périodes à venir, avec leur compensation.
+
+**Mes attestations** — attestation de travail et attestation de salaire,
+émises immédiatement par l'intéressé, signées et scellées comme celles des RH,
+avec le QR de vérification. Le registre garde qui les a émises :
+`PORTAIL_SALARIE`. L'attestation de salaire reprend les bulletins enregistrés
+mois par mois et dit combien elle en a trouvés — elle n'extrapole pas une
+moyenne sur des mois absents, ce qui ferait certifier un revenu que la paie
+n'a pas versé. Le nombre de mois repris se règle par
+`ATTESTATION_SALAIRE_MOIS`.
+
+Corrigé au passage : l'attestation portait « Nous soussignés, la direction de
+SIRH-SII » — le nom du logiciel, sur un document remis à une banque. Le nom
+vient désormais de l'identité de l'entreprise (onglet *Paramètres → Identité*).
+
 ## Rappels, treizième mois, provisions, astreintes, bilan social
 
 ### Rappels de salaire (Pilotage RH → Rappels de salaire)

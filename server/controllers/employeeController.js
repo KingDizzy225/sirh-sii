@@ -209,6 +209,26 @@ exports.updateEmployee = async (req, res) => {
         if (data.childrenCount !== undefined) {
             data.childrenCount = Number(data.childrenCount) || 0;
         }
+
+        /**
+         * Reconnaissance de travailleur handicapé.
+         *
+         * Le formulaire transmet une case cochée, c'est-à-dire parfois la
+         * chaîne « false ». La convertir ici évite qu'une chaîne non vide
+         * devienne un « oui » silencieux. La date de reconnaissance est
+         * effacée avec la reconnaissance elle-même : conserver la date d'une
+         * décision qu'on vient de retirer n'aurait aucun sens.
+         */
+        if (data.travailleurHandicape !== undefined) {
+            data.travailleurHandicape = data.travailleurHandicape === true
+                || data.travailleurHandicape === 'true';
+            if (!data.travailleurHandicape) {
+                data.handicapReconnuLe = null;
+                data.handicapAmenagement = null;
+            }
+        }
+        if (data.handicapReconnuLe === '') data.handicapReconnuLe = null;
+        else if (data.handicapReconnuLe) data.handicapReconnuLe = new Date(data.handicapReconnuLe);
         // La rémunération ne se modifie pas par le formulaire général : elle
         // passe par une décision datée et motivée, sans quoi une augmentation
         // se confondrait avec une correction de faute de frappe.

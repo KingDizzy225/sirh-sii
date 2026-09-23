@@ -1,5 +1,6 @@
 const prisma = require('../prismaClient');
 const rupture = require('./rupture');
+const retraite = require('./retraite');
 
 /**
  * Décompte de fin de contrat.
@@ -98,7 +99,21 @@ async function calculer(employeeId) {
         ? rupture.calculerIndemnite(anneesAnciennete, salaireMoyen)
         : { montant: 0, eligible: false, tranches: [], motifIneligibilite: null };
 
-    const net = indemniteConges + indemnite.montant - totalAvances;
+    /**
+     * Départ à la retraite.
+     *
+     * Il ne relève pas de l'indemnité de licenciement — ni la même cause, ni
+     * le même régime — et ressortait donc à zéro : le décompte d'un salarié
+     * partant après trente ans de maison ne portait que ses congés non pris.
+     * L'allocation de fin de carrière se calcule sur son propre barème, et se
+     * tait quand ce barème n'est pas déclaré plutôt que d'emprunter l'autre.
+     */
+    const partEnRetraite = procedure ? procedure.type === 'RETRAITE' : false;
+    const finCarriere = partEnRetraite
+        ? retraite.allocation(anneesAnciennete, salaireMoyen)
+        : { montant: 0, chiffrable: false, motif: null, tranches: [] };
+
+    const net = indemniteConges + indemnite.montant + (finCarriere.montant || 0) - totalAvances;
 
     return {
         salarie: {
@@ -121,6 +136,11 @@ async function calculer(employeeId) {
             issue: procedure.issue,
             clotureeLe: procedure.clotureeLe
         } : null,
+        allocationFinCarriere: partEnRetraite ? {
+            ...finCarriere,
+            salaireMoyenReference: Math.round(salaireMoyen),
+            anciennete: arrondir1(anneesAnciennete)
+        } : null,
         indemniteLicenciement: {
             ...indemnite,
             salaireMoyenReference: Math.round(salaireMoyen),
@@ -135,6 +155,13 @@ async function calculer(employeeId) {
                 montant: indemniteConges,
                 sens: 'credit'
             },
+            ...(partEnRetraite && finCarriere.chiffrable && finCarriere.montant > 0 ? [{
+                libelle: 'Allocation de fin de carrière',
+                detail: `${arrondir1(anneesAnciennete)} an(s) d'ancienneté, ` +
+                        `salaire moyen de ${Math.round(salaireMoyen).toLocaleString('fr-FR')} F`,
+                montant: finCarriere.montant,
+                sens: 'credit'
+            }] : []),
             ...(indemnisable && indemnite.eligible ? [{
                 libelle: 'Indemnité de licenciement',
                 detail: `${arrondir1(anneesAnciennete)} an(s) d'ancienneté, ` +
@@ -201,6 +228,12 @@ function obstacles(projet) {
             "Aucun bulletin de paie n'est enregistré pour ce salarié : l'indemnité " +
             "compensatrice de congés payés serait calculée sur un salaire nul."
         );
+    }
+    // Un départ à la retraite dont l'allocation n'est pas chiffrable produirait
+    // un reçu amputé du poste le plus lourd, et le salarié signerait une
+    // décharge pour un montant qui n'a jamais été calculé.
+    if (projet.allocationFinCarriere && !projet.allocationFinCarriere.chiffrable) {
+        empechements.push(projet.allocationFinCarriere.motif);
     }
     return empechements;
 }
