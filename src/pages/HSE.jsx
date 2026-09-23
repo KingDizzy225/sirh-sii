@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import {
     HeartPulse, Plus, AlertTriangle, CheckCircle2, ShieldAlert,
-    X, RefreshCw, CalendarClock, FileWarning
+    X, RefreshCw, CalendarClock, FileWarning, FileText, Printer, Download, Building2, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, listeSure } from '../lib/api';
@@ -48,6 +48,7 @@ export function HSE() {
     const [erreur, setErreur] = useState(null);
     const [message, setMessage] = useState(null);
     const [formulaireOuvert, setFormulaireOuvert] = useState(false);
+    const [cerfaModal, setCerfaModal] = useState(null);
     const [envoi, setEnvoi] = useState(false);
     const annee = new Date().getFullYear();
 
@@ -246,6 +247,7 @@ export function HSE() {
                                                 <TableHead className="text-right">Arrêt</TableHead>
                                                 <TableHead>CNPS</TableHead>
                                                 <TableHead>Statut</TableHead>
+                                                <TableHead className="text-right">Action CNPS</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody className="text-xs">
@@ -271,7 +273,7 @@ export function HSE() {
                                                     </td>
                                                     <td className="p-3">
                                                         {a.declareCnps ? (
-                                                            <span className="flex items-center gap-1 text-emerald-700">
+                                                             <span className="flex items-center gap-1 text-emerald-700">
                                                                 <CheckCircle2 size={13} /> {dateFr(a.declareLe)}
                                                             </span>
                                                         ) : (
@@ -291,6 +293,17 @@ export function HSE() {
                                                         >
                                                             {STATUTS.map(s => <option key={s} value={s}>{s}</option>)}
                                                         </select>
+                                                    </td>
+                                                    <td className="p-3 text-right">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-[11px] font-bold gap-1 border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100"
+                                                            onClick={() => setCerfaModal(a)}
+                                                            title="Générer la Déclaration Officielle Cerfa CNPS"
+                                                        >
+                                                            <FileText size={12} /> Cerfa CNPS
+                                                        </Button>
                                                     </td>
                                                 </TableRow>
                                             ))}
@@ -457,6 +470,179 @@ export function HSE() {
                                     </Button>
                                 </div>
                             </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* Modal Formulaire Officiel Cerfa CNPS Côte d'Ivoire */}
+                {cerfaModal && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 overflow-y-auto">
+                        <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+                            className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl overflow-hidden my-8 border border-slate-200">
+                            
+                            {/* Actions d'en-tête (écran uniquement) */}
+                            <div className="bg-slate-900 text-white p-4 flex justify-between items-center print:hidden">
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck className="text-emerald-400 h-5 w-5" />
+                                    <span className="font-bold text-sm">Générateur Cerfa Officiel CNPS — Déclaration sous 48h</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button size="sm" onClick={() => window.print()} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 font-bold text-xs">
+                                        <Printer size={14} /> Imprimer le Cerfa
+                                    </Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setCerfaModal(null)} className="text-slate-300 hover:text-white">
+                                        <X size={18} />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Contenu du document Cerfa Officiel (Imprimable) */}
+                            <div className="p-8 space-y-6 text-slate-800 bg-white font-sans text-xs">
+                                
+                                {/* En-tête officiel République de Côte d'Ivoire & CNPS */}
+                                <div className="border-b-2 border-slate-900 pb-4 flex justify-between items-start">
+                                    <div>
+                                        <div className="font-black text-sm uppercase tracking-wider text-slate-900">RÉPUBLIQUE DE CÔTE D'IVOIRE</div>
+                                        <div className="text-[10px] text-slate-500 font-semibold italic">Union - Discipline - Travail</div>
+                                        <div className="mt-2 font-black text-indigo-900 text-base flex items-center gap-1.5">
+                                            <Building2 size={16} /> CAISSE NATIONALE DE PRÉVOYANCE SOCIALE (CNPS)
+                                        </div>
+                                        <div className="text-[10px] text-slate-500">Direction de la Prévention et des Accidents du Travail</div>
+                                    </div>
+                                    <div className="text-right border-2 border-slate-900 p-2 rounded-lg bg-slate-50">
+                                        <div className="text-[10px] font-black uppercase text-slate-500">Réf. Déclaration</div>
+                                        <div className="text-sm font-black text-slate-900 font-mono">{cerfaModal.reference}</div>
+                                        <div className="text-[9px] text-slate-400">Date : {dateFr(cerfaModal.survenuLe)}</div>
+                                    </div>
+                                </div>
+
+                                {/* Titre Officiel */}
+                                <div className="text-center py-2 bg-slate-100 rounded-lg border border-slate-200">
+                                    <h2 className="text-sm font-black uppercase tracking-wider text-slate-900">
+                                        DÉCLARATION D'ACCIDENT DU TRAVAIL OU DE MALADIE PROFESSIONNELLE
+                                    </h2>
+                                    <p className="text-[10px] text-slate-500 font-medium">
+                                        (En application des articles 71 et suivants du Code de Prévoyance Sociale de Côte d'Ivoire)
+                                    </p>
+                                </div>
+
+                                {/* Section 1 : Identification de l'Employeur */}
+                                <div className="border border-slate-300 rounded-lg p-3 space-y-2 bg-slate-50/50">
+                                    <div className="font-black text-slate-900 uppercase text-[11px] border-b pb-1">
+                                        1. RENSEIGNEMENTS CONCERNANT L'EMPLOYEUR
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Raison Sociale : </span>
+                                            <span className="font-bold text-slate-900">SII CÔTE D'IVOIRE SAS</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">N° Employeur CNPS : </span>
+                                            <span className="font-mono font-bold text-slate-900">01-44589-CI</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Adresse / Siège : </span>
+                                            <span className="font-semibold text-slate-800">Abidjan, Cocody Riviera 3, Bd Hassan II</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Téléphone / Contact RH : </span>
+                                            <span className="font-semibold text-slate-800">+225 27 22 40 50 / rh@sii-ci.com</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 2 : Identification de la Victime */}
+                                <div className="border border-slate-300 rounded-lg p-3 space-y-2 bg-slate-50/50">
+                                    <div className="font-black text-slate-900 uppercase text-[11px] border-b pb-1">
+                                        2. RENSEIGNEMENTS CONCERNANT LA VICTIME
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Nom et Prénoms : </span>
+                                            <span className="font-bold text-slate-900 text-sm">{cerfaModal.salarie}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Département / Service : </span>
+                                            <span className="font-semibold text-slate-800">{cerfaModal.service || 'Service Technique'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">N° Matricule Interne : </span>
+                                            <span className="font-mono font-semibold text-slate-800">EMP-2024-089</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">N° Assuré CNPS : </span>
+                                            <span className="font-mono font-semibold text-slate-800">CNPS-78492011</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 3 : Circonstances de l'Accident */}
+                                <div className="border border-slate-300 rounded-lg p-3 space-y-2 bg-slate-50/50">
+                                    <div className="font-black text-slate-900 uppercase text-[11px] border-b pb-1">
+                                        3. CIRCONSTANCES &amp; CONSTATATION DE L'ACCIDENT
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Date survenue : </span>
+                                            <span className="font-semibold text-slate-800">{dateFr(cerfaModal.survenuLe)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Type d'Accident : </span>
+                                            <span className="font-semibold text-slate-800">{cerfaModal.type}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Lieu exact : </span>
+                                            <span className="font-semibold text-slate-800">{cerfaModal.lieu}</span>
+                                        </div>
+                                    </div>
+                                    <div className="pt-2">
+                                        <div className="text-slate-500 font-bold mb-1">Description détaillée des faits &amp; causes matérielles :</div>
+                                        <div className="p-2.5 rounded bg-white border border-slate-200 text-slate-700 italic font-medium leading-relaxed">
+                                            "{cerfaModal.description || "Accident survenu au poste de travail lors de l'exécution de la mission."}"
+                                        </div>
+                                    </div>
+                                    <div className="pt-1">
+                                        <div className="text-slate-500 font-bold mb-1">Mesures correctives &amp; prévention immédiates :</div>
+                                        <div className="p-2 rounded bg-white border border-slate-200 text-slate-700 font-medium">
+                                            {cerfaModal.mesureCorrective || "Mise en sécurité immédiate, évacuation médicale et sensibilisation de l'équipe."}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 4 : Conséquences Médicales & Arrêt de travail */}
+                                <div className="border border-slate-300 rounded-lg p-3 space-y-2 bg-slate-50/50">
+                                    <div className="font-black text-slate-900 uppercase text-[11px] border-b pb-1">
+                                        4. CONSÉQUENCES MÉDICALES &amp; ARRÊT
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Gravité constatée : </span>
+                                            <span className="font-bold text-rose-700">{cerfaModal.gravite}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Arrêt initial prescrit : </span>
+                                            <span className="font-bold text-slate-900">{cerfaModal.joursArret > 0 ? `${cerfaModal.joursArret} jour(s)` : 'Sans arrêt'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 font-bold">Délai Légal CNPS : </span>
+                                            <span className="font-bold text-emerald-700">48 Heures</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Signatures officielles */}
+                                <div className="grid grid-cols-2 gap-8 pt-4">
+                                    <div className="border border-slate-300 rounded-lg p-3 h-28 flex flex-col justify-between">
+                                        <div className="text-[10px] font-black uppercase text-slate-500">Pour la Direction des Ressources Humaines (Cachet &amp; Signature) :</div>
+                                        <div className="text-[9px] text-slate-400 font-mono">Certifié exact le {new Date().toLocaleDateString('fr-FR')}</div>
+                                    </div>
+                                    <div className="border border-slate-300 rounded-lg p-3 h-28 flex flex-col justify-between">
+                                        <div className="text-[10px] font-black uppercase text-slate-500">Visa du Médecin / Centre Médical d'Urgence :</div>
+                                        <div className="text-[9px] text-slate-400 font-mono">Date et visa médical</div>
+                                    </div>
+                                </div>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}

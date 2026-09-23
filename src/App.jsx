@@ -114,6 +114,8 @@ import { FeedbackWidget } from './components/FeedbackWidget';
 import { PublicPortal } from './pages/PublicPortal';
 import { VerifyDocument } from './pages/VerifyDocument';
 import { BottomNav } from './components/layout/BottomNav';
+import { SimulateurEmbauche } from './pages/SimulateurEmbauche';
+import { TalentMarketplace } from './pages/TalentMarketplace';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -617,6 +619,18 @@ const AppContent = () => {
             <Route path="/skills" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <SkillsMatrix />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/simulateur-embauche" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee']}>
+                <SimulateurEmbauche />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/marketplace-talents" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee']}>
+                <TalentMarketplace />
               </ProtectedRoute>
             } />
 
