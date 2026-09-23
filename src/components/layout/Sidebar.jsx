@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile} from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile, BookCheck} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +35,7 @@ const getAllNavItems = (t) => [
 
     // ── EMPLOYÉS : le dossier du salarié, de l'embauche au départ ──
     { name: t('sidebar.employees', 'Répertoire des salariés'), path: '/employees', icon: Users, domain: 'Employés', permission: 'employees:view' },
+    { name: 'Registre Unique du Personnel', path: '/registre-personnel', icon: BookCheck, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Dossiers & Conformité', path: '/conformite', icon: ShieldCheck, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Titres & Habilitations', path: '/pieces', icon: IdCard, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Badges Numériques', path: '/badges', icon: IdCard, domain: 'Employés', permission: 'employees:edit' },
@@ -55,10 +56,12 @@ const getAllNavItems = (t) => [
     { name: 'Astreintes & Gardes', path: '/astreintes', icon: PhoneCall, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Départs (Offboarding)', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Matériel & Équipements', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Flotte Mobile & Forfaits Pro', path: '/flotte-mobile', icon: PhoneCall, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Prestataires & Intérim', path: '/subcontractors', icon: Building, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Santé & Médecine Travail', path: '/medical-hub', icon: Stethoscope, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Mutuelle Santé & Ayants Droit', path: '/mutuelle-sante', icon: HeartHandshake, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Sécurité & Accidents (HSE)', path: '/hse', icon: Shield, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Comité Santé & Sécurité (CSST)', path: '/csst-comite', icon: ShieldCheck, domain: 'Employés', permission: 'employees:edit' },
     { name: t('sidebar.recruitment', 'Recrutement & ATS'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
 
     // ── PILOTAGE RH : processus mensuels & gestion opérationnelle ──

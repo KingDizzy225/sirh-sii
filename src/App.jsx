@@ -127,6 +127,9 @@ import { KiosqueAttestations } from './pages/KiosqueAttestations';
 import { PeriodesEssai } from './pages/PeriodesEssai';
 import { StudioOKR } from './pages/StudioOKR';
 import { ObservatoireGPEC } from './pages/ObservatoireGPEC';
+import { RegistreUniquePersonnel } from './pages/RegistreUniquePersonnel';
+import { ComiteCSST } from './pages/ComiteCSST';
+import { FlotteMobile } from './pages/FlotteMobile';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -818,6 +821,21 @@ const AppContent = () => {
             <Route path="/observatoire-gpec" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
                 <ObservatoireGPEC />
+              </ProtectedRoute>
+            } />
+            <Route path="/registre-personnel" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <RegistreUniquePersonnel />
+              </ProtectedRoute>
+            } />
+            <Route path="/csst-comite" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <ComiteCSST />
+              </ProtectedRoute>
+            } />
+            <Route path="/flotte-mobile" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <FlotteMobile />
               </ProtectedRoute>
             } />
 
