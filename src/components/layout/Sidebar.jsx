@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile, BookCheck} from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile, BookCheck, Leaf, Compass } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +44,7 @@ const getAllNavItems = (t) => [
     { name: 'Organigramme Entreprise', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Entretiens, Évaluations & OKR', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Bilans de Carrière (2 & 6 ans)', path: '/bilans-carriere', icon: BookOpen, domain: 'Employés', permission: 'employees:edit', manager: true },
+    { name: 'Simulateur Carrière & Évolution IA', path: '/simulateur-carriere-ia', icon: Compass, domain: 'Employés', permission: 'dashboard:view', manager: true },
     { name: 'Plan de Succession & Postes Clés', path: '/plan-succession', icon: Award, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: Rocket, domain: 'Employés', permission: 'onboarding:view' },
     { name: 'Délégués & Doléances Salariés', path: '/doleances-delegues', icon: Vote, domain: 'Employés', permission: 'employees:edit' },
@@ -65,6 +66,7 @@ const getAllNavItems = (t) => [
     { name: t('sidebar.payroll', 'Paie & Déclarations'), path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Simulateur Brut/Net & Grille CCNI', path: '/simulateur-embauche', icon: Calculator, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Prêts, Avantages & Primes', path: '/prets', icon: Landmark, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Salaire à la Demande (Acomptes)', path: '/salaire-a-la-demande', icon: Zap, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Budget & Masse Salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Délégations de Signature', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Plan de Formation & FDFP', path: '/fdfp-gestion', icon: PiggyBank, domain: 'Pilotage RH', permission: 'learning:view' },
@@ -81,7 +83,9 @@ const getAllNavItems = (t) => [
     { name: 'Audit & Historique Daté', path: '/historique', icon: History, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Équité Salariale, Diversité & Inclusion', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Baromètre QVT & Climat Social', path: '/barometre-qvt', icon: Smile, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
+    { name: 'Sentinelle IA Anti-Burnout', path: '/sentinelle-burnout', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Observatoire GPEC & Skill Gap', path: '/observatoire-gpec', icon: BrainCircuit, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
+    { name: 'Bilan Carbone RH & Green HR', path: '/green-hr', icon: Leaf, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Canal d\'Alerte & Éthique', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' }
 ];
 

@@ -136,6 +136,10 @@ import { EntretiensDepart } from './pages/EntretiensDepart';
 import { BilansCarriere } from './pages/BilansCarriere';
 import { InnovationParticipative } from './pages/InnovationParticipative';
 import { RelationsEcolesCampus } from './pages/RelationsEcolesCampus';
+import { SentinelleBurnout } from './pages/SentinelleBurnout';
+import { SalaireALaDemande } from './pages/SalaireALaDemande';
+import { SimulateurCarriereIA } from './pages/SimulateurCarriereIA';
+import { GreenHR } from './pages/GreenHR';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -872,6 +876,26 @@ const AppContent = () => {
             <Route path="/relations-ecoles-campus" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
                 <RelationsEcolesCampus />
+              </ProtectedRoute>
+            } />
+            <Route path="/sentinelle-burnout" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <SentinelleBurnout />
+              </ProtectedRoute>
+            } />
+            <Route path="/salaire-a-la-demande" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <SalaireALaDemande />
+              </ProtectedRoute>
+            } />
+            <Route path="/simulateur-carriere-ia" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <SimulateurCarriereIA />
+              </ProtectedRoute>
+            } />
+            <Route path="/green-hr" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <GreenHR />
               </ProtectedRoute>
             } />
 
