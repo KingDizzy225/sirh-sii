@@ -1,16 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Command, X, User, FileText, Settings, Home, Target, Calendar, BarChart, Rocket } from 'lucide-react';
+import { 
+    Search, Command, X, User, FileText, Settings, Home, Target, 
+    Calendar, BarChart, Rocket, Zap, HeartPulse, Sparkles, Scale, 
+    PiggyBank, Award, QrCode, Leaf, ShieldAlert, FileBarChart, 
+    Briefcase, Building2, Phone, Mail, ArrowRight, CornerDownLeft
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
 
-const ACTIONS = [
-    { id: '1', title: 'Vue d\'ensemble', path: '/', icon: Home, category: 'Navigation' },
-    { id: '2', title: 'Explorateur de Carrière', path: '/career-path', icon: Rocket, category: 'Navigation' },
-    { id: '3', title: 'Mon Profil', path: '/my-space', icon: User, category: 'Navigation' },
-    { id: '4', title: 'Mes Absences', path: '/leaves', icon: Calendar, category: 'Navigation' },
-    { id: '5', title: 'Analytique & Coûts', path: '/analytics', icon: BarChart, category: 'Navigation' },
-    { id: '6', title: 'Documents GED', path: '/documents', icon: FileText, category: 'Navigation' },
-    { id: '7', title: 'Paramètres', path: '/settings', icon: Settings, category: 'Système' },
+const MODULES_ACTIONS = [
+    { id: 'act-1', title: 'Tableau de Bord Principal', path: '/', icon: Home, category: 'Navigation', shortcut: 'D' },
+    { id: 'act-2', title: 'Simulateur Masse Salariale & Arbitrage Budget', path: '/payroll-simulation', icon: PiggyBank, category: 'Pilotage Financier', shortcut: 'S' },
+    { id: 'act-3', title: 'Sentinelle IA Anti-Burnout & Prévention', path: '/sentinelle-burnout', icon: HeartPulse, category: 'Intelligence RH', shortcut: 'B' },
+    { id: 'act-4', title: 'Automatisations & Déclencheurs RH', path: '/smart-automations', icon: Zap, category: 'Intelligence RH', shortcut: 'A' },
+    { id: 'act-5', title: 'Marketplace Interne de Compétences', path: '/marketplace-talents', icon: Sparkles, category: 'Talents & Missions', shortcut: 'M' },
+    { id: 'act-6', title: 'Copilote IA d\'Entretien Annuel & OKR', path: '/performance', icon: Target, category: 'Évaluation & Performance', shortcut: 'P' },
+    { id: 'act-7', title: 'Sentinelle Légale & Audit CNPS', path: '/conformite', icon: Scale, category: 'Conformité & Droit CI', shortcut: 'L' },
+    { id: 'act-8', title: 'Gestion FDFP & Plan de Formation', path: '/fdfp-gestion', icon: Award, category: 'Développement RH', shortcut: 'F' },
+    { id: 'act-9', title: 'Matrice 9-Box & Cartographie Compétences', path: '/skills', icon: Award, category: 'Talents & GPEC', shortcut: 'K' },
+    { id: 'act-10', title: 'Kiosque d\'Attestations & Documents', path: '/kiosque-attestations', icon: FileText, category: 'Administration RH', shortcut: 'T' },
+    { id: 'act-11', title: 'Pointage QR Code & Emargement', path: '/qr-pointage', icon: QrCode, category: 'Temps & Activités', shortcut: 'Q' },
+    { id: 'act-12', title: 'Bilan Carbone & Green HR', path: '/green-hr', icon: Leaf, category: 'RSE & Environnement', shortcut: 'G' },
+    { id: 'act-13', title: 'Gestion des Absences & Congés', path: '/leaves', icon: Calendar, category: 'Administration RH', shortcut: 'C' },
+    { id: 'act-14', title: 'Gestion de la Paie & Bulletins', path: '/payroll', icon: FileBarChart, category: 'Pilotage Financier', shortcut: '$' },
+    { id: 'act-15', title: 'Recrutement & Sourcing IA', path: '/recruitment', icon: Briefcase, category: 'Acquisition Talents', shortcut: 'R' },
+    { id: 'act-16', title: 'Paramètres du Système', path: '/settings', icon: Settings, category: 'Système', shortcut: ',' }
 ];
 
 export function CommandCenter() {
@@ -20,7 +35,18 @@ export function CommandCenter() {
     const navigate = useNavigate();
     const inputRef = useRef(null);
 
-    const [employees, setEmployees] = useState([]);
+    // Format all 191 employees for instant search
+    const employeeItems = MOCK_190_EMPLOYEES.map(emp => ({
+        id: `emp-${emp.id}`,
+        title: `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.name,
+        category: `Collaborateur • ${emp.department || 'Pôle Opérations'}`,
+        path: '/employees',
+        icon: User,
+        isEmployee: true,
+        data: emp
+    }));
+
+    const ALL_ITEMS = [...MODULES_ACTIONS, ...employeeItems];
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -41,145 +67,249 @@ export function CommandCenter() {
         if (isOpen) {
             setQuery('');
             setSelectedIndex(0);
-            setTimeout(() => inputRef.current?.focus(), 100);
-            
-            // Fetch employees dynamically for the search
-            const fetchEmployees = async () => {
-                try {
-                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-                    const token = localStorage.getItem('sirh_token');
-                    const res = await fetch(`${API_URL}/api/employees`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setEmployees(data.map(emp => ({
-                            id: `emp-${emp.id}`,
-                            title: `${emp.firstName} ${emp.lastName}`,
-                            path: '/employees', // Redirige vers le répertoire pour l'instant
-                            icon: User,
-                            category: `Employé • ${emp.positionTitle || 'RH'}`
-                        })));
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch employees for search', err);
-                }
-            };
-            fetchEmployees();
+            setTimeout(() => inputRef.current?.focus(), 80);
         }
     }, [isOpen]);
 
-    const ALL_ACTIONS = [...ACTIONS, ...employees];
+    const filteredItems = ALL_ITEMS.filter(item => {
+        const q = query.toLowerCase().trim();
+        if (!q) return true;
+        const matchTitle = item.title.toLowerCase().includes(q);
+        const matchCategory = item.category.toLowerCase().includes(q);
+        const matchDept = item.data?.department?.toLowerCase().includes(q);
+        const matchRole = (item.data?.role || item.data?.position)?.toLowerCase().includes(q);
+        const matchEmail = item.data?.email?.toLowerCase().includes(q);
+        return matchTitle || matchCategory || matchDept || matchRole || matchEmail;
+    }).slice(0, 30); // Show top 30 for performance
 
-    const filteredActions = ALL_ACTIONS.filter(action =>
-        action.title.toLowerCase().includes(query.toLowerCase()) ||
-        action.category.toLowerCase().includes(query.toLowerCase())
-    );
-
-    const handleSelect = (path) => {
-        navigate(path);
+    const handleSelect = (item) => {
+        if (!item) return;
+        navigate(item.path);
         setIsOpen(false);
     };
 
     const onKeyDown = (e) => {
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            setSelectedIndex(prev => (prev + 1) % filteredActions.length);
+            setSelectedIndex(prev => (prev + 1) % filteredItems.length);
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            setSelectedIndex(prev => (prev - 1 + filteredActions.length) % filteredActions.length);
+            setSelectedIndex(prev => (prev - 1 + filteredItems.length) % filteredItems.length);
         } else if (e.key === 'Enter') {
-            if (filteredActions[selectedIndex]) {
-                handleSelect(filteredActions[selectedIndex].path);
+            if (filteredItems[selectedIndex]) {
+                handleSelect(filteredItems[selectedIndex]);
             }
         }
     };
 
+    const selectedItem = filteredItems[selectedIndex];
+
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[15vh] px-4">
-                    {/* Overlay */}
+                <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[10vh] px-4">
+                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsOpen(false)}
-                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+                        className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
                     />
 
-                    {/* Modal */}
+                    {/* Palette Modal */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                        initial={{ opacity: 0, scale: 0.96, y: -16 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="relative w-full max-w-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden"
+                        exit={{ opacity: 0, scale: 0.96, y: -16 }}
+                        className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col max-h-[75vh]"
                     >
-                        <div className="flex items-center px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-                            <Search className="text-slate-400 mr-4" size={20} />
+                        {/* Search Input Bar */}
+                        <div className="flex items-center px-6 py-4.5 border-b border-slate-100 dark:border-slate-800 gap-3 bg-white dark:bg-slate-900">
+                            <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 rounded-xl">
+                                <Search size={20} />
+                            </div>
                             <input
                                 ref={inputRef}
                                 type="text"
-                                placeholder="Que cherchez-vous ? (Navigation, Employé, Action...)"
-                                className="flex-1 bg-transparent border-none outline-none text-lg text-slate-800 dark:text-slate-100 placeholder-slate-400"
+                                placeholder="Rechercher parmi les 191 collaborateurs, modules RH, simulations..."
+                                className="flex-1 bg-transparent border-none outline-none text-base text-slate-800 dark:text-slate-100 placeholder-slate-400 font-medium"
                                 value={query}
-                                onChange={(e) => setQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setQuery(e.target.value);
+                                    setSelectedIndex(0);
+                                }}
                                 onKeyDown={onKeyDown}
                             />
-                            <div className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase">Esc</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md text-[11px] font-bold text-slate-500 uppercase border border-slate-200 dark:border-slate-700">
+                                    ESC
+                                </span>
                             </div>
                         </div>
 
-                        <div className="max-h-[60vh] overflow-y-auto p-2 scrollbar-hide">
-                            {filteredActions.length > 0 ? (
-                                <div className="space-y-1">
-                                    {filteredActions.map((action, index) => (
-                                        <div
-                                            key={action.id}
-                                            onClick={() => handleSelect(action.path)}
-                                            onMouseEnter={() => setSelectedIndex(index)}
-                                            className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all ${
-                                                index === selectedIndex
-                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className={`p-2 rounded-lg ${index === selectedIndex ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                                                    <action.icon size={18} className={index === selectedIndex ? 'text-white' : 'text-slate-500'} />
+                        {/* Content Area: Left list + Right Preview */}
+                        <div className="flex flex-1 overflow-hidden divide-x divide-slate-100 dark:divide-slate-800">
+                            
+                            {/* Left: Scrollable List */}
+                            <div className="w-full md:w-3/5 overflow-y-auto p-3 space-y-1 max-h-[50vh]">
+                                {filteredItems.length > 0 ? (
+                                    filteredItems.map((item, index) => {
+                                        const isSelected = index === selectedIndex;
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => handleSelect(item)}
+                                                onMouseEnter={() => setSelectedIndex(index)}
+                                                className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl cursor-pointer transition-all ${
+                                                    isSelected
+                                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className={`p-2 rounded-xl shrink-0 ${
+                                                        isSelected
+                                                            ? 'bg-white/20 text-white'
+                                                            : item.isEmployee
+                                                            ? 'bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400'
+                                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                                    }`}>
+                                                        <item.icon size={17} />
+                                                    </div>
+                                                    <div className="truncate">
+                                                        <p className="text-sm font-bold truncate">{item.title}</p>
+                                                        <p className={`text-[11px] truncate font-medium ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
+                                                            {item.category}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-bold">{action.title}</p>
-                                                    <p className={`text-[10px] ${index === selectedIndex ? 'text-blue-100' : 'text-slate-400'}`}>{action.category}</p>
+
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {isSelected && (
+                                                        <span className="flex items-center gap-1 text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-md">
+                                                            <CornerDownLeft size={10} /> Aller
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
-                                            {index === selectedIndex && (
-                                                <div className="flex items-center gap-1 text-[10px] font-black bg-white/20 px-2 py-1 rounded">
-                                                    <Command size={10} />
-                                                    ENTER
+                                        );
+                                    })
+                                ) : (
+                                    <div className="py-16 text-center text-slate-400 text-sm italic">
+                                        Aucun collaborateur ou module ne correspond à « {query} »
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right: Instant Context Preview Panel */}
+                            <div className="hidden md:flex md:w-2/5 p-5 bg-slate-50/60 dark:bg-slate-950/40 flex-col justify-between">
+                                {selectedItem ? (
+                                    selectedItem.isEmployee && selectedItem.data ? (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-lg border border-indigo-200">
+                                                    {selectedItem.title.charAt(0)}
                                                 </div>
-                                            )}
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900 dark:text-white text-base leading-tight">
+                                                        {selectedItem.title}
+                                                    </h4>
+                                                    <span className="text-xs text-indigo-600 font-semibold">
+                                                        {selectedItem.data.position || selectedItem.data.role || 'Cadre'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2 text-xs pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                                                <div className="flex items-center justify-between text-slate-500">
+                                                    <span>Département :</span>
+                                                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                                                        {selectedItem.data.department || 'Banque & PME'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-slate-500">
+                                                    <span>Contrat :</span>
+                                                    <span className="font-bold text-emerald-600">
+                                                        {selectedItem.data.contractType || 'CDI'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-slate-500">
+                                                    <span>Localisation :</span>
+                                                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                                                        {selectedItem.data.location || 'Siège Abidjan Plateau'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-slate-500">
+                                                    <span>Email :</span>
+                                                    <span className="text-[11px] text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
+                                                        {selectedItem.data.email || 'collaborateur@sii.ci'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 text-[11px] space-y-1">
+                                                <span className="font-bold text-slate-700 dark:text-slate-300 block">Actions Rapides :</span>
+                                                <p className="text-slate-500">• Consulter le dossier RH</p>
+                                                <p className="text-slate-500">• Générer trame d'entretien IA</p>
+                                                <p className="text-slate-500">• Vérifier solde de congés</p>
+                                            </div>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-3 bg-indigo-100 text-indigo-700 rounded-2xl">
+                                                    <selectedItem.icon size={24} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900 dark:text-white text-base">
+                                                        {selectedItem.title}
+                                                    </h4>
+                                                    <span className="text-xs text-indigo-600 font-semibold">
+                                                        {selectedItem.category}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                                                Accédez directement à ce module pour piloter les données en temps réel sur les 191 collaborateurs de l'entreprise.
+                                            </p>
+
+                                            <div className="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-xl border border-indigo-100 dark:border-indigo-900/40 text-xs text-indigo-900 dark:text-indigo-300 font-medium">
+                                                Appuyez sur <span className="font-extrabold underline">Entrée ↵</span> pour ouvrir immédiatement la vue.
+                                            </div>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="text-xs text-slate-400 text-center my-auto">
+                                        Sélectionnez un élément pour voir l'aperçu
+                                    </div>
+                                )}
+
+                                <div className="text-[11px] text-slate-400 pt-3 border-t border-slate-200/60 dark:border-slate-800">
+                                    Effectif actif : <span className="font-bold text-slate-700 dark:text-slate-300">191 collaborateurs</span>
                                 </div>
-                            ) : (
-                                <div className="py-12 text-center">
-                                    <p className="text-slate-400 text-sm italic">Aucun résultat trouvé pour "{query}"</p>
-                                </div>
-                            )}
+                            </div>
+
                         </div>
 
-                        <div className="px-6 py-3 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-[10px] text-slate-400 font-medium">
+                        {/* Footer Bar */}
+                        <div className="px-6 py-3 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs text-slate-400 font-medium">
                             <div className="flex gap-4">
-                                <span>↑↓ Naviguer</span>
-                                <span>↵ Sélectionner</span>
+                                <span><strong className="text-slate-600 dark:text-slate-300">↑↓</strong> Naviguer</span>
+                                <span><strong className="text-slate-600 dark:text-slate-300">↵</strong> Ouvrir</span>
+                                <span><strong className="text-slate-600 dark:text-slate-300">ESC</strong> Fermer</span>
                             </div>
-                            <div>SIRH-SII V3.0 • Command Center</div>
+                            <div className="text-[11px] font-semibold text-indigo-600">
+                                Command Palette Universelle • SIRH
+                            </div>
                         </div>
+
                     </motion.div>
                 </div>
             )}
         </AnimatePresence>
     );
 }
+
+export default CommandCenter;

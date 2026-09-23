@@ -137,6 +137,7 @@ import { BilansCarriere } from './pages/BilansCarriere';
 import { InnovationParticipative } from './pages/InnovationParticipative';
 import { RelationsEcolesCampus } from './pages/RelationsEcolesCampus';
 import { SentinelleBurnout } from './pages/SentinelleBurnout';
+import { SmartAutomations } from './pages/SmartAutomations';
 import { SalaireALaDemande } from './pages/SalaireALaDemande';
 import { SimulateurCarriereIA } from './pages/SimulateurCarriereIA';
 import { GreenHR } from './pages/GreenHR';
@@ -881,6 +882,11 @@ const AppContent = () => {
             <Route path="/sentinelle-burnout" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
                 <SentinelleBurnout />
+              </ProtectedRoute>
+            } />
+            <Route path="/smart-automations" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <SmartAutomations />
               </ProtectedRoute>
             } />
             <Route path="/salaire-a-la-demande" element={

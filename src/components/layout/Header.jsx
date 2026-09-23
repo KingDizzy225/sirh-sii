@@ -98,15 +98,17 @@ export function Header({ onMenuClick, currentDomain, setCurrentDomain }) {
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4">
-                {/* Search */}
-                <div className="hidden lg:flex relative items-center">
-                    <Search className="absolute left-3 h-4 w-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Rechercher des employés..."
-                        className="h-9 w-64 rounded bg-slate-800 border border-slate-700 pl-10 pr-4 text-sm outline-none text-slate-200 placeholder:text-slate-500 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                    />
-                </div>
+                {/* Global Search trigger for CommandCenter */}
+                <button
+                    onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+                    className="hidden sm:flex items-center gap-3 h-9 px-3.5 rounded-xl bg-slate-800/90 border border-slate-700/80 text-sm text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-all cursor-pointer shadow-xs"
+                >
+                    <Search className="h-4 w-4 text-indigo-400" />
+                    <span className="text-xs font-medium text-slate-400">Rechercher (191 collaborateurs, modules...)</span>
+                    <span className="flex items-center gap-0.5 ml-2 px-1.5 py-0.5 rounded bg-slate-700 text-[10px] font-bold text-slate-300 border border-slate-600">
+                        ⌘K
+                    </span>
+                </button>
 
                 <div className="flex items-center gap-2">
                     {/* Cloche Standard */}

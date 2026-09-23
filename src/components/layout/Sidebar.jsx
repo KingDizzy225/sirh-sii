@@ -68,6 +68,7 @@ const getAllNavItems = (t) => [
     { name: 'Prêts, Avantages & Primes', path: '/prets', icon: Landmark, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Salaire à la Demande (Acomptes)', path: '/salaire-a-la-demande', icon: Zap, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Budget & Masse Salariale', path: '/budget', icon: Wallet, domain: 'Pilotage RH', permission: 'payroll:view' },
+    { name: 'Simulateur Masse Salariale & Arbitrage', path: '/payroll-simulation', icon: Calculator, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Délégations de Signature', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Plan de Formation & FDFP', path: '/fdfp-gestion', icon: PiggyBank, domain: 'Pilotage RH', permission: 'learning:view' },
     { name: 'Compétences, 9-Box & Talents', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
@@ -85,6 +86,7 @@ const getAllNavItems = (t) => [
     { name: 'Équité Salariale, Diversité & Inclusion', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Baromètre QVT & Climat Social', path: '/barometre-qvt', icon: Smile, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Sentinelle IA Anti-Burnout', path: '/sentinelle-burnout', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
+    { name: 'Automatisations & Déclencheurs RH', path: '/smart-automations', icon: Zap, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Observatoire GPEC & Skill Gap', path: '/observatoire-gpec', icon: BrainCircuit, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Bilan Carbone RH & Green HR', path: '/green-hr', icon: Leaf, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Canal d\'Alerte & Éthique', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' }
