@@ -123,6 +123,8 @@ import { ParcoursOnboarding } from './pages/ParcoursOnboarding';
 import { PlanSuccession } from './pages/PlanSuccession';
 import { MutuelleSante } from './pages/MutuelleSante';
 import { BarometreQVT } from './pages/BarometreQVT';
+import { KiosqueAttestations } from './pages/KiosqueAttestations';
+import { PeriodesEssai } from './pages/PeriodesEssai';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -794,6 +796,16 @@ const AppContent = () => {
             <Route path="/barometre-qvt" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
                 <BarometreQVT />
+              </ProtectedRoute>
+            } />
+            <Route path="/kiosque-attestations" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <KiosqueAttestations />
+              </ProtectedRoute>
+            } />
+            <Route path="/periodes-essai" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <PeriodesEssai />
               </ProtectedRoute>
             } />
 
