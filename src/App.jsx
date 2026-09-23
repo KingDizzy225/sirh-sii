@@ -132,6 +132,9 @@ import { ComiteCSST } from './pages/ComiteCSST';
 import { FlotteMobile } from './pages/FlotteMobile';
 import { RegistreVisiteurs } from './pages/RegistreVisiteurs';
 import { EnquetesAccidents } from './pages/EnquetesAccidents';
+import { EntretiensDepart } from './pages/EntretiensDepart';
+import { BilansCarriere } from './pages/BilansCarriere';
+import { InnovationParticipative } from './pages/InnovationParticipative';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -848,6 +851,21 @@ const AppContent = () => {
             <Route path="/enquetes-accidents" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
                 <EnquetesAccidents />
+              </ProtectedRoute>
+            } />
+            <Route path="/entretiens-depart" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <EntretiensDepart />
+              </ProtectedRoute>
+            } />
+            <Route path="/bilans-carriere" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <BilansCarriere />
+              </ProtectedRoute>
+            } />
+            <Route path="/innovation-participative" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <InnovationParticipative />
               </ProtectedRoute>
             } />
 
