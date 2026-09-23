@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
 import { api } from '../lib/api.js';
+import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees.js';
 
 const roleLabels = {
     'Administrator': 'Administrateur',
@@ -43,9 +44,36 @@ const JULIE_KONAN_ROW = {
     onboardingProgress: 100
 };
 
+const MAPPED_MOCK_190 = MOCK_190_EMPLOYEES.map(emp => ({
+    id: emp.id,
+    name: `${emp.firstName} ${emp.lastName}`,
+    firstName: emp.firstName,
+    lastName: emp.lastName,
+    role: emp.positionTitle || 'Poste Non Assigné',
+    systemRole: emp.role || 'Employee',
+    department: emp.department || 'Non assigné',
+    status: emp.status === 'ACTIVE' ? 'Actif' : 'En congé',
+    email: emp.email,
+    phone: emp.phone || '',
+    gender: emp.gender || 'Non spécifié',
+    birthDate: emp.birthDate || '',
+    address: emp.address || '',
+    nationality: emp.nationality || '',
+    matricule: emp.matricule || '',
+    cnpsNumber: emp.cnpsNumber || '',
+    bankName: emp.bankName || '',
+    bankAccount: emp.bankAccount || '',
+    childrenCount: emp.childrenCount ?? 0,
+    annualLeaveBalance: emp.annualLeaveBalance ?? 24,
+    leaveBalanceSource: emp.leaveBalanceSource || 'CALCUL',
+    onboardingProgress: 100
+}));
+
+export const ALL_INITIAL_EMPLOYEES = [JULIE_KONAN_ROW, ...MAPPED_MOCK_190];
+
 export function Employees() {
     const navigate = useNavigate();
-    const [employees, setEmployees] = useState([JULIE_KONAN_ROW]);
+    const [employees, setEmployees] = useState(ALL_INITIAL_EMPLOYEES);
     const [notification, setNotification] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +89,7 @@ export function Employees() {
         try {
             const res = await api.get('/employees');
             const data = res.data;
-            if(Array.isArray(data)){
+            if (Array.isArray(data) && data.length > 5) {
                 const mapped = data.map(emp => ({
                     id: emp.id,
                     name: `${emp.firstName} ${emp.lastName}`,
@@ -90,11 +118,11 @@ export function Employees() {
                 }
                 setEmployees(mapped);
             } else {
-                setEmployees([JULIE_KONAN_ROW]);
+                setEmployees(ALL_INITIAL_EMPLOYEES);
             }
         } catch (err) {
             console.error('API Error:', err);
-            setEmployees([JULIE_KONAN_ROW]);
+            setEmployees(ALL_INITIAL_EMPLOYEES);
         } finally {
             setIsLoading(false);
         }
@@ -769,7 +797,9 @@ export function Employees() {
                                 !searchQuery ||
                                 emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                 emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                emp.department.toLowerCase().includes(searchQuery.toLowerCase())
+                                emp.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                (emp.role && emp.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                                (emp.matricule && emp.matricule.toLowerCase().includes(searchQuery.toLowerCase()))
                             ).map((emp) => (
                                 <TableRow key={emp.id} className={selectedEmployees.includes(emp.id) ? "bg-blue-50/50" : ""}>
                                     <TableCell>

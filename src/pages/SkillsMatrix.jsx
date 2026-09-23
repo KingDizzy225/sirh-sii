@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { skillsCatalog, getAllSkillsFlat } from '../constants/skillsCatalog';
+import { MOCK_190_EMPLOYEES, MOCK_190_TALENTS } from '../constants/mockEmployees';
 
 // Dnd Kit Imports for Succession Planning
 import { DndContext, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
@@ -141,14 +142,17 @@ const JULIE_KONAN_TALENT = {
     readiness: 'Prêt maintenant'
 };
 
+export const ALL_MOCK_EMPLOYEES = [JULIE_KONAN_MOCK, ...MOCK_190_EMPLOYEES];
+export const ALL_MOCK_TALENTS = [JULIE_KONAN_TALENT, ...MOCK_190_TALENTS];
+
 export function SkillsMatrix() {
     const { token } = useAuth();
     const [activeTab, setActiveTab] = useState('matrix');
     const [notification, setNotification] = useState(null);
 
-    // Dynamic Lists from Backend
-    const [employees, setEmployees] = useState([JULIE_KONAN_MOCK]);
-    const [talents, setTalents] = useState([JULIE_KONAN_TALENT]);
+    // Dynamic Lists from Backend with 190+ hardcoded employees
+    const [employees, setEmployees] = useState(ALL_MOCK_EMPLOYEES);
+    const [talents, setTalents] = useState(ALL_MOCK_TALENTS);
     const [gpecMap, setGpecMap] = useState([]);
     const [gpecGaps, setGpecGaps] = useState([]);
     const [skillDefinitions, setSkillDefinitions] = useState([]);
@@ -194,33 +198,40 @@ export function SkillsMatrix() {
                 fetch(`${API_URL}/api/succession`, { headers }).then(r => r.ok ? r.json() : [])
             ]);
 
-            // Inject Julie Konan at top of employees list
-            const rawEmps = Array.isArray(empData) ? empData : [];
+            // Inject Julie Konan and ensure all 190 mock employees are loaded
+            const rawEmps = (Array.isArray(empData) && empData.length > 5) ? empData : ALL_MOCK_EMPLOYEES;
             const hasJulie = rawEmps.some(e => e.id === 'julie-konan-demo' || `${e.firstName} ${e.lastName}`.toLowerCase().includes('julie konan'));
             const finalEmployees = hasJulie ? rawEmps : [JULIE_KONAN_MOCK, ...rawEmps];
 
-            // Inject Julie Konan into talents (9-Box grid)
-            const rawTalents = Array.isArray(talentData) ? talentData : [];
+            // Inject Julie Konan and ensure all 190 talents are in 9-Box grid
+            const rawTalents = (Array.isArray(talentData) && talentData.length > 5) ? talentData : ALL_MOCK_TALENTS;
             const hasJulieTalent = rawTalents.some(t => t.id === 'julie-konan-demo' || (t.name && t.name.toLowerCase().includes('julie konan')));
             const finalTalents = hasJulieTalent ? rawTalents : [JULIE_KONAN_TALENT, ...rawTalents];
 
-            // Add Commercial & Relation Client to GPEC Map
-            let finalMap = Array.isArray(mapData) ? [...mapData] : [];
-            if (!finalMap.some(d => d.dept === 'Commercial & Relation Client')) {
-                finalMap.unshift({
-                    dept: 'Commercial & Relation Client',
-                    skills: [
-                        { skill: 'Gestion de la Relation Client (CRM)', count: 1, avgLevel: 4 },
-                        { skill: 'Communication Orale', count: 1, avgLevel: 4 },
-                        { skill: 'Service Client / SAV', count: 1, avgLevel: 4 },
-                        { skill: 'Intelligence Émotionnelle', count: 1, avgLevel: 4 },
-                        { skill: 'Communication Écrite', count: 1, avgLevel: 3 },
-                        { skill: 'Négociation de Contrats B2B/B2C', count: 1, avgLevel: 3 },
-                        { skill: 'Gestion du Stress', count: 1, avgLevel: 3 },
-                        { skill: 'Résolution de Problèmes', count: 1, avgLevel: 3 },
-                        { skill: 'Anglais (Professionnel courant)', count: 1, avgLevel: 2 }
-                    ]
+            // Build or enrich GPEC Map from employees and their real skills
+            let finalMap = (Array.isArray(mapData) && mapData.length > 2) ? [...mapData] : [];
+            if (finalMap.length === 0) {
+                const deptsMap = {};
+                finalEmployees.forEach(emp => {
+                    const dept = emp.department || 'Commercial & Relation Client';
+                    if (!deptsMap[dept]) deptsMap[dept] = {};
+                    (emp.skills || []).forEach(s => {
+                        const lvl = s.proficiencyLevel === 'Expert' ? 4 : s.proficiencyLevel === 'Avancé' ? 3 : s.proficiencyLevel === 'Intermédiaire' ? 2 : 1;
+                        if (!deptsMap[dept][s.skillName]) {
+                            deptsMap[dept][s.skillName] = { total: 0, count: 0 };
+                        }
+                        deptsMap[dept][s.skillName].total += lvl;
+                        deptsMap[dept][s.skillName].count += 1;
+                    });
                 });
+                finalMap = Object.entries(deptsMap).map(([dept, skillsDict]) => ({
+                    dept,
+                    skills: Object.entries(skillsDict).map(([skill, stats]) => ({
+                        skill,
+                        count: stats.count,
+                        avgLevel: Math.round((stats.total / stats.count) * 10) / 10
+                    }))
+                }));
             }
 
             setEmployees(finalEmployees);
@@ -238,8 +249,8 @@ export function SkillsMatrix() {
             }
         } catch (err) {
             console.error("Error loading talents & GPEC data", err);
-            setEmployees([JULIE_KONAN_MOCK]);
-            setTalents([JULIE_KONAN_TALENT]);
+            setEmployees(ALL_MOCK_EMPLOYEES);
+            setTalents(ALL_MOCK_TALENTS);
             setSelectedEmployee(JULIE_KONAN_MOCK);
             setSelectedEmployeeDetails(JULIE_KONAN_MOCK);
             setCompareRole('Chargée de Clientèle Senior');
@@ -260,6 +271,11 @@ export function SkillsMatrix() {
             if (!selectedEmployee) return;
             if (selectedEmployee.id === 'julie-konan-demo') {
                 setSelectedEmployeeDetails(JULIE_KONAN_MOCK);
+                return;
+            }
+            const foundMock = ALL_MOCK_EMPLOYEES.find(e => e.id === selectedEmployee.id);
+            if (foundMock && foundMock.skills && foundMock.skills.length > 0) {
+                setSelectedEmployeeDetails(foundMock);
                 return;
             }
             try {
@@ -300,18 +316,17 @@ export function SkillsMatrix() {
             const matchesText = `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                 (emp.positionTitle || '').toLowerCase().includes(searchQuery.toLowerCase());
             
-            // Skill filtration requires mapping GPEC map details or we filter based on backend assignments if loaded
+            // Skill filtration: check directly on employee skills or fallback to department map
             let matchesSkill = true;
             if (selectedSkillFilter) {
-                // Find if employee is in the GPEC map for this skill
-                const deptMap = gpecMap.find(d => d.dept === emp.department);
-                const skillInfo = deptMap?.skills.find(s => s.skill === selectedSkillFilter);
-                if (skillInfo) {
-                    // Check count/average or we can load details
-                    // For simplified matching, check if employee has details
-                    matchesSkill = (skillInfo.count > 0);
+                if (Array.isArray(emp.skills) && emp.skills.length > 0) {
+                    const foundSkill = emp.skills.find(s => s.skillName === selectedSkillFilter);
+                    const lvl = foundSkill ? (levelMap[foundSkill.proficiencyLevel] || 1) : 0;
+                    matchesSkill = lvl >= minLevelFilter;
                 } else {
-                    matchesSkill = false;
+                    const deptMap = gpecMap.find(d => d.dept === emp.department);
+                    const skillInfo = deptMap?.skills.find(s => s.skill === selectedSkillFilter);
+                    matchesSkill = !!skillInfo && (skillInfo.count > 0);
                 }
             }
             return matchesText && matchesSkill;
