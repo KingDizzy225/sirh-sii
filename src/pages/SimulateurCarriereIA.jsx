@@ -1,101 +1,165 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Compass, Sparkles, Target, ArrowRight, BookOpen, Award,
   CheckCircle2, Clock, Users, Building, TrendingUp, Star,
-  HelpCircle, ChevronRight, X, Send, BrainCircuit, Lightbulb
+  HelpCircle, ChevronRight, X, Send, BrainCircuit, Lightbulb,
+  DollarSign, Check, Sliders, ShieldCheck
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
+
+const TARGET_ROLES = {
+  "Directeur_Agence": {
+    titre: "Directrice / Directeur d'Agence Principale",
+    departement: "Direction Commerciale & Agences",
+    categorieCCNI: "Cadre Supérieur (Catégorie C3)",
+    salaireCible: 1350000,
+    competencesRequises: [
+      { nom: "Prospection & Négociation Grands Comptes PME", niveauRequis: "Expert", priorite: "CRITIQUE" },
+      { nom: "Analyse des Risques Crédits & Engagements", niveauRequis: "Avancé", priorite: "HAUTE" },
+      { nom: "Management d'Équipe & Leadership d'Agence", niveauRequis: "Avancé", priorite: "CRITIQUE" },
+      { nom: "Pilotage Compte d'Exploitation (P&L)", niveauRequis: "Avancé", priorite: "HAUTE" },
+      { nom: "Conformité Réglementaire BCEAO & Anti-Blanchiment", niveauRequis: "Maîtrise", priorite: "MOYENNE" }
+    ],
+    formationsConseillees: [
+      "Programme Certifiant Management d'Agence Bancaire (MDE Business School)",
+      "Formation Réglementation Prudentielle & Risque Crédit BCEAO (FDFP)",
+      "Coaching Exécutif de Transition Managériale SII"
+    ],
+    horizonMois: 14,
+    mentorRecommande: "Jean-Marc Koffi (Directeur d'Agence Plateau)"
+  },
+  "Lead_Architecte_Cloud": {
+    titre: "Lead Architecte Cloud & DevOps",
+    departement: "Infrastructure & Systèmes",
+    categorieCCNI: "Cadre Supérieur (Catégorie C3)",
+    salaireCible: 1250000,
+    competencesRequises: [
+      { nom: "Architecture Cloud Hybride AWS / Azure", niveauRequis: "Expert", priorite: "CRITIQUE" },
+      { nom: "Orchestration Kubernetes & Conteneurs Docker", niveauRequis: "Avancé", priorite: "HAUTE" },
+      { nom: "Sécurité & Gouvernance des Données Bancaires", niveauRequis: "Expert", priorite: "CRITIQUE" },
+      { nom: "Automatisation CI/CD & Terraform (IaC)", niveauRequis: "Avancé", priorite: "HAUTE" },
+      { nom: "Leadership & Encadrement Technique d'Équipe", niveauRequis: "Maîtrise", priorite: "MOYENNE" }
+    ],
+    formationsConseillees: [
+      "Certification AWS Certified Solutions Architect Professional",
+      "Bootcamp Avancé Kubernetes CKA & Sécurité Cloud",
+      "Séminaire Gouvernance SI & Résilience Opérationnelle"
+    ],
+    horizonMois: 12,
+    mentorRecommande: "Moussa Soro (Responsable IT & Systèmes)"
+  },
+  "Directeur_Financier_Adjoint": {
+    titre: "Directeur Administratif & Financier Adjoint",
+    departement: "Finance & Comptabilité",
+    categorieCCNI: "Cadre Supérieur (Catégorie C3)",
+    salaireCible: 1400000,
+    competencesRequises: [
+      { nom: "Consolidation des Comptes & Normes IFRS / SYSCOHADA", niveauRequis: "Expert", priorite: "CRITIQUE" },
+      { nom: "Gestion de Trésorerie Multidevises & Arbitrage", niveauRequis: "Avancé", priorite: "HAUTE" },
+      { nom: "Contrôle de Gestion & Modélisation Budgétaire", niveauRequis: "Expert", priorite: "CRITIQUE" },
+      { nom: "Relations avec Commissaires aux Comptes & Fisc", niveauRequis: "Avancé", priorite: "HAUTE" },
+      { nom: "Management d'Équipe Comptable & Financière", niveauRequis: "Maîtrise", priorite: "MOYENNE" }
+    ],
+    formationsConseillees: [
+      "Certificat DAF & Normes SYSCOHADA Révisé (FDFP)",
+      "Modélisation Financière Avancée & Power BI Finance",
+      "Atelier Négociation Bancaire & Financement Corporate"
+    ],
+    horizonMois: 16,
+    mentorRecommande: "Kouamé N'Dri (Chef Comptable Principal)"
+  },
+  "Chef_Projet_Fintech": {
+    titre: "Chef de Projet Digital, Mobile & FinTech",
+    departement: "Banque Digitale & Innovation",
+    categorieCCNI: "Cadre Supérieur (Catégorie C2)",
+    salaireCible: 1100000,
+    competencesRequises: [
+      { nom: "Gestion de Projet Agile Scrum & Kanban", niveauRequis: "Expert", priorite: "CRITIQUE" },
+      { nom: "APIs Open Banking & Monétique (GIM-UEMOA)", niveauRequis: "Avancé", priorite: "HAUTE" },
+      { nom: "Expérience Utilisateur Mobile UX / Product", niveauRequis: "Avancé", priorite: "HAUTE" },
+      { nom: "Gestion des Prestataires Techniques & SLAs", niveauRequis: "Maîtrise", priorite: "MOYENNE" },
+      { nom: "Conduite du Changement & Adoption Digitale", niveauRequis: "Maîtrise", priorite: "MOYENNE" }
+    ],
+    formationsConseillees: [
+      "Certification Scrum Master PSM II & Product Owner",
+      "Fondamentaux de la Monétique et Sécurité PCI-DSS",
+      "Masterclass Product Management & FinTech Africaine"
+    ],
+    horizonMois: 10,
+    mentorRecommande: "Armand Kouassi (Expert Projets Digitaux)"
+  }
+};
 
 export function SimulateurCarriereIA() {
-  const [currentRole, setCurrentRole] = useState("Developpeur_Fullstack");
-  const [targetRole, setTargetRole] = useState("Lead_Architecte_Cloud");
+  const [selectedEmpId, setSelectedEmpId] = useState('emp-001');
+  const [targetRoleKey, setTargetRoleKey] = useState("Directeur_Agence");
   const [toastMessage, setToastMessage] = useState(null);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
 
-  // Définition des profils de postes et compétences
-  const rolesData = {
-    "Developpeur_Fullstack": {
-      titre: "Développeur Fullstack React / Node",
-      departement: "Infrastructure & Systèmes",
-      categorieCCNI: "Agent de Maîtrise (Catégorie M1)",
-      salaireMoyen: 550000,
-      competences: ["React & Frontend UI", "Node.js & APIs REST", "Git & CI/CD", "Bases de données SQL"]
-    },
-    "Lead_Architecte_Cloud": {
-      titre: "Lead Architecte Cloud & DevOps",
-      departement: "Infrastructure & Systèmes",
-      categorieCCNI: "Cadre Supérieur (Catégorie C3)",
-      salaireMoyen: 1100000,
-      competencesRequises: [
-        { nom: "React & Frontend UI", niveauRequis: "Avancé", acquis: true },
-        { nom: "Node.js & APIs REST", niveauRequis: "Expert", acquis: true },
-        { nom: "Architecture Cloud AWS / Azure", niveauRequis: "Expert", acquis: false, priorite: "CRITIQUE" },
-        { nom: "Orchestration Kubernetes & Docker", niveauRequis: "Avancé", acquis: false, priorite: "HAUTE" },
-        { nom: "Leadership & Encadrement Technique", niveauRequis: "Maîtrise", acquis: false, priorite: "MOYENNE" }
-      ],
-      formationsConseillees: [
-        "Certification AWS Certified Solutions Architect (FDFP)",
-        "Bootcamp Kubernetes CKA & Infrastructure As Code Terraform",
-        "Atelier SII : Leadership & Posture de Mentor Technique"
-      ],
-      horizonMois: 14,
-      gainSalarialEstime: "+550 000 FCFA / mois"
-    },
-    "Charge_Clientele": {
-      titre: "Chargée de Clientèle Entreprises Senior",
-      departement: "Banque d'Affaires & PME",
-      categorieCCNI: "Agent de Maîtrise (Catégorie M2)",
-      salaireMoyen: 600000,
-      competences: ["Prospection Commerciale", "Analyse Financière PME", "Gestion Relation Client"]
-    },
-    "Directeur_Agence": {
-      titre: "Directrice / Directeur d'Agence Principale",
-      departement: "Direction Commerciale & Agences",
-      categorieCCNI: "Cadre Supérieur (Catégorie C3)",
-      salaireMoyen: 1250000,
-      competencesRequises: [
-        { nom: "Prospection & Négociation PME", niveauRequis: "Expert", acquis: true },
-        { nom: "Analyse des Risques Crédit", niveauRequis: "Avancé", acquis: true },
-        { nom: "Management d'Équipe & Recrutement", niveauRequis: "Avancé", acquis: false, priorite: "CRITIQUE" },
-        { nom: "Pilotage Compte d'Exploitation Agence", niveauRequis: "Avancé", acquis: false, priorite: "HAUTE" },
-        { nom: "Conformité Réglementaire BCEAO & Blanchiment", niveauRequis: "Maîtrise", acquis: false, priorite: "HAUTE" }
-      ],
-      formationsConseillees: [
-        "Programme Management Stratégique d'Agence Bancaire (MDE Business School)",
-        "Formation Réglementation Prudentielle & Risque BCEAO (FDFP)",
-        "Coaching de Transition Managériale SII"
-      ],
-      horizonMois: 18,
-      gainSalarialEstime: "+650 000 FCFA / mois"
-    }
-  };
+  const selectedEmp = useMemo(() => {
+    return MOCK_190_EMPLOYEES.find(e => e.id === selectedEmpId) || MOCK_190_EMPLOYEES[0];
+  }, [selectedEmpId]);
+
+  const targetData = TARGET_ROLES[targetRoleKey];
+
+  // Calcul dynamique du Matching Score en fonction du collaborateur sélectionné
+  const matchResult = useMemo(() => {
+    // Calcul de base basé sur la compatibilité de département et l'ancienneté
+    const empRole = (selectedEmp.position || selectedEmp.role || '').toLowerCase();
+    const targetDept = targetData.departement.toLowerCase();
+    const empDept = (selectedEmp.department || '').toLowerCase();
+
+    const isSameDept = empDept.includes('banque') || empDept.includes('commercial')
+      ? targetDept.includes('commercial') || targetDept.includes('agence')
+      : empDept.includes('syst') || empDept.includes('it')
+      ? targetDept.includes('syst') || targetDept.includes('cloud')
+      : true;
+
+    // Compétences acquises simulées
+    const comps = targetData.competencesRequises.map((c, idx) => {
+      // 2 premières compétences acquises si même pôle, sinon 1
+      const isAcquired = isSameDept ? idx < 3 : idx < 2;
+      return {
+        ...c,
+        acquis: isAcquired
+      };
+    });
+
+    const acquiredCount = comps.filter(c => c.acquis).length;
+    const score = Math.round((acquiredCount / comps.length) * 100);
+
+    const baseSalary = 650000;
+    const salaryGain = targetData.salaireCible - baseSalary;
+
+    return {
+      score,
+      comps,
+      acquiredCount,
+      salaryGain: salaryGain > 0 ? `+${salaryGain.toLocaleString('fr-FR')} FCFA / mois` : '+350 000 FCFA / mois'
+    };
+  }, [selectedEmp, targetData]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Sélection active
-  const targetData = targetRole === "Lead_Architecte_Cloud" ? rolesData.Lead_Architecte_Cloud : rolesData.Directeur_Agence;
-  const currentData = currentRole === "Developpeur_Fullstack" ? rolesData.Developpeur_Fullstack : rolesData.Charge_Clientele;
-
-  // Calcul du taux d'adéquation (Matching Score)
-  const totalComp = targetData.competencesRequises.length;
-  const compAcquises = targetData.competencesRequises.filter(c => c.acquis).length;
-  const matchScore = Math.round((compAcquises / totalComp) * 100);
-
   const handleSubmitWish = (e) => {
     e.preventDefault();
     setShowSubmitModal(false);
-    showToast(`Votre projet de parcours vers "${targetData.titre}" a été transmis à la DRH pour intégration au plan FDFP.`);
+    showToast(`Projet de mobilité vers « ${targetData.titre} » transmis à la DRH pour ${selectedEmp.firstName} ${selectedEmp.lastName}.`);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="min-h-screen bg-slate-50/60 p-4 sm:p-6 lg:p-8 space-y-6">
       
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-3 bg-emerald-600 text-white px-5 py-3.5 rounded-xl shadow-xl border border-emerald-500/30 animate-in fade-in slide-in-from-top-4 duration-300">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
           <span className="text-sm font-medium">{toastMessage}</span>
           <button onClick={() => setToastMessage(null)} className="ml-2 hover:opacity-80">
             <X className="w-4 h-4" />
@@ -104,83 +168,154 @@ export function SimulateurCarriereIA() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
-              <Compass className="w-7 h-7" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                Simulateur d'Évolution de Carrière IA ("Where Next?")
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-800">
-                  GPS Carrière
-                </span>
-              </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                Projetez votre avenir dans l'entreprise : diagnostic du Skill Gap, formations ciblées et perspectives CCNI
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              IA Mobilité Interne & GPEC • "Where Next?"
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Simulateur d'Évolution de Carrière & Trajectoire
+            </h1>
           </div>
+          <p className="text-slate-500 text-sm mt-1">
+            Projetez l'avenir professionnel de vos 191 collaborateurs : diagnostic du Skill Gap, formations certifiées FDFP et passerelles managériales.
+          </p>
         </div>
 
-        <button
-          onClick={() => setShowSubmitModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-xl shadow-sm transition-all"
-        >
-          <Send className="w-4 h-4" />
-          <span>Soumettre ce Projet à la DRH</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setShowSubmitModal(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs gap-2 font-semibold text-xs"
+          >
+            <Send size={14} /> Soumettre ce Projet à la DRH
+          </Button>
+        </div>
       </div>
 
-      {/* Sélecteur de Parcours */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-4">
-        <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+      {/* 4 Pastel KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* KPI 1 : Matching Score */}
+        <div className="bg-indigo-50/70 border border-indigo-100/80 p-5 rounded-2xl shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">
+              Adéquation IA (Match)
+            </span>
+            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+              <Sparkles className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-slate-900">{matchResult.score}%</span>
+            <span className="text-xs text-indigo-600 font-bold">Base solide</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            {matchResult.acquiredCount} compétences sur {matchResult.comps.length} validées
+          </p>
+        </div>
+
+        {/* KPI 2 : Horizon Temporel */}
+        <div className="bg-blue-50/70 border border-blue-100/80 p-5 rounded-2xl shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
+              Horizon de Réalisation
+            </span>
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+              <Clock className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-slate-900">{targetData.horizonMois}</span>
+            <span className="text-xs text-slate-500 font-medium">mois</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">Parcours certifiant et mentorat inclus</p>
+        </div>
+
+        {/* KPI 3 : Gain Salarial Estimé */}
+        <div className="bg-emerald-50/70 border border-emerald-100/80 p-5 rounded-2xl shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+              Progression Salariale CCNI
+            </span>
+            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              {matchResult.salaryGain}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">Passage au statut {targetData.categorieCCNI}</p>
+        </div>
+
+        {/* KPI 4 : Financement FDFP */}
+        <div className="bg-purple-50/70 border border-purple-100/80 p-5 rounded-2xl shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
+              Financement FDFP
+            </span>
+            <div className="p-2 bg-purple-100 text-purple-600 rounded-xl">
+              <Award className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-slate-900">100%</span>
+            <span className="text-xs text-emerald-600 font-bold">Pris en charge</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">3 certifications éligibles au plan 2026</p>
+        </div>
+
+      </div>
+
+      {/* Trajectory Selectors: Collaborator + Target Role */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+        <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
           <Target className="w-5 h-5 text-indigo-600" />
-          Définissez votre trajectoire d'évolution :
+          Définissez la trajectoire d'évolution :
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
           
-          {/* Poste Actuel */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+          {/* Collaborator Selector */}
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              1. Votre Poste Actuel
+              1. Collaborateur concerné (191 collaborateurs)
             </span>
             <select
-              value={currentRole}
-              onChange={(e) => {
-                setCurrentRole(e.target.value);
-                if (e.target.value === "Developpeur_Fullstack") setTargetRole("Lead_Architecte_Cloud");
-                else setTargetRole("Directeur_Agence");
-              }}
-              className="w-full text-sm font-bold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 text-slate-900 dark:text-white"
+              value={selectedEmpId}
+              onChange={(e) => setSelectedEmpId(e.target.value)}
+              className="w-full text-sm font-bold bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 truncate"
             >
-              <option value="Developpeur_Fullstack">Développeur Fullstack React / Node</option>
-              <option value="Charge_Clientele">Chargée de Clientèle Entreprises Senior</option>
+              {MOCK_190_EMPLOYEES.slice(0, 60).map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.firstName} {emp.lastName} — {emp.department} ({emp.position || emp.role || 'Salarié'})
+                </option>
+              ))}
             </select>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              Classification CCNI : <strong>{currentData.categorieCCNI}</strong>
+            <div className="text-xs text-slate-500">
+              Poste actuel : <strong className="text-slate-800">{selectedEmp.position || selectedEmp.role || 'Cadre'}</strong> • {selectedEmp.department}
             </div>
           </div>
 
-          {/* Poste Cible Rêvé */}
-          <div className="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-xl border-2 border-indigo-400 dark:border-indigo-800 space-y-2">
-            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">
-              2. Le Poste Cible Visé
+          {/* Target Role Selector */}
+          <div className="p-4 bg-indigo-50/60 rounded-xl border-2 border-indigo-300 space-y-2">
+            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider block">
+              2. Poste Cible Visé dans l'Entreprise
             </span>
             <select
-              value={targetRole}
-              onChange={(e) => setTargetRole(e.target.value)}
-              className="w-full text-sm font-bold bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 rounded-xl p-2.5 text-slate-900 dark:text-white"
+              value={targetRoleKey}
+              onChange={(e) => setTargetRoleKey(e.target.value)}
+              className="w-full text-sm font-bold bg-white border border-indigo-300 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              {currentRole === "Developpeur_Fullstack" ? (
-                <option value="Lead_Architecte_Cloud">Lead Architecte Cloud & DevOps</option>
-              ) : (
-                <option value="Directeur_Agence">Directrice / Directeur d'Agence Principale</option>
-              )}
+              {Object.keys(TARGET_ROLES).map((key) => (
+                <option key={key} value={key}>
+                  {TARGET_ROLES[key].titre} ({TARGET_ROLES[key].departement})
+                </option>
+              ))}
             </select>
-            <div className="text-xs text-indigo-700 dark:text-indigo-300">
+            <div className="text-xs text-indigo-700 font-medium">
               Classification CCNI cible : <strong>{targetData.categorieCCNI}</strong>
             </div>
           </div>
@@ -188,97 +323,39 @@ export function SimulateurCarriereIA() {
         </div>
       </div>
 
-      {/* Résultat du Matching IA */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        {/* Adéquation Actuelle */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-              Taux d'Adéquation IA
-            </span>
-            <div className="p-2 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
-              <Sparkles className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-4xl font-black text-slate-900 dark:text-white">{matchScore}%</span>
-            <span className="text-xs text-emerald-600 font-bold">Base solide</span>
-          </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            {compAcquises} compétences validées sur {totalComp} requises
-          </div>
-        </div>
-
-        {/* Horizon Temporel */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-              Horizon de Réalisation
-            </span>
-            <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg">
-              <Clock className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-4xl font-black text-slate-900 dark:text-white">{targetData.horizonMois}</span>
-            <span className="text-xs text-slate-400">mois</span>
-          </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Avec le parcours d'accompagnement FDFP
-          </div>
-        </div>
-
-        {/* Gain Salarial Indicatif */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-              Gain Salarial CCNI Indicatif
-            </span>
-            <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-              {targetData.gainSalarialEstime}
-            </span>
-          </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Passage au statut Cadre Supérieur C3
-          </div>
-        </div>
-
-      </div>
-
-      {/* Détail du Skill Gap (Compétences à combler) */}
+      {/* Skill Gap Analysis & Recommended Training Blueprint */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* Radar des Compétences */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
-            <BrainCircuit className="w-5 h-5 text-indigo-600" />
-            Analyse Détaillée du Skill Gap
-          </h3>
+        {/* Radar / Detailed Skill Gap */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <BrainCircuit className="w-5 h-5 text-indigo-600" />
+              <h3 className="font-bold text-slate-900 text-base">Diagnostic Détaillé du Skill Gap</h3>
+            </div>
+            <Badge className="bg-indigo-50 text-indigo-700 border-indigo-100 text-[11px] font-bold">
+              IA Diagnostic
+            </Badge>
+          </div>
 
-          <div className="space-y-3 pt-2">
-            {targetData.competencesRequises.map((comp, idx) => (
-              <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl flex items-center justify-between text-xs">
+          <div className="space-y-3 pt-1">
+            {matchResult.comps.map((comp, idx) => (
+              <div key={idx} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs hover:bg-slate-100/70 transition-colors">
                 <div className="space-y-0.5">
-                  <div className="font-bold text-slate-900 dark:text-white">{comp.nom}</div>
-                  <div className="text-slate-400">Attendu : {comp.niveauRequis}</div>
+                  <div className="font-bold text-slate-900">{comp.nom}</div>
+                  <div className="text-slate-400">Niveau requis : {comp.niveauRequis}</div>
                 </div>
 
                 {comp.acquis ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Déjà Acquis
+                    Validé
                   </span>
                 ) : (
-                  <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                  <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full ${
                     comp.priorite === 'CRITIQUE'
-                      ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
                   }`}>
                     À Acquérir ({comp.priorite})
                   </span>
@@ -288,43 +365,51 @@ export function SimulateurCarriereIA() {
           </div>
         </div>
 
-        {/* Plan d'Action Recommandé par l'IA */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-indigo-600" />
-            Parcours Recommandé par l'IA (Formations & Binômes)
-          </h3>
+        {/* AI Certified FDFP Action Plan */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-indigo-600" />
+              <h3 className="font-bold text-slate-900 text-base">Parcours de Formation FDFP & Accompagnement</h3>
+            </div>
+            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[11px] font-bold">
+              100% Pris en Charge
+            </Badge>
+          </div>
 
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-1">
             {targetData.formationsConseillees.map((f, idx) => (
-              <div key={idx} className="p-3.5 bg-indigo-50/50 dark:bg-indigo-950/40 rounded-xl border border-indigo-200 dark:border-indigo-900/60 flex items-start gap-3 text-xs">
+              <div key={idx} className="p-3.5 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-start gap-3 text-xs">
                 <div className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">
                   {idx + 1}
                 </div>
                 <div>
-                  <div className="font-bold text-slate-900 dark:text-white">{f}</div>
-                  <div className="text-slate-500 dark:text-slate-400 mt-0.5">Éligible prise en charge FDFP / E-learning interne</div>
+                  <div className="font-bold text-slate-900">{f}</div>
+                  <div className="text-slate-500 mt-0.5">Financement FDFP Côte d'Ivoire certifié • Validation N+1</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200">
-            <strong>Recommandation Mentorat :</strong> Positionnez-vous en binôme sur les projets d'architecture avec {targetRole === "Lead_Architecte_Cloud" ? "Moussa Soro" : "Jean-Marc Koffi"} pour valider la pratique de terrain.
+          <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 leading-relaxed space-y-1">
+            <strong>Binôme & Mentorat Recommandé :</strong>
+            <p>
+              L'IA préconise un compagnonnage terrain hebdomadaire avec <strong>{targetData.mentorRecommande}</strong> pour sécuriser l'acquisition des réflexes de gouvernance.
+            </p>
           </div>
         </div>
 
       </div>
 
-      {/* MODALE : Soumission à la DRH */}
+      {/* Submission Modal to HR */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-indigo-50 dark:bg-indigo-950/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-indigo-50">
               <div className="flex items-center gap-2">
                 <Compass className="w-5 h-5 text-indigo-600" />
-                <h3 className="font-bold text-slate-900 dark:text-white text-base">
-                  Transmettre mon Projet d'Évolution
+                <h3 className="font-bold text-slate-900 text-base">
+                  Transmettre ce Projet d'Évolution
                 </h3>
               </div>
               <button onClick={() => setShowSubmitModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
@@ -332,42 +417,42 @@ export function SimulateurCarriereIA() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitWish} className="p-5 space-y-4 text-xs">
-              <p className="text-slate-600 dark:text-slate-300">
-                Vous vous apprêtez à notifier votre manager et la Direction des Ressources Humaines de votre souhait d'évoluer vers le poste de :
+            <form onSubmit={handleSubmitWish} className="p-6 space-y-4 text-xs">
+              <p className="text-slate-600 leading-relaxed">
+                Vous allez formaliser la trajectoire de carrière de <strong>{selectedEmp.firstName} {selectedEmp.lastName}</strong> vers le poste cible de :
               </p>
 
-              <div className="p-3 bg-indigo-50 dark:bg-indigo-950/60 rounded-xl font-bold text-indigo-700 dark:text-indigo-300 text-sm">
+              <div className="p-3 bg-indigo-50 rounded-xl font-bold text-indigo-700 text-sm">
                 {targetData.titre}
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Message d'accompagnement / Motivations :
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Recommandation / Note de Motivation :
                 </label>
                 <textarea
                   rows={3}
                   required
-                  defaultValue="Je souhaite m'inscrire dans ce parcours d'évolution pour acquérir les compétences requises et franchir ce palier au sein de SII CI."
-                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                  defaultValue={`Validation du projet de montée en compétences pour ${selectedEmp.firstName} ${selectedEmp.lastName}. Pré-inscription aux modules FDFP validée.`}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setShowSubmitModal(false)}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-xl"
+                  className="rounded-xl"
                 >
                   Annuler
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="px-5 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm flex items-center gap-1.5"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-2 font-bold"
                 >
-                  <Send className="w-4 h-4" />
-                  <span>Envoyer à la DRH</span>
-                </button>
+                  <Send size={14} /> Transmettre à la DRH
+                </Button>
               </div>
             </form>
           </div>
@@ -377,4 +462,5 @@ export function SimulateurCarriereIA() {
     </div>
   );
 }
+
 export default SimulateurCarriereIA;

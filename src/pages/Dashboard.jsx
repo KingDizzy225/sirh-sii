@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { 
     Users, UserPlus, LogOut, Calendar, Clock, Star, Target, 
@@ -16,6 +17,7 @@ import { api } from '../lib/api';
 import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
 
 export function Dashboard() {
+    const navigate = useNavigate();
     const { token, user } = useAuth();
     const [notification, setNotification] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -203,6 +205,60 @@ export function Dashboard() {
                     >
                         <Download size={18} />
                     </button>
+                </div>
+            </div>
+
+            {/* QUICK ACTIONS & LIVE PULSE */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white border border-slate-200/80 p-3.5 rounded-2xl shadow-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 hidden sm:inline">
+                        Accès Direct :
+                    </span>
+                    <button
+                        onClick={() => navigate('/payroll-simulation')}
+                        className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                        💰 Simulateur Masse Salariale
+                    </button>
+                    <button
+                        onClick={() => navigate('/performance')}
+                        className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                        🪄 Copilote IA d'Entretien
+                    </button>
+                    <button
+                        onClick={() => navigate('/smart-automations')}
+                        className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                        ⚡ Déclencheurs RH
+                    </button>
+                    <button
+                        onClick={() => navigate('/sentinelle-burnout')}
+                        className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                        🧘 Sentinelle Anti-Burnout
+                    </button>
+                    <button
+                        onClick={() => navigate('/marketplace-talents')}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                        🎯 Marketplace Talents
+                    </button>
+                    <button
+                        onClick={() => navigate('/conformite')}
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                        ⚖️ Audit CNPS
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-3 text-xs font-medium text-slate-500 border-t lg:border-t-0 pt-2 lg:pt-0 border-slate-100">
+                    <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        178 Présents
+                    </span>
+                    <span>9 Télétravail</span>
+                    <span>4 Congés</span>
                 </div>
             </div>
 
