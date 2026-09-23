@@ -1046,7 +1046,7 @@ DATABASE_URL="postgresql://…/sirh_ecole" npm run anonymiser -- --confirmer --m
   WhatsApp, notifications.
 - **Ne copiez pas `uploads/`** : les fichiers, eux, ne sont pas anonymisés.
 
-## Transport, avantages, grille, virements, délégués, stages
+## Transport, avantages, virements, stages
 
 ### Prime de transport et avantages en nature (Pilotage RH → Transport & avantages)
 
@@ -1064,18 +1064,6 @@ Le bulletin ne connaissait qu'une ligne « primes », fourre-tout.
   montants sont ceux que l'employeur retient, sous sa responsabilité.
 - Le bulletin explique désormais ces deux lignes au salarié.
 
-### Grille conventionnelle (Pilotage RH → Grille conventionnelle)
-
-Saisir la grille (convention, catégorie, échelon, minimum), puis affecter une
-catégorie à chaque salarié. L'écran liste les salaires sous le minimum, et la
-paie les signale parmi les écarts — sans bloquer : une régularisation peut être
-en cours, mais elle ne passe plus inaperçue.
-
-- Le **minimum légal** se déclare par `SMIG_MENSUEL`. Non posé, seuls les
-  salariés dotés d'une catégorie sont contrôlés ; l'écran le dit.
-- Le plus élevé des deux minima l'emporte.
-- Retirer une ligne ne l'efface pas : un minimum passé explique un salaire passé.
-
 ### Virements des salaires (Pilotage RH → Virements des salaires)
 
 1. Choisir la période : l'écran annonce les virements et les salariés écartés
@@ -1092,23 +1080,6 @@ en cours, mais elle ne passe plus inaperçue.
 largeurs, en-tête, pied. À défaut, un CSV générique sort. Le jour où la banque
 remet sa spécification, elle se saisit — le programme ne change pas.
 
-### Délégués du personnel (Employés → Délégués du personnel)
-
-Scrutins, mandats, réunions, et les manques à traiter : absence de délégués
-au-delà du seuil, mandats proches du terme, réunion trop ancienne. Les alertes
-partent avec les échéances quotidiennes.
-
-| Variable | Rôle |
-|---|---|
-| `DELEGUES_SEUIL_EFFECTIF` | effectif déclenchant l'obligation (11 par défaut, **à confirmer**) |
-| `DELEGUES_DUREE_MANDAT_MOIS` | durée du mandat (24 par défaut) |
-| `DELEGUES_PREAVIS_JOURS` | préavis de renouvellement (90) |
-| `DELEGUES_BAREME` | nombre de délégués par tranche, fixé par arrêté — **non renseigné par défaut** |
-
-Sans barème, l'application suit les mandats sans annoncer combien de délégués
-vous devez avoir : un chiffre inventé serait pris pour vrai. Les stagiaires et
-apprentis ne comptent pas dans l'effectif retenu.
-
 ### Stagiaires et apprentis (Employés → Stagiaires & apprentis)
 
 Convention (école, niveau, tuteur, dates, gratification) rattachée à un
@@ -1121,7 +1092,7 @@ gratification. Elle la traite comme une rémunération ordinaire — cotisations
 impôt — et l'écran le dit. Si votre cabinet retient une exonération, ajustez
 en conséquence.
 
-## Retraite, missions, indemnités CNPS, travailleurs handicapés
+## Retraite, missions, travailleurs handicapés
 
 ### Départs à la retraite (Employés → Départs à la retraite)
 
@@ -1154,25 +1125,6 @@ l'essentiel, et le montant se saisit.
 les frais réels justifiés restent des notes de frais. L'écran met en tête les
 avances des missions effectuées et non soldées — de l'argent sorti que personne
 ne réclame.
-
-### Indemnités journalières CNPS (Pilotage RH → Indemnités CNPS)
-
-Pendant un congé de maternité ou un arrêt pour accident du travail, l'employeur
-avance le salaire et la CNPS rembourse. L'avance était faite chaque fois, la
-créance jamais ouverte.
-
-L'écran liste d'abord les **arrêts sans créance ouverte**, tirés des congés de
-maternité approuvés et des accidents du travail avec jours d'arrêt. Chacun
-s'ouvre en créance, se dépose (avec sa référence), puis s'encaisse. Un
-remboursement inférieur à la demande est signalé plutôt qu'enregistré en
-silence, et un arrêt trop ancien pour être déposé (`CNPS_IJ_DELAI_JOURS`) est
-marqué forclos au lieu d'être masqué.
-
-**L'application ne calcule pas le droit** : le taux, les plafonds et la durée
-indemnisable relèvent du régime CNPS. Avec `CNPS_TAUX_IJ`, elle estime à partir
-des bulletins **précédant** l'arrêt — les prendre pendant ferait baisser la
-référence, donc la créance. Estimation, demande et encaissement restent trois
-montants distincts, qui ne s'additionnent jamais.
 
 ### Travailleurs handicapés
 
@@ -1605,3 +1557,27 @@ alors **avant** de saisir ses données, jamais après.
 **Envoi d'emails.** Sans configuration SMTP, les notifications partent vers une
 boîte de test jetable. Les salariés ne reçoivent rien, et rien ne le signale
 dans l'interface. À régler avant d'annoncer la fonctionnalité.
+
+## Fonctions retirées le 23 septembre 2026
+
+Quatre sujets étaient traités deux fois : une maquette de démonstration d'un
+côté, une fonction enregistrant en base de l'autre. Sur décision d'Ibrahim
+Diop, les secondes ont été retirées pour ne garder qu'un écran par sujet.
+
+| Retiré | Ce qui reste |
+|---|---|
+| Attestations en libre-service depuis le badge | *Kiosque Attestations Express* |
+| Indemnités journalières CNPS (créances, encaissements) | *Sécurité, CSST & Accidents CNPS* |
+| Mandats et scrutins des délégués | *Délégués & Doléances Salariés* |
+| Grille conventionnelle et contrôle du minimum | *Simulateur Brut/Net & Grille CCNI* |
+
+**Ce qui disparaît avec elles**, et qu'il faut savoir : la paie ne signale plus
+un salaire inférieur au minimum de sa catégorie ; les créances d'indemnités
+journalières ne sont plus suivies jusqu'à leur encaissement ; les échéances de
+mandat ne remontent plus dans les alertes RH ; un salarié ne peut plus éditer
+lui-même une attestation scellée depuis son badge.
+
+**Aucune donnée n'a été supprimée.** Les tables `grille_convention`,
+`indemnite_journaliere`, `scrutin`, `mandat_delegue` et `reunion_delegues`
+restent en place, simplement plus alimentées. Les faire tomber demandera une
+migration explicite, à décider séparément.

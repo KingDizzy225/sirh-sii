@@ -68,9 +68,6 @@ const ECRANS_RATTACHES = {
         { name: "Livres d'Or", path: '/livres-dor' },
         { name: 'Rétrospectives', path: '/retrospectives' }
     ],
-    '/doleances-delegues': [
-        { name: 'Mandats & Scrutins', path: '/delegues' }
-    ],
     '/assets': [
         { name: 'Flotte Mobile', path: '/flotte-mobile' }
     ],
@@ -93,7 +90,6 @@ const ECRANS_RATTACHES = {
     ],
     '/payroll': [
         { name: 'Ordres de Virement', path: '/virements' },
-        { name: 'Grille Conventionnelle', path: '/grille' },
         { name: 'Transport & Avantages en Nature', path: '/avantages' },
         { name: 'Rappels de Salaire', path: '/rappels' },
         { name: "Prime de Fin d'Année", path: '/prime-annuelle' },
@@ -176,7 +172,6 @@ const getAllNavItems = (t) => [
     { name: 'Astreintes & Gardes', path: '/astreintes', icon: PhoneCall, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Départs à la Retraite', path: '/retraites', icon: Hourglass, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Ordres de Mission & Per Diem', path: '/missions', icon: Plane, domain: 'Employés', permission: 'employees:edit', manager: true },
-    { name: 'Indemnités Journalières CNPS', path: '/indemnites-journalieres', icon: HandCoins, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Départs & Entretiens de Sortie', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Équipements & Flotte Mobile', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Santé, Médecine & Mutuelle', path: '/mutuelle-sante', icon: HeartHandshake, domain: 'Employés', permission: 'employees:edit' },

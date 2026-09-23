@@ -18,9 +18,7 @@ import { Passations } from './pages/Passations';
 import { Emargements } from './pages/Emargements';
 import { PrevisionAbsences } from './pages/PrevisionAbsences';
 import { DroitAcces } from './pages/DroitAcces';
-import { Grille } from './pages/Grille';
 import { Virements } from './pages/Virements';
-import { Delegues } from './pages/Delegues';
 import { Stages } from './pages/Stages';
 import { Avantages } from './pages/Avantages';
 import { Rappels } from './pages/Rappels';
@@ -30,7 +28,6 @@ import { Astreintes } from './pages/Astreintes';
 import { BilanSocial } from './pages/BilanSocial';
 import { Retraites } from './pages/Retraites';
 import { Missions } from './pages/Missions';
-import { IndemnitesJournalieres } from './pages/IndemnitesJournalieres';
 import { Remplacements } from './pages/Remplacements';
 import { PreAccueil } from './pages/PreAccueil';
 import { Bienvenue } from './pages/Bienvenue';
@@ -510,11 +507,6 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/grille" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <Grille />
-              </ProtectedRoute>
-            } />
 
             <Route path="/virements" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
@@ -522,11 +514,6 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/delegues" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <Delegues />
-              </ProtectedRoute>
-            } />
 
             <Route path="/stages" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
@@ -586,11 +573,6 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/indemnites-journalieres" element={
-              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
-                <IndemnitesJournalieres />
-              </ProtectedRoute>
-            } />
 
             <Route path="/droit-acces" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>

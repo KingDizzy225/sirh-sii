@@ -5,9 +5,6 @@ const remplacement = require('../lib/remplacement');
 const presence = require('../lib/presence');
 const { notifierSalarie, notifierRH } = require('../lib/notify');
 const espacePersonnel = require('../lib/espacePersonnel');
-const attestation = require('../lib/attestation');
-const apposition = require('../lib/apposition');
-const PDFDocument = require('pdfkit');
 
 /**
  * Ce que le salarié fait depuis son téléphone, reconnu par son badge.
@@ -303,45 +300,11 @@ exports.monDossier = async (req, res) => {
             droits,
             bulletins,
             echeances,
-            astreintes,
-            attestations: Object.entries(attestation.TYPES).map(([code, t]) => ({ code, libelle: t.libelle }))
+            astreintes
         });
     } catch (erreur) {
         console.error('[ESPACE] Dossier indisponible :', erreur.message);
         res.status(500).json({ error: 'Votre dossier est momentanément indisponible.' });
-    }
-};
-
-/**
- * Attestation émise par le salarié lui-même.
- *
- * Elle était une demande adressée aux ressources humaines, traitée à la main,
- * pour un document que l'application sait produire, signer et sceller seule.
- * Le registre garde qui l'a émise : ici, l'intéressé depuis son badge.
- */
-exports.attestation = async (req, res) => {
-    try {
-        const salarie = await porteur(req.params.jeton);
-        if (!salarie) return refuserBadge(res);
-
-        const type = String(req.params.type || 'TRAVAIL').toUpperCase() === 'SALAIRE' ? 'SALAIRE' : 'TRAVAIL';
-        const employe = await prisma.employee.findUnique({ where: { id: salarie.id } });
-
-        const registre = await attestation.enregistrer(employe, type, 'PORTAIL_SALARIE');
-        const signataire = await apposition.choisirSignataire();
-        const salaire = type === 'SALAIRE' ? await attestation.elementsSalaire(employe.id) : null;
-
-        const pdfDoc = new PDFDocument({ margin: 50 });
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition',
-            `attachment; filename=Attestation_${type.toLowerCase()}_${employe.lastName}.pdf`);
-        pdfDoc.pipe(res);
-
-        await attestation.composer(pdfDoc, { employe, type, signataire, registre, salaire });
-        pdfDoc.end();
-    } catch (erreur) {
-        console.error('[ESPACE] Attestation impossible :', erreur.message);
-        if (!res.headersSent) res.status(500).json({ error: "L'attestation n'a pas pu être produite." });
     }
 };
 

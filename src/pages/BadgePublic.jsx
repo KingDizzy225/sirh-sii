@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ShieldX, Loader2, User, RotateCw, CalendarClock, Repeat, Check, X, ClipboardList, Plus, Trash2, CheckCheck, Wallet, FileText, AlarmClock, PhoneCall, Download, ChevronDown } from 'lucide-react';
+import { ShieldCheck, ShieldX, Loader2, User, RotateCw, CalendarClock, Repeat, Check, X, ClipboardList, Plus, Trash2, CheckCheck, Wallet, FileText, AlarmClock, PhoneCall, ChevronDown } from 'lucide-react';
 import { CLE_BADGE } from './Pointer';
 import { useIdentite, logoUrl, degradeMarque } from '../lib/identite.js';
 
@@ -338,23 +338,6 @@ function MonDossier({ jeton }) {
                     } />
             )}
 
-            <Bloc titre="Mes attestations" icone={Download} resume="Immédiat"
-                enfants={
-                    <div className="space-y-2 text-sm">
-                        <p className="text-slate-400 text-xs">
-                            Signées et scellées à l'émission : le document porte un QR qu'une banque ou une
-                            administration peut vérifier en ligne.
-                        </p>
-                        <a href={`${API_URL}/api/public/badges/${jeton}/attestation/TRAVAIL`}
-                            className="block rounded-lg bg-white/10 px-3 py-2 text-white hover:bg-white/20">
-                            Attestation de travail
-                        </a>
-                        <a href={`${API_URL}/api/public/badges/${jeton}/attestation/SALAIRE`}
-                            className="block rounded-lg bg-white/10 px-3 py-2 text-white hover:bg-white/20">
-                            Attestation de salaire
-                        </a>
-                    </div>
-                } />
         </div>
     );
 }
