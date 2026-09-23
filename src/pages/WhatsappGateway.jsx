@@ -287,7 +287,7 @@ export function WhatsappGateway() {
                                             onClick={() => setBroadcastMsg(m.text)}
                                             className="p-2.5 rounded-xl border border-blue-100 bg-white hover:bg-blue-50/80 transition-all text-left text-xs font-medium text-slate-700 group hover:border-blue-300"
                                         >
-                                            {tpl.title}
+                                            {m.title}
                                         </button>
                                     ))}
                                 </div>
@@ -334,7 +334,7 @@ export function WhatsappGateway() {
                         <CardHeader className="p-5 border-b border-slate-100">
                             <CardTitle className="text-base font-bold text-slate-900 flex items-center justify-between">
                                 <span>Journal d'Activité des Commandes & Campagnes</span>
-                                <Button variant="outline" size="sm" onClick={fetchLogs} className="gap-1 text-xs">
+                                <Button variant="outline" size="sm" onClick={chargerLogs} className="gap-1 text-xs">
                                     <RefreshCw size={12} /> Actualiser
                                 </Button>
                             </CardTitle>
