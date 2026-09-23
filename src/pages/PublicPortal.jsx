@@ -365,9 +365,24 @@ export function PublicPortal() {
                             <p className="text-sm text-slate-400">
                                 Conservez cette référence pour suivre l'avancement en direct sur le guichet :
                             </p>
-                            <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl font-mono text-xl font-bold text-emerald-400 tracking-widest shadow-inner">
-                                RÉF : {trackingId.slice(0, 8).toUpperCase()}
+                            {/* La référence est affichée entière : tronquée, elle ne permet pas
+                                de retrouver la demande, et le salarié recopie un identifiant
+                                qui ne mène nulle part. */}
+                            <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl font-mono text-base font-bold text-emerald-400 shadow-inner break-all">
+                                RÉF : {trackingId}
                             </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    try {
+                                        navigator.clipboard?.writeText(trackingId);
+                                    } catch { /* presse-papiers indisponible : la référence reste lisible */ }
+                                }}
+                                className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 h-11 rounded-xl"
+                            >
+                                Copier la référence
+                            </Button>
                             <div className="flex gap-3">
                                 <Button 
                                     onClick={() => {

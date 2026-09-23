@@ -194,12 +194,19 @@ export function Recruitment() {
     };
 
     const moveCandidate = async (candidateId, newStage) => {
+        const ancienneEtape = candidates.find(c => c.id === candidateId)?.stage;
         setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, stage: newStage } : c));
         showNotification(`Candidat déplacé vers l'étape : ${STAGES.find(s => s.id === newStage)?.label || newStage}`);
 
+        // La route appelée n'existait pas : le candidat changeait de colonne à
+        // l'écran, l'échec était avalé par un `catch` vide, et le déplacement
+        // disparaissait au rechargement. Le serveur expose `/status`.
         try {
-            await api.put(`/recruitment/applicants/${candidateId}/stage`, { stage: newStage });
-        } catch (err) {}
+            await api.put(`/recruitment/applicants/${candidateId}/status`, { status: newStage });
+        } catch (err) {
+            setCandidates(prev => prev.map(c => c.id === candidateId ? { ...c, stage: ancienneEtape } : c));
+            showNotification(`Le déplacement n'a pas été enregistré : ${err.message || 'serveur injoignable'}`);
+        }
     };
 
     const openScorecard = (candidate) => {
