@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       workbox: {
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6 MB to allow large bundles
+        maximumFileSizeToCacheInBytes: 15 * 1024 * 1024, // 15 MB to allow large bundles
         globPatterns: ['**/*.{js,css,html,ico,png,svg}']
       },
       manifest: {
@@ -54,26 +54,11 @@ export default defineConfig({
     },
   },
   build: {
-    chunkSizeWarningLimit: 3000,
+    chunkSizeWarningLimit: 5000,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom') || id.includes('framer-motion')) {
-              return 'react-core';
-            }
-            if (id.includes('recharts') || id.includes('d3')) {
-              return 'charts';
-            }
-            if (id.includes('lucide-react')) {
-              return 'icons';
-            }
-            if (id.includes('jspdf') || id.includes('html2canvas')) {
-              return 'pdf';
-            }
-            if (id.includes('leaflet')) {
-              return 'maps';
-            }
             return 'vendor';
           }
         }
