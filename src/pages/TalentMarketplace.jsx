@@ -213,51 +213,68 @@ export function TalentMarketplace() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-                        <Briefcase className="text-indigo-600 h-8 w-8" />
+                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2.5">
+                        <Briefcase className="text-blue-600 h-7 w-7" />
                         Marketplace Interne des Talents &amp; Missions
                     </h2>
-                    <p className="text-slate-500 text-sm mt-1">
-                        Bourse de projets agiles : mobilisez les compétences internes et favorisez la mobilité transversale.
+                    <p className="text-slate-400 text-sm font-medium mt-0.5">
+                        Bourse de projets agiles : mobilisez les compétences internes transversales des 191 collaborateurs.
                     </p>
                 </div>
                 <div className="flex gap-2">
                     <Button 
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 font-bold shadow-md shadow-indigo-100"
+                        className="bg-slate-900 hover:bg-slate-800 text-white gap-2 font-bold shadow-xs rounded-xl text-xs"
                     >
-                        <Plus size={16} /> Publier une Mission
+                        <Plus size={15} /> Publier une Mission
                     </Button>
                 </div>
             </div>
 
-            {/* KPIs Synthétiques */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Missions Ouvertes</span>
-                    <div className="text-2xl font-black text-slate-800 mt-1">
-                        {missions.filter(m => m.status === 'OPEN').length}
+            {/* 4 CARTES KPI PASTEL HARMONISÉES AVEC LE DASHBOARD */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-[#EFF6FF] border border-[#DBEAFE] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Briefcase size={20} />
                     </div>
-                    <span className="text-[10px] text-emerald-600 font-bold mt-1 block">Prêtes à être pourvues</span>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">En Cours de Réalisation</span>
-                    <div className="text-2xl font-black text-indigo-600 mt-1">
-                        {missions.filter(m => m.status === 'IN_PROGRESS').length}
+                    <div>
+                        <p className="text-xs font-semibold text-slate-600">Missions Ouvertes</p>
+                        <p className="text-2xl font-black text-slate-900">{missions.filter(m => m.status === 'OPEN').length}</p>
+                        <p className="text-[11px] text-emerald-600 font-semibold">Prêtes à être pourvues</p>
                     </div>
-                    <span className="text-[10px] text-indigo-500 font-bold mt-1 block">Collaboration active</span>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Match Compétences IA</span>
-                    <div className="text-2xl font-black text-emerald-600 mt-1">95%</div>
-                    <span className="text-[10px] text-slate-400 font-bold mt-1 block">Taux moyen d'adéquation</span>
+
+                <div className="bg-[#ECFDF5] border border-[#D1FAE5] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Users size={20} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-600">Missions en Cours</p>
+                        <p className="text-2xl font-black text-slate-900">{missions.filter(m => m.status === 'IN_PROGRESS').length}</p>
+                        <p className="text-[11px] text-emerald-600 font-semibold">Collaboration active</p>
+                    </div>
                 </div>
-                <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-4 rounded-xl shadow-sm">
-                    <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Collaborateur Clé Démo</span>
-                    <div className="text-base font-extrabold text-white mt-1">Julie Konan</div>
-                    <span className="text-[10px] text-emerald-400 font-bold mt-1 flex items-center gap-1">
-                        <CheckCircle2 size={12} /> Éligible &amp; Matchée
-                    </span>
+
+                <div className="bg-[#F5F3FF] border border-[#EDE9FE] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Sparkles size={20} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-600">Match Compétences IA</p>
+                        <p className="text-2xl font-black text-slate-900">95%</p>
+                        <p className="text-[11px] text-purple-700 font-semibold">Adéquation automatique</p>
+                    </div>
+                </div>
+
+                <div className="bg-[#FFFBEB] border border-[#FEF3C7] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Award size={20} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-semibold text-slate-600">Talents Disponibles</p>
+                        <p className="text-2xl font-black text-slate-900">191</p>
+                        <p className="text-[11px] text-amber-700 font-semibold">Vivier interne mobilisable</p>
+                    </div>
                 </div>
             </div>
 

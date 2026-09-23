@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Target, Star, MessageSquare, Plus, ArrowRight, CheckCircle2, X } from 'lucide-react';
+import { Target, Star, MessageSquare, Plus, ArrowRight, CheckCircle2, X, Sparkles, BrainCircuit, Download, Award, Briefcase, Users, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
+import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -24,8 +25,28 @@ export function Performance() {
     const [goals, setGoals] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
-    const [employees, setEmployees] = useState([]);
+    const [employees, setEmployees] = useState(MOCK_190_EMPLOYEES);
     const [notification, setNotification] = useState(null);
+
+    // AI Performance Copilot State
+    const [selectedEmpForCopilot, setSelectedEmpForCopilot] = useState('emp-001');
+    const [isGeneratingCopilot, setIsGeneratingCopilot] = useState(false);
+    const [copilotPlan, setCopilotPlan] = useState({
+        employeeName: 'Julie Konan',
+        role: 'Chargée de Clientèle Senior',
+        department: 'Commercial & Relation Client',
+        okrAchievement: '92% des objectifs commerciaux atteints',
+        strengths: ['Excellente gestion de la relation client', 'Leadership naturel', 'Rigueur administrative'],
+        growthAreas: ['Délégation des tâches opérationnelles', 'Anglais de négociation complexe'],
+        coachingQuestions: [
+            'Quels ont été tes 2 plus grands succès ce semestre et comment pouvons-nous les reproduire ?',
+            'Sur quels aspects de ton quotidien te sens-tu freinée ou surchargée ?',
+            'Comment envisages-tu ton passage vers le rôle de Directrice de Clientèle dans les 12 mois ?',
+            'De quels outils ou formations as-tu besoin pour sécuriser tes objectifs du prochain trimestre ?',
+            'Quel projet transverse souhaiterais-tu piloter au sein de l\'entreprise ?'
+        ],
+        recommendedTraining: 'Certification Négociation Avancée B2B & Leadership d\'Équipe (FDFP 100% pris en charge)'
+    });
 
     // Modal States
     const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -67,6 +88,42 @@ export function Performance() {
     const showNotification = (message) => {
         setNotification(message);
         setTimeout(() => setNotification(null), 3000);
+    };
+
+    const handleGenerateCopilot = (empId) => {
+        setIsGeneratingCopilot(true);
+        const emp = employees.find(e => e.id === empId) || employees[0];
+        const empName = emp ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.name || 'Collaborateur' : 'Collaborateur';
+        const empRole = emp?.position || emp?.role || 'Cadre Opérationnel';
+        const empDept = emp?.department || 'Opérations & Relation Client';
+
+        setTimeout(() => {
+            setCopilotPlan({
+                employeeName: empName,
+                role: empRole,
+                department: empDept,
+                okrAchievement: `${Math.floor(84 + (empId ? empId.charCodeAt(empId.length - 1) % 13 : 8))}% des objectifs stratégiques validés`,
+                strengths: [
+                    'Excellente rigueur et autonomie sur les livrables clés',
+                    'Capacité d’adaptation rapide face aux imprévus opérationnels',
+                    'Esprit d’équipe et transmission active des savoirs aux juniors'
+                ],
+                growthAreas: [
+                    'Priorisation stratégique des tâches à forte valeur ajoutée',
+                    'Affirmation du leadership lors des comités de direction'
+                ],
+                coachingQuestions: [
+                    `Quelles ont été tes plus grandes fiertés dans ton rôle de ${empRole} ce semestre ?`,
+                    'Quels obstacles majeurs as-tu rencontrés et comment pourrions-nous les anticiper ensemble ?',
+                    'Sur quelles compétences clés souhaiterais-tu monter en puissance au cours des 12 prochains mois ?',
+                    'Comment évalues-tu la collaboration avec ton équipe directe et les départements transverses ?',
+                    'Quel projet d\'innovation souhaiterais-tu proposer pour améliorer l’efficacité de notre pôle ?'
+                ],
+                recommendedTraining: `Certification : Leadership Stratégique & Gestion de Projets Agiles (Éligible FDFP Côte d'Ivoire - 100% pris en charge)`
+            });
+            setIsGeneratingCopilot(false);
+            showNotification(`Trame d'entretien générée par l'IA pour ${empName} !`);
+        }, 600);
     };
 
     const handleNewGoalSubmit = async (e) => {
@@ -452,23 +509,23 @@ export function Performance() {
             </AnimatePresence>
 
             {/* Header */}
-            <div className="flex items-center justify-between space-y-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">Performances & Objectifs</h2>
-                    <p className="text-slate-500 mt-1">Suivez les objectifs, passez en revue les retours et gérez votre évolution.</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Performances & Évaluations 360°</h2>
+                    <p className="text-slate-500 mt-1">Suivez les objectifs, passez en revue les retours 360° et pilotez les entretiens avec le copilote IA.</p>
                 </div>
                 <div className="flex items-center space-x-2">
                     {activeTab === 'goals' && (
-                        <Button onClick={() => setIsGoalModalOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                        <Button onClick={() => setIsGoalModalOpen(true)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-xs rounded-xl">
                             <Plus size={18} /> Nouvel Objectif
                         </Button>
                     )}
                     {activeTab === 'feedback' && (
                         <>
-                            <Button onClick={() => setIsFeedbackModalOpen(true)} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
+                            <Button onClick={() => setIsFeedbackModalOpen(true)} className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-xs rounded-xl">
                                 <MessageSquare size={18} /> Demander
                             </Button>
-                            <Button onClick={() => setIsSend360ModalOpen(true)} className="gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+                            <Button onClick={() => setIsSend360ModalOpen(true)} className="gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-xs rounded-xl">
                                 <Star size={18} /> Donner un Feedback
                             </Button>
                         </>
@@ -476,28 +533,90 @@ export function Performance() {
                 </div>
             </div>
 
+            {/* Pastel KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                <div className="bg-rose-50/70 border border-rose-100/80 p-5 rounded-2xl shadow-xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">Taux d'Atteinte OKR</span>
+                        <div className="p-2 bg-rose-100 text-rose-600 rounded-xl">
+                            <Target className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2">
+                        <span className="text-3xl font-extrabold text-slate-900">84.2%</span>
+                        <span className="text-xs text-emerald-600 font-semibold">+6.4% vs N-1</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">191 collaborateurs évalués</p>
+                </div>
+
+                <div className="bg-blue-50/70 border border-blue-100/80 p-5 rounded-2xl shadow-xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Entretiens Menés</span>
+                        <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                            <Sparkles className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2">
+                        <span className="text-3xl font-extrabold text-slate-900">156 <span className="text-slate-400 text-lg font-normal">/ 191</span></span>
+                        <span className="text-xs text-blue-600 font-semibold">82%</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">Campagne annuelle 2026 en cours</p>
+                </div>
+
+                <div className="bg-purple-50/70 border border-purple-100/80 p-5 rounded-2xl shadow-xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">Feedbacks 360°</span>
+                        <div className="p-2 bg-purple-100 text-purple-600 rounded-xl">
+                            <MessageSquare className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2">
+                        <span className="text-3xl font-extrabold text-slate-900">342</span>
+                        <span className="text-xs text-purple-600 font-semibold">Actifs</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">Évaluation croisée par les pairs</p>
+                </div>
+
+                <div className="bg-emerald-50/70 border border-emerald-100/80 p-5 rounded-2xl shadow-xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Plans de Compétences</span>
+                        <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
+                            <Award className="w-5 h-5" />
+                        </div>
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2">
+                        <span className="text-3xl font-extrabold text-slate-900">94%</span>
+                        <span className="text-xs text-emerald-600 font-semibold">Conformes FDFP</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">Plans de formation validés</p>
+                </div>
+            </div>
+
             {/* Navigation Tabs */}
-            <div className="flex space-x-1 bg-slate-200/50 p-1 rounded-lg w-max mb-6">
+            <div className="flex flex-wrap gap-2 bg-slate-100 p-1.5 rounded-xl w-max mt-6 mb-6">
                 <button
                     onClick={() => setActiveTab('goals')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'goals' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                        }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'goals' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
                     <Target size={16} /> Objectifs & OKRs
                 </button>
                 <button
                     onClick={() => setActiveTab('reviews')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'reviews' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                        }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'reviews' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
                     <Star size={16} /> Évaluations Formelles
                 </button>
                 <button
                     onClick={() => setActiveTab('feedback')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'feedback' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                        }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'feedback' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
                     <MessageSquare size={16} /> Feedbacks 360
+                </button>
+                <button
+                    onClick={() => setActiveTab('copilot')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'copilot' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100'}`}
+                >
+                    <Sparkles size={16} /> 🪄 Copilote IA d'Entretien
                 </button>
             </div>
 
@@ -672,6 +791,198 @@ export function Performance() {
                     </div>
                 )}
 
+                {/* COPILOT TAB */}
+                {activeTab === 'copilot' && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {/* Selector & Generator Card */}
+                        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                            IA Générative RH
+                                        </span>
+                                        <h3 className="text-xl font-bold text-slate-900">
+                                            Générateur de Trame d'Entretien Annuel Personnalisée
+                                        </h3>
+                                    </div>
+                                    <p className="text-sm text-slate-500 mt-1">
+                                        Sélectionnez l'un des 191 collaborateurs pour générer automatiquement une trame d'évaluation 360°, des questions de coaching sur-mesure et un plan de développement FDFP.
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <select
+                                        value={selectedEmpForCopilot}
+                                        onChange={(e) => {
+                                            setSelectedEmpForCopilot(e.target.value);
+                                            handleGenerateCopilot(e.target.value);
+                                        }}
+                                        className="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-xs truncate"
+                                    >
+                                        {employees.slice(0, 60).map((emp) => (
+                                            <option key={emp.id} value={emp.id}>
+                                                {emp.firstName ? `${emp.firstName} ${emp.lastName}` : emp.name || emp.id} ({emp.department || emp.role || 'Salarié'})
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <Button
+                                        onClick={() => handleGenerateCopilot(selectedEmpForCopilot)}
+                                        disabled={isGeneratingCopilot}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-2 font-semibold shadow-xs"
+                                    >
+                                        <BrainCircuit size={16} className={isGeneratingCopilot ? 'animate-spin' : ''} />
+                                        {isGeneratingCopilot ? 'Génération IA...' : 'Régénérer Trame'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Copilot Result View */}
+                        {copilotPlan && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Left Column: Employee Profile & Synthesized Metrics */}
+                                <div className="space-y-6">
+                                    <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center text-lg border border-indigo-100">
+                                                {copilotPlan.employeeName.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-slate-900 text-lg">{copilotPlan.employeeName}</h4>
+                                                <p className="text-xs text-slate-500">{copilotPlan.role}</p>
+                                                <p className="text-xs text-indigo-600 font-medium">{copilotPlan.department}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-3 border-t border-slate-100">
+                                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                Synthèse Performance & OKR
+                                            </div>
+                                            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                                                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                                                <span>{copilotPlan.okrAchievement}</span>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                Points Forts Démontrés
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                {copilotPlan.strengths.map((str, idx) => (
+                                                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 bg-slate-50 p-2 rounded-lg">
+                                                        <span className="text-emerald-600 font-bold">✓</span>
+                                                        <span>{str}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                Axes d'Amélioration Ciblés
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                {copilotPlan.growthAreas.map((area, idx) => (
+                                                    <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 bg-slate-50 p-2 rounded-lg">
+                                                        <span className="text-amber-500 font-bold">→</span>
+                                                        <span>{area}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-3">
+                                        <Button
+                                            onClick={() => showNotification(`Export PDF de la trame d'entretien pour ${copilotPlan.employeeName} prêt.`)}
+                                            className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl gap-2 font-medium"
+                                        >
+                                            <Download size={16} /> Exporter la Fiche d'Entretien (PDF)
+                                        </Button>
+                                        <Button
+                                            onClick={() => showNotification(`Trame d'entretien enregistrée dans le dossier collaborateur.`)}
+                                            variant="outline"
+                                            className="w-full rounded-xl gap-2 text-slate-700"
+                                        >
+                                            <FileText size={16} /> Sauvegarder dans le Dossier RH
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Right Column: Manager Coaching Guide & Questions */}
+                                <div className="lg:col-span-2 space-y-6">
+                                    {/* Coaching Questions */}
+                                    <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-2 bg-indigo-50 text-indigo-700 rounded-xl">
+                                                    <Sparkles size={18} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900">
+                                                        5 Questions de Coaching Recommandées par l'IA (Manager N+1)
+                                                    </h4>
+                                                    <p className="text-xs text-slate-500">
+                                                        Formulées pour stimuler l'autonomie, désamorcer les blocages et construire les succès futurs.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Badge className="bg-indigo-50 text-indigo-700 border-indigo-100 font-semibold">
+                                                Guide N+1
+                                            </Badge>
+                                        </div>
+
+                                        <div className="space-y-3 pt-2">
+                                            {copilotPlan.coachingQuestions.map((q, idx) => (
+                                                <div key={idx} className="p-4 bg-slate-50/80 border border-slate-100 rounded-xl flex items-start gap-3 hover:bg-indigo-50/30 transition-colors">
+                                                    <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                                        {idx + 1}
+                                                    </span>
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-semibold text-slate-800 leading-relaxed">
+                                                            « {q} »
+                                                        </p>
+                                                        <span className="text-[11px] text-slate-400 mt-1 block">
+                                                            Objectif : Valider les leviers d'engagement et aligner la vision de carrière.
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Training & Action Plan */}
+                                    <div className="bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/40 border border-indigo-100 rounded-2xl p-6 shadow-xs space-y-3">
+                                        <div className="flex items-center gap-2 text-indigo-900 font-bold">
+                                            <Award className="text-indigo-600" size={20} />
+                                            <span>Plan de Développement & Formation Continue (FDFP)</span>
+                                        </div>
+                                        <p className="text-xs text-slate-600 leading-relaxed">
+                                            L'IA a identifié la formation prioritaire la plus pertinente pour accélérer la montée en compétences de ce profil :
+                                        </p>
+                                        <div className="p-4 bg-white border border-indigo-100 rounded-xl flex items-center justify-between gap-4 shadow-2xs">
+                                            <div>
+                                                <h5 className="text-sm font-bold text-indigo-950">{copilotPlan.recommendedTraining}</h5>
+                                                <p className="text-xs text-slate-500 mt-0.5">Prise en charge intégrale au titre de la taxe d'apprentissage FDFP Côte d'Ivoire</p>
+                                            </div>
+                                            <Button
+                                                onClick={() => showNotification("Formation inscrite au plan prévisionnel FDFP 2026 !")}
+                                                size="sm"
+                                                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shrink-0"
+                                            >
+                                                Inscrire au Plan FDFP
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
         </div>

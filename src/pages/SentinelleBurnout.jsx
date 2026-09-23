@@ -160,78 +160,78 @@ export function SentinelleBurnout() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* KPI 1 : Indice Sérénité */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+        <div className="bg-emerald-50/70 border border-emerald-100/80 p-5 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-              Indice Global de Sérénité
+            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+              Indice Global Sérénité
             </span>
-            <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
+            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
               <Smile className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900 dark:text-white">{indiceSérénitéGlobal}</span>
-            <span className="text-xs text-slate-400">/ 100</span>
+            <span className="text-3xl font-extrabold text-slate-900">{indiceSérénitéGlobal}</span>
+            <span className="text-xs text-slate-400 font-normal">/ 100</span>
           </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Équilibre général des équipes satisfaisant
+          <div className="mt-1 text-xs text-slate-500">
+            Équilibre général des 191 collaborateurs
           </div>
         </div>
 
         {/* KPI 2 : Risque Critique */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+        <div className="bg-rose-50/70 border border-rose-100/80 p-5 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
-              Surcharge Critique Détectée
+            <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">
+              Surcharge Détectée
             </span>
-            <div className="p-2 bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg">
+            <div className="p-2 bg-rose-100 text-rose-600 rounded-xl">
               <AlertTriangle className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-rose-600 dark:text-rose-400">{totalCritiques}</span>
-            <span className="text-xs text-rose-600 dark:text-rose-400 font-semibold ml-2">intervention requise</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-slate-900">{totalCritiques}</span>
+            <span className="text-xs text-rose-600 font-semibold">intervention urgente</span>
           </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-1 text-xs text-slate-500">
             Astreintes cumulées + congés non pris
           </div>
         </div>
 
         {/* KPI 3 : Vigilance */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+        <div className="bg-amber-50/70 border border-amber-100/80 p-5 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
               Zone de Vigilance
             </span>
-            <div className="p-2 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg">
+            <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
               <Clock className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 dark:text-white">{totalVigilances}</span>
-            <span className="text-xs text-slate-400 ml-2">collaborateur(s)</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-slate-900">{totalVigilances}</span>
+            <span className="text-xs text-amber-600 font-semibold">collaborateur(s)</span>
           </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-1 text-xs text-slate-500">
             Tensions horaires à rééquilibrer
           </div>
         </div>
 
         {/* KPI 4 : Actions Résolues */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+        <div className="bg-blue-50/70 border border-blue-100/80 p-5 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-              Actions Régulatrices Prises
+            <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
+              Actions Régulatrices
             </span>
-            <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 dark:text-white">{actionsResolues}</span>
-            <span className="text-xs text-emerald-600 font-semibold ml-2">apaisements validés</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold text-slate-900">{actionsResolues}</span>
+            <span className="text-xs text-emerald-600 font-semibold">validées</span>
           </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Repos récupérateurs et congés posés
+          <div className="mt-1 text-xs text-slate-500">
+            Repos récupérateurs & congés accordés
           </div>
         </div>
 

@@ -71,6 +71,7 @@ const getAllNavItems = (t) => [
     { name: 'Délégations de Signature', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Plan de Formation & FDFP', path: '/fdfp-gestion', icon: PiggyBank, domain: 'Pilotage RH', permission: 'learning:view' },
     { name: 'Compétences, 9-Box & Talents', path: '/skills', icon: Award, domain: 'Pilotage RH', permission: 'skills:view' },
+    { name: 'Marketplace Interne & Missions', path: '/marketplace-talents', icon: Sparkles, domain: 'Pilotage RH', permission: 'skills:view' },
     { name: 'Boîte à Idées & Innovation', path: '/innovation-participative', icon: Sparkles, domain: 'Pilotage RH', permission: 'dashboard:view' },
     { name: 'Documents, Règles & Politiques', path: '/documents', icon: FileText, domain: 'Pilotage RH', permission: 'documents:view_company' },
     { name: 'Processus & Workflows', path: '/workflows', icon: Zap, domain: 'Pilotage RH', permission: 'dashboard:view' },
