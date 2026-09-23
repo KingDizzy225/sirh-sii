@@ -116,6 +116,10 @@ import { VerifyDocument } from './pages/VerifyDocument';
 import { BottomNav } from './components/layout/BottomNav';
 import { SimulateurEmbauche } from './pages/SimulateurEmbauche';
 import { TalentMarketplace } from './pages/TalentMarketplace';
+import { DoleancesDelegues } from './pages/DoleancesDelegues';
+import { GestionFDFP } from './pages/GestionFDFP';
+import { Feedback360 } from './pages/Feedback360';
+import { ParcoursOnboarding } from './pages/ParcoursOnboarding';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -753,6 +757,27 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
+            {/* Nouveaux modules RH & Dialogue Social */}
+            <Route path="/doleances-delegues" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <DoleancesDelegues />
+              </ProtectedRoute>
+            } />
+            <Route path="/fdfp-gestion" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <GestionFDFP />
+              </ProtectedRoute>
+            } />
+            <Route path="/feedback-360" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <Feedback360 />
+              </ProtectedRoute>
+            } />
+            <Route path="/parcours-onboarding" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <ParcoursOnboarding />
+              </ProtectedRoute>
+            } />
 
             {/* System Routes */}
             <Route path="/portal" element={<PublicPortal />} />
