@@ -198,13 +198,19 @@ export function SkillsMatrix() {
                 fetch(`${API_URL}/api/succession`, { headers }).then(r => r.ok ? r.json() : [])
             ]);
 
-            // Inject Julie Konan and ensure all 190 mock employees are loaded
-            const rawEmps = (Array.isArray(empData) && empData.length > 5) ? empData : ALL_MOCK_EMPLOYEES;
-            const hasJulie = rawEmps.some(e => e.id === 'julie-konan-demo' || `${e.firstName} ${e.lastName}`.toLowerCase().includes('julie konan'));
+            // Always merge backend records with all 190 mock employees so mock employees are never lost!
+            const apiEmps = Array.isArray(empData) ? empData : [];
+            const existingEmails = new Set(apiEmps.map(e => (e.email || '').toLowerCase()));
+            const missingMocks = ALL_MOCK_EMPLOYEES.filter(m => !existingEmails.has((m.email || '').toLowerCase()));
+            const rawEmps = [...apiEmps, ...missingMocks];
+            const hasJulie = rawEmps.some(e => e.id === 'julie-konan-demo' || `${e.firstName || ''} ${e.lastName || ''}`.toLowerCase().includes('julie konan'));
             const finalEmployees = hasJulie ? rawEmps : [JULIE_KONAN_MOCK, ...rawEmps];
 
-            // Inject Julie Konan and ensure all 190 talents are in 9-Box grid
-            const rawTalents = (Array.isArray(talentData) && talentData.length > 5) ? talentData : ALL_MOCK_TALENTS;
+            // Always merge backend talents with all 190 mock talents for the 9-Box grid
+            const apiTalents = Array.isArray(talentData) ? talentData : [];
+            const existingTalentNames = new Set(apiTalents.map(t => (t.name || '').toLowerCase()));
+            const missingTalents = ALL_MOCK_TALENTS.filter(t => !existingTalentNames.has((t.name || '').toLowerCase()));
+            const rawTalents = [...apiTalents, ...missingTalents];
             const hasJulieTalent = rawTalents.some(t => t.id === 'julie-konan-demo' || (t.name && t.name.toLowerCase().includes('julie konan')));
             const finalTalents = hasJulieTalent ? rawTalents : [JULIE_KONAN_TALENT, ...rawTalents];
 

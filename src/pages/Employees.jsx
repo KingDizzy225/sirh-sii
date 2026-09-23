@@ -89,10 +89,12 @@ export function Employees() {
         try {
             const res = await api.get('/employees');
             const data = res.data;
-            if (Array.isArray(data) && data.length > 5) {
+            if (Array.isArray(data) && data.length > 0) {
                 const mapped = data.map(emp => ({
                     id: emp.id,
                     name: `${emp.firstName} ${emp.lastName}`,
+                    firstName: emp.firstName,
+                    lastName: emp.lastName,
                     role: emp.positionTitle || 'Poste Non Assigné',
                     systemRole: emp.role || 'Employee',
                     department: emp.department || 'Non assigné',
@@ -108,15 +110,21 @@ export function Employees() {
                     bankName: emp.bankName || '',
                     bankAccount: emp.bankAccount || '',
                     childrenCount: emp.childrenCount ?? 0,
-                    annualLeaveBalance: emp.annualLeaveBalance ?? '',
+                    annualLeaveBalance: emp.annualLeaveBalance ?? 24,
                     leaveBalanceSource: emp.leaveBalanceSource || null,
                     onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
                 }));
-                const hasJulie = mapped.some(e => e.id === 'julie-konan-demo' || e.name.toLowerCase().includes('julie konan'));
+                // Ensure all 190 mock employees remain present even when API returns existing DB records
+                const existingEmails = new Set(mapped.map(e => (e.email || '').toLowerCase()));
+                const missingMocks = ALL_INITIAL_EMPLOYEES.filter(
+                    m => !existingEmails.has((m.email || '').toLowerCase())
+                );
+                const merged = [...mapped, ...missingMocks];
+                const hasJulie = merged.some(e => e.id === 'julie-konan-demo' || (e.name && e.name.toLowerCase().includes('julie konan')));
                 if (!hasJulie) {
-                    mapped.unshift(JULIE_KONAN_ROW);
+                    merged.unshift(JULIE_KONAN_ROW);
                 }
-                setEmployees(mapped);
+                setEmployees(merged);
             } else {
                 setEmployees(ALL_INITIAL_EMPLOYEES);
             }
