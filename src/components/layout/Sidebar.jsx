@@ -67,6 +67,7 @@ const getAllNavItems = (t) => [
     { name: 'Comité Santé & Sécurité (CSST)', path: '/csst-comite', icon: ShieldCheck, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Enquêtes Accidents & CNPS', path: '/enquetes-accidents', icon: ShieldAlert, domain: 'Employés', permission: 'employees:edit' },
     { name: t('sidebar.recruitment', 'Recrutement & ATS'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
+    { name: 'Relations Campus & Écoles', path: '/relations-ecoles-campus', icon: GraduationCap, domain: 'Employés', permission: 'recruitment:view' },
 
     // ── PILOTAGE RH : processus mensuels & gestion opérationnelle ──
     { name: 'Congés & Absences', path: '/leaves', icon: Calendar, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },

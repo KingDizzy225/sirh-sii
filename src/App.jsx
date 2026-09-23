@@ -135,6 +135,7 @@ import { EnquetesAccidents } from './pages/EnquetesAccidents';
 import { EntretiensDepart } from './pages/EntretiensDepart';
 import { BilansCarriere } from './pages/BilansCarriere';
 import { InnovationParticipative } from './pages/InnovationParticipative';
+import { RelationsEcolesCampus } from './pages/RelationsEcolesCampus';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -866,6 +867,11 @@ const AppContent = () => {
             <Route path="/innovation-participative" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
                 <InnovationParticipative />
+              </ProtectedRoute>
+            } />
+            <Route path="/relations-ecoles-campus" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <RelationsEcolesCampus />
               </ProtectedRoute>
             } />
 
