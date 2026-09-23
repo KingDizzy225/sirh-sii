@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile, BookCheck, Leaf, Compass, Hourglass, Plane, HandCoins } from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile, BookCheck, Leaf, Compass, Hourglass, Plane, HandCoins, ChevronDown } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +27,130 @@ import { LanguageSwitcher } from '../LanguageSwitcher';
  * aussi à la RH ont rejoint les domaines RH ; les autres restent joignables
  * par leur URL mais ne sont plus proposés.
  */
+
+/**
+ * Écrans rattachés.
+ *
+ * La refonte du menu a ramené la navigation à une trentaine d'entrées, et
+ * laissé derrière elle une soixantaine d'écrans qui existent toujours : leurs
+ * routes répondent, mais plus rien n'y menait. Les rajouter au premier niveau
+ * ramènerait le menu kilométrique qu'on venait de supprimer.
+ *
+ * Ils sont donc rattachés à l'entrée dont ils relèvent, et n'apparaissent que
+ * lorsque celle-ci est ouverte. Le premier niveau garde sa longueur ; rien
+ * n'est inaccessible.
+ */
+const ECRANS_RATTACHES = {
+    // ── Employés ──
+    '/registre-personnel': [
+        { name: 'Titres & Habilitations', path: '/pieces' },
+        { name: "Droit d'accès du salarié", path: '/droit-acces' }
+    ],
+    '/contracts': [
+        { name: 'Fiches de Poste', path: '/fiches-poste' },
+        { name: 'Studio de Rédaction', path: '/job-studio' },
+        { name: 'Suivi des CDD', path: '/cdd' },
+        { name: 'Stagiaires & Apprentis', path: '/stages' }
+    ],
+    '/org-chart': [
+        { name: "Simulation d'Organisation", path: '/org-simulation' }
+    ],
+    '/plan-succession': [
+        { name: 'Parcours de Carrière', path: '/career-path' },
+        { name: 'Mentorat', path: '/mentorship' }
+    ],
+    '/onboarding': [
+        { name: 'Pré-accueil (avant J1)', path: '/pre-accueil' },
+        { name: "Parcours d'Intégration", path: '/parcours-onboarding' }
+    ],
+    '/offboarding': [
+        { name: 'Entretiens de Départ', path: '/entretiens-depart' },
+        { name: "Livres d'Or", path: '/livres-dor' },
+        { name: 'Rétrospectives', path: '/retrospectives' }
+    ],
+    '/doleances-delegues': [
+        { name: 'Mandats & Scrutins', path: '/delegues' }
+    ],
+    '/assets': [
+        { name: 'Flotte Mobile', path: '/flotte-mobile' }
+    ],
+    '/astreintes': [
+        { name: 'Remplacements de Créneaux', path: '/remplacements', manager: true }
+    ],
+    '/kiosque-attestations': [
+        { name: 'Signataires Habilités', path: '/signataires' }
+    ],
+
+    // ── Pilotage RH ──
+    '/leaves': [
+        { name: 'Retards & Absences', path: '/absences', manager: true },
+        { name: "Analyse de l'Absentéisme", path: '/absenteisme' },
+        { name: 'Prévision des Absences', path: '/prevision-absences' }
+    ],
+    '/shifts': [
+        { name: 'Demandes de Pointage', path: '/timesheet', manager: true },
+        { name: "Relevé d'Heures", path: '/releve-heures' }
+    ],
+    '/payroll': [
+        { name: 'Ordres de Virement', path: '/virements' },
+        { name: 'Grille Conventionnelle', path: '/grille' },
+        { name: 'Transport & Avantages en Nature', path: '/avantages' },
+        { name: 'Rappels de Salaire', path: '/rappels' },
+        { name: "Prime de Fin d'Année", path: '/prime-annuelle' },
+        { name: 'Provision pour Congés', path: '/provisions' },
+        { name: 'Révisions Salariales', path: '/remunerations' }
+    ],
+    '/prets': [
+        { name: 'Avances sur Salaire', path: '/advances' },
+        { name: 'Notes de Frais', path: '/expenses' },
+        { name: 'Avantages Sociaux', path: '/benefits' },
+        { name: 'Récompenses', path: '/rewards' }
+    ],
+    '/fdfp-gestion': [
+        { name: 'Catalogue & Sessions', path: '/learning' },
+        { name: 'Émargements', path: '/emargements' }
+    ],
+    '/workflows': [
+        { name: 'Concepteur de Processus', path: '/workflow-builder' },
+        { name: 'Règles & Politiques', path: '/policy-rules' }
+    ],
+    '/marketplace-talents': [
+        { name: 'Cooptation', path: '/referrals' },
+        { name: 'Sourcing IA', path: '/ai-sourcing' },
+        { name: 'Relations Écoles & Campus', path: '/relations-ecoles-campus' }
+    ],
+    '/mutuelle-sante': [
+        { name: 'Visites Médicales', path: '/medical-hub' }
+    ],
+    '/enquetes-accidents': [
+        { name: 'Registre HSE', path: '/hse' },
+        { name: 'Comité CSST', path: '/csst-comite' }
+    ],
+
+    // ── Intelligence RH ──
+    '/historique': [
+        { name: "Journal d'Audit", path: '/audit-logs' }
+    ],
+    '/barometre-qvt': [
+        { name: 'Enquêtes de Climat', path: '/climate-surveys' },
+        { name: 'Engagement', path: '/engagement' },
+        { name: 'Santé des Équipes', path: '/team-health', manager: true },
+        { name: 'Kudos', path: '/kudos' },
+        { name: 'Feedback 360', path: '/feedback-360' }
+    ],
+    '/observatoire-gpec': [
+        { name: 'Studio OKR', path: '/studio-okr', manager: true }
+    ],
+    '/sentinelle-burnout': [
+        { name: 'Centre de Rétention', path: '/retention-center' },
+        { name: 'Soutien Social', path: '/social-support' },
+        { name: "Tableau de l'Assistant Social", path: '/social-worker-dashboard' }
+    ],
+    '/ethics': [
+        { name: 'Diversité & Inclusion', path: '/dei-dashboard' }
+    ]
+};
+
 const getAllNavItems = (t) => [
     // ── ACCUEIL ──
     { name: t('sidebar.dashboard', 'Vue d\'ensemble'), path: '/', icon: Home, domain: 'Accueil', permission: 'dashboard:view' },
@@ -102,6 +226,10 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
     const userRole = user ? user.role : 'EMPLOYEE';
     const { t } = useTranslation();
 
+    // Sections dépliées à la main. Par défaut, une section s'ouvre seule quand
+    // on se trouve sur elle ou sur l'un de ses écrans rattachés.
+    const [deplies, setDeplies] = React.useState({});
+
     const allItems = getAllNavItems(t);
 
     const navItems = allItems.filter(item => {
@@ -152,24 +280,67 @@ export function Sidebar({ className, setIsMobileMenuOpen, currentDomain = 'Home'
 
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.path;
+                    // Un responsable ne se voit proposer que les écrans rattachés
+                    // que les routes lui ouvrent, comme au premier niveau.
+                    const rattaches = (ECRANS_RATTACHES[item.path] || [])
+                        .filter((e) => userRole !== 'MANAGER' || e.manager === true);
+                    const surUnRattache = rattaches.some((e) => e.path === location.pathname);
+                    const ouvert = deplies[item.path] ?? (isActive || surUnRattache);
 
                     return (
-                        <Link
-                            key={item.name}
-                            to={item.path}
-                            onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
-                            className={cn(
-                                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all group mb-1',
-                                isActive
-                                    ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-xs'
-                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
+                        <div key={item.name} className="mb-1">
+                            <div className="flex items-stretch gap-1">
+                                <Link
+                                    to={item.path}
+                                    onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
+                                    className={cn(
+                                        'flex flex-1 items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all group',
+                                        isActive
+                                            ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200/80 shadow-xs'
+                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
+                                    )}
+                                >
+                                    <item.icon
+                                        className={cn('h-4.5 w-4.5 transition-colors', isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600')}
+                                    />
+                                    {item.name}
+                                </Link>
+                                {rattaches.length > 0 && (
+                                    <button
+                                        type="button"
+                                        aria-label={`${ouvert ? 'Replier' : 'Déplier'} ${item.name}`}
+                                        aria-expanded={ouvert}
+                                        onClick={() => setDeplies((d) => ({ ...d, [item.path]: !ouvert }))}
+                                        className="px-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                        <ChevronDown className={cn('h-4 w-4 transition-transform', ouvert && 'rotate-180')} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {rattaches.length > 0 && ouvert && (
+                                <div className="ml-6 mt-1 border-l border-slate-200 pl-3 space-y-0.5">
+                                    {rattaches.map((enfant) => {
+                                        const actif = location.pathname === enfant.path;
+                                        return (
+                                            <Link
+                                                key={enfant.path}
+                                                to={enfant.path}
+                                                onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(false)}
+                                                className={cn(
+                                                    'block rounded-lg px-3 py-1.5 text-[13px] transition-colors',
+                                                    actif
+                                                        ? 'bg-blue-50 text-blue-700 font-semibold'
+                                                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                                                )}
+                                            >
+                                                {enfant.name}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
                             )}
-                        >
-                            <item.icon
-                                className={cn('h-4.5 w-4.5 transition-colors', isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600')}
-                            />
-                            {item.name}
-                        </Link>
+                        </div>
                     );
                 })}
             </nav>
