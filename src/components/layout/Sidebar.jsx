@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart} from 'lucide-react';
+import { Home, Users, User, Network, Calendar, DollarSign, Settings, LogOut, FileText, Bell, Target, BookOpen, Heart, Shield, CheckSquare, Award, Clock, Receipt, HeartPulse, Laptop, BarChart, PiggyBank, GraduationCap, Grid, Megaphone, Banknote, Stethoscope, Trophy, PowerOff, Building, ShieldAlert, AlertTriangle, BrainCircuit, Calculator, Rocket, Zap, MessageSquare, Scale, Sparkles, Inbox, UserPlus, Workflow, ShieldCheck, Wallet, PenTool, UserCheck, ClipboardList, History , IdCard, Activity, CalendarDays, Landmark, Tv, MapPin, Repeat, DoorOpen, BookHeart, QrCode, CalendarRange, FileSearch, Vote, Bus, PhoneCall, Gift, FileBarChart, HeartHandshake, Smile} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +43,7 @@ const getAllNavItems = (t) => [
     { name: 'Organigramme Entreprise', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Entretiens & Évaluations', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Évaluation Feedback 360°', path: '/feedback-360', icon: Users, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Plan de Succession & Postes Clés', path: '/plan-succession', icon: Award, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Procédures & Sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Intégration (Onboarding)', path: '/onboarding', icon: GraduationCap, domain: 'Employés', permission: 'onboarding:view' },
     { name: 'Parcours 30 Jours (Onboarding)', path: '/parcours-onboarding', icon: Rocket, domain: 'Employés', permission: 'onboarding:view' },
@@ -53,6 +54,7 @@ const getAllNavItems = (t) => [
     { name: 'Matériel & Équipements', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Prestataires & Intérim', path: '/subcontractors', icon: Building, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Santé & Médecine Travail', path: '/medical-hub', icon: Stethoscope, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Mutuelle Santé & Ayants Droit', path: '/mutuelle-sante', icon: HeartHandshake, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Sécurité & Accidents (HSE)', path: '/hse', icon: Shield, domain: 'Employés', permission: 'employees:edit' },
     { name: t('sidebar.recruitment', 'Recrutement & ATS'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
 
@@ -86,6 +88,7 @@ const getAllNavItems = (t) => [
     { name: 'Audit & Historique Daté', path: '/historique', icon: History, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Équité Hommes / Femmes', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Climat Social & Baromètre', path: '/climate-surveys', icon: Inbox, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Baromètre QVT & Risques RPS', path: '/barometre-qvt', icon: Smile, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: Users, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Canal d\'Alerte & Éthique', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' }
 ];

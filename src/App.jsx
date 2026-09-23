@@ -120,6 +120,9 @@ import { DoleancesDelegues } from './pages/DoleancesDelegues';
 import { GestionFDFP } from './pages/GestionFDFP';
 import { Feedback360 } from './pages/Feedback360';
 import { ParcoursOnboarding } from './pages/ParcoursOnboarding';
+import { PlanSuccession } from './pages/PlanSuccession';
+import { MutuelleSante } from './pages/MutuelleSante';
+import { BarometreQVT } from './pages/BarometreQVT';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -776,6 +779,21 @@ const AppContent = () => {
             <Route path="/parcours-onboarding" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
                 <ParcoursOnboarding />
+              </ProtectedRoute>
+            } />
+            <Route path="/plan-succession" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <PlanSuccession />
+              </ProtectedRoute>
+            } />
+            <Route path="/mutuelle-sante" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <MutuelleSante />
+              </ProtectedRoute>
+            } />
+            <Route path="/barometre-qvt" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <BarometreQVT />
               </ProtectedRoute>
             } />
 
