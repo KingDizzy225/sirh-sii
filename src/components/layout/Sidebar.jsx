@@ -44,6 +44,7 @@ const getAllNavItems = (t) => [
     { name: 'Périodes d\'Essai & Titularisation', path: '/periodes-essai', icon: Clock, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Organigramme Entreprise', path: '/org-chart', icon: Network, domain: 'Employés', permission: 'employees:view' },
     { name: 'Entretiens & Évaluations', path: '/performance', icon: Trophy, domain: 'Employés', permission: 'employees:edit', manager: true },
+    { name: 'Studio Objectifs SMART & OKR', path: '/studio-okr', icon: Target, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Évaluation Feedback 360°', path: '/feedback-360', icon: Users, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Plan de Succession & Postes Clés', path: '/plan-succession', icon: Award, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Procédures & Sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
@@ -91,6 +92,7 @@ const getAllNavItems = (t) => [
     { name: 'Équité Hommes / Femmes', path: '/pay-equity', icon: Scale, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Climat Social & Baromètre', path: '/climate-surveys', icon: Inbox, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Baromètre QVT & Risques RPS', path: '/barometre-qvt', icon: Smile, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
+    { name: 'Observatoire GPEC & Skill Gap', path: '/observatoire-gpec', icon: BrainCircuit, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Diversité & Inclusion', path: '/dei-dashboard', icon: Users, domain: 'Intelligence RH', permission: 'dashboard:view' },
     { name: 'Canal d\'Alerte & Éthique', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' }
 ];

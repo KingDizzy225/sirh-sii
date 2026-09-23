@@ -125,6 +125,8 @@ import { MutuelleSante } from './pages/MutuelleSante';
 import { BarometreQVT } from './pages/BarometreQVT';
 import { KiosqueAttestations } from './pages/KiosqueAttestations';
 import { PeriodesEssai } from './pages/PeriodesEssai';
+import { StudioOKR } from './pages/StudioOKR';
+import { ObservatoireGPEC } from './pages/ObservatoireGPEC';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -806,6 +808,16 @@ const AppContent = () => {
             <Route path="/periodes-essai" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
                 <PeriodesEssai />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio-okr" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <StudioOKR />
+              </ProtectedRoute>
+            } />
+            <Route path="/observatoire-gpec" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <ObservatoireGPEC />
               </ProtectedRoute>
             } />
 
