@@ -39,6 +39,7 @@ const getAllNavItems = (t) => [
     { name: 'Dossiers & Conformité', path: '/conformite', icon: ShieldCheck, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Titres & Habilitations', path: '/pieces', icon: IdCard, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Badges Numériques', path: '/badges', icon: IdCard, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Registre Visiteurs & Accès', path: '/registre-visiteurs', icon: DoorOpen, domain: 'Employés', permission: 'dashboard:view' },
     { name: 'Kiosque Attestations Express', path: '/kiosque-attestations', icon: QrCode, domain: 'Employés', permission: 'dashboard:view' },
     { name: 'Fiches de poste', path: '/fiches-poste', icon: ClipboardList, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Contrats de travail', path: '/contracts', icon: FileText, domain: 'Employés', permission: 'employees:edit' },

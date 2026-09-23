@@ -130,6 +130,7 @@ import { ObservatoireGPEC } from './pages/ObservatoireGPEC';
 import { RegistreUniquePersonnel } from './pages/RegistreUniquePersonnel';
 import { ComiteCSST } from './pages/ComiteCSST';
 import { FlotteMobile } from './pages/FlotteMobile';
+import { RegistreVisiteurs } from './pages/RegistreVisiteurs';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -836,6 +837,11 @@ const AppContent = () => {
             <Route path="/flotte-mobile" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
                 <FlotteMobile />
+              </ProtectedRoute>
+            } />
+            <Route path="/registre-visiteurs" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <RegistreVisiteurs />
               </ProtectedRoute>
             } />
 
