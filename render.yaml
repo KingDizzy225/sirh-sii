@@ -17,6 +17,8 @@ services:
         generateValue: true
       - key: FRONTEND_URL
         sync: false # L'utilisateur pourra le définir dans le dashboard Render (URL de Vercel)
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=384"
 
 databases:
   - name: sirh-db

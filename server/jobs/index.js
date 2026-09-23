@@ -56,10 +56,10 @@ function startScheduledJobs() {
         return;
     }
 
-    // Rattrapage au démarrage, légèrement différé pour ne pas ralentir le boot
+    // Rattrapage au démarrage, différé pour laisser le serveur écouter et valider les health-checks Render
     setTimeout(() => {
         runAllDue().catch(err => console.error('[JOB] Rattrapage au démarrage :', err.message));
-    }, 10000);
+    }, 45000);
 
     // Acquisition des congés : le 1er de chaque mois à 02h00
     cron.schedule('0 2 1 * *', () => {

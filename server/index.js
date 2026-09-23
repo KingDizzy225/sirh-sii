@@ -358,7 +358,7 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-server.listen(PORT, async () => {
+server.listen(PORT, '0.0.0.0', async () => {
     console.log(`🚀 SIRH Backend Server running on port ${PORT}`);
     try {
         const prisma = require('./prismaClient');

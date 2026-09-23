@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "npx prisma migrate deploy || npx prisma db push --accept-data-loss || true; node index.js",
+    "start": "node --max-old-space-size=384 index.js",
     "dev": "nodemon index.js",
-    "build": "npx prisma generate",
+    "build": "npx prisma generate && (npx prisma db push --accept-data-loss --skip-generate || true)",
     "postinstall": "npx prisma generate",
     "create-admin": "node scripts/createAdmin.js",
     "run-jobs": "node scripts/runJobs.js",
