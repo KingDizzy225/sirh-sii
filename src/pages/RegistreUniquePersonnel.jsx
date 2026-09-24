@@ -13,127 +13,7 @@ export function RegistreUniquePersonnel() {
   const [showInspectionModal, setShowInspectionModal] = useState(false);
 
   // Données du Registre Unique (chronologique)
-  const [registre, setRegistre] = useState([
-    {
-      numOrdre: "001",
-      matricule: "EMP-0012",
-      nom: "Jean-Marc Koffi",
-      sexe: "M",
-      dateNaissance: "12/05/1976",
-      nationalite: "Ivoirienne",
-      emploi: "Directeur d'Agence Principale",
-      categorieCCNI: "Cadre Supérieur (Catégorie C3, Échelon A)",
-      salaireBase: 1200000,
-      dateEntree: "01/03/2017",
-      typeContrat: "CDI",
-      numeroCNPS: "7729103940",
-      dateSortie: "-",
-      motifSortie: "En fonction",
-      statut: "EN_FONCTION"
-    },
-    {
-      numOrdre: "002",
-      matricule: "EMP-0018",
-      nom: "Julie Konan",
-      sexe: "F",
-      dateNaissance: "24/09/1993",
-      nationalite: "Ivoirienne",
-      emploi: "Chargée de Clientèle Entreprises Senior",
-      categorieCCNI: "Agent de Maîtrise (Catégorie M1, Échelon B)",
-      salaireBase: 500000,
-      dateEntree: "15/01/2021",
-      typeContrat: "CDI",
-      numeroCNPS: "8829401201",
-      dateSortie: "-",
-      motifSortie: "En fonction",
-      statut: "EN_FONCTION"
-    },
-    {
-      numOrdre: "003",
-      matricule: "EMP-0025",
-      nom: "Armand Kouassi",
-      sexe: "M",
-      dateNaissance: "18/11/1990",
-      nationalite: "Ivoirienne",
-      emploi: "Comptable Fournisseurs",
-      categorieCCNI: "Agent de Maîtrise (Catégorie M1, Échelon A)",
-      salaireBase: 380000,
-      dateEntree: "10/09/2022",
-      typeContrat: "CDI",
-      numeroCNPS: "9018274619",
-      dateSortie: "-",
-      motifSortie: "En fonction",
-      statut: "EN_FONCTION"
-    },
-    {
-      numOrdre: "004",
-      matricule: "EMP-0034",
-      nom: "Aïcha Ouattara",
-      sexe: "F",
-      dateNaissance: "04/07/1987",
-      nationalite: "Ivoirienne",
-      emploi: "Responsable Paie & Fiscalité Sociale",
-      categorieCCNI: "Cadre (Catégorie C1, Échelon B)",
-      salaireBase: 850000,
-      dateEntree: "02/05/2022",
-      typeContrat: "CDI",
-      numeroCNPS: "100128475",
-      dateSortie: "-",
-      motifSortie: "En fonction",
-      statut: "EN_FONCTION"
-    },
-    {
-      numOrdre: "005",
-      matricule: "EMP-0041",
-      nom: "Moussa Diabaté",
-      sexe: "M",
-      dateNaissance: "14/02/1984",
-      nationalite: "Ivoirienne",
-      emploi: "Responsable HSE & Sécurité San Pedro",
-      categorieCCNI: "Cadre (Catégorie C1, Échelon A)",
-      salaireBase: 750000,
-      dateEntree: "15/06/2020",
-      typeContrat: "CDI",
-      numeroCNPS: "6629103982",
-      dateSortie: "-",
-      motifSortie: "En fonction",
-      statut: "EN_FONCTION"
-    },
-    {
-      numOrdre: "006",
-      matricule: "EMP-0059",
-      nom: "Kouadio Michel",
-      sexe: "M",
-      dateNaissance: "30/08/1989",
-      nationalite: "Ivoirienne",
-      emploi: "Chargé d'Affaires PME Marcory",
-      categorieCCNI: "Agent de Maîtrise (Catégorie M1, Échelon A)",
-      salaireBase: 450000,
-      dateEntree: "01/10/2023",
-      typeContrat: "CDI",
-      numeroCNPS: "9918274610",
-      dateSortie: "28/08/2026",
-      motifSortie: "Démission notifiée avec préavis effectué",
-      statut: "SORTI"
-    },
-    {
-      numOrdre: "007",
-      matricule: "EMP-0064",
-      nom: "Bamba Fanta",
-      sexe: "F",
-      dateNaissance: "19/12/1998",
-      nationalite: "Ivoirienne",
-      emploi: "Assistante Administrative & Accueil",
-      categorieCCNI: "Employée (Catégorie E3, Échelon A)",
-      salaireBase: 220000,
-      dateEntree: "01/02/2026",
-      typeContrat: "CDD",
-      numeroCNPS: "109283746",
-      dateSortie: "31/07/2026",
-      motifSortie: "Arrivée du terme du contrat CDD (6 mois)",
-      statut: "SORTI"
-    }
-  ]);
+  const [registre, setRegistre] = useState([]);
 
   // Formulaire d'ajout
   const [newEntry, setNewEntry] = useState({
@@ -389,11 +269,6 @@ export function RegistreUniquePersonnel() {
                     <td className="px-3 py-3 font-mono">{r.matricule}</td>
                     <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">
                       {r.nom}
-                      {r.nom === 'Julie Konan' && (
-                        <span className="ml-1.5 text-[9px] bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 px-1 py-0.2 rounded font-medium">
-                          Titularisée
-                        </span>
-                      )}
                     </td>
                     <td className="px-3 py-3">{r.nationalite}</td>
                     <td className="px-4 py-3">

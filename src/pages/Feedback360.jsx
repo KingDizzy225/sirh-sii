@@ -14,8 +14,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 const FEEDBACK_360_JULIE = {
-    employeeId: 'julie-konan-demo',
-    employeeName: 'Julie Konan',
+    employeeId: '',
+    employeeName: '',
     position: 'Chargée de Clientèle',
     department: 'Commercial & Relation Client',
     completionRate: 89, // 8 avis sur 9 reçus
@@ -193,7 +193,7 @@ export function Feedback360() {
 
                             <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200/80 text-[11px] text-emerald-950 font-medium mt-2">
                                 <span className="font-bold">Constat Clé IA : </span>
-                                Julie Konan est encore plus appréciée par ses pairs (note moyenne de 4,6/5) qu'elle ne s'auto-évalue (4,0/5). Forte reconnaissance sur l'entraide et l'orientation client.
+                                La synthèse apparaîtra une fois les évaluations saisies.
                             </div>
                         </CardContent>
                     </Card>
@@ -252,7 +252,7 @@ export function Feedback360() {
                     <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
                         <div className="flex justify-between items-center pb-3 border-b border-slate-100">
                             <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                                <Star size={18} className="text-indigo-600" /> Rédiger un Feedback 360° pour Julie Konan
+                                <Star size={18} className="text-indigo-600" /> Rédiger un feedback 360°
                             </h3>
                             <button onClick={() => setIsSubmitModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                                 <X size={20} />

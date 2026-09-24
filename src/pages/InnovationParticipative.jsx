@@ -149,7 +149,7 @@ export function InnovationParticipative() {
     const created = {
       id: `IDEA-2026-0${idees.length + 1}`,
       titre: newIdea.titre,
-      auteur: "Julie Konan",
+      auteur: '',
       auteurPoste: "Chargée de Clientèle Senior",
       auteurAgence: "Siège Plateau",
       categorie: newIdea.categorie,

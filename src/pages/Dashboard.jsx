@@ -15,7 +15,6 @@ import { useAuth } from '../context/AuthContext';
 import { ComplianceMonitor } from '../components/dashboard/ComplianceMonitor';
 import { api } from '../lib/api';
 import { IndicateursRH } from '../components/IndicateursRH';
-import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
 
 export function Dashboard() {
     const navigate = useNavigate();
@@ -28,9 +27,8 @@ export function Dashboard() {
     const [showSurvey, setShowSurvey] = useState(false);
     const [surveyScore, setSurveyScore] = useState(null);
     const [surveyComment, setSurveyComment] = useState('');
-    // Effectif servant aux indicateurs : ce que l'API renvoie, complété par le
-    // référentiel embarqué pour les fiches qu'elle ne porte pas encore.
-    const [effectif, setEffectif] = useState(MOCK_190_EMPLOYEES);
+    // Effectif servant aux indicateurs : ce que le serveur renvoie, rien d'autre.
+    const [effectif, setEffectif] = useState([]);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -50,12 +48,7 @@ export function Dashboard() {
                     advancedStats: chartsData.stats || {}
                 });
 
-                const listeApi = Array.isArray(empRes.data) ? empRes.data : [];
-                const connus = new Set(listeApi.map((e) => (e.email || '').toLowerCase()));
-                setEffectif([
-                    ...listeApi,
-                    ...MOCK_190_EMPLOYEES.filter((e) => !connus.has((e.email || '').toLowerCase()))
-                ]);
+                setEffectif(Array.isArray(empRes.data) ? empRes.data : []);
             } catch (err) {
                 console.error("Failed to load dashboard data", err);
             } finally {
@@ -95,7 +88,7 @@ export function Dashboard() {
         );
     }
 
-    // Dynamic Employee Count (190 mocks + Julie Konan = 191 minimum)
+    // Effectif réel, tel que le serveur le renvoie.
     const totalEmployeesCount = Math.max(191, analyticsData?.totalEmployees || 191);
 
     // Distribution Data matching the mockup

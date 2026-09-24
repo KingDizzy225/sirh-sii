@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 
 export function KiosqueAttestations() {
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('2'); // Julie Konan
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('2');
   const [selectedDocType, setSelectedDocType] = useState('TRAVAIL'); // 'TRAVAIL', 'VISA', 'BANQUE', 'NON_REDEVANCE'
   const [selectedBank, setSelectedBank] = useState('Société Générale Côte d\'Ivoire (SGCI)');
   const [destinationCountry, setDestinationCountry] = useState('France');
@@ -14,80 +14,12 @@ export function KiosqueAttestations() {
   const [generationSuccess, setGenerationSuccess] = useState(false);
 
   // Collaborateurs avec données détaillées pour l'attestation
-  const employees = [
-    {
-      id: '2',
-      nom: 'Julie Konan',
-      matricule: 'EMP-0018',
-      poste: 'Chargée de Clientèle Entreprises Senior',
-      departement: 'Réseau Agences & Développement',
-      dateEmbauche: '15 Janvier 2021',
-      typeContrat: 'Contrat à Durée Indéterminée (CDI)',
-      salaireBrut: 650000,
-      salaireNet: 520000,
-      lieuNaissance: 'Abidjan Cocody',
-      nationalite: 'Ivoirienne',
-      numeroCNPS: '8829401201'
-    },
-    {
-      id: '1',
-      nom: 'Jean-Marc Koffi',
-      matricule: 'EMP-0012',
-      poste: 'Directeur d\'Agence Plateau',
-      departement: 'Réseau Agences',
-      dateEmbauche: '01 Mars 2017',
-      typeContrat: 'Contrat à Durée Indéterminée (CDI)',
-      salaireBrut: 1800000,
-      salaireNet: 1420000,
-      lieuNaissance: 'Bouaké',
-      nationalite: 'Ivoirienne',
-      numeroCNPS: '7729103940'
-    },
-    {
-      id: '3',
-      nom: 'Armand Kouassi',
-      matricule: 'EMP-0025',
-      poste: 'Comptable Fournisseurs',
-      departement: 'Direction Financière',
-      dateEmbauche: '10 Septembre 2022',
-      typeContrat: 'Contrat à Durée Indéterminée (CDI)',
-      salaireBrut: 450000,
-      salaireNet: 375000,
-      lieuNaissance: 'Yamoussoukro',
-      nationalite: 'Ivoirienne',
-      numeroCNPS: '9018274619'
-    }
-  ];
+  const employees = [];
 
   const currentEmp = employees.find(e => e.id === selectedEmployeeId) || employees[0];
 
   // Historique des documents récemment générés
-  const [history, setHistory] = useState([
-    {
-      id: 'DOC-2026-09-8812',
-      type: 'Attestation de Travail & Présence',
-      salarie: 'Julie Konan',
-      date: '23 Septembre 2026',
-      statut: 'Certifié Conforme',
-      qrRef: 'VERIF-77291'
-    },
-    {
-      id: 'DOC-2026-09-8811',
-      type: 'Domiciliation Bancaire Irrévocable (SGCI)',
-      salarie: 'Armand Kouassi',
-      date: '21 Septembre 2026',
-      statut: 'Certifié Conforme',
-      qrRef: 'VERIF-44102'
-    },
-    {
-      id: 'DOC-2026-09-8810',
-      type: 'Attestation pour Demande de Visa (France)',
-      salarie: 'Jean-Marc Koffi',
-      date: '18 Septembre 2026',
-      statut: 'Certifié Conforme',
-      qrRef: 'VERIF-10923'
-    }
-  ]);
+  const [history, setHistory] = useState([]);
 
   const handleGenerate = () => {
     const newDocId = `DOC-2026-${Math.floor(1000 + Math.random() * 9000)}`;

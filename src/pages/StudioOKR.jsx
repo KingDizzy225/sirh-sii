@@ -15,129 +15,7 @@ export function StudioOKR() {
   const [smartResult, setSmartResult] = useState(null);
 
   // Arborescence des OKRs
-  const [okrs, setOkrs] = useState([
-    {
-      id: 1,
-      titre: "Accélérer l'expansion commerciale sur le segment PME à Abidjan et San Pedro",
-      pole: "Réseau Agences",
-      sponsor: "Jean-Marc Koffi (Dir. Agence)",
-      alignementStrategique: "Croissance Chiffre d'Affaires & Parts de Marché",
-      progression: 81,
-      keyResults: [
-        {
-          id: 101,
-          titre: "Acquérir 25 nouveaux comptes PME à forte marge",
-          responsable: "Julie Konan",
-          poste: "Chargée de Clientèle Entreprises Senior",
-          valeurCible: 25,
-          valeurActuelle: 21,
-          unite: "comptes",
-          progression: 84,
-          statut: "EN_AVANCE", // EN_AVANCE, SUR_LES_RAILS, EN_RETARD, ATTEINT
-          echeance: "31 Octobre 2026",
-          ponderation: "40%"
-        },
-        {
-          id: 102,
-          titre: "Atteindre 1,2 milliard FCFA d'encours de crédits PME sains",
-          responsable: "Patrick Bamba",
-          poste: "Chef d'Agence Adjoint (Marcory)",
-          valeurCible: 1200,
-          valeurActuelle: 950,
-          unite: "M FCFA",
-          progression: 79,
-          statut: "SUR_LES_RAILS",
-          echeance: "30 Novembre 2026",
-          ponderation: "30%"
-        },
-        {
-          id: 103,
-          titre: "Ouvrir et rendre opérationnel le guichet entreprises de San Pedro Port",
-          responsable: "Moussa Diabaté",
-          poste: "Responsable Opérations San Pedro",
-          valeurCible: 100,
-          valeurActuelle: 100,
-          unite: "%",
-          progression: 100,
-          statut: "ATTEINT",
-          echeance: "15 Septembre 2026",
-          ponderation: "30%"
-        }
-      ]
-    },
-    {
-      id: 2,
-      titre: "Automatiser et sécuriser à 100% la conformité paie, fiscale et sociale (CI)",
-      pole: "Direction RH",
-      sponsor: "Aïcha Ouattara (DRH)",
-      alignementStrategique: "Excellence Opérationnelle & Maîtrise des Risques",
-      progression: 87,
-      keyResults: [
-        {
-          id: 201,
-          titre: "Zéro risque de requalification tacite en CDI sur les périodes d'essai",
-          responsable: "Aïcha Ouattara",
-          poste: "DRH",
-          valeurCible: 100,
-          valeurActuelle: 100,
-          unite: "%",
-          progression: 100,
-          statut: "ATTEINT",
-          echeance: "30 Septembre 2026",
-          ponderation: "50%"
-        },
-        {
-          id: 202,
-          titre: "Taux de recouvrement des cotisations formation FDFP supérieur à 80%",
-          responsable: "Salimata Touré",
-          poste: "Gestionnaire RH",
-          valeurCible: 80,
-          valeurActuelle: 72,
-          unite: "%",
-          progression: 74,
-          statut: "SUR_LES_RAILS",
-          echeance: "15 Décembre 2026",
-          ponderation: "50%"
-        }
-      ]
-    },
-    {
-      id: 3,
-      titre: "Moderniser le Système d'Information RH & Déployer les Outils Digitaux",
-      pole: "Tech & SI",
-      sponsor: "Daniel Kouamé (CTO)",
-      alignementStrategique: "Transformation Digitale & Expérience Salarié",
-      progression: 92,
-      keyResults: [
-        {
-          id: 301,
-          titre: "Déployer le Kiosque d'attestations certifiées QR Code pour 100% des salariés",
-          responsable: "Daniel Kouamé",
-          poste: "CTO",
-          valeurCible: 100,
-          valeurActuelle: 100,
-          unite: "%",
-          progression: 100,
-          statut: "ATTEINT",
-          echeance: "20 Septembre 2026",
-          ponderation: "50%"
-        },
-        {
-          id: 302,
-          titre: "Réduire le délai moyen de délivrance des documents RH de 48h à moins de 5 secondes",
-          responsable: "Amadou Sanogo",
-          poste: "Ingénieur Développeur",
-          valeurCible: 5,
-          valeurActuelle: 5,
-          unite: "secondes",
-          progression: 100,
-          statut: "ATTEINT",
-          echeance: "20 Septembre 2026",
-          ponderation: "50%"
-        }
-      ]
-    }
-  ]);
+  const [okrs, setOkrs] = useState([]);
 
   // Nouveau formulaire OKR
   const [newOkr, setNewOkr] = useState({
@@ -146,7 +24,7 @@ export function StudioOKR() {
     sponsor: 'Jean-Marc Koffi',
     alignementStrategique: 'Croissance Commerciale',
     krTitre: '',
-    krResponsable: 'Julie Konan',
+    krResponsable: '',
     krCible: 20,
     krUnite: 'dossiers',
     krEcheance: '2026-11-30'
@@ -205,7 +83,7 @@ export function StudioOKR() {
       sponsor: 'Jean-Marc Koffi',
       alignementStrategique: 'Croissance Commerciale',
       krTitre: '',
-      krResponsable: 'Julie Konan',
+      krResponsable: '',
       krCible: 20,
       krUnite: 'dossiers',
       krEcheance: '2026-11-30'
@@ -433,11 +311,6 @@ export function StudioOKR() {
                         <span className="font-bold text-slate-900 dark:text-white text-sm">
                           {kr.titre}
                         </span>
-                        {kr.responsable === 'Julie Konan' && (
-                          <span className="text-[10px] bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 px-1.5 py-0.2 rounded font-medium">
-                            Profil Vitrine
-                          </span>
-                        )}
                       </div>
                       <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[11px]">
                         <span className="flex items-center gap-1">
@@ -657,7 +530,6 @@ export function StudioOKR() {
                       onChange={(e) => setNewOkr({ ...newOkr, krResponsable: e.target.value })}
                       className="w-full px-2 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 rounded"
                     >
-                      <option value="Julie Konan">Julie Konan</option>
                       <option value="Jean-Marc Koffi">Jean-Marc Koffi</option>
                       <option value="Patrick Bamba">Patrick Bamba</option>
                       <option value="Aïcha Ouattara">Aïcha Ouattara</option>

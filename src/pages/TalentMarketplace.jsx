@@ -9,89 +9,8 @@ import {
     Layers, TrendingUp, X, Award, ChevronRight, Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { JULIE_KONAN_MOCK } from './SkillsMatrix';
 
-const MISSIONS_INITIALES = [
-    {
-        id: 'mis-1',
-        title: 'Appui Négociation Stratégique Appel d\'Offres B2B Telecom',
-        department: 'Commercial & Relation Client',
-        lead: 'Armand Kouassi (Directeur Commercial)',
-        duration: '3 semaines',
-        timeAllocation: '25% du temps de travail',
-        priority: 'Urgente',
-        status: 'OPEN',
-        createdAt: '2026-09-18',
-        description: 'Renfort sur la structuration de l\'offre commerciale et soutenance finale face au comité d\'achat d\'un opérateur télécom de premier plan en Côte d\'Ivoire.',
-        requiredSkills: [
-            { name: 'Négociation de Contrats B2B/B2C', level: 3 },
-            { name: 'Gestion de la Relation Client (CRM)', level: 4 },
-            { name: 'Communication Orale', level: 4 }
-        ],
-        topCandidateMatch: {
-            employeeId: 'julie-konan-demo',
-            name: 'Julie Konan',
-            role: 'Chargée de Clientèle',
-            matchScore: 97,
-            matchedSkillsCount: 3
-        },
-        applicants: [
-            { id: 'app-1', name: 'Julie Konan', date: '2026-09-20', status: 'RECOMMENDED_AI', note: 'Match exceptionnel avec les compétences CRM et négociation' }
-        ]
-    },
-    {
-        id: 'mis-2',
-        title: 'Audit Interne de Conformité Fiscale & Sociale (DISA & CNPS)',
-        department: 'Finance & Ressources Humaines',
-        lead: 'Bamba Aïcha (Responsable Paie & RH)',
-        duration: '1 mois',
-        timeAllocation: '20% du temps de travail',
-        priority: 'Moyenne',
-        status: 'OPEN',
-        createdAt: '2026-09-15',
-        description: 'Revue préparatoire de la clôture sociale annuelle et vérification des déclarations nominatives des salaires avant transmission au fisc et à la CNPS.',
-        requiredSkills: [
-            { name: 'Droit du Travail', level: 4 },
-            { name: 'Gestion de la Paie', level: 3 },
-            { name: 'Conformité / Compliance (RGPD, etc.)', level: 3 }
-        ],
-        topCandidateMatch: {
-            employeeId: 'emp-2',
-            name: 'Koffi Marc',
-            role: 'Contrôleur de Gestion RH',
-            matchScore: 88,
-            matchedSkillsCount: 3
-        },
-        applicants: []
-    },
-    {
-        id: 'mis-3',
-        title: 'Mise en place de l\'Académie Interne de Mentorat & Onboarding',
-        department: 'Ressources Humaines & RSE',
-        lead: 'Dr. Sery Christian (Directeur RH)',
-        duration: '2 mois',
-        timeAllocation: '15% du temps de travail',
-        priority: 'Normale',
-        status: 'IN_PROGRESS',
-        createdAt: '2026-09-01',
-        description: 'Conception des guides de parrainage et animation des ateliers d\'accueil des nouvelles recrues du dernier trimestre.',
-        requiredSkills: [
-            { name: 'Intelligence Émotionnelle', level: 4 },
-            { name: 'Communication Orale', level: 4 },
-            { name: 'Sens de l\'Organisation', level: 3 }
-        ],
-        topCandidateMatch: {
-            employeeId: 'julie-konan-demo',
-            name: 'Julie Konan',
-            role: 'Chargée de Clientèle',
-            matchScore: 92,
-            matchedSkillsCount: 3
-        },
-        applicants: [
-            { id: 'app-2', name: 'Julie Konan', date: '2026-09-02', status: 'ASSIGNED', note: 'Désignée co-animatrice du programme' }
-        ]
-    }
-];
+const MISSIONS_INITIALES = [];
 
 export function TalentMarketplace() {
     const [missions, setMissions] = useState(MISSIONS_INITIALES);
@@ -134,7 +53,7 @@ export function TalentMarketplace() {
                     ...m,
                     applicants: [
                         ...m.applicants,
-                        { id: `app-${Date.now()}`, name: 'Julie Konan', date: new Date().toISOString().split('T')[0], status: 'APPLIED', note: 'Candidature spontanée transmise' }
+                        { id: `app-${Date.now()}`, name: '', date: new Date().toISOString().split('T')[0], status: 'APPLIED', note: 'Candidature spontanée transmise' }
                     ]
                 };
             }
@@ -149,7 +68,7 @@ export function TalentMarketplace() {
                     ...prev,
                     applicants: [
                         ...prev.applicants,
-                        { id: `app-${Date.now()}`, name: 'Julie Konan', date: new Date().toISOString().split('T')[0], status: 'APPLIED', note: 'Candidature spontanée transmise' }
+                        { id: `app-${Date.now()}`, name: '', date: new Date().toISOString().split('T')[0], status: 'APPLIED', note: 'Candidature spontanée transmise' }
                     ]
                 };
             }
@@ -176,8 +95,8 @@ export function TalentMarketplace() {
                 { name: newSkill1, level: 3 }
             ],
             topCandidateMatch: {
-                employeeId: 'julie-konan-demo',
-                name: 'Julie Konan',
+                employeeId: '',
+                name: '',
                 role: 'Chargée de Clientèle',
                 matchScore: 94,
                 matchedSkillsCount: 1
@@ -435,7 +354,7 @@ export function TalentMarketplace() {
                                         onClick={() => handleApply(selectedMission.id)}
                                         className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md shadow-emerald-100 gap-2"
                                     >
-                                        <CheckCircle2 size={16} /> Postuler / Affecter Julie Konan
+                                        <CheckCircle2 size={16} /> Postuler / Affecter
                                     </Button>
                                 </div>
                             </CardContent>

@@ -10,64 +10,7 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
-const DOSSIERS_FDFP_INITIAUX = [
-    {
-        id: 'FDFP-2026-001',
-        title: 'Certification Négociation Grands Comptes & CRM Salesforce',
-        provider: 'Cabinet Externe Agréé FDFP (Abidjan Plateau)',
-        category: 'Formation Continue (FPC)',
-        participantsCount: 6,
-        budgetEngaged: 4200000,
-        fdfpCoverageRequested: 3800000,
-        fdfpRefundReceived: 3800000,
-        status: 'REFUNDED', // IN_PREPARATION, SUBMITTED, APPROVED, REFUNDED
-        submissionDate: '2026-03-10',
-        approvalRef: 'AGR-FDFP-2026-891',
-        keyLearners: 'Julie Konan, Marc Koffi, Armand Kouassi'
-    },
-    {
-        id: 'FDFP-2026-002',
-        title: 'Cybersécurité Avancée, Architecture Cloud & Sécurité SI',
-        provider: 'Institut International des Technologies (IIT Abidjan)',
-        category: 'Formation Continue (FPC)',
-        participantsCount: 8,
-        budgetEngaged: 6500000,
-        fdfpCoverageRequested: 5800000,
-        fdfpRefundReceived: 5800000,
-        status: 'REFUNDED',
-        submissionDate: '2026-05-15',
-        approvalRef: 'AGR-FDFP-2026-1142',
-        keyLearners: 'Équipe Infrastructure & DevOps'
-    },
-    {
-        id: 'FDFP-2026-003',
-        title: 'Management Agile, Scrum Master & Conduite du Changement',
-        provider: 'Cabinet Performance Afrique',
-        category: 'Formation Continue (FPC)',
-        participantsCount: 12,
-        budgetEngaged: 5400000,
-        fdfpCoverageRequested: 4800000,
-        fdfpRefundReceived: 0,
-        status: 'APPROVED',
-        submissionDate: '2026-07-20',
-        approvalRef: 'AGR-FDFP-2026-1605',
-        keyLearners: 'Chefs de projets & Lead Tech'
-    },
-    {
-        id: 'FDFP-2026-004',
-        title: 'Atelier Excellence Rédactionnelle & Synthèse Décisionnelle',
-        provider: 'Centre de Formation Professionnelle Continue',
-        category: 'Formation Continue (FPC)',
-        participantsCount: 5,
-        budgetEngaged: 2800000,
-        fdfpCoverageRequested: 2500000,
-        fdfpRefundReceived: 0,
-        status: 'SUBMITTED',
-        submissionDate: '2026-09-05',
-        approvalRef: 'En attente commission FDFP',
-        keyLearners: 'Julie Konan, Équipe Relation Client'
-    }
-];
+const DOSSIERS_FDFP_INITIAUX = [];
 
 export function GestionFDFP() {
     const [dossiers, setDossiers] = useState(DOSSIERS_FDFP_INITIAUX);

@@ -16,152 +16,7 @@ export function RegistreVisiteurs() {
   const [notificationToast, setNotificationToast] = useState(null);
 
   // Registre des visiteurs (données initiales réalistes pour la Côte d'Ivoire)
-  const [visiteurs, setVisiteurs] = useState([
-    {
-      id: "VIS-2026-001",
-      badgeNumber: "BADGE-V-04",
-      nom: "Amadou Diaby",
-      societe: "Société Ivoirienne de Cacao (SIC CACAO)",
-      telephone: "+225 07 48 92 10 33",
-      pieceIdentite: "CNI CI - C0108392019",
-      collaborateur: "Julie Konan",
-      collaborateurPoste: "Chargée de Clientèle Entreprises Senior",
-      site: "Siège Plateau (Tour Postel 2001)",
-      motif: "RDV Commercial & Signature Contrat Cadre",
-      heureArrivee: "08:45",
-      heureSortie: null,
-      statut: "EN_COURS", // EN_COURS, ATTENDU, CLOTURE
-      date: "23/09/2026",
-      vehiculeImmat: "9482 HY 01",
-      estVip: true
-    },
-    {
-      id: "VIS-2026-002",
-      badgeNumber: "BADGE-V-12",
-      nom: "Koffi N'Goran Sylvain",
-      societe: "KPMG Côte d'Ivoire",
-      telephone: "+225 05 64 21 88 09",
-      pieceIdentite: "Passeport CI - 21AA89201",
-      collaborateur: "Jean-Marc Koffi",
-      collaborateurPoste: "Directeur d'Agence Principale",
-      site: "Siège Plateau (Tour Postel 2001)",
-      motif: "Mission d'Audit & Contrôle Légal des Comptes",
-      heureArrivee: "09:15",
-      heureSortie: null,
-      statut: "EN_COURS",
-      date: "23/09/2026",
-      vehiculeImmat: "Sans véhicule",
-      estVip: false
-    },
-    {
-      id: "VIS-2026-003",
-      badgeNumber: "BADGE-V-07",
-      nom: "Awa Bamba",
-      societe: "Cabinet Deloitte Audit & Conseil",
-      telephone: "+225 07 09 33 44 55",
-      pieceIdentite: "CNI CI - C0098492044",
-      collaborateur: "Dr. Stéphane Touré",
-      collaborateurPoste: "Directeur des Ressources Humaines",
-      site: "Agence Cocody Ambassades",
-      motif: "Entretien Recrutement Poste Contrôleur de Gestion Senior",
-      heureArrivee: "09:30",
-      heureSortie: "11:15",
-      statut: "CLOTURE",
-      date: "23/09/2026",
-      vehiculeImmat: "Sans véhicule",
-      estVip: false
-    },
-    {
-      id: "VIS-2026-004",
-      badgeNumber: "BADGE-V-15",
-      nom: "Barthélémy Kouamé",
-      societe: "SOGETEL Télécoms & Réseaux",
-      telephone: "+225 01 02 88 99 11",
-      pieceIdentite: "Permis Conduire - B09284102",
-      collaborateur: "Moussa Soro",
-      collaborateurPoste: "Responsable Infrastructure & IT",
-      site: "Hub Zone 4 Marcory",
-      motif: "Maintenance Baie Fibre Optique & Serveurs",
-      heureArrivee: "10:00",
-      heureSortie: null,
-      statut: "EN_COURS",
-      date: "23/09/2026",
-      vehiculeImmat: "4421 GH 01",
-      estVip: false
-    },
-    {
-      id: "VIS-2026-005",
-      badgeNumber: "BADGE-V-02",
-      nom: "Mme Salimata Ouattara",
-      societe: "Banque Atlantique CI",
-      telephone: "+225 07 88 12 34 56",
-      pieceIdentite: "CNI CI - C0149204910",
-      collaborateur: "Julie Konan",
-      collaborateurPoste: "Chargée de Clientèle Entreprises Senior",
-      site: "Siège Plateau (Tour Postel 2001)",
-      motif: "Session Partenariat Financement Flotte",
-      heureArrivee: "10:30",
-      heureSortie: "11:50",
-      statut: "CLOTURE",
-      date: "23/09/2026",
-      vehiculeImmat: "3290 JR 01",
-      estVip: true
-    },
-    {
-      id: "VIS-2026-006",
-      badgeNumber: "BADGE-V-19",
-      nom: "Fabrice Brou",
-      societe: "DHL Express Côte d'Ivoire",
-      telephone: "+225 05 05 91 19 22",
-      pieceIdentite: "Badge Pro DHL - DHL-CI-88",
-      collaborateur: "Armand Kouassi",
-      collaborateurPoste: "Comptable Fournisseurs",
-      site: "Siège Plateau (Tour Postel 2001)",
-      motif: "Livraison Plis Sécurisés & Factures Originales",
-      heureArrivee: "11:40",
-      heureSortie: null,
-      statut: "EN_COURS",
-      date: "23/09/2026",
-      vehiculeImmat: "1109 KL 01",
-      estVip: false
-    },
-    {
-      id: "VIS-2026-007",
-      badgeNumber: "BADGE-V-01",
-      nom: "Dr. Charles Yao",
-      societe: "Ministère de la Transition Numérique",
-      telephone: "+225 07 55 44 33 22",
-      pieceIdentite: "Passeport Diplomatique CI - D092841",
-      collaborateur: "Jean-Marc Koffi",
-      collaborateurPoste: "Directeur d'Agence Principale",
-      site: "Siège Plateau (Tour Postel 2001)",
-      motif: "Visite Institutionnelle & Protocole Numérique",
-      heureArrivee: "14:30",
-      heureSortie: null,
-      statut: "ATTENDU",
-      date: "23/09/2026",
-      vehiculeImmat: "D-894-CI",
-      estVip: true
-    },
-    {
-      id: "VIS-2026-008",
-      badgeNumber: "BADGE-V-09",
-      nom: "Mariam Traoré",
-      societe: "Cabinet Conseil RH & RSE Afrique",
-      telephone: "+225 07 41 85 96 32",
-      pieceIdentite: "CNI CI - C0192840192",
-      collaborateur: "Dr. Stéphane Touré",
-      collaborateurPoste: "Directeur des Ressources Humaines",
-      site: "Agence Cocody Ambassades",
-      motif: "Restitution Audit QVT & Bien-être au Travail",
-      heureArrivee: "15:00",
-      heureSortie: null,
-      statut: "ATTENDU",
-      date: "23/09/2026",
-      vehiculeImmat: "Sans véhicule",
-      estVip: false
-    }
-  ]);
+  const [visiteurs, setVisiteurs] = useState([]);
 
   // Formulaire d'émargement d'un nouveau visiteur sur place
   const [newVisitor, setNewVisitor] = useState({
@@ -170,7 +25,7 @@ export function RegistreVisiteurs() {
     telephone: '',
     pieceIdentiteType: 'CNI',
     pieceIdentiteNum: '',
-    collaborateur: 'Julie Konan (Chargée de Clientèle Entreprises Senior)',
+    collaborateur: '',
     site: 'Siège Plateau (Tour Postel 2001)',
     motif: 'RDV Commercial & Client',
     badgeNumber: '',
@@ -271,7 +126,7 @@ export function RegistreVisiteurs() {
       telephone: '',
       pieceIdentiteType: 'CNI',
       pieceIdentiteNum: '',
-      collaborateur: 'Julie Konan (Chargée de Clientèle Entreprises Senior)',
+      collaborateur: '',
       site: 'Siège Plateau (Tour Postel 2001)',
       motif: 'RDV Commercial & Client',
       badgeNumber: '',
@@ -885,7 +740,6 @@ export function RegistreVisiteurs() {
                     onChange={(e) => setNewVisitor({ ...newVisitor, collaborateur: e.target.value })}
                     className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
                   >
-                    <option value="Julie Konan (Chargée de Clientèle Entreprises Senior)">Julie Konan (Chargée de Clientèle Senior)</option>
                     <option value="Jean-Marc Koffi (Directeur d'Agence Principale)">Jean-Marc Koffi (Directeur d'Agence Principale)</option>
                     <option value="Dr. Stéphane Touré (Directeur des Ressources Humaines)">Dr. Stéphane Touré (Directeur des RH)</option>
                     <option value="Moussa Soro (Responsable Infrastructure & IT)">Moussa Soro (Responsable IT)</option>
@@ -1086,7 +940,6 @@ export function RegistreVisiteurs() {
                 >
                   <option value="Jean-Marc Koffi (Directeur d'Agence Principale)">Jean-Marc Koffi (Directeur d'Agence Principale)</option>
                   <option value="Dr. Stéphane Touré (Directeur des Ressources Humaines)">Dr. Stéphane Touré (Directeur des RH)</option>
-                  <option value="Julie Konan (Chargée de Clientèle Senior)">Julie Konan (Chargée de Clientèle Senior)</option>
                 </select>
               </div>
 

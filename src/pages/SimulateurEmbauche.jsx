@@ -158,7 +158,7 @@ export function SimulateurEmbauche() {
     const [netInput, setNetInput] = useState(500000);
     const [parts, setParts] = useState(1);
     const [transportAllowance, setTransportAllowance] = useState(30000);
-    const [candidateName, setCandidateName] = useState('Julie Konan');
+    const [candidateName, setCandidateName] = useState('');
     const [positionTitle, setPositionTitle] = useState('Chargée de Clientèle Senior');
     const [department, setDepartment] = useState('Commercial & Relation Client');
 
@@ -180,13 +180,7 @@ export function SimulateurEmbauche() {
         { name: 'Charges Patronales (CNPS + FDFP + CMU)', value: payroll.totalEmployerCharges, color: '#ec4899' }
     ];
 
-    const presets = [
-        { label: 'Junior / Débutant', gross: 350000, title: 'Chargée de Clientèle Junior' },
-        { label: 'Confirmé / Spécialiste', gross: 650000, title: 'Chargée de Clientèle' },
-        { label: 'Senior / Lead (Julie Konan)', gross: 950000, title: 'Chargée de Clientèle Senior' },
-        { label: 'Manager / Chef d’Équipe', gross: 1600000, title: 'Responsable Commercial' },
-        { label: 'Directeur de Département', gross: 2800000, title: 'Directeur Commercial & Expérience Client' }
-    ];
+    const presets = [];
 
     const handleApplyPreset = (p) => {
         setPositionTitle(p.title);

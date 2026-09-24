@@ -14,122 +14,7 @@ export function PlanSuccession() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedPoste, setSelectedPoste] = useState(null);
 
-  const [postes, setPostes] = useState([
-    {
-      id: 1,
-      titre: "Directeur d'Agence Principale (Plateau)",
-      departement: "Réseau Agences",
-      titulaire: "Jean-Marc Koffi",
-      matricule: "EMP-0012",
-      titulaireAnciennete: "7 ans",
-      risqueDepart: "Moyen",
-      motifRisque: "Départ à la retraite prévu d'ici 24 mois",
-      criticite: "CRITIQUE",
-      tauxCouverture: "100%",
-      successeurs: [
-        {
-          id: 101,
-          nom: "Julie Konan",
-          posteActuel: "Chargée de Clientèle Entreprises Senior",
-          maturite: "IMMEDIAT", // IMMEDIAT, MOYEN_TERME, LONG_TERME
-          adequation: 92,
-          actionsDev: "Formation Leadership FDFP complétée, Shadowing CODIR en cours",
-          recommandePar: "Jean-Marc Koffi"
-        },
-        {
-          id: 102,
-          nom: "Patrick Bamba",
-          posteActuel: "Responsable d'Agence Adjoint (Marcory)",
-          maturite: "MOYEN_TERME",
-          adequation: 80,
-          actionsDev: "Plan de renforcement en gestion budgétaire & risques crédit",
-          recommandePar: "DRH"
-        }
-      ]
-    },
-    {
-      id: 2,
-      titre: "Responsable Paie & Fiscalité Sociale (CI)",
-      departement: "Direction des Ressources Humaines",
-      titulaire: "Aïcha Ouattara",
-      matricule: "EMP-0034",
-      titulaireAnciennete: "4 ans",
-      risqueDepart: "Élevé",
-      motifRisque: "Forte sollicitation marché / chasse de têtes cabinets d'audit",
-      criticite: "CRITIQUE",
-      tauxCouverture: "50%",
-      successeurs: [
-        {
-          id: 201,
-          nom: "Salimata Touré",
-          posteActuel: "Gestionnaire RH & Administration du Personnel",
-          maturite: "MOYEN_TERME",
-          adequation: 74,
-          actionsDev: "Certification paie Sage & fiscalité ivoirienne requise (État 301, DISA)",
-          recommandePar: "Aïcha Ouattara"
-        }
-      ]
-    },
-    {
-      id: 3,
-      titre: "Chief Technology Officer / Architecte SI",
-      departement: "Systèmes d'Information & Tech",
-      titulaire: "Daniel Kouamé",
-      matricule: "EMP-0008",
-      titulaireAnciennete: "5 ans",
-      risqueDepart: "Élevé",
-      motifRisque: "Projet de création d'entreprise à moyen terme",
-      criticite: "CRITIQUE",
-      tauxCouverture: "0%",
-      successeurs: []
-    },
-    {
-      id: 4,
-      titre: "Responsable HSE & Sécurité Industrielle",
-      departement: "Opérations & Logistique",
-      titulaire: "Moussa Diabaté",
-      matricule: "EMP-0045",
-      titulaireAnciennete: "6 ans",
-      risqueDepart: "Faible",
-      motifRisque: "Fidélisé, engagement fort",
-      criticite: "MODÉRÉ",
-      tauxCouverture: "100%",
-      successeurs: [
-        {
-          id: 401,
-          nom: "Fatou N'Dri",
-          posteActuel: "Chargée de Conformité HSE",
-          maturite: "IMMEDIAT",
-          adequation: 95,
-          actionsDev: "Habilitation d'audit tierce partie ISO 45001 validée",
-          recommandePar: "Directeur des Opérations"
-        }
-      ]
-    },
-    {
-      id: 5,
-      titre: "Contrôleur de Gestion Opérationnel",
-      departement: "Direction Financière",
-      titulaire: "Christian Koffi",
-      matricule: "EMP-0056",
-      titulaireAnciennete: "3 ans",
-      risqueDepart: "Moyen",
-      motifRisque: "Opportunité de mobilité interne sous-régionale",
-      criticite: "ÉLEVÉ",
-      tauxCouverture: "100%",
-      successeurs: [
-        {
-          id: 501,
-          nom: "Armand Kouassi",
-          posteActuel: "Comptable Fournisseurs Senior",
-          maturite: "MOYEN_TERME",
-          adequation: 82,
-          actionsDev: "Programme de mentoring avec le DAF",
-          recommandePar: "Christian Koffi"
-        }
-      ]
-    }
-  ]);
+  const [postes, setPostes] = useState([]);
 
   // Modal new successor form state
   const [newSuccessor, setNewSuccessor] = useState({
@@ -463,11 +348,6 @@ export function PlanSuccession() {
                           <div>
                             <p className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                               {succ.nom}
-                              {succ.nom === "Julie Konan" && (
-                                <span className="text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 px-1.5 py-0.2 rounded font-medium">
-                                  Top Talent
-                                </span>
-                              )}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">{succ.posteActuel}</p>
                           </div>
@@ -548,7 +428,7 @@ export function PlanSuccession() {
                 <input 
                   type="text"
                   required
-                  placeholder="Ex: Julie Konan, Kouamé N'Guessan..."
+                  placeholder="Ex : nom du collaborateur"
                   value={newSuccessor.nom}
                   onChange={(e) => setNewSuccessor({ ...newSuccessor, nom: e.target.value })}
                   className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
@@ -678,7 +558,7 @@ export function PlanSuccession() {
                   <ShieldAlert className="w-4 h-4 shrink-0" /> Attention critique sur le poste de CTO / Architecte SI : absence totale de doublure interne prête.
                 </li>
                 <li className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium">
-                  <Sparkles className="w-4 h-4 shrink-0" /> Profil à fort potentiel validé : Julie Konan identifiée pour la succession de la Direction d'Agence Plateau (Adéquation 92%).
+                  <Sparkles className="w-4 h-4 shrink-0" /> Aucun profil de succession validé pour l'instant.
                 </li>
               </ul>
             </div>

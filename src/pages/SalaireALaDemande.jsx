@@ -13,7 +13,7 @@ export function SalaireALaDemande() {
 
   // Données du collaborateur connecté (simulation réaliste pour la démo)
   const [collaborateur, setCollaborateur] = useState({
-    nom: "Julie Konan",
+    nom: '',
     matricule: "EMP-0018",
     poste: "Chargée de Clientèle Entreprises Senior",
     salaireNetMensuel: 650000,

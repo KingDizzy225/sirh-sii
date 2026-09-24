@@ -11,50 +11,7 @@ export function ComiteCSST() {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
 
   // Membres du bureau paritaire CSST
-  const bureauMembres = [
-    {
-      roleCSST: "Président du Comité (Représentant Direction)",
-      nom: "Jean-Marc Koffi",
-      poste: "Directeur d'Agence Plateau",
-      college: "Direction",
-      contact: "+225 07 08 20 44 12"
-    },
-    {
-      roleCSST: "Secrétaire du Comité (Élu Délégués)",
-      nom: "Patrick Bamba",
-      poste: "Chef d'Agence Adjoint (Marcory)",
-      college: "Délégués du Personnel",
-      contact: "+225 07 48 10 92 33"
-    },
-    {
-      roleCSST: "Médecin du Travail d'Entreprise",
-      nom: "Dr. Konaté Alassane",
-      poste: "Médecin Inspecteur du Travail Agréé",
-      college: "Santé au Travail",
-      contact: "+225 05 01 29 84 10"
-    },
-    {
-      roleCSST: "Responsable Sécurité & Conditions de Travail",
-      nom: "Moussa Diabaté",
-      poste: "Responsable HSE & Prévention des Risques",
-      college: "Technique & Sécurité",
-      contact: "+225 07 77 34 20 90"
-    },
-    {
-      roleCSST: "Représentante du Personnel (Pôle Commercial)",
-      nom: "Julie Konan",
-      poste: "Chargée de Clientèle Entreprises Senior",
-      college: "Salariés",
-      contact: "+225 07 12 34 56 78"
-    },
-    {
-      roleCSST: "Représentant du Personnel (Pôle Support)",
-      nom: "Armand Kouassi",
-      poste: "Comptable Fournisseurs",
-      college: "Salariés",
-      contact: "+225 07 88 12 43 00"
-    }
-  ];
+  const bureauMembres = [];
 
   // Réunions trimestrielles statutaires
   const [reunions, setReunions] = useState([

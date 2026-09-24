@@ -10,7 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { motion, AnimatePresence } from 'framer-motion';
 import { RequirePermission } from '../components/auth/ProtectedRoute';
 import { api } from '../lib/api.js';
-import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees.js';
 
 const roleLabels = {
     'Administrator': 'Administrateur',
@@ -19,61 +18,9 @@ const roleLabels = {
     'Social Worker': 'Assistante Sociale'
 };
 
-const JULIE_KONAN_ROW = {
-    id: 'julie-konan-demo',
-    name: 'Julie Konan',
-    firstName: 'Julie',
-    lastName: 'Konan',
-    role: 'Chargée de Clientèle',
-    systemRole: 'Employee',
-    department: 'Commercial & Relation Client',
-    status: 'Actif',
-    email: 'julie.konan@sii-ci.com',
-    phone: '+225 07 08 09 10 11',
-    gender: 'Féminin',
-    birthDate: '1994-08-20',
-    address: 'Abidjan, Cocody Riviera Palmeraie',
-    nationality: 'Ivoirienne',
-    matricule: 'EMP-2022-042',
-    cnpsNumber: 'CNPS-84920194',
-    bankName: 'Société Générale CI',
-    bankAccount: 'CI059 01001 12345678901 45',
-    childrenCount: 1,
-    annualLeaveBalance: 24,
-    leaveBalanceSource: null,
-    onboardingProgress: 100
-};
-
-const MAPPED_MOCK_190 = MOCK_190_EMPLOYEES.map(emp => ({
-    id: emp.id,
-    name: `${emp.firstName} ${emp.lastName}`,
-    firstName: emp.firstName,
-    lastName: emp.lastName,
-    role: emp.positionTitle || 'Poste Non Assigné',
-    systemRole: emp.role || 'Employee',
-    department: emp.department || 'Non assigné',
-    status: emp.status === 'ACTIVE' ? 'Actif' : 'En congé',
-    email: emp.email,
-    phone: emp.phone || '',
-    gender: emp.gender || 'Non spécifié',
-    birthDate: emp.birthDate || '',
-    address: emp.address || '',
-    nationality: emp.nationality || '',
-    matricule: emp.matricule || '',
-    cnpsNumber: emp.cnpsNumber || '',
-    bankName: emp.bankName || '',
-    bankAccount: emp.bankAccount || '',
-    childrenCount: emp.childrenCount ?? 0,
-    annualLeaveBalance: emp.annualLeaveBalance ?? 24,
-    leaveBalanceSource: emp.leaveBalanceSource || 'CALCUL',
-    onboardingProgress: 100
-}));
-
-export const ALL_INITIAL_EMPLOYEES = [JULIE_KONAN_ROW, ...MAPPED_MOCK_190];
-
 export function Employees() {
     const navigate = useNavigate();
-    const [employees, setEmployees] = useState(ALL_INITIAL_EMPLOYEES);
+    const [employees, setEmployees] = useState([]);
     const [notification, setNotification] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -114,23 +61,15 @@ export function Employees() {
                     leaveBalanceSource: emp.leaveBalanceSource || null,
                     onboardingProgress: emp.status === 'ACTIVE' ? 100 : 0
                 }));
-                // Ensure all 190 mock employees remain present even when API returns existing DB records
-                const existingEmails = new Set(mapped.map(e => (e.email || '').toLowerCase()));
-                const missingMocks = ALL_INITIAL_EMPLOYEES.filter(
-                    m => !existingEmails.has((m.email || '').toLowerCase())
-                );
-                const merged = [...mapped, ...missingMocks];
-                const hasJulie = merged.some(e => e.id === 'julie-konan-demo' || (e.name && e.name.toLowerCase().includes('julie konan')));
-                if (!hasJulie) {
-                    merged.unshift(JULIE_KONAN_ROW);
-                }
-                setEmployees(merged);
+                setEmployees(mapped);
             } else {
-                setEmployees(ALL_INITIAL_EMPLOYEES);
+                setEmployees([]);
             }
         } catch (err) {
-            console.error('API Error:', err);
-            setEmployees(ALL_INITIAL_EMPLOYEES);
+            // Une erreur de chargement n'est plus masquée par un effectif de
+            // démonstration : la liste reste vide et le motif remonte.
+            console.error('[EMPLOYÉS] Chargement impossible :', err.message || err);
+            setEmployees([]);
         } finally {
             setIsLoading(false);
         }

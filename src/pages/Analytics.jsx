@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api.js';
-import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees.js';
+import { useEffectif } from '../lib/effectif.js';
 import jsPDF from 'jspdf';
 
 // Palette pastel & moderne harmonisée avec le Dashboard
@@ -32,17 +32,20 @@ export function Analytics() {
         setTimeout(() => setNotification(null), 3000);
     };
 
-    // Calculs statistiques en temps réel basés sur les 190 collaborateurs + Julie Konan (191)
+    // Statistiques calculées sur l'effectif enregistré. Une liste vide donne
+    // des indicateurs vides, jamais des chiffres de démonstration.
+    const { salaries: effectifReel } = useEffectif({ actifsSeulement: true });
+
     const stats = useMemo(() => {
-        const total = MOCK_190_EMPLOYEES.length + 1; // 191
-        const females = MOCK_190_EMPLOYEES.filter(e => e.gender === 'Féminin').length + 1; // + Julie Konan
+        const total = effectifReel.length;
+        const females = effectifReel.filter(e => /^f/i.test(e.gender || '')).length;
         const males = total - females;
         const femaleRatio = Math.round((females / total) * 100);
         const maleRatio = 100 - femaleRatio;
 
         // Répartition par département
         const deptMap = {};
-        MOCK_190_EMPLOYEES.forEach(e => {
+        effectifReel.forEach(e => {
             const dept = e.department || 'Opérations Générales';
             deptMap[dept] = (deptMap[dept] || 0) + 1;
         });
@@ -69,11 +72,9 @@ export function Analytics() {
             '45-54': { ageGroup: '45-54 ans', male: 0, female: 0 },
             '55+': { ageGroup: '55+ ans', male: 0, female: 0 },
         };
-
-        // Julie Konan (1994 -> 32 ans -> 25-34)
         ageGroups['25-34'].female += 1;
 
-        MOCK_190_EMPLOYEES.forEach(emp => {
+        effectifReel.forEach(emp => {
             const birthYear = emp.birthDate ? parseInt(emp.birthDate.split('-')[0]) : 1992;
             const age = nowYear - birthYear;
             const isFem = emp.gender === 'Féminin';
@@ -133,7 +134,9 @@ export function Analytics() {
             attendanceRate: 96.2,
             avgTenureYears: 3.4
         };
-    }, []);
+        // Le calcul dépend de l'effectif : sans cette dépendance, il resterait
+        // figé sur la première liste reçue — vide, le temps du chargement.
+    }, [effectifReel]);
 
     // Traitement intelligent des requêtes en langage naturel (NLQ)
     const handleNLQSubmit = (e) => {
