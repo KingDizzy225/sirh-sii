@@ -74,9 +74,19 @@ async function rapprocher(candidat, exclureId = null) {
             motifs.push('Même numéro CNPS');
             niveau = NIVEAUX.CERTAIN;
         }
+        /**
+         * Le matricule n'ouvre qu'une correspondance probable, jamais
+         * certaine.
+         *
+         * Il porte déjà une contrainte d'unicité en base, qui refuse le
+         * doublon avec son propre message. En faire ici une correspondance
+         * certaine ajouterait un second refus, plus tôt, sur un cas que la
+         * base traite mieux — et laisserait croire qu'on peut le franchir en
+         * confirmant, alors que la contrainte, elle, ne se confirme pas.
+         */
         if (matricule && canoniser(fiche.matricule) === matricule) {
             motifs.push('Même matricule');
-            niveau = NIVEAUX.CERTAIN;
+            niveau = niveau || NIVEAUX.PROBABLE;
         }
         if (!niveau && nom && nomCanonique(fiche.firstName, fiche.lastName) === nom) {
             const memeNaissance = naissance && fiche.birthDate
