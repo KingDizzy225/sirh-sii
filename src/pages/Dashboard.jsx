@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { ComplianceMonitor } from '../components/dashboard/ComplianceMonitor';
 import { api } from '../lib/api';
+import { IndicateursRH } from '../components/IndicateursRH';
 import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
 
 export function Dashboard() {
@@ -27,13 +28,17 @@ export function Dashboard() {
     const [showSurvey, setShowSurvey] = useState(false);
     const [surveyScore, setSurveyScore] = useState(null);
     const [surveyComment, setSurveyComment] = useState('');
+    // Effectif servant aux indicateurs : ce que l'API renvoie, complété par le
+    // référentiel embarqué pour les fiches qu'elle ne porte pas encore.
+    const [effectif, setEffectif] = useState(MOCK_190_EMPLOYEES);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const [statsRes, chartsRes] = await Promise.all([
+                const [statsRes, chartsRes, empRes] = await Promise.all([
                     api.get('/dashboard/stats').catch(() => ({ data: {} })),
-                    api.get('/analytics/dashboard').catch(() => ({ data: {} }))
+                    api.get('/analytics/dashboard').catch(() => ({ data: {} })),
+                    api.get('/employees').catch(() => ({ data: [] }))
                 ]);
                 
                 const statsData = statsRes.data || {};
@@ -44,6 +49,13 @@ export function Dashboard() {
                     charts: chartsData.charts || {},
                     advancedStats: chartsData.stats || {}
                 });
+
+                const listeApi = Array.isArray(empRes.data) ? empRes.data : [];
+                const connus = new Set(listeApi.map((e) => (e.email || '').toLowerCase()));
+                setEffectif([
+                    ...listeApi,
+                    ...MOCK_190_EMPLOYEES.filter((e) => !connus.has((e.email || '').toLowerCase()))
+                ]);
             } catch (err) {
                 console.error("Failed to load dashboard data", err);
             } finally {
@@ -207,6 +219,8 @@ export function Dashboard() {
                     </button>
                 </div>
             </div>
+
+            <IndicateursRH salaries={effectif} />
 
             {/* QUICK ACTIONS & LIVE PULSE */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white border border-slate-200/80 p-3.5 rounded-2xl shadow-xs">

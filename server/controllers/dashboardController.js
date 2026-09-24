@@ -1,5 +1,4 @@
 const prisma = require('../prismaClient');
-
 exports.getStats = async (req, res) => {
     try {
         const totalEmployees = await prisma.employee.count({
