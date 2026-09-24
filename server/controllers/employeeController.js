@@ -4,6 +4,7 @@ const evenements = require('../lib/evenements');
 const sincerite = require('../lib/sincerite');
 const { construireTachesIntegration } = require('../data/onboardingTemplates');
 const { soldeOuverture } = require('../lib/conges');
+const doublon = require('../lib/doublon');
 const dossier = require('../lib/dossier');
 const corbeille = require('../lib/corbeille');
 const remuneration = require('../lib/remuneration');
@@ -82,6 +83,33 @@ exports.createEmployee = async (req, res) => {
         } = req.body;
 
         const dateEmbauche = hireDate ? new Date(hireDate) : new Date();
+
+        /**
+         * Fiche déjà existante ?
+         *
+         * Le numéro CNPS ne porte pas de contrainte d'unicité : deux fiches de
+         * la même personne passaient donc sans que rien ne le signale, et leurs
+         * bulletins se retrouvaient répartis entre deux dossiers.
+         *
+         * La saisie n'est pas bloquée sans recours — une homonymie existe, une
+         * réembauche aussi — mais une correspondance certaine doit être
+         * confirmée explicitement (`confirmerDoublon`), jamais franchie par
+         * inadvertance.
+         */
+        const correspondances = await doublon.rapprocher({
+            firstName, lastName, matricule, cnpsNumber, birthDate
+        });
+        const certaines = correspondances.filter((c) => c.niveau === doublon.NIVEAUX.CERTAIN);
+        if (certaines.length > 0 && req.body.confirmerDoublon !== true) {
+            return res.status(409).json({
+                error: certaines.length === 1
+                    ? `Une fiche porte déjà ${certaines[0].motifs.join(' et ').toLowerCase()} : ${certaines[0].nom}.`
+                    : `${certaines.length} fiches portent déjà les mêmes identifiants.`,
+                remede: "Ouvrez la fiche existante si c'est la même personne. S'il s'agit bien d'un "
+                    + "nouveau salarié, renvoyez la demande avec `confirmerDoublon` à vrai.",
+                correspondances: certaines
+            });
+        }
 
         // Le solde de congés n'est plus le forfait de 30 jours du schéma, qui
         // créditait une année entière à un salarié arrivé la veille. Il est

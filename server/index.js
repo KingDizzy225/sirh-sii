@@ -9,6 +9,20 @@ const rateLimit = require('express-rate-limit');
 dotenv.config();
 
 const app = express();
+
+/**
+ * L'application tourne derrière le proxy de l'hébergeur.
+ *
+ * Sans cette ligne, `req.ip` vaut l'adresse du proxy pour tout le monde : le
+ * limiteur de débit compte alors tous les visiteurs comme un seul client — il
+ * bloque tout le monde à la fois, ou ne protège personne. Les traces d'audit
+ * enregistraient de leur côté la même adresse pour chaque salarié.
+ *
+ * `1` et non `true` : on ne fait confiance qu'au premier relais, celui de
+ * l'hébergeur. Faire confiance à toute la chaîne laisserait un client forger
+ * son adresse en ajoutant un en-tête.
+ */
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Security Middleware

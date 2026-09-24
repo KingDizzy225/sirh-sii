@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { aLeRole, estRH } from '../../lib/roles.js';
 
 export const ProtectedRoute = ({ allowedRoles = [], children }) => {
     const { user, isLoading } = useAuth();
@@ -22,18 +23,10 @@ export const ProtectedRoute = ({ allowedRoles = [], children }) => {
         return <Navigate to="/login" replace />;
     }
 
-    // Role mapping since DB uses ADMIN/HR/MANAGER and frontend expects Administrator/HR
-    const roleMapping = {
-        'ADMIN': 'Administrator',
-        'HR': 'HR',
-        'MANAGER': 'Manager',
-        'EMPLOYEE': 'Employee'
-    };
-
-    const userFrontendRole = roleMapping[user.role] || user.role;
-
-    // If allowedRoles is provided and user's role is not in the list
-    if (allowedRoles.length > 0 && !allowedRoles.includes(userFrontendRole)) {
+    // La comparaison passe par la table unique de `lib/roles` : celle qui vivait
+    // ici ignorait SOCIAL_WORKER, et renvoyait donc un assistant social vers la
+    // page d'accès refusé sur ses propres écrans.
+    if (!aLeRole(user.role, allowedRoles)) {
         return <Navigate to="/unauthorized" replace />;
     }
 
@@ -46,11 +39,18 @@ export const RequirePermission = ({ permission, children, fallbackPath = "/dashb
 
     if (isLoading) return null;
 
-    // Simplified auth check for UI elements based on User Role.  To enhance later.
-    // Le rôle peut être brut (DB: ADMIN/HR) ou déjà mappé côté front (Administrator)
-    const hasPerm = user && ['ADMIN', 'Administrator', 'HR'].includes(user.role);
+    /**
+     * La permission demandée était ignorée : tout compte RH passait, tout autre
+     * était refusé, quelle que soit la permission. Le composant promettait un
+     * contrôle fin qu'il n'exerçait pas.
+     *
+     * Il applique désormais ce qu'il annonce — `view:own` est ouvert à tous,
+     * le reste est réservé aux rôles RH — et le dit franchement plutôt que de
+     * laisser croire à une granularité qui n'existe pas encore.
+     */
+    const autorise = permission === 'view:own' || estRH(user && user.role);
 
-    if (hasPerm || permission === 'view:own') {
+    if (autorise) {
         return children;
     }
 

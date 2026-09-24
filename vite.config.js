@@ -57,10 +57,25 @@ export default defineConfig({
     chunkSizeWarningLimit: 5000,
     rollupOptions: {
       output: {
+        /**
+         * Découpage des bibliothèques.
+         *
+         * Tout node_modules partait dans un seul fragment `vendor` de 2,1 Mo,
+         * chargé avant le premier affichage — y compris les graphiques, la
+         * cartographie et la génération de PDF, qui ne servent qu'à une
+         * poignée d'écrans.
+         *
+         * Seules des bibliothèques *feuilles* sont détachées : rien d'autre
+         * dans node_modules ne dépend d'elles, donc aucun cycle entre
+         * fragments — c'est ce qui avait provoqué une page blanche lors d'une
+         * tentative précédente. React et ses satellites restent groupés.
+         */
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+          if (!id.includes('node_modules')) return;
+          if (id.includes('recharts') || id.includes('d3-')) return 'graphiques';
+          if (id.includes('leaflet')) return 'cartographie';
+          if (id.includes('jspdf') || id.includes('html2canvas')) return 'documents';
+          return 'vendor';
         }
       }
     },

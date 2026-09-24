@@ -1,146 +1,163 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { Sidebar } from './components/layout/Sidebar';
-import { MurAgence } from './pages/MurAgence';
-import { EcransAgence } from './pages/EcransAgence';
-import { Badges } from './pages/Badges';
-import { BadgeCarte, BadgeVerification } from './pages/BadgePublic';
-import { MonAnnee } from './pages/MonAnnee';
-import { Retrospectives } from './pages/Retrospectives';
-import { CarteAgences } from './pages/CarteAgences';
-import { Pointer, Emarger } from './pages/Pointer';
-import { EcranEmargement } from './pages/EcranEmargement';
-import { Passations } from './pages/Passations';
-import { Emargements } from './pages/Emargements';
-import { PrevisionAbsences } from './pages/PrevisionAbsences';
-import { DroitAcces } from './pages/DroitAcces';
-import { Virements } from './pages/Virements';
-import { Stages } from './pages/Stages';
-import { Avantages } from './pages/Avantages';
-import { Rappels } from './pages/Rappels';
-import { PrimeAnnuelle } from './pages/PrimeAnnuelle';
-import { ProvisionConges } from './pages/ProvisionConges';
-import { Astreintes } from './pages/Astreintes';
-import { BilanSocial } from './pages/BilanSocial';
-import { Retraites } from './pages/Retraites';
-import { Missions } from './pages/Missions';
-import { Remplacements } from './pages/Remplacements';
-import { PreAccueil } from './pages/PreAccueil';
-import { Bienvenue } from './pages/Bienvenue';
-import { LivresDor } from './pages/LivresDor';
-import { LivreDorEcrire, LivreDorRemise } from './pages/LivreDorPublic';
 import { Header } from './components/layout/Header';
-import { Dashboard } from './pages/Dashboard';
-import { EmployeePortal } from './pages/EmployeePortal';
-import { Employees } from './pages/Employees';
-import { EmployeeProfile } from './pages/EmployeeProfile';
-import { OrgChart } from './pages/OrgChart';
-import { OrgSimulation } from './pages/OrgSimulation';
-import { PayEquityScanner } from './pages/PayEquityScanner';
-import { JobDescriptionStudio } from './pages/JobDescriptionStudio';
-import { RetentionCenter } from './pages/RetentionCenter';
-import { Leaves } from './pages/Leaves';
-import { Payroll } from './pages/Payroll';
-import { Recruitment } from './pages/Recruitment';
-import { Settings } from './pages/Settings';
-import { AuditLogs } from './pages/AuditLogs';
-import { Performance } from './pages/Performance';
-import { PayslipViewer } from './pages/PayslipViewer';
-import { Onboarding } from './pages/Onboarding';
-import { Learning } from './pages/Learning';
-import { Support } from './pages/Support';
-import { SupportDashboard } from './pages/SupportDashboard';
-import { Documents } from './pages/Documents';
-import { WorkflowBuilder } from './pages/WorkflowBuilder';
-import { PolicyRules } from './pages/PolicyRules';
-import { Conformite } from './pages/Conformite';
-import { PiecesEcheances } from './pages/PiecesEcheances';
-import { Absenteisme } from './pages/Absenteisme';
-import { JoursFeries } from './pages/JoursFeries';
-import { Prets } from './pages/Prets';
-import { SuiviCdd } from './pages/SuiviCdd';
-import { Procedures } from './pages/Procedures';
-import { Budget } from './pages/Budget';
-import { Signataires } from './pages/Signataires';
-import { Remuneration } from './pages/Remuneration';
-import { Delegations } from './pages/Delegations';
-import { FichesPoste } from './pages/FichesPoste';
-import { Requeteur } from './pages/Requeteur';
-import { ReleveHeures } from './pages/ReleveHeures';
-import { Historique } from './pages/Historique';
-import { TaskBoard } from './pages/TaskBoard';
-import { SkillsMatrix } from './pages/SkillsMatrix';
-import { Timesheet } from './pages/Timesheet';
-import { Expenses } from './pages/Expenses';
-import { Engagement } from './pages/Engagement';
-import { Workflows } from './pages/Workflows';
-import { HSE } from './pages/HSE';
-import { Assets } from './pages/Assets';
-import { Analytics } from './pages/Analytics';
-import { Announcements } from './pages/Announcements';
-import { SalaryAdvances } from './pages/SalaryAdvances';
-import { Rewards } from './pages/Rewards';
-import { Login } from './pages/Login';
 import { useAuth } from './context/AuthContext';
-import { PublicCareers } from './pages/PublicCareers';
-import { PublicDocument } from './pages/PublicDocument';
-import { PublicSignature } from './pages/PublicSignature';
 
-import { Referrals } from './pages/Referrals';
-import { Mentorship } from './pages/Mentorship';
-import { ContractStudio } from './pages/ContractStudio';
-import { WhatsappGateway } from './pages/WhatsappGateway';
-import { MedicalVisitsHub } from './pages/MedicalVisitsHub';
-import { ClimateSurveys } from './pages/ClimateSurveys';
-import { Offboarding } from './pages/Offboarding';
-import { KudosWall } from './pages/KudosWall';
-import { AiSourcing } from './pages/AiSourcing';
-import { PayrollSimulation } from './pages/PayrollSimulation';
-import { ShiftScheduler } from './pages/ShiftScheduler';
-import { Benefits } from './pages/Benefits';
-import { Ethics } from './pages/Ethics';
-import { Subcontractors } from './pages/Subcontractors';
-import { DeiDashboard } from './pages/DeiDashboard';
+/**
+ * Écrans chargés à la demande.
+ *
+ * Les 128 écrans étaient importés au démarrage : ouvrir la page de connexion
+ * téléchargeait l'écran de paie, la matrice de compétences et le registre des
+ * visiteurs — 4,5 Mo avant le premier affichage utile, sur des connexions
+ * mobiles qui ne les supportent pas.
+ *
+ * Chacun devient un fragment récupéré au moment où on l'ouvre. Les écrans
+ * exportent des composants nommés : l'import dynamique les réexpose en export
+ * par défaut, seule forme que `lazy` accepte.
+ */
+const MurAgence = lazy(() => import('./pages/MurAgence').then((m) => ({ default: m.MurAgence })));
+const EcransAgence = lazy(() => import('./pages/EcransAgence').then((m) => ({ default: m.EcransAgence })));
+const Badges = lazy(() => import('./pages/Badges').then((m) => ({ default: m.Badges })));
+const BadgeCarte = lazy(() => import('./pages/BadgePublic').then((m) => ({ default: m.BadgeCarte })));
+const BadgeVerification = lazy(() => import('./pages/BadgePublic').then((m) => ({ default: m.BadgeVerification })));
+const MonAnnee = lazy(() => import('./pages/MonAnnee').then((m) => ({ default: m.MonAnnee })));
+const Retrospectives = lazy(() => import('./pages/Retrospectives').then((m) => ({ default: m.Retrospectives })));
+const CarteAgences = lazy(() => import('./pages/CarteAgences').then((m) => ({ default: m.CarteAgences })));
+const Pointer = lazy(() => import('./pages/Pointer').then((m) => ({ default: m.Pointer })));
+const Emarger = lazy(() => import('./pages/Pointer').then((m) => ({ default: m.Emarger })));
+const EcranEmargement = lazy(() => import('./pages/EcranEmargement').then((m) => ({ default: m.EcranEmargement })));
+const Passations = lazy(() => import('./pages/Passations').then((m) => ({ default: m.Passations })));
+const Emargements = lazy(() => import('./pages/Emargements').then((m) => ({ default: m.Emargements })));
+const PrevisionAbsences = lazy(() => import('./pages/PrevisionAbsences').then((m) => ({ default: m.PrevisionAbsences })));
+const DroitAcces = lazy(() => import('./pages/DroitAcces').then((m) => ({ default: m.DroitAcces })));
+const Virements = lazy(() => import('./pages/Virements').then((m) => ({ default: m.Virements })));
+const Stages = lazy(() => import('./pages/Stages').then((m) => ({ default: m.Stages })));
+const Avantages = lazy(() => import('./pages/Avantages').then((m) => ({ default: m.Avantages })));
+const Rappels = lazy(() => import('./pages/Rappels').then((m) => ({ default: m.Rappels })));
+const PrimeAnnuelle = lazy(() => import('./pages/PrimeAnnuelle').then((m) => ({ default: m.PrimeAnnuelle })));
+const ProvisionConges = lazy(() => import('./pages/ProvisionConges').then((m) => ({ default: m.ProvisionConges })));
+const Astreintes = lazy(() => import('./pages/Astreintes').then((m) => ({ default: m.Astreintes })));
+const BilanSocial = lazy(() => import('./pages/BilanSocial').then((m) => ({ default: m.BilanSocial })));
+const Retraites = lazy(() => import('./pages/Retraites').then((m) => ({ default: m.Retraites })));
+const Missions = lazy(() => import('./pages/Missions').then((m) => ({ default: m.Missions })));
+const Remplacements = lazy(() => import('./pages/Remplacements').then((m) => ({ default: m.Remplacements })));
+const PreAccueil = lazy(() => import('./pages/PreAccueil').then((m) => ({ default: m.PreAccueil })));
+const Bienvenue = lazy(() => import('./pages/Bienvenue').then((m) => ({ default: m.Bienvenue })));
+const LivresDor = lazy(() => import('./pages/LivresDor').then((m) => ({ default: m.LivresDor })));
+const LivreDorEcrire = lazy(() => import('./pages/LivreDorPublic').then((m) => ({ default: m.LivreDorEcrire })));
+const LivreDorRemise = lazy(() => import('./pages/LivreDorPublic').then((m) => ({ default: m.LivreDorRemise })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
+const EmployeePortal = lazy(() => import('./pages/EmployeePortal').then((m) => ({ default: m.EmployeePortal })));
+const Employees = lazy(() => import('./pages/Employees').then((m) => ({ default: m.Employees })));
+const EmployeeProfile = lazy(() => import('./pages/EmployeeProfile').then((m) => ({ default: m.EmployeeProfile })));
+const OrgChart = lazy(() => import('./pages/OrgChart').then((m) => ({ default: m.OrgChart })));
+const OrgSimulation = lazy(() => import('./pages/OrgSimulation').then((m) => ({ default: m.OrgSimulation })));
+const PayEquityScanner = lazy(() => import('./pages/PayEquityScanner').then((m) => ({ default: m.PayEquityScanner })));
+const JobDescriptionStudio = lazy(() => import('./pages/JobDescriptionStudio').then((m) => ({ default: m.JobDescriptionStudio })));
+const RetentionCenter = lazy(() => import('./pages/RetentionCenter').then((m) => ({ default: m.RetentionCenter })));
+const Leaves = lazy(() => import('./pages/Leaves').then((m) => ({ default: m.Leaves })));
+const Payroll = lazy(() => import('./pages/Payroll').then((m) => ({ default: m.Payroll })));
+const Recruitment = lazy(() => import('./pages/Recruitment').then((m) => ({ default: m.Recruitment })));
+const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
+const AuditLogs = lazy(() => import('./pages/AuditLogs').then((m) => ({ default: m.AuditLogs })));
+const Performance = lazy(() => import('./pages/Performance').then((m) => ({ default: m.Performance })));
+const PayslipViewer = lazy(() => import('./pages/PayslipViewer').then((m) => ({ default: m.PayslipViewer })));
+const Onboarding = lazy(() => import('./pages/Onboarding').then((m) => ({ default: m.Onboarding })));
+const Learning = lazy(() => import('./pages/Learning').then((m) => ({ default: m.Learning })));
+const Support = lazy(() => import('./pages/Support').then((m) => ({ default: m.Support })));
+const SupportDashboard = lazy(() => import('./pages/SupportDashboard').then((m) => ({ default: m.SupportDashboard })));
+const Documents = lazy(() => import('./pages/Documents').then((m) => ({ default: m.Documents })));
+const WorkflowBuilder = lazy(() => import('./pages/WorkflowBuilder').then((m) => ({ default: m.WorkflowBuilder })));
+const PolicyRules = lazy(() => import('./pages/PolicyRules').then((m) => ({ default: m.PolicyRules })));
+const Conformite = lazy(() => import('./pages/Conformite').then((m) => ({ default: m.Conformite })));
+const PiecesEcheances = lazy(() => import('./pages/PiecesEcheances').then((m) => ({ default: m.PiecesEcheances })));
+const Absenteisme = lazy(() => import('./pages/Absenteisme').then((m) => ({ default: m.Absenteisme })));
+const JoursFeries = lazy(() => import('./pages/JoursFeries').then((m) => ({ default: m.JoursFeries })));
+const Prets = lazy(() => import('./pages/Prets').then((m) => ({ default: m.Prets })));
+const SuiviCdd = lazy(() => import('./pages/SuiviCdd').then((m) => ({ default: m.SuiviCdd })));
+const Procedures = lazy(() => import('./pages/Procedures').then((m) => ({ default: m.Procedures })));
+const Budget = lazy(() => import('./pages/Budget').then((m) => ({ default: m.Budget })));
+const Signataires = lazy(() => import('./pages/Signataires').then((m) => ({ default: m.Signataires })));
+const Remuneration = lazy(() => import('./pages/Remuneration').then((m) => ({ default: m.Remuneration })));
+const Delegations = lazy(() => import('./pages/Delegations').then((m) => ({ default: m.Delegations })));
+const FichesPoste = lazy(() => import('./pages/FichesPoste').then((m) => ({ default: m.FichesPoste })));
+const Requeteur = lazy(() => import('./pages/Requeteur').then((m) => ({ default: m.Requeteur })));
+const ReleveHeures = lazy(() => import('./pages/ReleveHeures').then((m) => ({ default: m.ReleveHeures })));
+const Historique = lazy(() => import('./pages/Historique').then((m) => ({ default: m.Historique })));
+const TaskBoard = lazy(() => import('./pages/TaskBoard').then((m) => ({ default: m.TaskBoard })));
+const SkillsMatrix = lazy(() => import('./pages/SkillsMatrix').then((m) => ({ default: m.SkillsMatrix })));
+const Timesheet = lazy(() => import('./pages/Timesheet').then((m) => ({ default: m.Timesheet })));
+const Expenses = lazy(() => import('./pages/Expenses').then((m) => ({ default: m.Expenses })));
+const Engagement = lazy(() => import('./pages/Engagement').then((m) => ({ default: m.Engagement })));
+const Workflows = lazy(() => import('./pages/Workflows').then((m) => ({ default: m.Workflows })));
+const HSE = lazy(() => import('./pages/HSE').then((m) => ({ default: m.HSE })));
+const Assets = lazy(() => import('./pages/Assets').then((m) => ({ default: m.Assets })));
+const Analytics = lazy(() => import('./pages/Analytics').then((m) => ({ default: m.Analytics })));
+const Announcements = lazy(() => import('./pages/Announcements').then((m) => ({ default: m.Announcements })));
+const SalaryAdvances = lazy(() => import('./pages/SalaryAdvances').then((m) => ({ default: m.SalaryAdvances })));
+const Rewards = lazy(() => import('./pages/Rewards').then((m) => ({ default: m.Rewards })));
+const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
+const PublicCareers = lazy(() => import('./pages/PublicCareers').then((m) => ({ default: m.PublicCareers })));
+const PublicDocument = lazy(() => import('./pages/PublicDocument').then((m) => ({ default: m.PublicDocument })));
+const PublicSignature = lazy(() => import('./pages/PublicSignature').then((m) => ({ default: m.PublicSignature })));
+const Referrals = lazy(() => import('./pages/Referrals').then((m) => ({ default: m.Referrals })));
+const Mentorship = lazy(() => import('./pages/Mentorship').then((m) => ({ default: m.Mentorship })));
+const ContractStudio = lazy(() => import('./pages/ContractStudio').then((m) => ({ default: m.ContractStudio })));
+const WhatsappGateway = lazy(() => import('./pages/WhatsappGateway').then((m) => ({ default: m.WhatsappGateway })));
+const MedicalVisitsHub = lazy(() => import('./pages/MedicalVisitsHub').then((m) => ({ default: m.MedicalVisitsHub })));
+const ClimateSurveys = lazy(() => import('./pages/ClimateSurveys').then((m) => ({ default: m.ClimateSurveys })));
+const Offboarding = lazy(() => import('./pages/Offboarding').then((m) => ({ default: m.Offboarding })));
+const KudosWall = lazy(() => import('./pages/KudosWall').then((m) => ({ default: m.KudosWall })));
+const AiSourcing = lazy(() => import('./pages/AiSourcing').then((m) => ({ default: m.AiSourcing })));
+const PayrollSimulation = lazy(() => import('./pages/PayrollSimulation').then((m) => ({ default: m.PayrollSimulation })));
+const ShiftScheduler = lazy(() => import('./pages/ShiftScheduler').then((m) => ({ default: m.ShiftScheduler })));
+const Benefits = lazy(() => import('./pages/Benefits').then((m) => ({ default: m.Benefits })));
+const Ethics = lazy(() => import('./pages/Ethics').then((m) => ({ default: m.Ethics })));
+const Subcontractors = lazy(() => import('./pages/Subcontractors').then((m) => ({ default: m.Subcontractors })));
+const DeiDashboard = lazy(() => import('./pages/DeiDashboard').then((m) => ({ default: m.DeiDashboard })));
+const CareerPath = lazy(() => import('./pages/CareerPath').then((m) => ({ default: m.CareerPath })));
+const TeamHealth = lazy(() => import('./pages/TeamHealth').then((m) => ({ default: m.TeamHealth })));
+const PublicPortal = lazy(() => import('./pages/PublicPortal').then((m) => ({ default: m.PublicPortal })));
+const VerifyDocument = lazy(() => import('./pages/VerifyDocument').then((m) => ({ default: m.VerifyDocument })));
+const SimulateurEmbauche = lazy(() => import('./pages/SimulateurEmbauche').then((m) => ({ default: m.SimulateurEmbauche })));
+const TalentMarketplace = lazy(() => import('./pages/TalentMarketplace').then((m) => ({ default: m.TalentMarketplace })));
+const DoleancesDelegues = lazy(() => import('./pages/DoleancesDelegues').then((m) => ({ default: m.DoleancesDelegues })));
+const GestionFDFP = lazy(() => import('./pages/GestionFDFP').then((m) => ({ default: m.GestionFDFP })));
+const Feedback360 = lazy(() => import('./pages/Feedback360').then((m) => ({ default: m.Feedback360 })));
+const ParcoursOnboarding = lazy(() => import('./pages/ParcoursOnboarding').then((m) => ({ default: m.ParcoursOnboarding })));
+const PlanSuccession = lazy(() => import('./pages/PlanSuccession').then((m) => ({ default: m.PlanSuccession })));
+const MutuelleSante = lazy(() => import('./pages/MutuelleSante').then((m) => ({ default: m.MutuelleSante })));
+const BarometreQVT = lazy(() => import('./pages/BarometreQVT').then((m) => ({ default: m.BarometreQVT })));
+const KiosqueAttestations = lazy(() => import('./pages/KiosqueAttestations').then((m) => ({ default: m.KiosqueAttestations })));
+const PeriodesEssai = lazy(() => import('./pages/PeriodesEssai').then((m) => ({ default: m.PeriodesEssai })));
+const StudioOKR = lazy(() => import('./pages/StudioOKR').then((m) => ({ default: m.StudioOKR })));
+const ObservatoireGPEC = lazy(() => import('./pages/ObservatoireGPEC').then((m) => ({ default: m.ObservatoireGPEC })));
+const RegistreUniquePersonnel = lazy(() => import('./pages/RegistreUniquePersonnel').then((m) => ({ default: m.RegistreUniquePersonnel })));
+const ComiteCSST = lazy(() => import('./pages/ComiteCSST').then((m) => ({ default: m.ComiteCSST })));
+const FlotteMobile = lazy(() => import('./pages/FlotteMobile').then((m) => ({ default: m.FlotteMobile })));
+const RegistreVisiteurs = lazy(() => import('./pages/RegistreVisiteurs').then((m) => ({ default: m.RegistreVisiteurs })));
+const EnquetesAccidents = lazy(() => import('./pages/EnquetesAccidents').then((m) => ({ default: m.EnquetesAccidents })));
+const EntretiensDepart = lazy(() => import('./pages/EntretiensDepart').then((m) => ({ default: m.EntretiensDepart })));
+const BilansCarriere = lazy(() => import('./pages/BilansCarriere').then((m) => ({ default: m.BilansCarriere })));
+const InnovationParticipative = lazy(() => import('./pages/InnovationParticipative').then((m) => ({ default: m.InnovationParticipative })));
+const RelationsEcolesCampus = lazy(() => import('./pages/RelationsEcolesCampus').then((m) => ({ default: m.RelationsEcolesCampus })));
+const SentinelleBurnout = lazy(() => import('./pages/SentinelleBurnout').then((m) => ({ default: m.SentinelleBurnout })));
+const SmartAutomations = lazy(() => import('./pages/SmartAutomations').then((m) => ({ default: m.SmartAutomations })));
+const SalaireALaDemande = lazy(() => import('./pages/SalaireALaDemande').then((m) => ({ default: m.SalaireALaDemande })));
+const SimulateurCarriereIA = lazy(() => import('./pages/SimulateurCarriereIA').then((m) => ({ default: m.SimulateurCarriereIA })));
+const GreenHR = lazy(() => import('./pages/GreenHR').then((m) => ({ default: m.GreenHR })));
+
+
 
 import { FloatingChat } from './components/FloatingChat';
-import { CareerPath } from './pages/CareerPath';
 import { CommandCenter } from './components/CommandCenter';
-import { TeamHealth } from './pages/TeamHealth';
 import { FeedbackWidget } from './components/FeedbackWidget';
-import { PublicPortal } from './pages/PublicPortal';
-import { VerifyDocument } from './pages/VerifyDocument';
 import { BottomNav } from './components/layout/BottomNav';
-import { SimulateurEmbauche } from './pages/SimulateurEmbauche';
-import { TalentMarketplace } from './pages/TalentMarketplace';
-import { DoleancesDelegues } from './pages/DoleancesDelegues';
-import { GestionFDFP } from './pages/GestionFDFP';
-import { Feedback360 } from './pages/Feedback360';
-import { ParcoursOnboarding } from './pages/ParcoursOnboarding';
-import { PlanSuccession } from './pages/PlanSuccession';
-import { MutuelleSante } from './pages/MutuelleSante';
-import { BarometreQVT } from './pages/BarometreQVT';
-import { KiosqueAttestations } from './pages/KiosqueAttestations';
-import { PeriodesEssai } from './pages/PeriodesEssai';
-import { StudioOKR } from './pages/StudioOKR';
-import { ObservatoireGPEC } from './pages/ObservatoireGPEC';
-import { RegistreUniquePersonnel } from './pages/RegistreUniquePersonnel';
-import { ComiteCSST } from './pages/ComiteCSST';
-import { FlotteMobile } from './pages/FlotteMobile';
-import { RegistreVisiteurs } from './pages/RegistreVisiteurs';
-import { EnquetesAccidents } from './pages/EnquetesAccidents';
-import { EntretiensDepart } from './pages/EntretiensDepart';
-import { BilansCarriere } from './pages/BilansCarriere';
-import { InnovationParticipative } from './pages/InnovationParticipative';
-import { RelationsEcolesCampus } from './pages/RelationsEcolesCampus';
-import { SentinelleBurnout } from './pages/SentinelleBurnout';
-import { SmartAutomations } from './pages/SmartAutomations';
-import { SalaireALaDemande } from './pages/SalaireALaDemande';
-import { SimulateurCarriereIA } from './pages/SimulateurCarriereIA';
-import { GreenHR } from './pages/GreenHR';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -932,11 +949,31 @@ const AppContent = () => {
   );
 };
 
+/**
+ * Attente de chargement d'un écran.
+ *
+ * Les écrans arrivent désormais par fragments : entre le clic et l'affichage,
+ * il s'écoule le temps d'une requête. Sans cet écran d'attente, la page
+ * resterait blanche — ce qui se lit comme une panne, pas comme un chargement.
+ */
+function EcranEnChargement() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+        <p className="text-slate-600 font-medium">Chargement de l'écran…</p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <AppContent />
+        <Suspense fallback={<EcranEnChargement />}>
+          <AppContent />
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );

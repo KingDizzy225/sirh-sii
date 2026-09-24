@@ -1581,3 +1581,51 @@ lui-même une attestation scellée depuis son badge.
 `indemnite_journaliere`, `scrutin`, `mandat_delegue` et `reunion_delegues`
 restent en place, simplement plus alimentées. Les faire tomber demandera une
 migration explicite, à décider séparément.
+
+## Avant la bascule chez SII — ce qui a été fait, ce qui reste
+
+Lot de mise en production livré le 24 septembre 2026.
+
+### Corrigé
+
+| Point | Avant | Après |
+|---|---|---|
+| Langue du document | `lang="en"` | `lang="fr"` — les lecteurs d'écran lisent le français correctement |
+| Adresse du visiteur | celle du proxy, pour tout le monde | `trust proxy` : le limiteur de débit distingue les clients, les traces d'audit portent la bonne adresse |
+| Table des rôles | une par côté, divergentes | une seule (`src/lib/roles.js`), alignée sur le serveur |
+| Assistant social | refusé sur ses propres écrans | reconnu |
+| `RequirePermission` | ignorait la permission demandée | applique ce qu'il annonce |
+| Premier chargement | 128 écrans importés au démarrage | chargés à la demande, avec écran d'attente |
+| Fiches en double | rien ne les empêchait | une correspondance certaine (CNPS ou matricule) arrête la création |
+
+### Ce qui reste à faire, et par qui
+
+**Par Ibrahim, avant d'ouvrir aux salariés** — ces trois-là ne sont pas dans le
+code, et personne d'autre ne doit les déclencher :
+
+1. `DISABLE_TEST_ACCOUNTS=true` sur Render — le mot de passe des comptes de
+   démonstration est affiché sur l'écran de connexion.
+2. `VITE_DEMO_MODE=false` sur Vercel — mais créer un compte réel **avant**,
+   sinon plus personne n'entre.
+3. `npm run purge-demo -- --confirm` une fois les vraies données chargées.
+
+**Par le service informatique** : voir `docs/PASSATION-IT.md`.
+
+**Par le cabinet comptable** : les valeurs que l'application refuse d'inventer
+et sans lesquelles certaines fonctions restent muettes — SMIG, barème de
+l'allocation de fin de carrière, plafond d'exonération du transport, forfaits
+de per diem, taux d'indemnisation CNPS, quota de travailleurs handicapés.
+
+**Par la banque** : le format de fichier de virement. Tant qu'il n'est pas
+connu, le fichier produit reste un CSV générique.
+
+### Contrôle du doublon à la création
+
+Une fiche dont le numéro CNPS ou le matricule correspond à une fiche existante
+est refusée avec un code 409 et le nom de la fiche concernée. S'il s'agit bien
+d'une autre personne — homonymie, réembauche —, renvoyer la demande avec
+`confirmerDoublon: true`.
+
+La contrainte d'unicité sur le numéro CNPS **n'a pas été posée en base** : elle
+échouerait sur les doublons déjà présents. L'inventaire se lit par
+`lib/doublon.js` → `inventaire()`, à passer avant d'ajouter la contrainte.
