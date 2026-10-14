@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Tv, Copy, ExternalLink, Ban, Store, Coffee, ScanLine } from 'lucide-react';
+import { Tv, Copy, ExternalLink, Ban, Store, Coffee, ScanLine, PartyPopper, Sparkles } from 'lucide-react';
 import { api, listeSure } from '../lib/api.js';
 
 /**
@@ -22,6 +22,8 @@ export function EcransAgence() {
     const [saisie, setSaisie] = useState({ nom: '', workSiteId: '', visibleClientele: null });
     const [message, setMessage] = useState(null);
     const [envoi, setEnvoi] = useState(false);
+    const [celebrationForm, setCelebrationForm] = useState(null);
+    const [envoiCelebration, setEnvoiCelebration] = useState(false);
 
     const charger = useCallback(async () => {
         try {
@@ -77,6 +79,26 @@ export function EcransAgence() {
             setMessage({ ton: 'ok', texte: 'Lien copié.' });
         } catch {
             setMessage({ ton: 'alerte', texte: lien });
+        }
+    };
+
+    const lancerCelebration = async (ev) => {
+        ev.preventDefault();
+        if (!celebrationForm) return;
+        setEnvoiCelebration(true);
+        try {
+            await api.post(`/ecrans/${celebrationForm.ecran.id}/celebrer`, {
+                type: celebrationForm.type,
+                titre: celebrationForm.titre,
+                sousTitre: celebrationForm.sousTitre,
+                dureeMinutes: parseInt(celebrationForm.dureeMinutes, 10) || 30
+            });
+            setMessage({ ton: 'ok', texte: `🎉 Mode célébration activé sur « ${celebrationForm.ecran.nom} » !` });
+            setCelebrationForm(null);
+        } catch (err) {
+            setMessage({ ton: 'alerte', texte: err.message || 'Échec du déclenchement.' });
+        } finally {
+            setEnvoiCelebration(false);
         }
     };
 
@@ -180,6 +202,9 @@ export function EcransAgence() {
                                             <td className="py-3 text-right whitespace-nowrap">
                                                 {!e.revoqueLe && (
                                                     <div className="flex justify-end gap-2">
+                                                        <Button variant="outline" size="sm" onClick={() => setCelebrationForm({ ecran: e, titre: 'Bravo pour la performance ! 🚀', sousTitre: "Félicitations à l'équipe pour l'atteinte des objectifs !", type: 'CHALLENGE', dureeMinutes: 30 })} className="text-amber-700 border-amber-300 hover:bg-amber-50" title="Célébrer sur cet écran">
+                                                            <PartyPopper className="w-4 h-4 mr-1 text-amber-500" /> Célébrer
+                                                        </Button>
                                                         <Button variant="outline" size="sm" onClick={() => copier(e.lien)}><Copy className="w-4 h-4 mr-1" /> Lien</Button>
                                                         <Button variant="outline" size="sm" onClick={() => window.open(e.lien, '_blank', 'noopener')}><ExternalLink className="w-4 h-4" /></Button>
                                                         <Button variant="outline" size="sm" onClick={() => revoquer(e)}><Ban className="w-4 h-4 text-rose-600" /></Button>
@@ -194,6 +219,79 @@ export function EcransAgence() {
                     )}
                 </CardContent>
             </Card>
+
+            {celebrationForm && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <Card className="max-w-lg w-full bg-white shadow-2xl border-amber-200">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-amber-800">
+                                <PartyPopper className="w-6 h-6 text-amber-500" /> Mode Célébration : {celebrationForm.ecran.nom}
+                            </CardTitle>
+                            <CardDescription>
+                                Déclenche une bannière animée festive avec confettis sur la TV pendant une durée déterminée.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={lancerCelebration} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">Type de célébration</label>
+                                    <select
+                                        value={celebrationForm.type}
+                                        onChange={(ev) => setCelebrationForm(s => ({ ...s, type: ev.target.value }))}
+                                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"
+                                    >
+                                        <option value="CHALLENGE">🏆 Challenge & Objectif Atteint</option>
+                                        <option value="ANNIVERSAIRE">🎂 Anniversaire Collaborateur</option>
+                                        <option value="RECORD">⭐ Record Commercial / Vente</option>
+                                        <option value="BIENVENUE">👋 Bienvenue dans l'équipe</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">Titre affiché</label>
+                                    <input
+                                        value={celebrationForm.titre}
+                                        onChange={(ev) => setCelebrationForm(s => ({ ...s, titre: ev.target.value }))}
+                                        placeholder="Bravo pour le challenge Orange Money !"
+                                        required
+                                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-medium"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">Message / Félicitations</label>
+                                    <textarea
+                                        value={celebrationForm.sousTitre}
+                                        onChange={(ev) => setCelebrationForm(s => ({ ...s, sousTitre: ev.target.value }))}
+                                        rows={3}
+                                        placeholder="Toute la direction commerciale et l'équipe vous félicitent !"
+                                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">Durée d'affichage</label>
+                                    <select
+                                        value={celebrationForm.dureeMinutes}
+                                        onChange={(ev) => setCelebrationForm(s => ({ ...s, dureeMinutes: parseInt(ev.target.value, 10) }))}
+                                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 bg-white"
+                                    >
+                                        <option value={15}>15 minutes</option>
+                                        <option value={30}>30 minutes</option>
+                                        <option value={60}>1 heure</option>
+                                        <option value={120}>2 heures</option>
+                                    </select>
+                                </div>
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <Button type="button" variant="outline" onClick={() => setCelebrationForm(null)}>
+                                        Annuler
+                                    </Button>
+                                    <Button type="submit" disabled={envoiCelebration} className="bg-amber-600 hover:bg-amber-700 text-white">
+                                        {envoiCelebration ? 'Lancement…' : '🎉 Lancer sur l\'écran'}
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

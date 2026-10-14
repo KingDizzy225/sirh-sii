@@ -1,10 +1,42 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Cake, Megaphone, Heart, Wallet, WifiOff, MonitorOff, BookHeart, ScanLine, ClipboardList } from 'lucide-react';
+import { Users, Cake, Megaphone, Heart, Wallet, WifiOff, MonitorOff, BookHeart, ScanLine, ClipboardList, PartyPopper, Trophy, Sparkles, Award } from 'lucide-react';
 import { useIdentite, logoUrl } from '../lib/identite.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+function ConfettisOverlay() {
+    const particules = [
+        { c: 'bg-amber-400', l: '5%', d: 0, s: 14 },
+        { c: 'bg-rose-500', l: '12%', d: 0.4, s: 18 },
+        { c: 'bg-orange-400', l: '20%', d: 0.2, s: 16 },
+        { c: 'bg-emerald-400', l: '28%', d: 0.7, s: 12 },
+        { c: 'bg-sky-400', l: '35%', d: 0.1, s: 15 },
+        { c: 'bg-purple-400', l: '42%', d: 0.5, s: 14 },
+        { c: 'bg-pink-400', l: '50%', d: 0.3, s: 18 },
+        { c: 'bg-yellow-300', l: '58%', d: 0.8, s: 13 },
+        { c: 'bg-orange-500', l: '65%', d: 0.2, s: 15 },
+        { c: 'bg-teal-400', l: '72%', d: 0.6, s: 12 },
+        { c: 'bg-indigo-400', l: '80%', d: 0.4, s: 16 },
+        { c: 'bg-rose-400', l: '88%', d: 0.1, s: 14 },
+        { c: 'bg-amber-300', l: '95%', d: 0.7, s: 15 },
+    ];
+    return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+            {particules.map((p, i) => (
+                <motion.div
+                    key={i}
+                    initial={{ y: -40, opacity: 1, rotate: 0 }}
+                    animate={{ y: ['0vh', '110vh'], rotate: [0, 720], x: [0, (i % 2 === 0 ? 30 : -30), 0] }}
+                    transition={{ repeat: Infinity, duration: 4.5 + (i % 3), delay: p.d, ease: 'linear' }}
+                    style={{ left: p.l, width: p.s, height: p.s }}
+                    className={`absolute rounded-sm ${p.c} shadow-md`}
+                />
+            ))}
+        </div>
+    );
+}
 
 /**
  * Mur d'agence : la page qui tourne en boucle sur la TV de la boutique.
@@ -121,11 +153,13 @@ export function MurAgence() {
     // Seuls les panneaux qui ont quelque chose à dire entrent dans la rotation.
     const panneaux = [];
     if (contenu) {
+        if (contenu.celebration) panneaux.push('celebration');
         panneaux.push('presence');
         if (contenu.anniversaires.length > 0) panneaux.push('anniversaires');
         if (contenu.annonces.length > 0) panneaux.push('annonces');
         if (contenu.kudos.length > 0) panneaux.push('kudos');
         if ((contenu.livresDor || []).length > 0) panneaux.push('livres');
+        if (contenu.battle) panneaux.push('battle');
         if (contenu.passation) panneaux.push('passation');
     }
     const nombrePanneaux = panneaux.length;
@@ -173,6 +207,57 @@ export function MurAgence() {
 
             <main className="flex-1 min-h-0 relative">
                 <AnimatePresence mode="wait">
+                    {courant === 'celebration' && contenu.celebration && (
+                        <motion.section
+                            key="celebration"
+                            initial={{ opacity: 0, scale: 0.94 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 1.04 }}
+                            transition={{ duration: 0.7, ease: 'easeOut' }}
+                            className="h-full flex flex-col justify-center items-center text-center relative px-8"
+                        >
+                            <ConfettisOverlay />
+                            <div className="mb-6 flex items-center justify-center gap-6">
+                                <span className="p-5 rounded-3xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-2xl">
+                                    <PartyPopper className="w-14 h-14 animate-bounce" />
+                                </span>
+                                <span className="text-2xl font-black uppercase tracking-[0.3em] text-amber-300 bg-amber-500/15 px-8 py-3 rounded-full border border-amber-400/30 shadow-lg">
+                                    {contenu.celebration.type === 'ANNIVERSAIRE' ? '🎉 Célébration Spéciale' : '🏆 Challenge & Fierté Agence'}
+                                </span>
+                                <span className="p-5 rounded-3xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-2xl">
+                                    <Trophy className="w-14 h-14 animate-pulse" />
+                                </span>
+                            </div>
+
+                            <motion.h2
+                                initial={{ y: 20 }}
+                                animate={{ y: 0 }}
+                                className="text-7xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-orange-300 to-rose-300 drop-shadow-2xl mb-8 leading-tight max-w-5xl"
+                            >
+                                {contenu.celebration.titre}
+                            </motion.h2>
+
+                            {contenu.celebration.sousTitre && (
+                                <motion.p
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="text-4xl text-slate-100 max-w-4xl font-normal leading-relaxed bg-white/10 backdrop-blur-md px-12 py-7 rounded-3xl border border-white/20 shadow-2xl"
+                                >
+                                    {contenu.celebration.sousTitre}
+                                </motion.p>
+                            )}
+
+                            {contenu.celebration.beneficiaire && (
+                                <div className="mt-8">
+                                    <span className="px-8 py-3.5 rounded-full bg-gradient-to-r from-pink-500 to-orange-500 text-3xl font-bold shadow-2xl flex items-center gap-3">
+                                        <Sparkles className="w-8 h-8 text-amber-200" /> À l'honneur : {contenu.celebration.beneficiaire}
+                                    </span>
+                                </div>
+                            )}
+                        </motion.section>
+                    )}
+
                     {courant === 'presence' && (
                         <Panneau key="presence" icone={Users} titre="Aujourd'hui en agence" teinte="bg-emerald-500/20 text-emerald-300">
                             <div className="flex items-center gap-16 h-full">
@@ -259,6 +344,24 @@ export function MurAgence() {
                                         </div>
                                     </motion.div>
                                 ))}
+                            </div>
+                        </Panneau>
+                    )}
+                    {courant === 'battle' && contenu.battle && (
+                        <Panneau key="battle" icone={Trophy} titre="Live Battle des Agences" teinte="bg-amber-500/20 text-amber-300">
+                            <div className="rounded-3xl bg-linear-to-r from-orange-500/20 to-amber-500/20 border border-amber-400/30 p-10 space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-3xl font-black uppercase tracking-wider text-amber-300">
+                                        👑 Agence N°1 de la semaine :
+                                    </span>
+                                    <span className="text-4xl font-extrabold text-white bg-amber-500/30 px-6 py-2 rounded-2xl border border-amber-300/40">
+                                        {contenu.battle.topAgence}
+                                    </span>
+                                </div>
+                                <div className="p-6 bg-black/30 rounded-2xl border border-white/10">
+                                    <p className="text-2xl text-slate-300 font-medium">Sprint en cours :</p>
+                                    <p className="text-4xl font-bold text-orange-200 mt-2">{contenu.battle.defiEnCours}</p>
+                                </div>
                             </div>
                         </Panneau>
                     )}

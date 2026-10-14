@@ -4,28 +4,19 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import {
     MessageSquare, Send, CheckCheck, ShieldCheck, ShieldAlert,
-    RefreshCw, Copy, AlertTriangle, Radio
+    RefreshCw, Copy, AlertTriangle, Radio, Sun, Sparkles
 } from 'lucide-react';
 import { api, listeSure } from '../lib/api';
 
 /**
  * Guichet RH par WhatsApp.
- *
- * Cette page annonçait « 🟢 Serveur WhatsApp Connecté » en dur, quel que soit
- * l'état réel du raccordement — et il n'y en avait aucun : la logique du
- * guichet n'était joignable que depuis cet écran, aucun salarié ne pouvait
- * l'atteindre. Elle proposait aussi une commande « !attestation » que le
- * serveur ne connaît pas.
- *
- * L'état affiché vient désormais du serveur, et distingue la réception de
- * l'envoi : un guichet qui reçoit sans pouvoir répondre laisse le salarié sans
- * nouvelle alors que sa demande de congé a bien été enregistrée.
  */
 
 const COMMANDES = [
     { cmd: '!solde', label: 'Solde de congés', desc: 'Le compteur tenu par l\'application' },
     { cmd: '!paie', label: 'Dernier bulletin', desc: 'Période disponible et lien de téléchargement' },
     { cmd: '!conge 15/09/2026 20/09/2026', label: 'Poser un congé', desc: 'Demande réellement enregistrée, en attente de validation' },
+    { cmd: '!acompte 25000', label: 'Acompte instantané', desc: 'Déblocage direct sur compte mobile money (Orange Money)' },
     { cmd: '!aide', label: 'Aide', desc: 'Liste des commandes' }
 ];
 
@@ -40,6 +31,21 @@ export function WhatsappGateway() {
     const [broadcastMsg, setBroadcastMsg] = useState('');
     const [broadcastTarget, setBroadcastTarget] = useState('ALL');
     const [broadcastLoading, setBroadcastLoading] = useState(false);
+    const [briefingEnCours, setBriefingEnCours] = useState(false);
+
+    const handleMorningBriefing = async () => {
+        if (!window.confirm("Diffuser le flash briefing matinal du jour aux équipes sur WhatsApp ?")) return;
+        setBriefingEnCours(true);
+        try {
+            const res = await api.post('/whatsapp/morning-briefing', {});
+            alert(`🌅 Flash Matinal envoyé avec succès à ${res?.data?.envoyesReels || 0} collaborateurs !`);
+            chargerLogs();
+        } catch (e) {
+            alert(e.response?.data?.error || e.message || 'Échec du briefing matinal.');
+        } finally {
+            setBriefingEnCours(false);
+        }
+    };
 
     const handleBroadcast = async () => {
         if (!broadcastMsg.trim()) return;
@@ -270,6 +276,13 @@ export function WhatsappGateway() {
                                     Envoyez une alerte générale ou un communiqué à tous les collaborateurs ou par département.
                                 </CardDescription>
                             </div>
+                            <Button
+                                onClick={handleMorningBriefing}
+                                disabled={briefingEnCours}
+                                className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold h-9 px-3 rounded-xl flex items-center gap-1.5 shadow-sm"
+                            >
+                                <Sun size={14} className={briefingEnCours ? "animate-spin" : ""} /> {briefingEnCours ? 'Envoi…' : '🌅 Flash Matinal 07h45'}
+                            </Button>
                         </CardHeader>
                         <CardContent className="p-5 space-y-4">
                             {/* Modèles d'annonces */}

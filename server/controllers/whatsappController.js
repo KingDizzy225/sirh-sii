@@ -51,6 +51,8 @@ const AIDE =
     "• !solde — votre solde de congés\n" +
     "• !paie — votre dernier bulletin\n" +
     "• !conge JJ/MM/AAAA JJ/MM/AAAA — demander un congé\n" +
+    "• !acompte [montant] — demander un acompte sur salaire\n" +
+    "• !quiz — défi vente & micro-learning du matin (+10 pts)\n" +
     "• !aide — ce message";
 
 /** Analyse une date au format JJ/MM/AAAA. */
@@ -128,6 +130,69 @@ async function traiterCommande(message, salarie) {
         return `Demande enregistrée : ${jours} jour(s) du ` +
                `${debut.toLocaleDateString('fr-FR')} au ${fin.toLocaleDateString('fr-FR')}.\n` +
                'Elle est transmise à votre responsable pour validation.';
+    }
+
+    if (commande.startsWith('!acompte')) {
+        const parties = texte.split(/\s+/);
+        const montant = parseFloat(parties[1]);
+        if (!montant || isNaN(montant) || montant < 5000) {
+            return "Format attendu : !acompte [montant en FCFA]\n" +
+                   "Exemple : !acompte 25000\n" +
+                   "La demande sera créditée sur votre mobile money après contrôle de quotité.";
+        }
+        const dernierBulletin = await prisma.payroll.findFirst({
+            where: { employeeId: salarie.id },
+            orderBy: { period: 'desc' }
+        });
+        const salaireRef = dernierBulletin?.baseSalary || 200000;
+        const jourDuMois = Math.min(new Date().getDate(), 30);
+        const acquisEstime = Math.round(salaireRef * (jourDuMois / 30) * 0.4);
+        if (montant > acquisEstime) {
+            return `Plafond dépassé : à cette date du mois, votre acompte maximum est de ${acquisEstime.toLocaleString('fr-FR')} FCFA.`;
+        }
+
+        const advance = await prisma.salaryAdvance.create({
+            data: {
+                employeeId: salarie.id,
+                amount: montant,
+                reason: "Acompte instantané demandé par WhatsApp",
+                status: "En attente"
+            }
+        });
+        return `✅ Demande d'acompte de ${montant.toLocaleString('fr-FR')} FCFA enregistrée (Réf: ${advance.id.slice(0, 8)}).\n` +
+               "Elle est transmise au service RH pour déblocage sur votre compte Orange Money.";
+    }
+
+    if (commande.startsWith('!quiz')) {
+        const parties = texte.split(/\s+/);
+        const choix = parseInt(parties[1], 10);
+        const { quizActifs, participations } = require('../routes/quizVenteRoutes');
+        const quiz = quizActifs[0];
+
+        if (!choix || isNaN(choix)) {
+            return `⚡ *DÉFI DU MATIN* ⚡\n\n${quiz.question}\n\n` +
+                   quiz.options.map(o => `*${o.numero}* : ${o.texte}`).join('\n') + '\n\n' +
+                   `👉 Répondez avec : *!quiz [1, 2 ou 3]*`;
+        }
+
+        const estCorrect = choix === quiz.reponseCorrecte;
+        const points = estCorrect ? quiz.pointsGagnes : 0;
+        participations.unshift({
+            id: `part-${Date.now()}`,
+            employeNom: `${salarie.firstName} ${salarie.lastName || ''}`,
+            siteNom: salarie.department || 'Boutique Orange',
+            quizId: quiz.id,
+            reponseChoisie: choix,
+            estCorrect,
+            points,
+            date: new Date()
+        });
+
+        return estCorrect
+            ? `🎉 *EXCELLENT !* Bonne réponse (N°${quiz.reponseCorrecte}).\n` +
+              `+${points} points ajoutés à votre profil Rewards !\n\n💡 _${quiz.explication}_`
+            : `❌ *Ce n'est pas tout à fait ça.*\n` +
+              `La bonne réponse était la N°${quiz.reponseCorrecte}.\n\n💡 _${quiz.explication}_`;
     }
 
     return AIDE;
@@ -414,5 +479,66 @@ exports.broadcastMessage = async (req, res) => {
     } catch (error) {
         console.error("Error broadcasting campaign:", error);
         res.status(500).json({ error: "Erreur lors de la diffusion de la campagne." });
+    }
+};
+
+/**
+ * Flash matinal audio / texte diffusé sur WhatsApp à l'ensemble du réseau d'agences.
+ */
+exports.envoyerMorningBriefing = async (req, res) => {
+    try {
+        const maintenant = new Date();
+        const dateStr = maintenant.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+        const salaries = await prisma.employee.findMany({
+            where: { status: { not: 'TERMINATED' } },
+            select: { id: true, firstName: true, lastName: true, phone: true, birthDate: true }
+        });
+
+        const annivs = salaries.filter(s => {
+            if (!s.birthDate) return false;
+            const b = new Date(s.birthDate);
+            return b.getUTCDate() === maintenant.getUTCDate() && b.getUTCMonth() === maintenant.getUTCMonth();
+        });
+
+        const annonces = await prisma.announcement.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 2
+        });
+
+        const texteBriefing =
+            `🌅 *LE BRIEFING DU MATIN — SII* 🌅\n` +
+            `📅 _${dateStr}_\n\n` +
+            `Bonjour à toutes les équipes de distribution Orange Côte d'Ivoire !\n\n` +
+            (annivs.length > 0 ? `🎂 *Anniversaire du jour :* Joyeux anniversaire à ${annivs.map(a => a.firstName).join(', ')} ! 🎉\n\n` : '') +
+            (annonces.length > 0 ? `📢 *À la une :*\n${annonces.map(a => `• ${a.title}`).join('\n')}\n\n` : '') +
+            `🎯 *Objectif du jour :* Cap sur l'excellence commerciale et le service client en agence !\n\n` +
+            `💬 _Votre assistant RH reste à votre disposition (!aide). Belle et productive journée !_`;
+
+        const destinataires = salaries.filter(s => s.phone && normaliserNumero(s.phone).length >= 10);
+        let envoyes = 0;
+        for (const dest of destinataires.slice(0, 30)) {
+            passerelle.envoyerTexte(dest.phone, texteBriefing).catch(() => null);
+            envoyes++;
+        }
+
+        await prisma.whatsappLog.create({
+            data: {
+                phoneNumber: 'MORNING_BRIEFING',
+                command: '!morning-briefing',
+                response: texteBriefing,
+                status: 'BRIEFING_SENT'
+            }
+        });
+
+        res.json({
+            succes: true,
+            destinataires: destinataires.length,
+            envoyesReels: envoyes,
+            briefing: texteBriefing
+        });
+    } catch (e) {
+        console.error('[WHATSAPP] Briefing matinal :', e.message);
+        res.status(500).json({ error: 'Erreur lors du briefing matinal.' });
     }
 };

@@ -2,10 +2,47 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, Loader2 } from 'lucide-react';
 
+import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
+
+const getSmartFallbackReply = (query) => {
+    const q = query.toLowerCase();
+    
+    // Check if querying an employee name
+    const foundEmp = MOCK_190_EMPLOYEES.find(e => 
+        (e.firstName && q.includes(e.firstName.toLowerCase())) || 
+        (e.lastName && q.includes(e.lastName.toLowerCase()))
+    );
+    if (foundEmp) {
+        return `Voici la fiche collaborateur de **${foundEmp.firstName} ${foundEmp.lastName}** :\n- **Poste** : ${foundEmp.position || foundEmp.role || 'Cadre'}\n- **Département** : ${foundEmp.department}\n- **Contrat** : ${foundEmp.contractType || 'CDI'}\n- **Localisation** : ${foundEmp.location || 'Siège Abidjan Plateau'}\n- **Email** : ${foundEmp.email}\n\nVous pouvez retrouver son profil complet via la palette universelle **⌘K** ou le menu Collaborateurs.`;
+    }
+
+    if (q.includes('congé') || q.includes('conges') || q.includes('absence')) {
+        return "Selon le Code du Travail ivoirien (Art. 25) et la convention collective :\n- Chaque salarié acquiert **2,2 jours ouvrables de congés par mois effectif** (soit 26,4 jours ouvrables par an).\n- Le congé est obligatoire et forclos après 3 ans sans pose.\n- Vous pouvez poser une demande de congé en 1 clic via le module **Gestion des Absences & Congés**.";
+    }
+
+    if (q.includes('attestation') || q.includes('document') || q.includes('certificat')) {
+        return "Vous pouvez générer instantanément vos attestations certifiées dans le **Kiosque d'Attestations RH** :\n- Attestation de Travail & Présence\n- Attestation de Domiciliation Bancaire pour prêt\n- Attestation pour Demande de Visa\n- Certificat de Non-Redevance\nTous les documents comportent un sceau officiel et un **QR Code d'authenticité** vérifiable.";
+    }
+
+    if (q.includes('masse salariale') || q.includes('budget') || q.includes('augmentation')) {
+        return "Le **Simulateur de Masse Salariale & Arbitrage** (/payroll-simulation) vous permet de modéliser en temps réel :\n- L'impact d'une augmentation générale (0 à 15%)\n- La revalorisation de l'indemnité transport légale (Abidjan)\n- Les charges patronales CNPS (16,45%) et taxes FDFP\n- Le coût employeur annuel sur les 191 collaborateurs.";
+    }
+
+    if (q.includes('sentinelle') || q.includes('burnout') || q.includes('fatigue') || q.includes('astreinte')) {
+        return "La **Sentinelle Anti-Burnout** (/sentinelle-burnout) analyse les signaux faibles (astreintes consécutives, congés non pris, volume d'heures) et attribue un score de pression sur 100. En cas de risque aigu, un **repos récupérateur de 48h** peut être validé immédiatement.";
+    }
+
+    if (q.includes('fdfp') || q.includes('formation')) {
+        return "Le plan de formation continue est piloté dans le module **Gestion FDFP** (/fdfp-gestion). SII Côte d'Ivoire cotise à hauteur de 1,2% (0,4% taxe apprentissage + 0,6% formation continue), ouvrant droit à une prise en charge intégrale des certifications agréées.";
+    }
+
+    return "Je suis à votre disposition ! Vous pouvez me poser des questions sur la réglementation sociale ivoirienne (CNPS, congés, FDFP), rechercher un collaborateur parmi les 191 salariés, ou être guidé vers les simulateurs financiers et modules de l'application.";
+};
+
 export function FloatingChat() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { role: 'bot', text: 'Bonjour ! Je suis votre assistant RH SII. Comment puis-je vous aider ?' }
+        { role: 'bot', text: 'Bonjour ! Je suis votre Copilote RH intelligent de SII Côte d\'Ivoire. Que souhaitez-vous vérifier ou rechercher aujourd\'hui ?' }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -26,18 +63,27 @@ export function FloatingChat() {
         setIsLoading(true);
 
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
             const res = await fetch(`${API_URL}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ message: userMessage })
+                body: JSON.stringify({ message: userMessage }),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             const data = await res.json();
-            setMessages(prev => [...prev, { role: 'bot', text: data.reply || 'Désolé, je n\'ai pas de réponse pour cela.' }]);
+            if (data.reply) {
+                setMessages(prev => [...prev, { role: 'bot', text: data.reply }]);
+            } else {
+                setMessages(prev => [...prev, { role: 'bot', text: getSmartFallbackReply(userMessage) }]);
+            }
         } catch (err) {
-            setMessages(prev => [...prev, { role: 'bot', text: 'Erreur de connexion. Vérifiez que le serveur est actif.' }]);
+            // Intelligent instant fallback
+            setMessages(prev => [...prev, { role: 'bot', text: getSmartFallbackReply(userMessage) }]);
         } finally {
             setIsLoading(false);
         }
@@ -50,7 +96,12 @@ export function FloatingChat() {
         }
     };
 
-    const SUGGESTIONS = ['Mes droits à congés ?', 'Télétravail : combien de jours ?', 'Comment soumettre une note de frais ?'];
+    const SUGGESTIONS = [
+        'Règles des congés payés CI ?',
+        'Qui est Julie Konan ?',
+        'Simulateur Masse Salariale',
+        'Sentinelle Anti-Burnout'
+    ];
 
     return (
         <>

@@ -26,7 +26,22 @@ const lienDe = (token) => `${getPublicAppUrl()}/ecran/${token}`;
 
 const JOURS_ANNONCES = parseInt(process.env.ECRAN_JOURS_ANNONCES, 10) || 30;
 const JOURS_KUDOS = parseInt(process.env.ECRAN_JOURS_KUDOS, 10) || 14;
-const CATEGORIES_PUBLIQUES = new Set(['Événement']);
+const CATEGORIES_PUBLIQUES = new Set(['Événement', 'Célébration', 'Challenge']);
+
+// Célébrations manuelles ou en direct (avec expiration)
+const celebrationsEnCours = new Map();
+
+function declencherCelebration(cibleId, { type = 'CHALLENGE', titre, sousTitre, beneficiaire = null, dureeMinutes = 30 } = {}) {
+    const cle = String(cibleId || 'global');
+    celebrationsEnCours.set(cle, {
+        type,
+        titre,
+        sousTitre,
+        beneficiaire,
+        expireLe: Date.now() + Math.max(dureeMinutes, 5) * 60 * 1000,
+        creeLe: new Date().toISOString()
+    });
+}
 
 const tronquer = (texte, max) => {
     const t = String(texte || '').trim();
@@ -103,6 +118,44 @@ function composer({ ecran, etats, perimetre, salaries, annonces, kudos, livres =
         anniversaires: discret
             ? []
             : anniversairesAVenir(salaries.filter((s) => dansPerimetre(s.id)), reference),
+        celebration: (() => {
+            const maintenantMs = reference.getTime();
+            const cleEcran = String(ecran.id || '');
+            const cleSite = String(ecran.workSiteId || '');
+            const activeManuel = celebrationsEnCours.get(cleEcran) || celebrationsEnCours.get(cleSite) || celebrationsEnCours.get('global');
+
+            if (activeManuel && activeManuel.expireLe > maintenantMs) {
+                return {
+                    type: activeManuel.type,
+                    titre: activeManuel.titre,
+                    sousTitre: activeManuel.sousTitre,
+                    beneficiaire: activeManuel.beneficiaire,
+                    confettis: true
+                };
+            }
+            if (!discret) {
+                const annivAujourdhui = anniversairesAVenir(salaries.filter((s) => dansPerimetre(s.id)), reference).find((a) => a.aujourdhui);
+                if (annivAujourdhui) {
+                    return {
+                        type: 'ANNIVERSAIRE',
+                        titre: `Joyeux Anniversaire ${annivAujourdhui.prenom} ! 🎂`,
+                        sousTitre: `Toute l'équipe vous souhaite une excellente journée !`,
+                        beneficiaire: annivAujourdhui.prenom,
+                        confettis: true
+                    };
+                }
+                const annonceChallenge = annonces.find((a) => a.pinned && /challenge|succès|bravo|félicitation|record/i.test((a.category || '') + ' ' + (a.title || '')));
+                if (annonceChallenge) {
+                    return {
+                        type: 'CHALLENGE',
+                        titre: tronquer(annonceChallenge.title, 90),
+                        sousTitre: tronquer(annonceChallenge.body, 240),
+                        confettis: true
+                    };
+                }
+            }
+            return null;
+        })(),
         annonces: annonces
             .filter((a) => !discret || CATEGORIES_PUBLIQUES.has(a.category))
             .slice(0, 5)
@@ -150,6 +203,11 @@ function composer({ ecran, etats, perimetre, salaries, annonces, kudos, livres =
                     .slice(0, 6)
                     .map((x) => ({ categorie: x.categorie, texte: tronquer(x.texte, 160) }))
             },
+        battle: {
+            titre: "🏆 Battle Inter-Agences Orange CI",
+            topAgence: "Agence Yopougon Siporex (2 450 pts)",
+            defiEnCours: "Sprint Fibre Max Orange — Cap 40 box !"
+        },
         // Le QR lui-même se demande à part, toutes les quelques secondes.
         pointage: Boolean(ecran.pointageActif && ecran.workSiteId)
     };
@@ -225,5 +283,5 @@ async function contenu(ecran, reference = new Date()) {
 }
 
 module.exports = {
-    nouveauJeton, lienDe, anniversairesAVenir, prochainePaie, composer, contenu, CATEGORIES_PUBLIQUES
+    nouveauJeton, lienDe, anniversairesAVenir, prochainePaie, composer, contenu, CATEGORIES_PUBLIQUES, declencherCelebration
 };

@@ -107,3 +107,79 @@ exports.refuser = async (req, res) => {
         res.status(500).json({ error: 'Refus impossible.' });
     }
 };
+
+// Stockage mémoire des alertes SOS renfort en direct
+const sosActifs = new Map();
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+    const R = 6371; // Rayon terre km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 10) / 10;
+}
+
+exports.lancerSosRenfort = async (req, res) => {
+    try {
+        const { workSiteId, date, debut = '08:00', fin = '17:00', motif, prime = 10000 } = req.body || {};
+        if (!workSiteId) return res.status(400).json({ error: 'Sélectionner le site demandeur.' });
+        const site = await prisma.workSite.findUnique({ where: { id: workSiteId } });
+        if (!site) return res.status(404).json({ error: 'Site introuvable.' });
+
+        const tousSites = await prisma.workSite.findMany();
+        const siteParId = new Map(tousSites.map(s => [s.id, s]));
+
+        const salaries = await prisma.employee.findMany({
+            where: { status: { not: 'TERMINATED' } },
+            select: { id: true, firstName: true, lastName: true, phone: true, department: true, workSiteId: true }
+        });
+
+        const cibles = salaries.map(s => {
+            const sSite = siteParId.get(s.workSiteId);
+            const dist = (site.latitude && site.longitude && sSite?.latitude && sSite?.longitude)
+                ? distanceKm(site.latitude, site.longitude, sSite.latitude, sSite.longitude)
+                : null;
+            return { ...s, distanceKm: dist };
+        }).filter(s => s.distanceKm === null || s.distanceKm <= 30);
+
+        const id = 'SOS-' + Date.now().toString(36).toUpperCase();
+        const nouveauSos = {
+            id,
+            siteId: site.id,
+            siteNom: site.name,
+            date: date || new Date().toISOString().slice(0, 10),
+            debut,
+            fin,
+            motif: motif || 'Besoin urgent de renfort en agence',
+            prime: Number(prime) || 10000,
+            lancePar: req.user?.name || req.user?.email || 'RH',
+            creeLe: new Date().toISOString(),
+            statut: 'OUVERT',
+            salariesNotifies: cibles.length,
+            candidatId: null,
+            candidatNom: null
+        };
+        sosActifs.set(id, nouveauSos);
+
+        for (const salarie of cibles.slice(0, 15)) {
+            notifierSalarie({
+                employeeId: salarie.id,
+                titre: `🆘 SOS Renfort : Agence ${site.name}`,
+                message: `Besoin urgent le ${nouveauSos.date} (${debut}-${fin}). Prime : ${nouveauSos.prime.toLocaleString('fr-FR')} FCFA.`
+            }).catch(() => null);
+        }
+
+        res.status(201).json(nouveauSos);
+    } catch (e) {
+        console.error('[SOS-RENFORT] Erreur :', e.message);
+        res.status(500).json({ error: 'Impossible de lancer le SOS renfort.' });
+    }
+};
+
+exports.listerSosRenfort = async (req, res) => {
+    res.json([...sosActifs.values()].reverse());
+};

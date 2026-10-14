@@ -49,6 +49,7 @@ router.get('/badges/:jeton/photo', badgeController.photo);
 // proposer ou reprendre un créneau.
 const espaceSalarieController = require('../controllers/espaceSalarieController');
 router.post('/badges/:jeton/pointer', espaceSalarieController.pointer);
+router.post('/pulsation', require('./pulsationRoutes'));
 router.get('/badges/:jeton/espace', espaceSalarieController.espace);
 router.post('/badges/:jeton/remplacements', espaceSalarieController.proposer);
 router.post('/badges/:jeton/remplacements/:id/annuler', espaceSalarieController.annuler);

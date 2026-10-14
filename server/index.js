@@ -201,6 +201,7 @@ app.use('/api/succession', verifyToken, require('./routes/successionRoutes'));
 app.use('/api/job-descriptions', verifyToken, require('./routes/jobDescriptionRoutes'));
 app.use('/api/retention', verifyToken, require('./routes/retentionRoutes'));
 app.use('/api/audit', verifyToken, require('./routes/auditRoutes'));
+app.use('/api/juridique', verifyToken, require('./routes/juridiqueRoutes'));
 
 // V6 Enterprise Upgrade - Chatbot IA
 const chatRoutes = require('./routes/chatRoutes');
@@ -231,6 +232,19 @@ app.use('/api/whatsapp', whatsappRoutes);
 
 const surveyRoutes = require('./routes/surveyRoutes');
 app.use('/api/surveys', surveyRoutes);
+
+// Innovations RH - Continuité, Covoiturage, Battle Inter-Boutiques & Pulsation Émotionnelle
+app.use('/api/continuite', verifyToken, require('./routes/continuiteRoutes'));
+app.use('/api/covoiturage', verifyToken, require('./routes/covoiturageRoutes'));
+app.use('/api/battle', verifyToken, require('./routes/battleRoutes'));
+app.use('/api/pulsations', require('./routes/pulsationRoutes'));
+
+// Nouvelles Innovations Opérationnelles Agences Orange CI
+app.use('/api/quiz-vente', verifyToken, require('./routes/quizVenteRoutes'));
+app.use('/api/ouverture-agence', verifyToken, require('./routes/ouvertureAgenceRoutes'));
+app.use('/api/bourse-stock', verifyToken, require('./routes/bourseStockRoutes'));
+app.use('/api/sante-express', verifyToken, require('./routes/santeExpressRoutes'));
+app.use('/api/titularisation', verifyToken, require('./routes/titularisationRoutes'));
 
 // V9 Pointage géolocalisé
 const workSiteRoutes = require('./routes/workSiteRoutes');

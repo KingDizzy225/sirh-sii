@@ -156,3 +156,32 @@ exports.codePointage = async (req, res) => {
         res.status(500).json({ error: 'Code indisponible.' });
     }
 };
+
+/** Déclenche une célébration ou challenge festif temporaire sur un écran ou sur tous les écrans */
+exports.celebrer = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type, titre, sousTitre, beneficiaire, dureeMinutes } = req.body || {};
+        if (!titre || String(titre).trim().length < 3) {
+            return res.status(400).json({ error: 'Donner un titre à la célébration (3 caractères au moins).' });
+        }
+
+        if (id !== 'global') {
+            const ecran = await prisma.ecranAgence.findUnique({ where: { id } });
+            if (!ecran || ecran.revoqueLe) return res.status(404).json({ error: 'Écran introuvable ou révoqué.' });
+        }
+
+        ecrans.declencherCelebration(id, {
+            type: type || 'CHALLENGE',
+            titre: String(titre).trim(),
+            sousTitre: sousTitre ? String(sousTitre).trim() : null,
+            beneficiaire: beneficiaire ? String(beneficiaire).trim() : null,
+            dureeMinutes: parseInt(dureeMinutes, 10) || 30
+        });
+
+        res.json({ message: 'Mode célébration activé avec succès !' });
+    } catch (erreur) {
+        console.error('[ÉCRANS] Célébration impossible :', erreur.message);
+        res.status(500).json({ error: 'Déclenchement de la célébration impossible.' });
+    }
+};

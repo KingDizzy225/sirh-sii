@@ -13,5 +13,6 @@ router.get('/configuration', verifyToken, whatsappController.getConfiguration);
 router.post('/command', verifyToken, whatsappController.executeCommand);
 router.get('/logs', verifyToken, whatsappController.getLogs);
 router.post('/broadcast', verifyToken, whatsappController.broadcastMessage);
+router.post('/morning-briefing', verifyToken, whatsappController.envoyerMorningBriefing);
 
 module.exports = router;

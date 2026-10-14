@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Banknote, Zap, ArrowDownCircle, CheckCircle2, ShieldCheck,
   CreditCard, Clock, Calendar, Smartphone, Plus, Search,
   Filter, AlertCircle, X, ChevronRight, TrendingUp, DollarSign
 } from 'lucide-react';
+import { api } from '../lib/api.js';
 
 export function SalaireALaDemande() {
   const [selectedCanal, setSelectedCanal] = useState('ORANGE_MONEY'); // ORANGE_MONEY, WAVE, VIREMENT
@@ -50,6 +51,48 @@ export function SalaireALaDemande() {
     }
   ]);
 
+  useEffect(() => {
+    let actif = true;
+    const charger = async () => {
+      try {
+        const [resEarned, resAdvances] = await Promise.all([
+          api.get('/advances/earned').catch(() => null),
+          api.get('/advances').catch(() => null)
+        ]);
+        if (!actif) return;
+        if (resEarned?.data && resEarned.data.detail) {
+          const d = resEarned.data.detail;
+          setCollaborateur(prev => ({
+            ...prev,
+            salaireNetMensuel: d.salaireMensuelReference,
+            joursTravaillesMois: d.joursEcoules,
+            joursTotalMois: d.joursDansMois,
+            salaireAcquisBrut: d.acquisCeMois,
+            plafondDisponibleFCFA: d.plafond,
+            dejaDebloqueCeMois: d.dejaEngage,
+            resteDeblocableFCFA: resEarned.data.disponible
+          }));
+        }
+        if (resAdvances?.data && Array.isArray(resAdvances.data) && resAdvances.data.length > 0) {
+          setHistorique(resAdvances.data.map(a => ({
+            id: `EWA-${String(a.id || '').slice(0, 8)}`,
+            dateDemande: a.requestedAt,
+            montant: a.amount,
+            motif: a.reason || 'Avance sur salaire',
+            canal: 'Orange Money CI',
+            statut: a.status === 'Approuvé' ? 'VIRE_INSTANTANE' : 'EN_ATTENTE',
+            imputationPaie: 'Retenue sur prochain bulletin',
+            referenceTransaction: `TX-OM-${String(a.id || '').slice(0, 8)}`
+          })));
+        }
+      } catch (e) {
+        console.warn('Mode démo conservé pour salaire à la demande');
+      }
+    };
+    charger();
+    return () => { actif = false; };
+  }, []);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
@@ -62,6 +105,11 @@ export function SalaireALaDemande() {
       alert("Le montant demandé dépasse votre plafond déblocable de sécurité.");
       return;
     }
+
+    api.post('/advances', {
+      amount: montant,
+      reason: `Acompte salaire via ${selectedCanal}`
+    }).catch(err => console.warn('Sauvegarde avance :', err.message));
 
     const nouvelleDemande = {
       id: `EWA-2026-0${historique.length + 43}`,

@@ -141,6 +141,15 @@ import { SmartAutomations } from './pages/SmartAutomations';
 import { SalaireALaDemande } from './pages/SalaireALaDemande';
 import { SimulateurCarriereIA } from './pages/SimulateurCarriereIA';
 import { GreenHR } from './pages/GreenHR';
+import { ConseillerJuridique } from './pages/ConseillerJuridique';
+import { ContinuiteActivite } from './pages/ContinuiteActivite';
+import { CovoiturageSecurite } from './pages/CovoiturageSecurite';
+import { AgenceBattle } from './pages/AgenceBattle';
+import { QuizVenteMatin } from './pages/QuizVenteMatin';
+import { OuvertureAgence } from './pages/OuvertureAgence';
+import { BourseStock } from './pages/BourseStock';
+import { SanteExpress } from './pages/SanteExpress';
+import { TitularisationHonneur } from './pages/TitularisationHonneur';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -620,6 +629,60 @@ const AppContent = () => {
             <Route path="/cdd" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <SuiviCdd />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/conseiller-juridique" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <ConseillerJuridique />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/continuite-agences" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <ContinuiteActivite />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/retour-serein" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <CovoiturageSecurite />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/battle-agences" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <AgenceBattle />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/quiz-vente" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <QuizVenteMatin />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/ouverture-agence" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <OuvertureAgence />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/bourse-stock" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <BourseStock />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/sante-express" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <SanteExpress />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/titularisation-honneur" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <TitularisationHonneur />
               </ProtectedRoute>
             } />
 

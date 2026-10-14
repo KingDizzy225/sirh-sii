@@ -51,7 +51,8 @@ const getAllNavItems = (t) => [
     { name: 'Procédures & Sanctions', path: '/procedures', icon: Scale, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Astreintes & Gardes', path: '/astreintes', icon: PhoneCall, domain: 'Employés', permission: 'employees:edit', manager: true },
     { name: 'Départs & Entretiens de Sortie', path: '/offboarding', icon: PowerOff, domain: 'Employés', permission: 'employees:edit', manager: true },
-    { name: 'Équipements & Flotte Mobile', path: '/assets', icon: Laptop, domain: 'Employés', permission: 'employees:edit' },
+    { name: 'Titularisation CDI (Honneur)', path: '/titularisation-honneur', icon: PartyPopper, domain: 'Employés', permission: 'employees:edit', manager: true },
+    { name: 'Tiers-Payant Santé Express', path: '/sante-express', icon: HeartPulse, domain: 'Employés', permission: 'dashboard:view', manager: true },
     { name: 'Santé, Médecine & Mutuelle', path: '/mutuelle-sante', icon: HeartHandshake, domain: 'Employés', permission: 'employees:edit' },
     { name: 'Sécurité, CSST & Accidents CNPS', path: '/enquetes-accidents', icon: ShieldAlert, domain: 'Employés', permission: 'employees:edit' },
     { name: t('sidebar.recruitment', 'Recrutement & Campus'), path: '/recruitment', icon: Target, domain: 'Employés', permission: 'recruitment:view' },
@@ -62,6 +63,12 @@ const getAllNavItems = (t) => [
     { name: 'Pointages & Planning Shifts', path: '/shifts', icon: CalendarRange, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
     { name: 'Jours Fériés & Calendrier', path: '/jours-feries', icon: CalendarDays, domain: 'Pilotage RH', permission: 'employees:edit' },
     { name: 'Carte des Agences & Sites', path: '/carte-agences', icon: MapPin, domain: 'Pilotage RH', permission: 'employees:edit' },
+    { name: 'Store Opening & Prise Poste', path: '/ouverture-agence', icon: CheckSquare, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Bourse Dépannage Stock', path: '/bourse-stock', icon: Repeat, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Quiz Vente Matin (Flash 60s)', path: '/quiz-vente', icon: Sparkles, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Continuité & Délestage Élec', path: '/continuite-agences', icon: PowerOff, domain: 'Pilotage RH', permission: 'employees:edit', manager: true },
+    { name: 'Retour Serein (Covoiturage)', path: '/retour-serein', icon: Bus, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
+    { name: 'Battle Inter-Agences Live', path: '/battle-agences', icon: Trophy, domain: 'Pilotage RH', permission: 'dashboard:view', manager: true },
     { name: "Passations d'Équipe", path: '/passations', icon: ClipboardList, domain: 'Pilotage RH', permission: 'employees:edit' },
     { name: t('sidebar.payroll', 'Paie & Déclarations'), path: '/payroll', icon: DollarSign, domain: 'Pilotage RH', permission: 'payroll:view' },
     { name: 'Simulateur Brut/Net & Grille CCNI', path: '/simulateur-embauche', icon: Calculator, domain: 'Pilotage RH', permission: 'payroll:view' },
@@ -88,7 +95,7 @@ const getAllNavItems = (t) => [
     { name: 'Sentinelle IA Anti-Burnout', path: '/sentinelle-burnout', icon: HeartPulse, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Automatisations & Déclencheurs RH', path: '/smart-automations', icon: Zap, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
     { name: 'Observatoire GPEC & Skill Gap', path: '/observatoire-gpec', icon: BrainCircuit, domain: 'Intelligence RH', permission: 'dashboard:view', manager: true },
-    { name: 'Bilan Carbone RH & Green HR', path: '/green-hr', icon: Leaf, domain: 'Intelligence RH', permission: 'dashboard:view' },
+    { name: 'Conseiller Juridique & Code CI', path: '/conseiller-juridique', icon: Scale, domain: 'Intelligence RH', permission: 'employees:edit' },
     { name: 'Canal d\'Alerte & Éthique', path: '/ethics', icon: ShieldAlert, domain: 'Intelligence RH', permission: 'dashboard:view' }
 ];
 
