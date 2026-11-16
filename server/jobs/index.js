@@ -1,4 +1,9 @@
-const cron = require('node-cron');
+let cron = null;
+try {
+    cron = require('node-cron');
+} catch (e) {
+    // node-cron optionnel en local
+}
 const { accrueMonthlyLeave } = require('./leaveAccrual');
 const { scanDeadlines } = require('./deadlineAlerts');
 const { relancerDemandesEnAttente } = require('./pendingReminders');
@@ -51,6 +56,10 @@ const runAllDue = async () => {
 };
 
 function startScheduledJobs() {
+    if (!cron) {
+        console.warn('[JOB] node-cron non disponible : les tâches planifiées automatiques sont désactivées.');
+        return;
+    }
     if (process.env.DISABLE_SCHEDULED_JOBS === 'true') {
         console.log('[JOB] Traitements planifiés désactivés (DISABLE_SCHEDULED_JOBS=true).');
         return;

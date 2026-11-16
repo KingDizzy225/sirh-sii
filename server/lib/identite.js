@@ -28,6 +28,7 @@ let lueLe = 0;
 
 async function rafraichir() {
     try {
+        if (!prisma || !prisma.identiteEntreprise) return null;
         copie = await prisma.identiteEntreprise.findUnique({ where: { id: 'principale' } });
         lueLe = Date.now();
     } catch (erreur) {

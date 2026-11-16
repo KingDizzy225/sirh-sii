@@ -150,6 +150,73 @@ import { OuvertureAgence } from './pages/OuvertureAgence';
 import { BourseStock } from './pages/BourseStock';
 import { SanteExpress } from './pages/SanteExpress';
 import { TitularisationHonneur } from './pages/TitularisationHonneur';
+import { CaisseSecurite } from './pages/CaisseSecurite';
+import { TontineRh } from './pages/TontineRh';
+import { AssistanceSilence } from './pages/AssistanceSilence';
+import { BerceauSii } from './pages/BerceauSii';
+import { ClesCoffres } from './pages/ClesCoffres';
+import { SmartphoneSecours } from './pages/SmartphoneSecours';
+import { SecourismeBoutique } from './pages/SecourismeBoutique';
+import { SolidariteConges } from './pages/SolidariteConges';
+import { MeteoConfort } from './pages/MeteoConfort';
+import { EquipementsDemo } from './pages/EquipementsDemo';
+import { PopoteAgence } from './pages/PopoteAgence';
+import { ParrainageStagiaires } from './pages/ParrainageStagiaires';
+import { CommissionsLive } from './pages/CommissionsLive';
+import { EtoileOmbre } from './pages/EtoileOmbre';
+import { PassDeluge } from './pages/PassDeluge';
+import { PermutationQuartier } from './pages/PermutationQuartier';
+import { ConstatMoto } from './pages/ConstatMoto';
+import { BadgeuseNomade } from './pages/BadgeuseNomade';
+import { SimSwapArtci } from './pages/SimSwapArtci';
+import { SosMicroAvance } from './pages/SosMicroAvance';
+import { RentreeScolaire } from './pages/RentreeScolaire';
+import { BonsFestifs } from './pages/BonsFestifs';
+import { CagnotteSolidarite } from './pages/CagnotteSolidarite';
+import { AlloIncivilites } from './pages/AlloIncivilites';
+import { PasseportHauteur } from './pages/PasseportHauteur';
+import { AmbassadeurFibre } from './pages/AmbassadeurFibre';
+import { FraisCarburant } from './pages/FraisCarburant';
+import { TopVendeurRegions } from './pages/TopVendeurRegions';
+import { KiosqueUniformes } from './pages/KiosqueUniformes';
+import { AcademieManager } from './pages/AcademieManager';
+import { AuditClientMystere } from './pages/AuditClientMystere';
+import { PasseportEvenements } from './pages/PasseportEvenements';
+import { BilanSanteBoutique } from './pages/BilanSanteBoutique';
+import { AlumniElite } from './pages/AlumniElite';
+import { GasoilGroupe } from './pages/GasoilGroupe';
+import { UrgenceProvince } from './pages/UrgenceProvince';
+import { SavCartesSim } from './pages/SavCartesSim';
+import { ObjetsTrouves } from './pages/ObjetsTrouves';
+import { RequisitionsArtci } from './pages/RequisitionsArtci';
+import { VentePriveeStaff } from './pages/VentePriveeStaff';
+import { MaracanaLigue } from './pages/MaracanaLigue';
+import { SprintFinMois } from './pages/SprintFinMois';
+import { FastCnps } from './pages/FastCnps';
+import { LeadershipFeminin } from './pages/LeadershipFeminin';
+import { RecyclageBoutique } from './pages/RecyclageBoutique';
+import { KitEnergieNomade } from './pages/KitEnergieNomade';
+import { VoiceToHr } from './pages/VoiceToHr';
+import { ChurnPredictor } from './pages/ChurnPredictor';
+import { AttestationsSecurisees } from './pages/AttestationsSecurisees';
+import { OfflineModeSync } from './pages/OfflineModeSync';
+import { EntraideMateriel } from './pages/EntraideMateriel';
+import { MaintenanceQhse } from './pages/MaintenanceQhse';
+import { PassSante } from './pages/PassSante';
+import { RetourVillage } from './pages/RetourVillage';
+import { BourseScolaire } from './pages/BourseScolaire';
+import { BiometriePresence } from './pages/BiometriePresence';
+import { AuditCaissesSim } from './pages/AuditCaissesSim';
+import { BouclierMeps } from './pages/BouclierMeps';
+import { TitresCedeao } from './pages/TitresCedeao';
+import { CaravaneStreetMarketing } from './pages/CaravaneStreetMarketing';
+import { JobDatingQr } from './pages/JobDatingQr';
+import { EcoScoreMoto } from './pages/EcoScoreMoto';
+import { PassLagunaire } from './pages/PassLagunaire';
+import { PodcastsDialectes } from './pages/PodcastsDialectes';
+import { ChocDesGuichets } from './pages/ChocDesGuichets';
+import { ConciergeriePapiers } from './pages/ConciergeriePapiers';
+import { EcouteSerenite } from './pages/EcouteSerenite';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -686,6 +753,282 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
+            <Route path="/caisse-securite" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <CaisseSecurite />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/tontine-rh" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <TontineRh />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/assistance-silence" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <AssistanceSilence />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/berceau-sii" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <BerceauSii />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/cles-coffres" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <ClesCoffres />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/smartphone-secours" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <SmartphoneSecours />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/secourisme-boutique" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <SecourismeBoutique />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/solidarite-conges" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <SolidariteConges />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/meteo-confort" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <MeteoConfort />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/equipements-demo" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <EquipementsDemo />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/popote-agence" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <PopoteAgence />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/parrainage-stagiaires" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <ParrainageStagiaires />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/commissions-live" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <CommissionsLive />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/etoile-ombre" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <EtoileOmbre />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/pass-deluge" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <PassDeluge />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/permutation-quartier" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <PermutationQuartier />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/constat-moto" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <ConstatMoto />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/badgeuse-nomade" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <BadgeuseNomade />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/sim-swap-artci" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <SimSwapArtci />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/sos-micro-avance" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <SosMicroAvance />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/rentree-scolaire" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <RentreeScolaire />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/bons-festifs" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <BonsFestifs />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/cagnotte-solidarite" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <CagnotteSolidarite />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/allo-incivilites" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <AlloIncivilites />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/passeport-hauteur" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <PasseportHauteur />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/ambassadeur-fibre" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <AmbassadeurFibre />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/frais-carburant" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <FraisCarburant />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/top-vendeur-regions" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <TopVendeurRegions />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/kiosque-uniformes" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <KiosqueUniformes />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/academie-manager" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <AcademieManager />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/audit-client-mystere" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <AuditClientMystere />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/passeport-evenements" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <PasseportEvenements />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/bilan-sante-boutique" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <BilanSanteBoutique />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/alumni-elite" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <AlumniElite />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/gasoil-groupe" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <GasoilGroupe />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/urgence-province" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <UrgenceProvince />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/sav-cartes-sim" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <SavCartesSim />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/objets-trouves" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <ObjetsTrouves />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/requisitions-artci" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <RequisitionsArtci />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/vente-privee-staff" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <VentePriveeStaff />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/maracana-ligue" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <MaracanaLigue />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/sprint-fin-mois" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <SprintFinMois />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/fast-cnps" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <FastCnps />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/leadership-feminin" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <LeadershipFeminin />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/recyclage-boutique" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <RecyclageBoutique />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/kit-energie-nomade" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager', 'Employee']}>
+                <KitEnergieNomade />
+              </ProtectedRoute>
+            } />
+
             <Route path="/policy-rules" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <PolicyRules />
@@ -965,6 +1308,117 @@ const AppContent = () => {
             <Route path="/green-hr" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
                 <GreenHR />
+              </ProtectedRoute>
+            } />
+
+            {/* Innovations Opérationnelles & Résilience (Axes 2 à 5) */}
+            <Route path="/voice-to-hr" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <VoiceToHr />
+              </ProtectedRoute>
+            } />
+            <Route path="/churn-predictor" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <ChurnPredictor />
+              </ProtectedRoute>
+            } />
+            <Route path="/attestations-securisees" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <AttestationsSecurisees />
+              </ProtectedRoute>
+            } />
+            <Route path="/offline-sync" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <OfflineModeSync />
+              </ProtectedRoute>
+            } />
+            <Route path="/entraide-materiel" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <EntraideMateriel />
+              </ProtectedRoute>
+            } />
+            <Route path="/maintenance-qhse" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <MaintenanceQhse />
+              </ProtectedRoute>
+            } />
+            <Route path="/pass-sante" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <PassSante />
+              </ProtectedRoute>
+            } />
+            <Route path="/retour-village" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <RetourVillage />
+              </ProtectedRoute>
+            } />
+            <Route path="/bourse-scolaire" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <BourseScolaire />
+              </ProtectedRoute>
+            } />
+            <Route path="/biometrie-presence" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <BiometriePresence />
+              </ProtectedRoute>
+            } />
+            <Route path="/audit-caisses-sim" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <AuditCaissesSim />
+              </ProtectedRoute>
+            } />
+
+            {/* Pack 4 : Sérénité Juridique & Contrôles Officiels */}
+            <Route path="/bouclier-meps" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <BouclierMeps />
+              </ProtectedRoute>
+            } />
+            <Route path="/titres-cedeao" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <TitresCedeao />
+              </ProtectedRoute>
+            } />
+
+            {/* Packs 1, 2, 3 & 5 : Opérations Terrain, Mobilité Abidjan, Compétences & Bien-être */}
+            <Route path="/caravane-marketing" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <CaravaneStreetMarketing />
+              </ProtectedRoute>
+            } />
+            <Route path="/job-dating-qr" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <JobDatingQr />
+              </ProtectedRoute>
+            } />
+            <Route path="/eco-score-moto" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <EcoScoreMoto />
+              </ProtectedRoute>
+            } />
+            <Route path="/pass-lagunaire" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <PassLagunaire />
+              </ProtectedRoute>
+            } />
+            <Route path="/podcasts-dialectes" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <PodcastsDialectes />
+              </ProtectedRoute>
+            } />
+            <Route path="/choc-des-guichets" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <ChocDesGuichets />
+              </ProtectedRoute>
+            } />
+            <Route path="/conciergerie-papiers" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <ConciergeriePapiers />
+              </ProtectedRoute>
+            } />
+            <Route path="/ecoute-serenite" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <EcouteSerenite />
               </ProtectedRoute>
             } />
 

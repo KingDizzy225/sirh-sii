@@ -1,4 +1,9 @@
-const Anthropic = require('@anthropic-ai/sdk');
+let Anthropic = null;
+try {
+    Anthropic = require('@anthropic-ai/sdk');
+} catch (err) {
+    // Anthropic SDK optional/not installed yet
+}
 
 /**
  * Couche d'accès à Claude pour toutes les fonctions IA du SIRH.
@@ -26,6 +31,12 @@ const MAX_TOKENS = parseInt(process.env.ANTHROPIC_MAX_TOKENS || '16000', 10);
 
 let client = null;
 const getClient = () => {
+    if (!Anthropic) {
+        throw new Error(
+            "@anthropic-ai/sdk non installé. Les fonctions IA Claude sont indisponibles. " +
+            "Exécutez `npm install @anthropic-ai/sdk` dans le dossier server."
+        );
+    }
     if (!client) {
         if (!process.env.ANTHROPIC_API_KEY) {
             throw new Error(

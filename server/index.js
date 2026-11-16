@@ -245,6 +245,83 @@ app.use('/api/ouverture-agence', verifyToken, require('./routes/ouvertureAgenceR
 app.use('/api/bourse-stock', verifyToken, require('./routes/bourseStockRoutes'));
 app.use('/api/sante-express', verifyToken, require('./routes/santeExpressRoutes'));
 app.use('/api/titularisation', verifyToken, require('./routes/titularisationRoutes'));
+app.use('/api/caisse-securite', verifyToken, require('./routes/caisseSecuriteRoutes'));
+app.use('/api/tontine-rh', verifyToken, require('./routes/tontineRhRoutes'));
+app.use('/api/assistance-silence', verifyToken, require('./routes/assistanceSilenceRoutes'));
+app.use('/api/berceau-sii', verifyToken, require('./routes/berceauSiiRoutes'));
+app.use('/api/cles-coffres', verifyToken, require('./routes/clesCoffresRoutes'));
+app.use('/api/smartphone-secours', verifyToken, require('./routes/smartphoneSecoursRoutes'));
+app.use('/api/secourisme-boutique', verifyToken, require('./routes/secourismeBoutiqueRoutes'));
+app.use('/api/solidarite-conges', verifyToken, require('./routes/solidariteCongesRoutes'));
+app.use('/api/meteo-confort', verifyToken, require('./routes/meteoConfortRoutes'));
+app.use('/api/equipements-demo', verifyToken, require('./routes/equipementsDemoRoutes'));
+app.use('/api/popote-agence', verifyToken, require('./routes/popoteAgenceRoutes'));
+app.use('/api/parrainage-stagiaires', verifyToken, require('./routes/parrainageStagiairesRoutes'));
+app.use('/api/commissions-live', verifyToken, require('./routes/commissionsLiveRoutes'));
+app.use('/api/etoile-ombre', verifyToken, require('./routes/etoileOmbreRoutes'));
+
+// Mega-Pack 20 Innovations Opérationnelles SII CI
+app.use('/api/pass-deluge', verifyToken, require('./routes/passDelugeRoutes'));
+app.use('/api/permutation-quartier', verifyToken, require('./routes/permutationQuartierRoutes'));
+app.use('/api/constat-moto', verifyToken, require('./routes/constatMotoRoutes'));
+app.use('/api/badgeuse-nomade', verifyToken, require('./routes/badgeuseNomadeRoutes'));
+app.use('/api/sim-swap-artci', verifyToken, require('./routes/simSwapArtciRoutes'));
+app.use('/api/sos-micro-avance', verifyToken, require('./routes/sosMicroAvanceRoutes'));
+app.use('/api/rentree-scolaire', verifyToken, require('./routes/rentreeScolaireRoutes'));
+app.use('/api/bons-festifs', verifyToken, require('./routes/bonsFestifsRoutes'));
+app.use('/api/cagnotte-solidarite', verifyToken, require('./routes/cagnotteSolidariteRoutes'));
+app.use('/api/allo-incivilites', verifyToken, require('./routes/alloIncivilitesRoutes'));
+app.use('/api/passeport-hauteur', verifyToken, require('./routes/passeportHauteurRoutes'));
+app.use('/api/ambassadeur-fibre', verifyToken, require('./routes/ambassadeurFibreRoutes'));
+app.use('/api/frais-carburant', verifyToken, require('./routes/fraisCarburantRoutes'));
+app.use('/api/top-vendeur-regions', verifyToken, require('./routes/topVendeurRegionsRoutes'));
+app.use('/api/kiosque-uniformes', verifyToken, require('./routes/kiosqueUniformesRoutes'));
+app.use('/api/academie-manager', verifyToken, require('./routes/academieManagerRoutes'));
+app.use('/api/audit-client-mystere', verifyToken, require('./routes/auditClientMystereRoutes'));
+app.use('/api/passeport-evenements', verifyToken, require('./routes/passeportEvenementsRoutes'));
+app.use('/api/bilan-sante-boutique', verifyToken, require('./routes/bilanSanteBoutiqueRoutes'));
+app.use('/api/alumni-elite', verifyToken, require('./routes/alumniEliteRoutes'));
+
+// Méga-Pack Final SII CI (12 Modules d'Excellence Opérationnelle)
+app.use('/api/gasoil-groupe', verifyToken, require('./routes/gasoilGroupeRoutes'));
+app.use('/api/urgence-province', verifyToken, require('./routes/urgenceProvinceRoutes'));
+app.use('/api/sav-cartes-sim', verifyToken, require('./routes/savCartesSimRoutes'));
+app.use('/api/objets-trouves', verifyToken, require('./routes/objetsTrouvesRoutes'));
+app.use('/api/requisitions-artci', verifyToken, require('./routes/requisitionsArtciRoutes'));
+app.use('/api/vente-privee-staff', verifyToken, require('./routes/ventePriveeStaffRoutes'));
+app.use('/api/maracana-ligue', verifyToken, require('./routes/maracanaLigueRoutes'));
+app.use('/api/sprint-fin-mois', verifyToken, require('./routes/sprintFinMoisRoutes'));
+app.use('/api/fast-cnps', verifyToken, require('./routes/fastCnpsRoutes'));
+app.use('/api/leadership-feminin', verifyToken, require('./routes/leadershipFemininRoutes'));
+app.use('/api/recyclage-boutique', verifyToken, require('./routes/recyclageBoutiqueRoutes'));
+app.use('/api/kit-energie-nomade', verifyToken, require('./routes/kitEnergieNomadeRoutes'));
+
+// Packs Axes 2 à 5 (Opérations d'Élite, Résilience & Sécurité SII CI)
+app.use('/api/voice-to-hr', verifyToken, require('./routes/voiceToHrRoutes'));
+app.use('/api/churn-predictor', verifyToken, require('./routes/churnPredictorRoutes'));
+app.use('/api/attestations-securisees', verifyToken, require('./routes/attestationsSecuriseesRoutes'));
+app.use('/api/offline-sync', verifyToken, require('./routes/offlineSyncRoutes'));
+app.use('/api/entraide-materiel', verifyToken, require('./routes/entraideMaterielRoutes'));
+app.use('/api/maintenance-qhse', verifyToken, require('./routes/maintenanceQhseRoutes'));
+app.use('/api/pass-sante', verifyToken, require('./routes/passSanteRoutes'));
+app.use('/api/retour-village', verifyToken, require('./routes/retourVillageRoutes'));
+app.use('/api/bourse-scolaire', verifyToken, require('./routes/bourseScolaireRoutes'));
+app.use('/api/biometrie-presence', verifyToken, require('./routes/biometriePresenceRoutes'));
+app.use('/api/audit-caisses-sim', verifyToken, require('./routes/auditCaissesSimRoutes'));
+
+// Pack 4 : Sérénité Juridique & Contrôles Officiels
+app.use('/api/bouclier-meps', verifyToken, require('./routes/bouclierMepsRoutes'));
+app.use('/api/titres-cedeao', verifyToken, require('./routes/titresCedeaoRoutes'));
+
+// Packs 1, 2, 3 & 5 : Opérations Terrain, Mobilité Abidjan, Compétences & Bien-être
+app.use('/api/caravane-marketing', verifyToken, require('./routes/caravaneMarketingRoutes'));
+app.use('/api/job-dating-qr', verifyToken, require('./routes/jobDatingQrRoutes'));
+app.use('/api/eco-score-moto', verifyToken, require('./routes/ecoScoreMotoRoutes'));
+app.use('/api/pass-lagunaire', verifyToken, require('./routes/passLagunaireRoutes'));
+app.use('/api/podcasts-dialectes', verifyToken, require('./routes/podcastsDialectesRoutes'));
+app.use('/api/choc-des-guichets', verifyToken, require('./routes/chocDesGuichetsRoutes'));
+app.use('/api/conciergerie-papiers', verifyToken, require('./routes/conciergeriePapiersRoutes'));
+app.use('/api/ecoute-serenite', verifyToken, require('./routes/ecouteSereniteRoutes'));
 
 // V9 Pointage géolocalisé
 const workSiteRoutes = require('./routes/workSiteRoutes');
