@@ -12,77 +12,7 @@ export function SentinelleBurnout() {
   const [selectedSignalDetail, setSelectedSignalDetail] = useState(null);
 
   // Registre des signaux faibles de charge de travail détectés par l'IA
-  const [signaux, setSignaux] = useState([
-    {
-      id: "SIG-2026-081",
-      employeNom: "Moussa Soro",
-      poste: "Responsable Infrastructure & IT",
-      departement: "Infrastructure & Systèmes",
-      agence: "Siège Plateau (Tour Postel 2001)",
-      scorePression: 89, // sur 100
-      niveauRisque: "CRITIQUE", // CRITIQUE, VIGILANCE, EQUILIBRE
-      facteursDeclencheurs: [
-        "4 astreintes de nuit consécutives sur les 21 derniers jours",
-        "18 jours de congés payés non posés depuis plus de 9 mois",
-        "Connexions tardives au VPN d'entreprise après 21h30 (6 occurrences)"
-      ],
-      recommandationIA: "Risque aigu de surmenage identifié. Programmer d'urgence un repos récupérateur de 48h et transférer la prochaine astreinte au technicien de back-up.",
-      actionStatut: "A_TRAITER", // A_TRAITER, EN_COURS, RESOLU
-      manager: "Directeur Général Adjoint",
-      dateAlerte: "22/09/2026"
-    },
-    {
-      id: "SIG-2026-080",
-      employeNom: "Julie Konan",
-      poste: "Chargée de Clientèle Entreprises Senior",
-      departement: "Banque d'Affaires & PME",
-      agence: "Siège Plateau (Tour Postel 2001)",
-      scorePression: 68,
-      niveauRisque: "VIGILANCE",
-      facteursDeclencheurs: [
-        "Plafond hebdomadaire d'heures dépassé de 12% en période de clôture",
-        "Aucune pause méridienne supérieure à 30 minutes enregistrée cette semaine"
-      ],
-      recommandationIA: "Tension modérée liée aux clôtures trimestrielles. Recommander une délégation temporaire des dossiers administratifs pour soulager le portefeuille.",
-      actionStatut: "EN_COURS",
-      manager: "Jean-Marc Koffi",
-      dateAlerte: "20/09/2026"
-    },
-    {
-      id: "SIG-2026-079",
-      employeNom: "Armand Kouassi",
-      poste: "Comptable Fournisseurs",
-      departement: "Finance & Comptabilité",
-      agence: "Siège Plateau (Tour Postel 2001)",
-      scorePression: 62,
-      niveauRisque: "VIGILANCE",
-      facteursDeclencheurs: [
-        "Volume de factures à traiter en hausse de 40% sur le mois",
-        "12 jours de congés en attente de planification"
-      ],
-      recommandationIA: "Accélérer l'automatisation des écritures pour absorber la hausse de charge et valider la pose de congés de repos.",
-      actionStatut: "RESOLU",
-      manager: "Directeur Administratif & Financier",
-      dateAlerte: "18/09/2026"
-    },
-    {
-      id: "SIG-2026-078",
-      employeNom: "Fatou Camara",
-      poste: "Responsable QVT & Relations Salariées",
-      departement: "Ressources Humaines",
-      agence: "Agence Cocody Ambassades",
-      scorePression: 38,
-      niveauRisque: "EQUILIBRE",
-      facteursDeclencheurs: [
-        "Respect continu des temps de repos légaux (11h consécutives)",
-        "Congés régulièrement planifiés et posés par anticipation"
-      ],
-      recommandationIA: "Charge équilibrée. Rythme soutenable et dynamique positive.",
-      actionStatut: "RESOLU",
-      manager: "Dr. Stéphane Touré (DRH)",
-      dateAlerte: "15/09/2026"
-    }
-  ]);
+  const [signaux, setSignaux] = useState([]);
 
   const showToast = (msg) => {
     setToastMessage(msg);

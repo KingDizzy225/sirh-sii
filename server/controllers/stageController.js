@@ -1,5 +1,4 @@
 const prisma = require('../prismaClient');
-const delegues = require('../lib/delegues');
 const paie = require('../lib/paie');
 
 /**
@@ -55,7 +54,7 @@ exports.lister = async (req, res) => {
         res.json({
             types: TYPES,
             avertissement: AVERTISSEMENT_GRATIFICATION,
-            horsEffectif: delegues.CONTRATS_HORS_EFFECTIF,
+            horsEffectif: TYPES,
             enCours: lignes.filter((l) => l.jusquAuTerme >= 0 && l.statut !== 'TERMINATED').length,
             lignes
         });

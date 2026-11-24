@@ -4,6 +4,7 @@ const pointage = require('../lib/pointageEcran');
 const remplacement = require('../lib/remplacement');
 const presence = require('../lib/presence');
 const { notifierSalarie, notifierRH } = require('../lib/notify');
+const espacePersonnel = require('../lib/espacePersonnel');
 
 /**
  * Ce que le salarié fait depuis son téléphone, reconnu par son badge.
@@ -270,6 +271,40 @@ exports.reprendre = async (req, res) => {
     } catch (erreur) {
         console.error('[REMPLACEMENT] Reprise impossible :', erreur.message);
         res.status(500).json({ error: 'Reprise impossible.' });
+    }
+};
+
+// ── Ce que le salarié voit de son propre dossier ──────────────────────────
+
+/**
+ * Droits acquis, bulletins expliqués, échéances et astreintes.
+ *
+ * Un seul appel plutôt que quatre : le badge s'ouvre sur un téléphone, souvent
+ * en 3G, et quatre allers-retours pour une page se paient en secondes.
+ */
+exports.monDossier = async (req, res) => {
+    try {
+        const salarie = await porteur(req.params.jeton);
+        if (!salarie) return refuserBadge(res);
+
+        const [droits, bulletins, echeances, astreintes] = await Promise.all([
+            espacePersonnel.droits(salarie.id),
+            espacePersonnel.bulletins(salarie.id, req.query.bulletins),
+            espacePersonnel.echeances(salarie.id),
+            espacePersonnel.astreintes(salarie.id)
+        ]);
+
+        res.set('Cache-Control', 'no-store');
+        res.json({
+            prenom: salarie.firstName,
+            droits,
+            bulletins,
+            echeances,
+            astreintes
+        });
+    } catch (erreur) {
+        console.error('[ESPACE] Dossier indisponible :', erreur.message);
+        res.status(500).json({ error: 'Votre dossier est momentanément indisponible.' });
     }
 };
 

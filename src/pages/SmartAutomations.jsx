@@ -90,12 +90,7 @@ export function SmartAutomations() {
   ]);
 
   // Journal d'exécution des déclencheurs
-  const [logs, setLogs] = useState([
-    { id: 'LOG-891', date: '23 Sept 2026 - 15:20', automation: 'Alerte Fin de Période d\'Essai', target: 'Mamadou Touré (Commercial)', status: 'SUCCÈS', detail: 'Fiche d\'évaluation envoyée au Manager N+1.' },
-    { id: 'LOG-890', date: '23 Sept 2026 - 11:20', automation: 'Régulation Surcharge & Repos 48h', target: 'Moussa Soro (IT)', status: 'SUCCÈS', detail: 'Repos récupérateur 48h validé.' },
-    { id: 'LOG-889', date: '23 Sept 2026 - 09:00', automation: 'Célébration Anniversaire d\'Ancienneté', target: 'Julie Konan (3 ans)', status: 'SUCCÈS', detail: 'Post publié sur le Mur d\'Entreprise & badge octroyé.' },
-    { id: 'LOG-888', date: '22 Sept 2026 - 14:15', automation: 'Sentinelle CDD 24 Mois', target: 'Armand Kouassi (Finance)', status: 'SUCCÈS', detail: 'Notification alerte 21 mois transmise au DRH.' }
-  ]);
+  const [logs, setLogs] = useState([]);
 
   const showToast = (msg) => {
     setToastMessage(msg);

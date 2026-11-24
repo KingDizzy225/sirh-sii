@@ -8,7 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
+import { useEffectif, nomDe } from '../lib/effectif.js';
 
 const TARGET_ROLES = {
   "Directeur_Agence": {
@@ -94,14 +94,16 @@ const TARGET_ROLES = {
 };
 
 export function SimulateurCarriereIA() {
-  const [selectedEmpId, setSelectedEmpId] = useState('emp-001');
+  // L'effectif vient du serveur ; le premier salarié reçu ouvre la simulation.
+  const { salaries: effectif } = useEffectif({ actifsSeulement: true });
+  const [selectedEmpId, setSelectedEmpId] = useState(null);
   const [targetRoleKey, setTargetRoleKey] = useState("Directeur_Agence");
   const [toastMessage, setToastMessage] = useState(null);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   const selectedEmp = useMemo(() => {
-    return MOCK_190_EMPLOYEES.find(e => e.id === selectedEmpId) || MOCK_190_EMPLOYEES[0];
-  }, [selectedEmpId]);
+    return effectif.find(e => e.id === selectedEmpId) || effectif[0] || null;
+  }, [selectedEmpId, effectif]);
 
   const targetData = TARGET_ROLES[targetRoleKey];
 
@@ -288,9 +290,9 @@ export function SimulateurCarriereIA() {
               onChange={(e) => setSelectedEmpId(e.target.value)}
               className="w-full text-sm font-bold bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 truncate"
             >
-              {MOCK_190_EMPLOYEES.slice(0, 60).map((emp) => (
+              {effectif.slice(0, 60).map((emp) => (
                 <option key={emp.id} value={emp.id}>
-                  {emp.firstName} {emp.lastName} — {emp.department} ({emp.position || emp.role || 'Salarié'})
+                  {nomDe(emp)} — {emp.department} ({emp.positionTitle || emp.role || 'Salarié'})
                 </option>
               ))}
             </select>

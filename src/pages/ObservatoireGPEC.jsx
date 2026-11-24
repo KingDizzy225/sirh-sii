@@ -11,89 +11,7 @@ export function ObservatoireGPEC() {
   const [showSimulateModal, setShowSimulateModal] = useState(false);
 
   // Cartographie prospective des familles de métiers
-  const metiers = [
-    {
-      id: 1,
-      titre: "Chargé(e) de Clientèle Entreprises & PME",
-      famille: "Développement Commercial & Réseau",
-      tendance: "EMERGENT", // EMERGENT, STABLE, MUTATION
-      evolutionHorizon: "+25% de recrutements prévus d'ici 2027",
-      impactIA: "Forte intégration des outils IA de scoring crédit et CRM prédictif",
-      referentVitrine: "Julie Konan",
-      effectifActuel: 14,
-      competences: [
-        { nom: "Négociation Commerciale B2B Complexe", niveauActuel: 4, niveauCible: 5, ecart: 1 },
-        { nom: "Analyse Financière & Risque Crédit PME", niveauActuel: 4, niveauCible: 4, ecart: 0 },
-        { nom: "Outils CRM & Assistants IA Générative", niveauActuel: 3, niveauCible: 5, ecart: 2, alerte: true },
-        { nom: "Conformité Réglementaire & Lutte Blanchiment", niveauActuel: 4, niveauCible: 5, ecart: 1 },
-        { nom: "Conseil en Investissement & Financement", niveauActuel: 3, niveauCible: 4, ecart: 1 }
-      ],
-      formationsRecommandees: [
-        { titre: "Masterclass IA & Négociation B2B Grands Comptes", duree: "3 jours", organisme: "Institut FDFP Agréé", budget: "450 000 FCFA" },
-        { titre: "Certification Analyse de Bilan & Risque PME UEMOA", duree: "5 jours", organisme: "CESAG", budget: "700 000 FCFA" }
-      ]
-    },
-    {
-      id: 2,
-      titre: "Responsable Paie, Déclarations & Fiscalité Sociale",
-      famille: "Ressources Humaines & Juridique",
-      tendance: "STABLE",
-      evolutionHorizon: "Pérennité stratégique forte, transformation vers le conseil",
-      impactIA: "Automatisation de la saisie au profit de l'audit et du contrôle social",
-      referentVitrine: "Aïcha Ouattara",
-      effectifActuel: 4,
-      competences: [
-        { nom: "Législation Sociale CI & Code du Travail", niveauActuel: 5, niveauCible: 5, ecart: 0 },
-        { nom: "Maîtrise Logicielle Sage & Paramétrage", niveauActuel: 4, niveauCible: 5, ecart: 1 },
-        { nom: "Contrôle de Gestion Sociale & Masse Salariale", niveauActuel: 3, niveauCible: 5, ecart: 2, alerte: true },
-        { nom: "Télédéclarations e-CNPS, DISA & DGI 301", niveauActuel: 5, niveauCible: 5, ecart: 0 },
-        { nom: "Audit de Conformité & Sécurité Juridique", niveauActuel: 4, niveauCible: 5, ecart: 1 }
-      ],
-      formationsRecommandees: [
-        { titre: "Expertise en Contrôle de Gestion Sociale & Reporting KPI", duree: "4 jours", organisme: "Cabinet Conseil CI", budget: "550 000 FCFA" }
-      ]
-    },
-    {
-      id: 3,
-      titre: "Opérateur de Saisie de Caisse & Guichet",
-      famille: "Opérations Agence",
-      tendance: "MUTATION",
-      evolutionHorizon: "-40% de besoin sur la saisie pure avec la digitalisation",
-      impactIA: "Reconversion prioritaire requise vers le conseil client de niveau 1",
-      referentVitrine: "Personnel Guichet Réseau",
-      effectifActuel: 12,
-      competences: [
-        { nom: "Opérations de Caisse & Rapprochement Espèces", niveauActuel: 5, niveauCible: 2, ecart: 0 },
-        { nom: "Sens du Service & Accueil Clientèle", niveauActuel: 4, niveauCible: 5, ecart: 1 },
-        { nom: "Vente de Produits Digitaux & Applications Mobile", niveauActuel: 2, niveauCible: 4, ecart: 2, alerte: true },
-        { nom: "Détection des Fraudes Documentaires", niveauActuel: 3, niveauCible: 4, ecart: 1 },
-        { nom: "Aisance Outils Informatiques Collaboratifs", niveauActuel: 2, niveauCible: 4, ecart: 2, alerte: true }
-      ],
-      formationsRecommandees: [
-        { titre: "Passerelle Reconversion : De Caissier à Conseiller Clientèle", duree: "10 jours", organisme: "Centre Formation Bancaire", budget: "850 000 FCFA" }
-      ]
-    },
-    {
-      id: 4,
-      titre: "Data Analyst RH & Pilotage de la Performance",
-      famille: "Systèmes d'Information & Intelligence",
-      tendance: "EMERGENT",
-      evolutionHorizon: "+50% d'importance stratégique d'ici 2028",
-      impactIA: "Cœur de la prospective, modélisation de l'attrition et de la masse salariale",
-      referentVitrine: "Daniel Kouamé",
-      effectifActuel: 2,
-      competences: [
-        { nom: "Modélisation Statistique & SQL/Python", niveauActuel: 4, niveauCible: 5, ecart: 1 },
-        { nom: "Tableaux de Bord Décisionnels PowerBI / Looker", niveauActuel: 4, niveauCible: 5, ecart: 1 },
-        { nom: "Data Mining des Données de Paie & Absences", niveauActuel: 3, niveauCible: 5, ecart: 2, alerte: true },
-        { nom: "Algorithmes Prédictifs de Rétention Talents", niveauActuel: 3, niveauCible: 4, ecart: 1 },
-        { nom: "Gouvernance RGPD / Données Personnelles CI", niveauActuel: 4, niveauCible: 5, ecart: 1 }
-      ],
-      formationsRecommandees: [
-        { titre: "Intelligence Artificielle Prédictive Appliquée aux Ressources Humaines", duree: "5 jours", organisme: "ESATIC / INP-HB", budget: "900 000 FCFA" }
-      ]
-    }
-  ];
+  const metiers = [];
 
   const currentMetier = metiers.find(m => m.id === selectedMetierId) || metiers[0];
 
@@ -407,7 +325,6 @@ export function ObservatoireGPEC() {
                   Choisir le collaborateur à évaluer :
                 </label>
                 <select className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
-                  <option value="2">Julie Konan (Chargée de Clientèle Senior)</option>
                   <option value="1">Jean-Marc Koffi (Directeur d'Agence)</option>
                   <option value="3">Armand Kouassi (Comptable Fournisseurs)</option>
                 </select>
@@ -415,7 +332,7 @@ export function ObservatoireGPEC() {
 
               <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800 space-y-2">
                 <p className="font-bold text-purple-900 dark:text-purple-200">
-                  Résultat du Diagnostic pour Julie Konan :
+                  Résultat du diagnostic :
                 </p>
                 <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                   Adéquation actuelle de <strong>86%</strong> avec les exigences du poste d'ici 2027.

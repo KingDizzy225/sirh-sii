@@ -56,68 +56,7 @@ export function Leaves() {
         attachment: null
     });
 
-    const DEFAULT_LEAVES = [
-        {
-            id: 'l-01',
-            employee: 'Kouassi Armand',
-            type: 'Congé Annuel',
-            duration: '10 Juil - 17 Juil (5 Jours)',
-            durationDays: 5,
-            status: 'En attente RH',
-            rawStatus: 'PENDING_HR',
-            appliedOn: '21 Juin 2026',
-            rawStart: new Date('2026-07-10'),
-            rawEnd: new Date('2026-07-17')
-        },
-        {
-            id: 'l-02',
-            employee: 'Raïssa Fofana',
-            type: 'Congé Maternité',
-            duration: '01 Août - 31 Oct (90 Jours)',
-            durationDays: 90,
-            status: 'Approuvé',
-            rawStatus: 'APPROVED',
-            appliedOn: '15 Juin 2026',
-            rawStart: new Date('2026-08-01'),
-            rawEnd: new Date('2026-10-31')
-        },
-        {
-            id: 'l-03',
-            employee: 'Mamadou Traoré',
-            type: 'Congé Annuel',
-            duration: '15 Juil - 22 Juil (6 Jours)',
-            durationDays: 6,
-            status: 'En attente Manager',
-            rawStatus: 'PENDING_MANAGER',
-            appliedOn: '22 Juin 2026',
-            rawStart: new Date('2026-07-15'),
-            rawEnd: new Date('2026-07-22')
-        },
-        {
-            id: 'l-04',
-            employee: 'Julie Konan',
-            type: 'Congé Annuel',
-            duration: '05 Juil - 09 Juil (4 Jours)',
-            durationDays: 4,
-            status: 'Approuvé',
-            rawStatus: 'APPROVED',
-            appliedOn: '10 Juin 2026',
-            rawStart: new Date('2026-07-05'),
-            rawEnd: new Date('2026-07-09')
-        },
-        {
-            id: 'l-05',
-            employee: 'Aïssatou Diallo',
-            type: 'Congé Maladie',
-            duration: '18 Juin - 20 Juin (3 Jours)',
-            durationDays: 3,
-            status: 'Approuvé',
-            rawStatus: 'APPROVED',
-            appliedOn: '18 Juin 2026',
-            rawStart: new Date('2026-06-18'),
-            rawEnd: new Date('2026-06-20')
-        }
-    ];
+    const DEFAULT_LEAVES = [];
 
     const loadLeaves = async () => {
         try {

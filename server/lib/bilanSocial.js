@@ -34,12 +34,26 @@ const DEFINITIONS = {
         + "théoriquement travaillés (effectif moyen × jours ouvrés). Les congés payés en sont exclus.",
     formation: "Heures de formation suivies dans l'exercice, comptées par participation.",
     accidents: "Accidents du travail survenus dans l'exercice, hors presque-accidents.",
+    travailleursHandicapes: "Salariés présents à fin d'exercice dont la reconnaissance de travailleur "
+        + "handicapé est enregistrée. Un salarié qui ne l'a pas déclarée n'y figure pas.",
     masseSalariale: "Somme des bruts des bulletins enregistrés de l'exercice.",
     ecartRemuneration: "Écart entre le salaire de base moyen des hommes et celui des femmes, "
         + "rapporté au salaire moyen des hommes. Un écart positif est en faveur des hommes."
 };
 
 const JOURS_OUVRES_AN = Math.max(parseInt(process.env.BILAN_JOURS_OUVRES_AN, 10) || 260, 1);
+
+/**
+ * Quota d'emploi de travailleurs handicapés, en pourcentage de l'effectif.
+ *
+ * Aucune valeur par défaut : le taux et son périmètre dépendent du texte
+ * applicable et de l'effectif assujetti. Sans quota déclaré, l'application
+ * rend le taux constaté et se garde de dire si l'entreprise est en règle.
+ */
+const QUOTA_HANDICAPES = (() => {
+    const n = parseFloat(process.env.QUOTA_TRAVAILLEURS_HANDICAPES);
+    return Number.isFinite(n) && n > 0 ? n : null;
+})();
 const arrondir = (n, d = 2) => {
     const f = Math.pow(10, d);
     return Math.round((Number(n) || 0) * f) / f;
@@ -84,7 +98,8 @@ async function produire(annee = new Date().getFullYear() - 1) {
     const salaries = await prisma.employee.findMany({
         select: {
             id: true, gender: true, birthDate: true, hireDate: true, exitDate: true,
-            contractType: true, department: true, status: true, baseSalary: true
+            contractType: true, department: true, status: true, baseSalary: true,
+            travailleurHandicape: true
         }
     });
 
@@ -174,6 +189,23 @@ async function produire(annee = new Date().getFullYear() - 1) {
             joursArret: accidents.reduce((s, a) => s + (a.daysOff || 0), 0),
             nonDeclares: accidents.filter((a) => !a.declaredToCnps).length
         },
+        /**
+         * Emploi de travailleurs handicapés.
+         *
+         * Cet indicateur existait sur le tableau de bord de diversité sous
+         * forme d'un pourcentage écrit en dur, sans donnée derrière lui. Il
+         * repose désormais sur une reconnaissance enregistrée salarié par
+         * salarié — et sans quota déclaré, il rend le taux sans prononcer de
+         * verdict de conformité.
+         */
+        handicap: {
+            salaries: presentsFin.filter((s) => s.travailleurHandicape).length,
+            tauxPct: pourcent(presentsFin.filter((s) => s.travailleurHandicape).length, presentsFin.length),
+            quotaPct: QUOTA_HANDICAPES,
+            conforme: QUOTA_HANDICAPES == null
+                ? null
+                : pourcent(presentsFin.filter((s) => s.travailleurHandicape).length, presentsFin.length) >= QUOTA_HANDICAPES
+        },
         remuneration: {
             masseSalarialeBrute: arrondir(masse, 0),
             chargesPatronales: arrondir(bulletins.reduce((s, b) => s + (b.employerContributions || 0), 0), 0),
@@ -196,4 +228,4 @@ async function produire(annee = new Date().getFullYear() - 1) {
     };
 }
 
-module.exports = { AVERTISSEMENT, DEFINITIONS, JOURS_OUVRES_AN, presentsA, effectifMoyen, repartition, produire };
+module.exports = { AVERTISSEMENT, DEFINITIONS, JOURS_OUVRES_AN, QUOTA_HANDICAPES, presentsA, effectifMoyen, repartition, produire };

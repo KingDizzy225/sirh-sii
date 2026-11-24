@@ -1046,7 +1046,7 @@ DATABASE_URL="postgresql://…/sirh_ecole" npm run anonymiser -- --confirmer --m
   WhatsApp, notifications.
 - **Ne copiez pas `uploads/`** : les fichiers, eux, ne sont pas anonymisés.
 
-## Transport, avantages, grille, virements, délégués, stages
+## Transport, avantages, virements, stages
 
 ### Prime de transport et avantages en nature (Pilotage RH → Transport & avantages)
 
@@ -1064,18 +1064,6 @@ Le bulletin ne connaissait qu'une ligne « primes », fourre-tout.
   montants sont ceux que l'employeur retient, sous sa responsabilité.
 - Le bulletin explique désormais ces deux lignes au salarié.
 
-### Grille conventionnelle (Pilotage RH → Grille conventionnelle)
-
-Saisir la grille (convention, catégorie, échelon, minimum), puis affecter une
-catégorie à chaque salarié. L'écran liste les salaires sous le minimum, et la
-paie les signale parmi les écarts — sans bloquer : une régularisation peut être
-en cours, mais elle ne passe plus inaperçue.
-
-- Le **minimum légal** se déclare par `SMIG_MENSUEL`. Non posé, seuls les
-  salariés dotés d'une catégorie sont contrôlés ; l'écran le dit.
-- Le plus élevé des deux minima l'emporte.
-- Retirer une ligne ne l'efface pas : un minimum passé explique un salaire passé.
-
 ### Virements des salaires (Pilotage RH → Virements des salaires)
 
 1. Choisir la période : l'écran annonce les virements et les salariés écartés
@@ -1092,23 +1080,6 @@ en cours, mais elle ne passe plus inaperçue.
 largeurs, en-tête, pied. À défaut, un CSV générique sort. Le jour où la banque
 remet sa spécification, elle se saisit — le programme ne change pas.
 
-### Délégués du personnel (Employés → Délégués du personnel)
-
-Scrutins, mandats, réunions, et les manques à traiter : absence de délégués
-au-delà du seuil, mandats proches du terme, réunion trop ancienne. Les alertes
-partent avec les échéances quotidiennes.
-
-| Variable | Rôle |
-|---|---|
-| `DELEGUES_SEUIL_EFFECTIF` | effectif déclenchant l'obligation (11 par défaut, **à confirmer**) |
-| `DELEGUES_DUREE_MANDAT_MOIS` | durée du mandat (24 par défaut) |
-| `DELEGUES_PREAVIS_JOURS` | préavis de renouvellement (90) |
-| `DELEGUES_BAREME` | nombre de délégués par tranche, fixé par arrêté — **non renseigné par défaut** |
-
-Sans barème, l'application suit les mandats sans annoncer combien de délégués
-vous devez avoir : un chiffre inventé serait pris pour vrai. Les stagiaires et
-apprentis ne comptent pas dans l'effectif retenu.
-
 ### Stagiaires et apprentis (Employés → Stagiaires & apprentis)
 
 Convention (école, niveau, tuteur, dates, gratification) rattachée à un
@@ -1120,6 +1091,92 @@ délégués.
 gratification. Elle la traite comme une rémunération ordinaire — cotisations et
 impôt — et l'écran le dit. Si votre cabinet retient une exonération, ajustez
 en conséquence.
+
+## Retraite, missions, travailleurs handicapés
+
+### Départs à la retraite (Employés → Départs à la retraite)
+
+L'application connaissait toutes les dates de naissance et n'en tirait rien.
+L'écran annonce les départs à venir sur 12, 24 ou 60 mois, et signale en rouge
+ceux dont l'âge est **déjà dépassé** — ce n'est pas une erreur de saisie, c'est
+un départ qui aurait dû être préparé. `RETRAITE_AGE` porte l'âge retenu.
+
+Le point le plus lourd est ailleurs : un salarié partant à la retraite
+ressortait du décompte de départ avec **zéro** indemnité, puisque seul le
+licenciement en ouvrait une. L'allocation de fin de carrière a son propre
+barème (`RETRAITE_BAREME_ALLOCATION`, même forme que celui du licenciement) et
+figure désormais sur sa propre ligne du décompte. **Sans barème déclaré, le
+reçu pour solde de tout compte est bloqué** : mieux vaut pas de reçu qu'un reçu
+signé amputé de son poste le plus lourd.
+
+### Ordres de mission (Employés → Ordres de mission)
+
+Les notes de frais remboursaient après coup ; rien ne consignait qui avait
+autorisé le déplacement. Un ordre de mission se demande, s'autorise ou se
+refuse avec motif — les deux décisions sont journalisées —, puis se constate et
+se solde au retour. Les responsables demandent pour leur équipe ; autoriser et
+solder restent aux RH.
+
+`MISSION_PER_DIEM` porte les forfaits par zone (LOCALE, INTERIEUR, ETRANGER).
+Sans paramétrage, l'ordre vaut quand même : l'autorisation écrite est déjà
+l'essentiel, et le montant se saisit.
+
+**Le per diem n'est pas un remboursement** : il couvre le séjour au forfait,
+les frais réels justifiés restent des notes de frais. L'écran met en tête les
+avances des missions effectuées et non soldées — de l'argent sorti que personne
+ne réclame.
+
+### Travailleurs handicapés
+
+La fiche salarié porte la reconnaissance, sa date et l'aménagement de poste.
+C'est une donnée sensible : elle sert au décompte et à l'aménagement, pas aux
+écrans ordinaires.
+
+Le bilan social en tire le taux d'emploi. Cet indicateur existait auparavant sur
+le tableau de bord de diversité sous forme d'un pourcentage écrit en dur, sans
+aucune donnée derrière — il avait été retiré, il revient sur une base réelle.
+`QUOTA_TRAVAILLEURS_HANDICAPES` déclare le quota applicable ; sans lui,
+l'application rend le taux constaté et **ne prononce aucun verdict de
+conformité**.
+
+## Ce que le salarié voit de son dossier
+
+Les salariés n'ont pas de compte : leur badge numérique les identifie. La page
+du badge (`/badge/<jeton>`) porte donc, sous la carte, ce qu'ils peuvent
+consulter d'eux-mêmes. Les blocs sont repliés par défaut — le badge s'ouvre sur
+un téléphone, souvent en 3G.
+
+**Mes droits** — solde de congés opposable (celui que la paie décompte), sa
+décomposition (acquis, majorations d'ancienneté et pour enfants, jours pris),
+la valeur d'une journée, l'ancienneté, la prime de fin d'année acquise à ce
+jour et les rappels à venir. Le salarié remplissait jusqu'ici une demande de
+congés sans connaître son solde.
+
+**Mes bulletins** — les trois derniers, expliqués ligne par ligne.
+L'explication existait, réservée aux comptes RH : le salarié recevait le PDF et
+l'explication restait de l'autre côté du guichet. Elle compte d'autant plus
+depuis que le bulletin porte le rappel, le transport, les avantages en nature,
+l'astreinte et le treizième mois.
+
+**Mes échéances** — terme du contrat, validité de la visite médicale,
+échéances de prêt restantes. **L'avis du médecin du travail n'en fait pas
+partie** : seule la date de validité sort, jamais la conclusion ni les
+restrictions.
+
+**Mes astreintes** — les périodes à venir, avec leur compensation.
+
+**Mes attestations** — attestation de travail et attestation de salaire,
+émises immédiatement par l'intéressé, signées et scellées comme celles des RH,
+avec le QR de vérification. Le registre garde qui les a émises :
+`PORTAIL_SALARIE`. L'attestation de salaire reprend les bulletins enregistrés
+mois par mois et dit combien elle en a trouvés — elle n'extrapole pas une
+moyenne sur des mois absents, ce qui ferait certifier un revenu que la paie
+n'a pas versé. Le nombre de mois repris se règle par
+`ATTESTATION_SALAIRE_MOIS`.
+
+Corrigé au passage : l'attestation portait « Nous soussignés, la direction de
+SIRH-SII » — le nom du logiciel, sur un document remis à une banque. Le nom
+vient désormais de l'identité de l'entreprise (onglet *Paramètres → Identité*).
 
 ## Rappels, treizième mois, provisions, astreintes, bilan social
 
@@ -1500,3 +1557,75 @@ alors **avant** de saisir ses données, jamais après.
 **Envoi d'emails.** Sans configuration SMTP, les notifications partent vers une
 boîte de test jetable. Les salariés ne reçoivent rien, et rien ne le signale
 dans l'interface. À régler avant d'annoncer la fonctionnalité.
+
+## Fonctions retirées le 23 septembre 2026
+
+Quatre sujets étaient traités deux fois : une maquette de démonstration d'un
+côté, une fonction enregistrant en base de l'autre. Sur décision d'Ibrahim
+Diop, les secondes ont été retirées pour ne garder qu'un écran par sujet.
+
+| Retiré | Ce qui reste |
+|---|---|
+| Attestations en libre-service depuis le badge | *Kiosque Attestations Express* |
+| Indemnités journalières CNPS (créances, encaissements) | *Sécurité, CSST & Accidents CNPS* |
+| Mandats et scrutins des délégués | *Délégués & Doléances Salariés* |
+| Grille conventionnelle et contrôle du minimum | *Simulateur Brut/Net & Grille CCNI* |
+
+**Ce qui disparaît avec elles**, et qu'il faut savoir : la paie ne signale plus
+un salaire inférieur au minimum de sa catégorie ; les créances d'indemnités
+journalières ne sont plus suivies jusqu'à leur encaissement ; les échéances de
+mandat ne remontent plus dans les alertes RH ; un salarié ne peut plus éditer
+lui-même une attestation scellée depuis son badge.
+
+**Aucune donnée n'a été supprimée.** Les tables `grille_convention`,
+`indemnite_journaliere`, `scrutin`, `mandat_delegue` et `reunion_delegues`
+restent en place, simplement plus alimentées. Les faire tomber demandera une
+migration explicite, à décider séparément.
+
+## Avant la bascule chez SII — ce qui a été fait, ce qui reste
+
+Lot de mise en production livré le 24 septembre 2026.
+
+### Corrigé
+
+| Point | Avant | Après |
+|---|---|---|
+| Langue du document | `lang="en"` | `lang="fr"` — les lecteurs d'écran lisent le français correctement |
+| Adresse du visiteur | celle du proxy, pour tout le monde | `trust proxy` : le limiteur de débit distingue les clients, les traces d'audit portent la bonne adresse |
+| Table des rôles | une par côté, divergentes | une seule (`src/lib/roles.js`), alignée sur le serveur |
+| Assistant social | refusé sur ses propres écrans | reconnu |
+| `RequirePermission` | ignorait la permission demandée | applique ce qu'il annonce |
+| Premier chargement | 128 écrans importés au démarrage | chargés à la demande, avec écran d'attente |
+| Fiches en double | rien ne les empêchait | une correspondance certaine (CNPS ou matricule) arrête la création |
+
+### Ce qui reste à faire, et par qui
+
+**Par Ibrahim, avant d'ouvrir aux salariés** — ces trois-là ne sont pas dans le
+code, et personne d'autre ne doit les déclencher :
+
+1. `DISABLE_TEST_ACCOUNTS=true` sur Render — le mot de passe des comptes de
+   démonstration est affiché sur l'écran de connexion.
+2. `VITE_DEMO_MODE=false` sur Vercel — mais créer un compte réel **avant**,
+   sinon plus personne n'entre.
+3. `npm run purge-demo -- --confirm` une fois les vraies données chargées.
+
+**Par le service informatique** : voir `docs/PASSATION-IT.md`.
+
+**Par le cabinet comptable** : les valeurs que l'application refuse d'inventer
+et sans lesquelles certaines fonctions restent muettes — SMIG, barème de
+l'allocation de fin de carrière, plafond d'exonération du transport, forfaits
+de per diem, taux d'indemnisation CNPS, quota de travailleurs handicapés.
+
+**Par la banque** : le format de fichier de virement. Tant qu'il n'est pas
+connu, le fichier produit reste un CSV générique.
+
+### Contrôle du doublon à la création
+
+Une fiche dont le numéro CNPS ou le matricule correspond à une fiche existante
+est refusée avec un code 409 et le nom de la fiche concernée. S'il s'agit bien
+d'une autre personne — homonymie, réembauche —, renvoyer la demande avec
+`confirmerDoublon: true`.
+
+La contrainte d'unicité sur le numéro CNPS **n'a pas été posée en base** : elle
+échouerait sur les doublons déjà présents. L'inventaire se lit par
+`lib/doublon.js` → `inventaire()`, à passer avant d'ajouter la contrainte.

@@ -152,7 +152,7 @@ export function ParcoursOnboarding() {
                             Passeport d'Intégration • Semaine 3 en cours
                         </span>
                         <h3 className="text-lg font-black text-slate-900 mt-0.5">
-                            Collaboratrice accompagnée : Julie Konan (Chargée de Clientèle)
+                            Collaborateur accompagné
                         </h3>
                     </div>
                     <div className="flex items-center gap-2">

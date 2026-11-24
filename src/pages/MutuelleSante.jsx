@@ -14,155 +14,14 @@ export function MutuelleSante() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   // Données des salariés affiliés
-  const [affilies, setAffilies] = useState([
-    {
-      id: 1,
-      matricule: "EMP-0012",
-      nom: "Jean-Marc Koffi",
-      poste: "Directeur d'Agence Plateau",
-      agence: "Abidjan Plateau",
-      assureur: "Ascoma CI",
-      numeroPolice: "POL-ASC-88492",
-      formule: "Cadre Supérieur (100%)",
-      statutCMU: "Immatriculé (N° 100294821)",
-      primeMensuelle: 45000,
-      ayantsDroit: [
-        { id: 101, nom: "Koffi Akissi Béatrice", lien: "Conjoint(e)", dateNaissance: "1984-05-12", statutPieces: "Conforme" },
-        { id: 102, nom: "Koffi Marc-Aurel", lien: "Enfant", dateNaissance: "2012-08-20", statutPieces: "Conforme" },
-        { id: 103, nom: "Koffi Marie-Ange", lien: "Enfant", dateNaissance: "2016-11-04", statutPieces: "Conforme" }
-      ],
-      consommationAnnuelle: {
-        pharmacie: 65, // %
-        optique: 90,   // % alerte
-        dentaire: 40,  // %
-        hospitalisation: 15 // %
-      }
-    },
-    {
-      id: 2,
-      matricule: "EMP-0018",
-      nom: "Julie Konan",
-      poste: "Chargée de Clientèle Entreprises",
-      agence: "Abidjan Plateau",
-      assureur: "Ascoma CI",
-      numeroPolice: "POL-ASC-88493",
-      formule: "Agent de Maîtrise (80%)",
-      statutCMU: "Immatriculé (N° 100482910)",
-      primeMensuelle: 32000,
-      ayantsDroit: [
-        { id: 201, nom: "Konan Yannick Junior", lien: "Enfant", dateNaissance: "2019-03-15", statutPieces: "Conforme" }
-      ],
-      consommationAnnuelle: {
-        pharmacie: 45,
-        optique: 20,
-        dentaire: 35,
-        hospitalisation: 0
-      }
-    },
-    {
-      id: 3,
-      matricule: "EMP-0025",
-      nom: "Armand Kouassi",
-      poste: "Comptable Fournisseurs",
-      agence: "Abidjan Marcory",
-      assureur: "Gras Savoye / WTW",
-      numeroPolice: "POL-GS-49102",
-      formule: "Agent de Maîtrise (80%)",
-      statutCMU: "Immatriculé (N° 100938472)",
-      primeMensuelle: 32000,
-      ayantsDroit: [
-        { id: 301, nom: "Kouassi Marie-Paule", lien: "Conjoint(e)", dateNaissance: "1991-09-02", statutPieces: "Conforme" },
-        { id: 302, nom: "Kouassi David", lien: "Enfant", dateNaissance: "2021-01-10", statutPieces: "Extrait requis" }
-      ],
-      consommationAnnuelle: {
-        pharmacie: 85,
-        optique: 50,
-        dentaire: 70,
-        hospitalisation: 30
-      }
-    },
-    {
-      id: 4,
-      matricule: "EMP-0034",
-      nom: "Aïcha Ouattara",
-      poste: "Responsable Paie & Fiscalité Sociale",
-      agence: "Siège Social",
-      assureur: "Ascoma CI",
-      numeroPolice: "POL-ASC-88494",
-      formule: "Cadre (100%)",
-      statutCMU: "Immatriculé (N° 100128475)",
-      primeMensuelle: 40000,
-      ayantsDroit: [
-        { id: 401, nom: "Ouattara Inès", lien: "Enfant", dateNaissance: "2015-06-25", statutPieces: "Conforme" },
-        { id: 402, nom: "Ouattara Cheick", lien: "Enfant", dateNaissance: "2018-12-14", statutPieces: "Conforme" }
-      ],
-      consommationAnnuelle: {
-        pharmacie: 30,
-        optique: 88,
-        dentaire: 25,
-        hospitalisation: 0
-      }
-    },
-    {
-      id: 5,
-      matricule: "EMP-0041",
-      nom: "Moussa Diabaté",
-      poste: "Responsable HSE",
-      agence: "San Pedro Port",
-      assureur: "NSIA Assurances",
-      numeroPolice: "POL-NSIA-1029",
-      formule: "Cadre (100%)",
-      statutCMU: "En cours d'enrôlement",
-      primeMensuelle: 40000,
-      ayantsDroit: [
-        { id: 501, nom: "Diabaté Fatoumata", lien: "Conjoint(e)", dateNaissance: "1988-02-18", statutPieces: "Conforme" }
-      ],
-      consommationAnnuelle: {
-        pharmacie: 40,
-        optique: 10,
-        dentaire: 15,
-        hospitalisation: 0
-      }
-    }
-  ]);
+  const [affilies, setAffilies] = useState([]);
 
   // Mouvements mensuels récents (incorporations & radiations)
-  const [mouvements, setMouvements] = useState([
-    {
-      id: 1,
-      date: "2026-09-15",
-      type: "INCORPORATION",
-      collaborateur: "Julie Konan",
-      beneficiaire: "Nouveau-né (Konan Liam)",
-      lien: "Enfant",
-      assureur: "Ascoma CI",
-      statut: "Transmis à la compagnie"
-    },
-    {
-      id: 2,
-      date: "2026-09-02",
-      type: "INCORPORATION",
-      collaborateur: "Moussa Diabaté",
-      beneficiaire: "Diabaté Fatoumata",
-      lien: "Conjoint(e)",
-      assureur: "NSIA Assurances",
-      statut: "Validé - Carte émise"
-    },
-    {
-      id: 3,
-      date: "2026-08-28",
-      type: "RADIATION",
-      collaborateur: "Kouadio Michel (Démissionnaire)",
-      beneficiaire: "Salarié + 2 ayants droit",
-      lien: "Famille complète",
-      assureur: "Ascoma CI",
-      statut: "Cartes désactivées"
-    }
-  ]);
+  const [mouvements, setMouvements] = useState([]);
 
   // Formulaire d'ajout d'ayant droit
   const [newAyantDroit, setNewAyantDroit] = useState({
-    affilieId: 2, // Julie Konan par défaut
+    affilieId: 2,
     nom: '',
     lien: 'Enfant',
     dateNaissance: '',
@@ -414,11 +273,6 @@ export function MutuelleSante() {
                         <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
                           {affilie.matricule}
                         </span>
-                        {affilie.nom === "Julie Konan" && (
-                          <span className="text-[10px] bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 px-1.5 py-0.2 rounded font-medium">
-                            Profil Vitrine
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {affilie.poste} • {affilie.agence}

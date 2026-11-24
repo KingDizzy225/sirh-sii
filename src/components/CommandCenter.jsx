@@ -7,7 +7,7 @@ import {
     Briefcase, Building2, Phone, Mail, ArrowRight, CornerDownLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
+import { useEffectif, nomDe } from '../lib/effectif.js';
 
 const MODULES_ACTIONS = [
     { id: 'act-1', title: 'Tableau de Bord Principal', path: '/', icon: Home, category: 'Navigation', shortcut: 'D' },
@@ -35,10 +35,13 @@ export function CommandCenter() {
     const navigate = useNavigate();
     const inputRef = useRef(null);
 
-    // Format all 191 employees for instant search
-    const employeeItems = MOCK_190_EMPLOYEES.map(emp => ({
+    // La recherche porte sur l'effectif réel : une liste embarquée proposait
+    // des noms que la base ne connaissait pas, et le clic ne menait nulle part.
+    const { salaries } = useEffectif();
+
+    const employeeItems = salaries.map(emp => ({
         id: `emp-${emp.id}`,
-        title: `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.name,
+        title: nomDe(emp),
         category: `Collaborateur • ${emp.department || 'Pôle Opérations'}`,
         path: '/employees',
         icon: User,

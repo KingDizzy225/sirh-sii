@@ -11,44 +11,7 @@ export function GreenHR() {
   const [toastMessage, setToastMessage] = useState(null);
 
   // Trajets de covoiturage interne proposés entre collègues
-  const [covoiturages, setCovoiturages] = useState([
-    {
-      id: "RIDE-01",
-      conducteur: "Jean-Marc Koffi",
-      poste: "Directeur d'Agence",
-      itineraire: "Cocody Riviera Palmeraie ➔ Siège Plateau",
-      heureDepart: "07h15 (Retour : 17h30)",
-      placesDispos: 3,
-      placesOccupees: 2,
-      passagers: ["Julie Konan", "Armand Kouassi"],
-      co2EconomiseKg: 180,
-      vehicule: "SUV Hybride d'Entreprise"
-    },
-    {
-      id: "RIDE-02",
-      conducteur: "Mamadou Bakayoko",
-      poste: "Technicien Réseaux",
-      itineraire: "Yopougon Maroc ➔ Hub Zone 4 Marcory",
-      heureDepart: "06h45 (Retour : 18h00)",
-      placesDispos: 3,
-      placesOccupees: 3,
-      passagers: ["Kouamé Eric", "Ousmane D.", "Aïssata Diallo"],
-      co2EconomiseKg: 240,
-      vehicule: "Berline Confort"
-    },
-    {
-      id: "RIDE-03",
-      conducteur: "Fatou Camara",
-      poste: "Responsable QVT",
-      itineraire: "Bingerville Nouveau Goudron ➔ Agence Cocody",
-      heureDepart: "07h30 (Retour : 17h00)",
-      placesDispos: 2,
-      placesOccupees: 1,
-      passagers: ["Marie-Grâce K."],
-      co2EconomiseKg: 95,
-      vehicule: "Citadine Électrique"
-    }
-  ]);
+  const [covoiturages, setCovoiturages] = useState([]);
 
   // Challenges d'agences
   const [challenges, setChallenges] = useState([

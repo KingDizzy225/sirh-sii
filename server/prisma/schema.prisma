@@ -62,6 +62,17 @@ model Employee {
   // entière de congés à tout salarié dès sa création, y compris à un import en
   // masse. Il est désormais calculé à la création (lib/conges.js) ou repris du
   // système précédent, et `leaveBalanceSource` dit lequel des deux.
+  /// Travailleur handicapé, tel que reconnu par la décision administrative.
+  ///
+  /// Le tableau de bord de diversité affichait un taux d'emploi de travailleurs
+  /// handicapés relié à aucune donnée — il a été retiré. Le champ existe
+  /// maintenant, et l'indicateur repose sur lui.
+  ///
+  /// Donnée sensible : elle sert au décompte du quota et à l'aménagement du
+  /// poste, et n'a pas à figurer sur les écrans ordinaires.
+  travailleurHandicape Boolean   @default(false) @map("travailleur_handicape")
+  handicapReconnuLe    DateTime? @map("handicap_reconnu_le")
+  handicapAmenagement  String?   @map("handicap_amenagement") @db.Text
   annualLeaveBalance Float     @default(0) @map("annual_leave_balance")
   leaveBalanceSource String?   @map("leave_balance_source") // 'CALCUL' | 'REPRISE'
   leaveBalanceSetAt  DateTime? @map("leave_balance_set_at")
@@ -134,18 +145,20 @@ model Employee {
   /// Prime de transport mensuelle, reprise à chaque paie.
   primeTransport        Float?                  @map("prime_transport")
 
-  avantages          AvantageNature[]
-  rappels            RappelSalaire[]
-  primesAnnuelles    PrimeAnnuelle[]
-  astreintes         Astreinte[]
-  mandats            MandatDelegue[]
-  conventionStage    ConventionStage?        @relation("StagiaireConvention")
-  stagiairesEncadres ConventionStage[]       @relation("TuteurStage")
-  lignesVirement     LigneVirement[]
-  passationsRedigees Passation[]             @relation("PassationsRedigees")
-  elementsResolus    ElementPassation[]      @relation("ElementsPassationResolus")
-  acquittements      AcquittementPassation[]
-  emargements        Emargement[]
+  avantages            AvantageNature[]
+  rappels              RappelSalaire[]
+  primesAnnuelles      PrimeAnnuelle[]
+  astreintes           Astreinte[]
+  missions             OrdreMission[]
+  indemnitesJournalieres IndemniteJournaliere[]
+  mandats              MandatDelegue[]
+  conventionStage      ConventionStage?        @relation("StagiaireConvention")
+  stagiairesEncadres   ConventionStage[]       @relation("TuteurStage")
+  lignesVirement       LigneVirement[]
+  passationsRedigees   Passation[]             @relation("PassationsRedigees")
+  elementsResolus      ElementPassation[]      @relation("ElementsPassationResolus")
+  acquittements        AcquittementPassation[]
+  emargements          Emargement[]
 }
 
 // ... (existing code)
@@ -2622,4 +2635,79 @@ model Astreinte {
   @@index([debut])
   @@index([employeeId, statut])
   @@map("astreinte")
+}
+
+/// Ordre de mission : l'autorisation de partir, et l'indemnité de séjour.
+///
+/// Les notes de frais remboursaient après coup ; rien ne consignait qui avait
+/// autorisé le déplacement, ni ce qui était dû au forfait. Le per diem couvre
+/// le séjour ; les frais réels justifiés restent des notes de frais, sans quoi
+/// la même nuit d'hôtel se paierait deux fois.
+model OrdreMission {
+  id             String    @id @default(uuid())
+  employeeId     String    @map("employee_id")
+  objet          String
+  destination    String
+  /// LOCALE, INTERIEUR, ETRANGER
+  zone           String
+  debut          DateTime
+  fin            DateTime
+  /// Forfait journalier retenu, en FCFA. Nul quand aucun n'est déclaré.
+  perDiemJour    Float?    @map("per_diem_jour")
+  montantPrevu   Float?    @map("montant_prevu")
+  /// Avance versée avant le départ, à solder au retour.
+  avance         Float     @default(0)
+  moyenTransport String?   @map("moyen_transport")
+  /// DEMANDEE, AUTORISEE, EFFECTUEE, SOLDEE, REFUSEE, ANNULEE
+  statut         String    @default("DEMANDEE")
+  autorisePar    String?   @map("autorise_par")
+  autoriseeLe    DateTime? @map("autorisee_le")
+  motifRefus     String?   @map("motif_refus")
+  compteRendu    String?   @map("compte_rendu") @db.Text
+  creeLe         DateTime  @default(now()) @map("cree_le")
+  creePar        String?   @map("cree_par")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([debut])
+  @@index([employeeId, statut])
+  @@map("ordre_mission")
+}
+
+/// Créance d'indemnités journalières sur la CNPS.
+///
+/// Pendant un congé de maternité ou un arrêt pour accident du travail,
+/// l'employeur avance le salaire et la CNPS lui rembourse. L'avance était
+/// faite chaque fois, la créance jamais ouverte.
+///
+/// `montantEstime` et `montantReclame` restent distincts de `montantRembourse` :
+/// une estimation n'est pas une créance, et une créance n'est pas un
+/// encaissement.
+model IndemniteJournaliere {
+  id                String    @id @default(uuid())
+  employeeId        String    @map("employee_id")
+  /// MATERNITE, ACCIDENT
+  type              String
+  /// Identifiant du congé ou de l'accident d'origine.
+  origineId         String    @unique @map("origine_id")
+  debut             DateTime
+  fin               DateTime
+  jours             Int
+  salaireJournalier Float?    @map("salaire_journalier")
+  montantEstime     Float?    @map("montant_estime")
+  montantReclame    Float?    @map("montant_reclame")
+  montantRembourse  Float?    @map("montant_rembourse")
+  /// A_RECLAMER, RECLAMEE, REMBOURSEE, ABANDONNEE
+  statut            String    @default("A_RECLAMER")
+  reference         String?
+  reclameeLe        DateTime? @map("reclamee_le")
+  rembourseeLe      DateTime? @map("remboursee_le")
+  note              String?   @db.Text
+  creeLe            DateTime  @default(now()) @map("cree_le")
+  creePar           String?   @map("cree_par")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([statut])
+  @@map("indemnite_journaliere")
 }

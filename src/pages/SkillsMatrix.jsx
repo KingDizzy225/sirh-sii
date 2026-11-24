@@ -14,7 +14,6 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { skillsCatalog, getAllSkillsFlat } from '../constants/skillsCatalog';
-import { MOCK_190_EMPLOYEES, MOCK_190_TALENTS } from '../constants/mockEmployees';
 
 // Dnd Kit Imports for Succession Planning
 import { DndContext, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
@@ -90,60 +89,6 @@ const TARGET_ROLES = [
     }
 ];
 
-export const JULIE_KONAN_MOCK = {
-    id: 'julie-konan-demo',
-    firstName: 'Julie',
-    lastName: 'Konan',
-    name: 'Julie Konan',
-    email: 'julie.konan@sii-ci.com',
-    phone: '+225 07 08 09 10 11',
-    positionTitle: 'Chargée de Clientèle',
-    role: 'Employee',
-    department: 'Commercial & Relation Client',
-    status: 'ACTIVE',
-    gender: 'Féminin',
-    birthDate: '1994-08-20',
-    hireDate: '2022-03-15',
-    address: 'Abidjan, Cocody Riviera Palmeraie',
-    matricule: 'EMP-2022-042',
-    cnpsNumber: 'CNPS-84920194',
-    bankName: 'Société Générale CI',
-    bankAccount: 'CI059 01001 12345678901 45',
-    childrenCount: 1,
-    annualLeaveBalance: 24,
-    nationality: 'Ivoirienne',
-    manager: { firstName: 'Armand', lastName: 'Kouassi', positionTitle: 'Directeur Commercial' },
-    skills: [
-        { id: 'jk-s1', skillName: 'Gestion de la Relation Client (CRM)', proficiencyLevel: 'Expert', category: 'Vente, Marketing & Commerce' },
-        { id: 'jk-s2', skillName: 'Communication Orale', proficiencyLevel: 'Expert', category: 'Soft Skills (Savoir-être)' },
-        { id: 'jk-s3', skillName: 'Communication Écrite', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
-        { id: 'jk-s4', skillName: 'Négociation de Contrats B2B/B2C', proficiencyLevel: 'Avancé', category: 'Vente, Marketing & Commerce' },
-        { id: 'jk-s5', skillName: 'Service Client / SAV', proficiencyLevel: 'Expert', category: 'Vente, Marketing & Commerce' },
-        { id: 'jk-s6', skillName: 'Intelligence Émotionnelle', proficiencyLevel: 'Expert', category: 'Soft Skills (Savoir-être)' },
-        { id: 'jk-s7', skillName: 'Gestion du Stress', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
-        { id: 'jk-s8', skillName: 'Résolution de Problèmes', proficiencyLevel: 'Avancé', category: 'Soft Skills (Savoir-être)' },
-        { id: 'jk-s9', skillName: 'Anglais (Professionnel courant)', proficiencyLevel: 'Intermédiaire', category: 'Langues' }
-    ],
-    equipment: [
-        { id: 'eq-jk1', name: 'MacBook Pro 14" M2', serialNumber: 'MBP-2022-991', assignedDate: '2022-03-16' },
-        { id: 'eq-jk2', name: 'Casque Jabra Evolve2 65', serialNumber: 'JBR-7712', assignedDate: '2022-03-16' }
-    ]
-};
-
-const JULIE_KONAN_TALENT = {
-    id: 'julie-konan-demo',
-    employeeId: 'julie-konan-demo',
-    name: 'Julie Konan',
-    position: 'Chargée de Clientèle',
-    department: 'Commercial & Relation Client',
-    potential: 'High',
-    performance: 'High',
-    flightRisk: 'Low',
-    readiness: 'Prêt maintenant'
-};
-
-export const ALL_MOCK_EMPLOYEES = [JULIE_KONAN_MOCK, ...MOCK_190_EMPLOYEES];
-export const ALL_MOCK_TALENTS = [JULIE_KONAN_TALENT, ...MOCK_190_TALENTS];
 
 export function SkillsMatrix() {
     const { token } = useAuth();
@@ -151,17 +96,21 @@ export function SkillsMatrix() {
     const [notification, setNotification] = useState(null);
 
     // Dynamic Lists from Backend with 190+ hardcoded employees
-    const [employees, setEmployees] = useState(ALL_MOCK_EMPLOYEES);
-    const [talents, setTalents] = useState(ALL_MOCK_TALENTS);
+    const [employees, setEmployees] = useState([]);
+    const [talents, setTalents] = useState([]);
     const [gpecMap, setGpecMap] = useState([]);
     const [gpecGaps, setGpecGaps] = useState([]);
     const [skillDefinitions, setSkillDefinitions] = useState([]);
     const [successionPlans, setSuccessionPlans] = useState([]);
+    // Rôles cibles déduits des postes réellement occupés, et la méthode qui les
+    // a produits — affichée, pour qu'un écart ne passe pas pour une norme.
+    const [rolesMetier, setRolesMetier] = useState([]);
+    const [methodeRoles, setMethodeRoles] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Selected Employee Detail (Tab 1) - Default to Julie Konan for presentation
-    const [selectedEmployee, setSelectedEmployee] = useState(JULIE_KONAN_MOCK);
-    const [selectedEmployeeDetails, setSelectedEmployeeDetails] = useState(JULIE_KONAN_MOCK);
+    // Détail du salarié sélectionné
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [selectedEmployeeDetails, setSelectedEmployeeDetails] = useState(null);
     const [compareRole, setCompareRole] = useState('Chargée de Clientèle Senior');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSkillFilter, setSelectedSkillFilter] = useState('');
@@ -184,35 +133,50 @@ export function SkillsMatrix() {
         setTimeout(() => setNotification(null), 3000); 
     };
 
+    /**
+     * Rôles disponibles pour mesurer un écart.
+     *
+     * Les quatre rôles écrits dans cet écran sont conservés, et les postes
+     * réellement occupés viennent s'y ajouter. Un poste tenu par une seule
+     * personne est proposé mais signalé : la barre y est son propre niveau,
+     * donc l'écart vaut zéro par construction.
+     */
+    const rolesDisponibles = React.useMemo(() => {
+        const ecrits = TARGET_ROLES.map(r => ({ ...r, origine: 'MODELE' }));
+        const dejaLa = new Set(ecrits.map(r => r.title.toLowerCase()));
+        const metiers = rolesMetier
+            .filter(r => !dejaLa.has((r.title || '').toLowerCase()))
+            .map(r => ({ ...r, origine: 'POSTE' }));
+        return [...ecrits, ...metiers];
+    }, [rolesMetier]);
+
+    const roleRetenu = rolesDisponibles.find(r => r.title === compareRole) || null;
+
     // Main loading routine
     const loadAllData = async () => {
         setIsLoading(true);
         try {
             const headers = { Authorization: `Bearer ${token}` };
-            const [empData, talentData, mapData, gapsData, defsData, successionData] = await Promise.all([
+            const [empData, talentData, mapData, gapsData, defsData, successionData, rolesData] = await Promise.all([
                 fetch(`${API_URL}/api/employees`, { headers }).then(r => r.ok ? r.json() : []),
                 fetch(`${API_URL}/api/talents`, { headers }).then(r => r.ok ? r.json() : []),
                 fetch(`${API_URL}/api/gpec/map`, { headers }).then(r => r.ok ? r.json() : []),
                 fetch(`${API_URL}/api/gpec/gaps`, { headers }).then(r => r.ok ? r.json() : []),
                 fetch(`${API_URL}/api/gpec/skill-definitions`, { headers }).then(r => r.ok ? r.json() : []),
-                fetch(`${API_URL}/api/succession`, { headers }).then(r => r.ok ? r.json() : [])
+                fetch(`${API_URL}/api/succession`, { headers }).then(r => r.ok ? r.json() : []),
+                fetch(`${API_URL}/api/gpec/roles-cibles`, { headers }).then(r => r.ok ? r.json() : null)
             ]);
 
-            // Always merge backend records with all 190 mock employees so mock employees are never lost!
-            const apiEmps = Array.isArray(empData) ? empData : [];
-            const existingEmails = new Set(apiEmps.map(e => (e.email || '').toLowerCase()));
-            const missingMocks = ALL_MOCK_EMPLOYEES.filter(m => !existingEmails.has((m.email || '').toLowerCase()));
-            const rawEmps = [...apiEmps, ...missingMocks];
-            const hasJulie = rawEmps.some(e => e.id === 'julie-konan-demo' || `${e.firstName || ''} ${e.lastName || ''}`.toLowerCase().includes('julie konan'));
-            const finalEmployees = hasJulie ? rawEmps : [JULIE_KONAN_MOCK, ...rawEmps];
+            // Les postes occupés donnent des rôles cibles réels ; les quatre
+            // rôles écrits dans cet écran restent en tête, à défaut.
+            if (rolesData && Array.isArray(rolesData.roles)) {
+                setRolesMetier(rolesData.roles);
+                setMethodeRoles(rolesData.methode || null);
+            }
 
-            // Always merge backend talents with all 190 mock talents for the 9-Box grid
-            const apiTalents = Array.isArray(talentData) ? talentData : [];
-            const existingTalentNames = new Set(apiTalents.map(t => (t.name || '').toLowerCase()));
-            const missingTalents = ALL_MOCK_TALENTS.filter(t => !existingTalentNames.has((t.name || '').toLowerCase()));
-            const rawTalents = [...apiTalents, ...missingTalents];
-            const hasJulieTalent = rawTalents.some(t => t.id === 'julie-konan-demo' || (t.name && t.name.toLowerCase().includes('julie konan')));
-            const finalTalents = hasJulieTalent ? rawTalents : [JULIE_KONAN_TALENT, ...rawTalents];
+            // L'effectif et les talents viennent du serveur, et de lui seul.
+            const finalEmployees = Array.isArray(empData) ? empData : [];
+            const finalTalents = Array.isArray(talentData) ? talentData : [];
 
             // Build or enrich GPEC Map from employees and their real skills
             let finalMap = (Array.isArray(mapData) && mapData.length > 2) ? [...mapData] : [];
@@ -247,19 +211,20 @@ export function SkillsMatrix() {
             setSkillDefinitions(defsData || []);
             setSuccessionPlans(successionData || []);
 
-            // Keep Julie Konan selected by default
-            if (!selectedEmployee || selectedEmployee.id === 'julie-konan-demo') {
-                setSelectedEmployee(JULIE_KONAN_MOCK);
-                setSelectedEmployeeDetails(JULIE_KONAN_MOCK);
-                setCompareRole('Chargée de Clientèle Senior');
+            // À défaut de sélection, le premier salarié de la liste. Aucun
+            // salarié : la sélection reste vide et l'écran le dit.
+            if (!selectedEmployee && finalEmployees.length > 0) {
+                setSelectedEmployee(finalEmployees[0]);
+                setSelectedEmployeeDetails(finalEmployees[0]);
             }
         } catch (err) {
-            console.error("Error loading talents & GPEC data", err);
-            setEmployees(ALL_MOCK_EMPLOYEES);
-            setTalents(ALL_MOCK_TALENTS);
-            setSelectedEmployee(JULIE_KONAN_MOCK);
-            setSelectedEmployeeDetails(JULIE_KONAN_MOCK);
-            setCompareRole('Chargée de Clientèle Senior');
+            // Une panne de chargement n'est plus comblée par un effectif de
+            // démonstration : elle se voit.
+            console.error('[COMPÉTENCES] Chargement impossible :', err.message || err);
+            setEmployees([]);
+            setTalents([]);
+            setSelectedEmployee(null);
+            setSelectedEmployeeDetails(null);
         } finally {
             setIsLoading(false);
         }
@@ -275,15 +240,6 @@ export function SkillsMatrix() {
     useEffect(() => {
         const fetchEmployeeDetails = async () => {
             if (!selectedEmployee) return;
-            if (selectedEmployee.id === 'julie-konan-demo') {
-                setSelectedEmployeeDetails(JULIE_KONAN_MOCK);
-                return;
-            }
-            const foundMock = ALL_MOCK_EMPLOYEES.find(e => e.id === selectedEmployee.id);
-            if (foundMock && foundMock.skills && foundMock.skills.length > 0) {
-                setSelectedEmployeeDetails(foundMock);
-                return;
-            }
             try {
                 const res = await fetch(`${API_URL}/api/employees/${selectedEmployee.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
@@ -342,7 +298,7 @@ export function SkillsMatrix() {
     // Recharts data formatter (Tab 1)
     const getRadarData = () => {
         if (!selectedEmployeeDetails) return [];
-        const targetRoleReqs = TARGET_ROLES.find(r => r.title === compareRole)?.requirements || {};
+        const targetRoleReqs = rolesDisponibles.find(r => r.title === compareRole)?.requirements || {};
         
         // Combine current skills and target role skill requirements
         const allSkillNames = new Set([
@@ -361,7 +317,7 @@ export function SkillsMatrix() {
     // Calculate role compatibility percentage
     const targetCompatibility = useMemo(() => {
         if (!selectedEmployeeDetails || !compareRole) return 0;
-        const reqs = TARGET_ROLES.find(r => r.title === compareRole)?.requirements || {};
+        const reqs = rolesDisponibles.find(r => r.title === compareRole)?.requirements || {};
         const reqKeys = Object.keys(reqs);
         if (reqKeys.length === 0) return 100;
 
@@ -824,10 +780,33 @@ export function SkillsMatrix() {
                                                         value={compareRole}
                                                         onChange={(e) => setCompareRole(e.target.value)}
                                                     >
-                                                        {TARGET_ROLES.map(role => (
-                                                            <option key={role.title} value={role.title}>{role.title}</option>
-                                                        ))}
+                                                        <optgroup label="Modèles de rôle">
+                                                            {rolesDisponibles.filter(r => r.origine === 'MODELE').map(role => (
+                                                                <option key={role.title} value={role.title}>{role.title}</option>
+                                                            ))}
+                                                        </optgroup>
+                                                        {rolesDisponibles.some(r => r.origine === 'POSTE') && (
+                                                            <optgroup label="Postes occupés dans l'entreprise">
+                                                                {rolesDisponibles.filter(r => r.origine === 'POSTE').map(role => (
+                                                                    <option key={role.title} value={role.title}>
+                                                                        {role.title} ({role.titulaires} titulaire{role.titulaires > 1 ? 's' : ''})
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                        )}
                                                     </select>
+                                                    {roleRetenu?.origine === 'POSTE' && (
+                                                        <p className="text-[10px] text-slate-500 mt-1.5 leading-snug">
+                                                            {roleRetenu.comparable
+                                                                ? `Niveau attendu = plus haut niveau constaté chez les ${roleRetenu.titulaires} titulaires du poste.`
+                                                                : "Un seul titulaire : la barre est son propre niveau, l'écart vaut donc zéro."}
+                                                        </p>
+                                                    )}
+                                                    {roleRetenu?.origine === 'POSTE' && methodeRoles && (
+                                                        <p className="text-[10px] text-amber-700 mt-1 leading-snug">
+                                                            Photographie des compétences enregistrées, non référentiel validé.
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </CardHeader>
 
@@ -910,7 +889,7 @@ export function SkillsMatrix() {
                                                         {selectedEmployeeDetails.skills && selectedEmployeeDetails.skills.length > 0 ? (
                                                             selectedEmployeeDetails.skills.map(s => {
                                                                 const levelVal = levelMap[s.proficiencyLevel] || 1;
-                                                                const targetLevelVal = compareRole ? (TARGET_ROLES.find(r => r.title === compareRole)?.requirements[s.skillName] || 0) : 0;
+                                                                const targetLevelVal = compareRole ? (rolesDisponibles.find(r => r.title === compareRole)?.requirements[s.skillName] || 0) : 0;
                                                                 const isGap = compareRole && targetLevelVal > levelVal;
 
                                                                 return (

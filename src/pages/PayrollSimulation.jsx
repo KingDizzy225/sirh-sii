@@ -13,7 +13,6 @@ import {
     ResponsiveContainer, BarChart as ReBarChart, Bar, XAxis, YAxis, 
     CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area
 } from 'recharts';
-import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
 
 export function PayrollSimulation() {
     const totalEmployees = 191;

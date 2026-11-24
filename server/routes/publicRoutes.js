@@ -51,6 +51,7 @@ const espaceSalarieController = require('../controllers/espaceSalarieController'
 router.post('/badges/:jeton/pointer', espaceSalarieController.pointer);
 router.post('/pulsation', require('./pulsationRoutes'));
 router.get('/badges/:jeton/espace', espaceSalarieController.espace);
+router.get('/badges/:jeton/dossier', espaceSalarieController.monDossier);
 router.post('/badges/:jeton/remplacements', espaceSalarieController.proposer);
 router.post('/badges/:jeton/remplacements/:id/annuler', espaceSalarieController.annuler);
 router.post('/badges/:jeton/remplacements/:id/accepter', espaceSalarieController.reprendre);

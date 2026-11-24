@@ -6,6 +6,9 @@ const requireRole = require('../middleware/roleMiddleware');
 
 router.get('/map', verifyToken, requireRole('HR', 'ADMIN', 'Administrator'), c.getCompetencyMap);
 router.get('/gaps', verifyToken, requireRole('HR', 'ADMIN', 'Administrator'), c.getSkillGaps);
+// Rôles cibles déduits des postes occupés : ouverts aux responsables, qui
+// mesurent les écarts de leur équipe.
+router.get('/roles-cibles', verifyToken, requireRole('HR', 'ADMIN', 'Administrator', 'Manager'), c.getRolesCibles);
 router.get('/skill-definitions', verifyToken, c.getSkillDefinitions);
 router.post('/skill-definitions', verifyToken, requireRole('HR', 'ADMIN', 'Administrator'), c.createSkillDefinition);
 router.delete('/skill-definitions/:id', verifyToken, requireRole('HR', 'ADMIN', 'Administrator'), c.deleteSkillDefinition);

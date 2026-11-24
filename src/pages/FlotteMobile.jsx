@@ -13,93 +13,7 @@ export function FlotteMobile() {
   const [selectedLine, setSelectedLine] = useState(null);
 
   // Inventaire des lignes de flotte
-  const [flotte, setFlotte] = useState([
-    {
-      id: 1,
-      collaborateur: "Julie Konan",
-      matricule: "EMP-0018",
-      poste: "Chargée de Clientèle Entreprises Senior",
-      departement: "Réseau Agences",
-      operateur: "Orange CI",
-      numero: "+225 07 12 34 56 78",
-      forfaitNom: "Flotte Pro Illimitée + 25 Go Data",
-      coutMensuel: 25000,
-      dataConso: 18,
-      dataPlafond: 25,
-      terminal: "iPhone 13 Pro 128 Go",
-      imei: "354920192847102",
-      dechargeSignee: true,
-      dateRemise: "15 Janvier 2021"
-    },
-    {
-      id: 2,
-      collaborateur: "Jean-Marc Koffi",
-      matricule: "EMP-0012",
-      poste: "Directeur d'Agence Principale",
-      departement: "Réseau Agences",
-      operateur: "Orange CI",
-      numero: "+225 07 08 20 44 12",
-      forfaitNom: "Flotte Direction VIP + 50 Go Data",
-      coutMensuel: 45000,
-      dataConso: 32,
-      dataPlafond: 50,
-      terminal: "Samsung Galaxy S23 Ultra",
-      imei: "359102948201948",
-      dechargeSignee: true,
-      dateRemise: "01 Mars 2017"
-    },
-    {
-      id: 3,
-      collaborateur: "Patrick Bamba",
-      matricule: "EMP-0048",
-      poste: "Chef d'Agence Adjoint (Marcory)",
-      departement: "Réseau Agences",
-      operateur: "MTN CI",
-      numero: "+225 05 48 10 92 33",
-      forfaitNom: "Flotte Pro Illimitée + 20 Go Data",
-      coutMensuel: 20000,
-      dataConso: 19.5, // alerte
-      dataPlafond: 20,
-      terminal: "Samsung Galaxy A54 5G",
-      imei: "357281092847192",
-      dechargeSignee: true,
-      dateRemise: "10 Octobre 2023"
-    },
-    {
-      id: 4,
-      collaborateur: "Moussa Diabaté",
-      matricule: "EMP-0041",
-      poste: "Responsable HSE & Sécurité",
-      departement: "Opérations San Pedro",
-      operateur: "MTN CI",
-      numero: "+225 05 77 34 20 90",
-      forfaitNom: "Flotte Terrain 24/7 + 30 Go Data",
-      coutMensuel: 30000,
-      dataConso: 14,
-      dataPlafond: 30,
-      terminal: "Blackview Rugged Antichoc BV9300",
-      imei: "351092837461928",
-      dechargeSignee: true,
-      dateRemise: "15 Juin 2020"
-    },
-    {
-      id: 5,
-      collaborateur: "Armand Kouassi",
-      matricule: "EMP-0025",
-      poste: "Comptable Fournisseurs",
-      departement: "Direction Financière",
-      operateur: "Moov Africa",
-      numero: "+225 01 88 12 43 00",
-      forfaitNom: "Flotte Standard Voix + 10 Go Data",
-      coutMensuel: 15000,
-      dataConso: 6,
-      dataPlafond: 10,
-      terminal: "Redmi Note 12",
-      imei: "358291039482019",
-      dechargeSignee: true,
-      dateRemise: "10 Septembre 2022"
-    }
-  ]);
+  const [flotte, setFlotte] = useState([]);
 
   // Formulaire d'affectation
   const [newLine, setNewLine] = useState({
@@ -316,11 +230,6 @@ export function FlotteMobile() {
                       <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
                         {ligne.matricule}
                       </span>
-                      {ligne.collaborateur === 'Julie Konan' && (
-                        <span className="text-[10px] bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 px-1.5 py-0.2 rounded font-medium">
-                          Flotte Commerciale
-                        </span>
-                      )}
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {ligne.poste} • {ligne.departement}

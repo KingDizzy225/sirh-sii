@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
-import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -25,14 +24,14 @@ export function Performance() {
     const [goals, setGoals] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
-    const [employees, setEmployees] = useState(MOCK_190_EMPLOYEES);
+    const [employees, setEmployees] = useState([]);
     const [notification, setNotification] = useState(null);
 
     // AI Performance Copilot State
     const [selectedEmpForCopilot, setSelectedEmpForCopilot] = useState('emp-001');
     const [isGeneratingCopilot, setIsGeneratingCopilot] = useState(false);
     const [copilotPlan, setCopilotPlan] = useState({
-        employeeName: 'Julie Konan',
+        employeeName: '',
         role: 'Chargée de Clientèle Senior',
         department: 'Commercial & Relation Client',
         okrAchievement: '92% des objectifs commerciaux atteints',

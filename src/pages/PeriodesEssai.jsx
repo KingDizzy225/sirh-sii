@@ -15,93 +15,7 @@ export function PeriodesEssai() {
   const [generatedLetter, setGeneratedLetter] = useState(null);
 
   // Liste des collaborateurs en période d'essai ou récemment confirmés
-  const [trials, setTrials] = useState([
-    {
-      id: 1,
-      matricule: 'EMP-0078',
-      nom: 'Sarah Touré',
-      poste: 'Assistante Commerciale Agence Marcory',
-      categorie: 'Employé',
-      dureeLegale: '1 mois',
-      renouvelable: '1 fois maximum',
-      dateDebut: '2026-08-28',
-      dateFinEssai: '2026-09-28',
-      joursRestants: 5,
-      isRenouvele: false,
-      manager: 'Patrick Bamba',
-      statut: 'URGENT_DECISION', // URGENT_DECISION, EN_COURS, RENOUVELE, CONFIRME, ROMPU
-      appreciationManager: 'Très bon relationnel client, rigueur à consolider sur les saisies d\'opérations.',
-      tauxObjectifs: 82
-    },
-    {
-      id: 2,
-      matricule: 'EMP-0075',
-      nom: 'Amadou Sanogo',
-      poste: 'Ingénieur Développeur Fullstack',
-      categorie: 'Cadre',
-      dureeLegale: '3 mois',
-      renouvelable: '1 fois maximum',
-      dateDebut: '2026-07-10',
-      dateFinEssai: '2026-10-10',
-      joursRestants: 17,
-      isRenouvele: false,
-      manager: 'Daniel Kouamé (CTO)',
-      statut: 'EN_COURS',
-      appreciationManager: 'Excellente intégration technique, maîtrise rapide de la stack React / Prisma.',
-      tauxObjectifs: 90
-    },
-    {
-      id: 3,
-      matricule: 'EMP-0081',
-      nom: 'Viviane Yao',
-      poste: 'Chargée d\'Accueil & Standard Siège Plateau',
-      categorie: 'Employé',
-      dureeLegale: '1 mois',
-      renouvelable: '1 fois maximum',
-      dateDebut: '2026-08-01',
-      dateFinEssai: '2026-10-01',
-      joursRestants: 8,
-      isRenouvele: true,
-      manager: 'Jean-Marc Koffi',
-      statut: 'RENOUVELE',
-      appreciationManager: 'Ponctualité exemplaire, période d\'essai renouvelée pour confirmer l\'autonomie sur les réclamations complexes.',
-      tauxObjectifs: 78
-    },
-    {
-      id: 4,
-      matricule: 'EMP-0072',
-      nom: 'Stéphane Boli',
-      poste: 'Superviseur Logistique & Quai',
-      categorie: 'Cadre',
-      dureeLegale: '3 mois',
-      renouvelable: '1 fois maximum',
-      dateDebut: '2026-08-15',
-      dateFinEssai: '2026-11-15',
-      joursRestants: 53,
-      isRenouvele: false,
-      manager: 'Moussa Diabaté (HSE)',
-      statut: 'EN_COURS',
-      appreciationManager: 'Leadership naturel sur les équipes de manutention de San Pedro.',
-      tauxObjectifs: 85
-    },
-    {
-      id: 5,
-      matricule: 'EMP-0018',
-      nom: 'Julie Konan',
-      poste: 'Chargée de Clientèle Entreprises',
-      categorie: 'Cadre',
-      dureeLegale: '3 mois',
-      renouvelable: '1 fois maximum',
-      dateDebut: '2021-01-15',
-      dateFinEssai: '2021-04-15',
-      joursRestants: 0,
-      isRenouvele: false,
-      manager: 'Jean-Marc Koffi',
-      statut: 'CONFIRME',
-      appreciationManager: 'Titularisée avec les félicitations du jury. Candidate exceptionnelle.',
-      tauxObjectifs: 98
-    }
-  ]);
+  const [trials, setTrials] = useState([]);
 
   // Formulaire de décision managériale
   const [decisionData, setDecisionData] = useState({
@@ -353,11 +267,6 @@ export function PeriodesEssai() {
                       <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
                         {trial.matricule}
                       </span>
-                      {trial.nom === 'Julie Konan' && (
-                        <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.2 rounded font-medium">
-                          Titularisée
-                        </span>
-                      )}
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {trial.poste} • Catégorie : <strong>{trial.categorie}</strong> (Durée légale : {trial.dureeLegale})
