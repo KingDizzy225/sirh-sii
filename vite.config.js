@@ -12,7 +12,8 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       workbox: {
         maximumFileSizeToCacheInBytes: 15 * 1024 * 1024, // 15 MB to allow large bundles
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+        navigateFallback: '/index.html'
       },
       manifest: {
         name: 'SIRH-SII Mobile',

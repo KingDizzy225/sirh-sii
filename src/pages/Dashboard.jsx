@@ -1,676 +1,851 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { 
-    Users, UserPlus, LogOut, Calendar, Clock, Star, Target, 
-    CheckCircle2, TrendingUp, AlertTriangle, ShieldCheck, 
-    ChevronDown, ChevronUp, Loader2, Sparkles, Download
+    Users, UserPlus, Calendar, Clock, Star, Target, CheckCircle2, 
+    TrendingUp, AlertTriangle, ShieldCheck, Sparkles, Download, 
+    ArrowRight, Check, X, Building2, MapPin, Activity, Coins, 
+    Scale, Handshake, ShieldAlert, Award, FileText, ChevronRight,
+    Zap, Landmark, ArrowUpRight, Compass, Bell, RefreshCw, Sun,
+    Filter, CheckCheck, AlertOctagon, HelpCircle, ArrowDownRight, Network
 } from 'lucide-react';
 import { 
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
-    PieChart, Pie, Cell, LineChart, Line, CartesianGrid, LabelList
+    PieChart, Pie, Cell, AreaChart, Area, CartesianGrid 
 } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { ComplianceMonitor } from '../components/dashboard/ComplianceMonitor';
 import { api } from '../lib/api';
-import { MOCK_190_EMPLOYEES } from '../constants/mockEmployees';
 
 export function Dashboard() {
     const navigate = useNavigate();
     const { token, user } = useAuth();
     const [notification, setNotification] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [analyticsData, setAnalyticsData] = useState(null);
-    const [predictiveInsights, setPredictiveInsights] = useState(null);
-    const [showAdvanced, setShowAdvanced] = useState(false);
-    const [showSurvey, setShowSurvey] = useState(false);
-    const [surveyScore, setSurveyScore] = useState(null);
-    const [surveyComment, setSurveyComment] = useState('');
+    const [activeTabApproval, setActiveTabApproval] = useState('TOUS');
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                const [statsRes, chartsRes] = await Promise.all([
-                    api.get('/dashboard/stats').catch(() => ({ data: {} })),
-                    api.get('/analytics/dashboard').catch(() => ({ data: {} }))
-                ]);
-                
-                const statsData = statsRes.data || {};
-                const chartsData = chartsRes.data || {};
+    // Stats globales
+    const [stats, setStats] = useState({
+        totalEmployees: 194,
+        presentsToday: 182,
+        onLeave: 6,
+        remoteWork: 6,
+        masseSalarialeMois: 84250000,
+        tauxPresence: 98.4,
+        scoreConformite: 98.5
+    });
 
-                setAnalyticsData({
-                    ...statsData,
-                    charts: chartsData.charts || {},
-                    advancedStats: chartsData.stats || {}
-                });
-            } catch (err) {
-                console.error("Failed to load dashboard data", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+    // Données pour les Sparklines des KPI Cards (Sans violet)
+    const sparklineEmployees = [
+        { v: 186 }, { v: 188 }, { v: 189 }, { v: 191 }, { v: 192 }, { v: 194 }
+    ];
+    const sparklinePayroll = [
+        { v: 81.2 }, { v: 81.8 }, { v: 82.5 }, { v: 83.1 }, { v: 83.9 }, { v: 84.25 }
+    ];
+    const sparklinePresence = [
+        { v: 96.5 }, { v: 97.0 }, { v: 97.2 }, { v: 97.8 }, { v: 98.1 }, { v: 98.4 }
+    ];
+    const sparklineCompliance = [
+        { v: 94.0 }, { v: 95.5 }, { v: 96.2 }, { v: 97.0 }, { v: 97.9 }, { v: 98.5 }
+    ];
 
-        const fetchPredictive = async () => {
-            try {
-                const predRes = await api.get('/analytics/predictive').catch(() => ({ data: [] }));
-                if (predRes.data && Array.isArray(predRes.data)) {
-                    setPredictiveInsights(predRes.data);
-                }
-            } catch (err) {
-                console.error("Failed to load predictive data", err);
-            }
-        };
-
-        if (token) {
-            fetchDashboardData();
-            fetchPredictive();
-        } else {
-            setLoading(false);
+    // Approvals unifiées
+    const [approvalItems, setApprovalItems] = useState([
+        {
+            id: 'APP-01',
+            type: 'CONGE',
+            titre: 'Congé Annuel Payé (4 jours ouvrés)',
+            demandeur: 'Kouamé Jean-Luc',
+            role: 'Conseiller Clientèle',
+            departement: 'Ventes Réseau Plateau',
+            date: 'Du 20 au 24 Nov 2026',
+            badge: 'Absence',
+            badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+            avatar: 'KJ',
+            avatarBg: 'bg-blue-600 text-white'
+        },
+        {
+            id: 'APP-02',
+            type: 'COMPLIANCE',
+            titre: 'Déclaration Cadeau Fournisseur (85 000 FCFA)',
+            demandeur: 'Diallo Oumar',
+            role: 'Gestionnaire Flotte',
+            departement: 'Logistique & Flotte Moto',
+            date: 'Reçu le 14 Nov 2026',
+            badge: 'Sapin II',
+            badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+            avatar: 'DO',
+            avatarBg: 'bg-amber-600 text-white'
+        },
+        {
+            id: 'APP-03',
+            type: 'SOD',
+            titre: 'Révocation Habilitation Incompatible (Caisse vs Annulation OM)',
+            demandeur: 'Koffi Blaise',
+            role: 'Caissier Principal',
+            departement: 'Agence Yopougon Bel Air',
+            date: 'Alerte Audit SoD 14 Nov',
+            badge: 'Anti-Fraude',
+            badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
+            avatar: 'KB',
+            avatarBg: 'bg-rose-600 text-white'
+        },
+        {
+            id: 'APP-04',
+            type: 'CARRIERE',
+            titre: 'Fin de Période d\'Essai CDI (Avis Favorable Manager)',
+            demandeur: 'Amani Sylvie',
+            role: 'Superviseur Télécoms',
+            departement: 'Service Client & Rétention',
+            date: 'Échéance le 28 Nov 2026',
+            badge: 'Titularisation',
+            badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            avatar: 'AS',
+            avatarBg: 'bg-emerald-600 text-white'
         }
-    }, [token]);
+    ]);
+
+    // Données Télémétrie des 4 Agences Abidjan
+    const agencesStatus = [
+        {
+            nom: 'Agence Plateau Pyramide',
+            commune: 'Plateau (Siège Commercial)',
+            etp: 8,
+            visiteurs: 380,
+            attenteMin: 6.8,
+            saturation: 94,
+            status: 'OPTIMAL'
+        },
+        {
+            nom: 'Agence Yopougon Bel Air Express',
+            commune: 'Yopougon Keneya',
+            etp: 12,
+            visiteurs: 640,
+            attenteMin: 14.2,
+            saturation: 122,
+            status: 'SURCHARGE'
+        },
+        {
+            nom: 'Agence Treichville Arras',
+            commune: 'Treichville Boulevard',
+            etp: 8,
+            visiteurs: 430,
+            attenteMin: 11.5,
+            saturation: 108,
+            status: 'TENSION'
+        },
+        {
+            nom: 'Boutique VIP Aéroport F.H.B.',
+            commune: 'Port-Bouët Express',
+            etp: 4,
+            visiteurs: 120,
+            attenteMin: 3.5,
+            saturation: 68,
+            status: 'SOUS_CHARGE'
+        }
+    ];
+
+    // Évolution Masse Salariale sur 6 mois
+    const payrollTrendData = [
+        { mois: 'Juin', masseM: 81.2, chargesM: 14.2 },
+        { mois: 'Juil', masseM: 81.8, chargesM: 14.3 },
+        { mois: 'Août', masseM: 82.5, chargesM: 14.5 },
+        { mois: 'Sept', masseM: 83.1, chargesM: 14.6 },
+        { mois: 'Oct', masseM: 83.9, chargesM: 14.7 },
+        { mois: 'Nov', masseM: 84.25, chargesM: 14.8 }
+    ];
+
+    // Répartition de l'effectif (Palette corporate sans violet)
+    const distributionData = [
+        { name: 'Ventes Réseau B2C & B2B', value: 78, color: '#1e3a8a' }, // Deep Navy
+        { name: 'Agences & Guichets Abidjan', value: 52, color: '#0284c7' }, // Sky Blue
+        { name: 'Technique, Fibre & Télécoms', value: 36, color: '#059669' }, // Emerald
+        { name: 'Fonctions Siège & Support', value: 28, color: '#d97706' } // Amber
+    ];
+
+    // Échéances RH du mois
+    const echeancesRh = [
+        { date: '20 Nov', titre: 'Commission Paritaire & Dialogue Social', type: 'NAO', statut: 'Confirmé' },
+        { date: '24 Nov', titre: 'Clôture Saisie des Variables de Paie', type: 'PAIE', statut: 'En cours' },
+        { date: '26 Nov', titre: 'Émission Fichiers Virements Bancaires', type: 'DAF', statut: 'Planifié' },
+        { date: '30 Nov', titre: 'Arrêté Trimestriel Provisions Retraite IDR', type: 'COMPTA', statut: 'Rappel' }
+    ];
 
     const showNotification = (message) => {
         setNotification(message);
-        setTimeout(() => setNotification(null), 3000);
+        setTimeout(() => setNotification(null), 3500);
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full min-h-[calc(100vh-4rem)]">
-                <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-            </div>
+    const handleActionApproval = (id, action) => {
+        setApprovalItems(prev => prev.filter(item => item.id !== id));
+        showNotification(
+            action === 'approve' 
+                ? 'Dossier approuvé et scellé dans la piste d\'audit.' 
+                : 'Dossier rejeté avec notification directe transmise.'
         );
-    }
+    };
 
-    // Dynamic Employee Count (190 mocks + Julie Konan = 191 minimum)
-    const totalEmployeesCount = Math.max(191, analyticsData?.totalEmployees || 191);
-
-    // Distribution Data matching the mockup
-    const employeeDistribution = [
-        { department: 'Operations', count: 72, fill: '#3b82f6' },
-        { department: 'Sales', count: 54, fill: '#10b981' },
-        { department: 'Marketing', count: 38, fill: '#8b5cf6' },
-        { department: 'Admin', count: 54, fill: '#f43f5e' }
-    ];
-
-    // Recruitment Status Donut Data matching the mockup
-    const recruitmentStatus = [
-        { name: 'Hired', value: 12, percent: 50, color: '#10b981' },
-        { name: 'In Progress', value: 7, percent: 29, color: '#3b82f6' },
-        { name: 'On Hold', value: 3, percent: 13, color: '#f59e0b' },
-        { name: 'Closed', value: 2, percent: 8, color: '#8b5cf6' }
-    ];
-
-    // Leave Trend Line Data matching the mockup
-    const leaveTrend = [
-        { month: 'Jan', leaves: 12 },
-        { month: 'Feb', leaves: 15 },
-        { month: 'Mar', leaves: 23 },
-        { month: 'Apr', leaves: 20 },
-        { month: 'May', leaves: 26 },
-        { month: 'Jun', leaves: 31 }
-    ];
-
-    // Recent Employees matching the mockup
-    const recentEmployees = [
-        { name: 'Aisha Khan', role: 'HR Executive', department: 'HR', date: '12 Jun 2025', avatar: 'AK', bg: 'bg-emerald-100 text-emerald-700' },
-        { name: 'Rohan Mathew', role: 'Marketing Executive', department: 'Marketing', date: '09 Jun 2025', avatar: 'RM', bg: 'bg-blue-100 text-blue-700' },
-        { name: 'Sneha Nair', role: 'Accountant', department: 'Finance', date: '05 Jun 2025', avatar: 'SN', bg: 'bg-purple-100 text-purple-700' },
-        { name: 'Arjun S', role: 'Sales Executive', department: 'Sales', date: '02 Jun 2025', avatar: 'AS', bg: 'bg-amber-100 text-amber-700' }
-    ];
-
-    // Key Highlights matching the mockup
-    const keyHighlights = [
-        { 
-            icon: Users, 
-            bg: 'bg-emerald-100 text-emerald-600', 
-            title: '12 new joiners this month', 
-            desc: 'Team is growing!' 
-        },
-        { 
-            icon: Calendar, 
-            bg: 'bg-purple-100 text-purple-600', 
-            title: 'Attendance improved by 2%', 
-            desc: 'Great job, everyone!' 
-        },
-        { 
-            icon: Star, 
-            bg: 'bg-amber-100 text-amber-600', 
-            title: 'Employee satisfaction at 4.2/5', 
-            desc: 'Keep up the good work!' 
-        },
-        { 
-            icon: Target, 
-            bg: 'bg-blue-100 text-blue-600', 
-            title: '3 open positions', 
-            desc: 'Hiring is in progress' 
-        }
-    ];
+    const filteredApprovals = activeTabApproval === 'TOUS' 
+        ? approvalItems 
+        : approvalItems.filter(item => item.type === activeTabApproval);
 
     return (
-        <div className="flex-1 space-y-6 p-6 md:p-8 bg-[#F8FAFC] min-h-[calc(100vh-4rem)]">
-            {/* Notification Toast */}
+        <div className="flex-1 space-y-6 p-4 md:p-8 bg-[#F8FAFC] min-h-[calc(100vh-4rem)] max-w-[1600px] mx-auto text-slate-900">
+            {/* Notification Toast Flottant Élégant */}
             <AnimatePresence>
                 {notification && (
                     <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm font-semibold"
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-xl text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs md:text-sm font-semibold border border-slate-700/80"
                     >
-                        <CheckCircle2 size={18} className="text-emerald-400" />
-                        {notification}
+                        <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                        <span>{notification}</span>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* HEADER MATCHING MOCKUP */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-                        HR Dashboard
-                    </h1>
-                    <p className="text-slate-400 text-sm font-medium mt-0.5">
-                        People • Processes • Progress
-                    </p>
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* 1. HERO COCKPIT EXÉCUTIF - PALETTE CORPORATE BLEU NUIT / ARDOISE */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-6 md:p-8 shadow-xl border border-slate-800">
+                {/* Lueur d'ambiance sobre */}
+                <div className="absolute -right-20 -top-20 w-[450px] h-[450px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none"></div>
+                <div className="absolute left-1/3 -bottom-20 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-[90px] pointer-events-none"></div>
+
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="space-y-2.5">
+                        {/* Puces de Statut Supérieures */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black bg-white text-[#002B7F] shadow-xs border border-white">
+                                <img src="/logo.png" alt="SII" className="h-4 w-auto object-contain" />
+                                <span>SII Côte d'Ivoire</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 backdrop-blur-md text-blue-200 border border-white/15 shadow-xs">
+                                <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
+                                Cockpit Exécutif · Enterprise Edition
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Réseau Télécoms 100% Opérationnel
+                            </span>
+                            <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-medium bg-white/5 text-slate-300 border border-white/10">
+                                <Sun className="h-3.5 w-3.5 text-amber-400" />
+                                Abidjan 29°C · Mardi 17 Nov
+                            </span>
+                        </div>
+
+                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white font-serif">
+                            Bonjour, {user?.name || 'Direction Générale RH'} 👋
+                        </h1>
+                        <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                            Supervision stratégique des <strong>194 collaborateurs</strong>, pilotage de la masse salariale UEMOA, télémétrie des agences et conformité légale en direct.
+                        </p>
+                    </div>
+
+                    {/* Capsule Télémétrie Présence Live */}
+                    <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xl p-4 rounded-2xl border border-white/15 shadow-inner">
+                        <div className="px-3 border-r border-white/15 text-left">
+                            <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">Présents ce matin</span>
+                            <div className="text-2xl font-black text-emerald-400 flex items-center gap-1.5 mt-0.5">
+                                <span>{stats.presentsToday}</span>
+                                <span className="text-xs text-slate-300 font-normal">/ {stats.totalEmployees}</span>
+                            </div>
+                        </div>
+                        <div className="px-3 border-r border-white/15 text-left">
+                            <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">Télétravail</span>
+                            <div className="text-2xl font-black text-sky-400 mt-0.5">{stats.remoteWork}</div>
+                        </div>
+                        <div className="px-3 text-left">
+                            <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">En Congé</span>
+                            <div className="text-2xl font-black text-amber-400 mt-0.5">{stats.onLeave}</div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right Slogan & Team illustration */}
-                <div className="flex items-center gap-4 bg-white/80 border border-slate-200/70 px-4 py-2.5 rounded-2xl shadow-xs backdrop-blur-xs">
-                    <div className="text-right hidden sm:block">
-                        <p className="text-xs font-medium text-slate-700 italic tracking-tight font-serif">
-                            Better People Build a Stronger Tomorrow
-                        </p>
-                        <span className="text-xs text-rose-500 font-bold ml-1">♡</span>
-                    </div>
-
-                    {/* Team Avatars Illustration */}
-                    <div className="flex -space-x-2 overflow-hidden">
-                        <div className="inline-block h-9 w-9 rounded-full ring-2 ring-white bg-[#0F172A] text-white flex items-center justify-center text-xs font-bold shadow-xs">
-                            👩🏽‍💼
-                        </div>
-                        <div className="inline-block h-9 w-9 rounded-full ring-2 ring-white bg-[#334155] text-white flex items-center justify-center text-xs font-bold shadow-xs">
-                            👨🏾‍💼
-                        </div>
-                        <div className="inline-block h-9 w-9 rounded-full ring-2 ring-white bg-[#64748B] text-white flex items-center justify-center text-xs font-bold shadow-xs">
-                            👩🏻‍💻
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={() => showNotification("Rapport de synthèse RH exporté avec succès.")}
-                        title="Exporter le rapport"
-                        className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
+                {/* 3 Cartes d'Insights Stratégiques Métier */}
+                <div className="mt-6 pt-5 border-t border-white/15 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div 
+                        onClick={() => navigate('/segregation-des-devoirs-sod')}
+                        className="bg-white/5 hover:bg-white/10 p-3 rounded-2xl border border-white/10 transition-all cursor-pointer flex items-center justify-between group hover:border-red-400/40"
                     >
-                        <Download size={18} />
-                    </button>
+                        <div className="flex items-center gap-3 truncate">
+                            <span className="p-2 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 shrink-0">
+                                <ShieldAlert size={16} />
+                            </span>
+                            <div className="truncate">
+                                <div className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors flex items-center gap-1.5">
+                                    <span>Audit SoD : 1 Conflit Actif</span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping"></span>
+                                </div>
+                                <p className="text-[11px] text-slate-300 truncate">Habilitation caisse à révoquer à Yopougon</p>
+                            </div>
+                        </div>
+                        <ChevronRight size={15} className="text-slate-400 group-hover:translate-x-1 transition-transform shrink-0" />
+                    </div>
+
+                    <div 
+                        onClick={() => navigate('/capacite-charge-agences')}
+                        className="bg-white/5 hover:bg-white/10 p-3 rounded-2xl border border-white/10 transition-all cursor-pointer flex items-center justify-between group hover:border-amber-400/40"
+                    >
+                        <div className="flex items-center gap-3 truncate">
+                            <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+                                <Activity size={16} />
+                            </span>
+                            <div className="truncate">
+                                <div className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">
+                                    WFM : Tension à Bel Air (122%)
+                                </div>
+                                <p className="text-[11px] text-slate-300 truncate">Attente moyenne : 14.2 min (+2 ETP requis)</p>
+                            </div>
+                        </div>
+                        <ChevronRight size={15} className="text-slate-400 group-hover:translate-x-1 transition-transform shrink-0" />
+                    </div>
+
+                    <div 
+                        onClick={() => navigate('/indemnites-fin-carriere-idr')}
+                        className="bg-white/5 hover:bg-white/10 p-3 rounded-2xl border border-white/10 transition-all cursor-pointer flex items-center justify-between group hover:border-emerald-400/40"
+                    >
+                        <div className="flex items-center gap-3 truncate">
+                            <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                                <Landmark size={16} />
+                            </span>
+                            <div className="truncate">
+                                <div className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors">
+                                    IAS 19 : Provision Retraite IDR
+                                </div>
+                                <p className="text-[11px] text-slate-300 truncate">Dotation mensuelle : 420 000 FCFA au passif</p>
+                            </div>
+                        </div>
+                        <ChevronRight size={15} className="text-slate-400 group-hover:translate-x-1 transition-transform shrink-0" />
+                    </div>
                 </div>
             </div>
 
-            {/* QUICK ACTIONS & LIVE PULSE */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white border border-slate-200/80 p-3.5 rounded-2xl shadow-xs">
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* 2. BARRE D'ACTIONS DIRECTES */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 hidden sm:inline">
-                        Accès Direct :
+                    <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider px-2 hidden sm:inline">
+                        Actions Directes :
                     </span>
+                    
+                    <button
+                        onClick={() => navigate('/orgchart')}
+                        className="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100/80 text-[#002B7F] text-xs font-bold flex items-center gap-1.5 transition-all border border-blue-200 cursor-pointer shadow-2xs"
+                    >
+                        <Network size={14} className="text-[#002B7F]" />
+                        Organigramme & Agences
+                    </button>
+
+                    <button
+                        onClick={() => navigate('/employees')}
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all border border-slate-200 hover:border-blue-200 cursor-pointer shadow-2xs"
+                    >
+                        <UserPlus size={14} className="text-blue-600" />
+                        + Nouveau Salarié
+                    </button>
+
+                    <button
+                        onClick={() => navigate('/leaves')}
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all border border-slate-200 hover:border-blue-200 cursor-pointer shadow-2xs"
+                    >
+                        <Calendar size={14} className="text-blue-600" />
+                        Poser un Congé
+                    </button>
+
+                    <button
+                        onClick={() => navigate('/accords-dentreprise-nao')}
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all border border-slate-200 hover:border-blue-200 cursor-pointer shadow-2xs"
+                    >
+                        <Handshake size={14} className="text-blue-600" />
+                        Accords & NAO 2026
+                    </button>
+
+                    <button
+                        onClick={() => navigate('/compliance-conflits-interets')}
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all border border-slate-200 hover:border-blue-200 cursor-pointer shadow-2xs"
+                    >
+                        <Scale size={14} className="text-emerald-600" />
+                        Déclarer Cadeau / Intérêt
+                    </button>
+
                     <button
                         onClick={() => navigate('/payroll-simulation')}
-                        className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all border border-slate-200 hover:border-blue-200 cursor-pointer shadow-2xs"
                     >
-                        💰 Simulateur Masse Salariale
-                    </button>
-                    <button
-                        onClick={() => navigate('/performance')}
-                        className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                        🪄 Copilote IA d'Entretien
-                    </button>
-                    <button
-                        onClick={() => navigate('/smart-automations')}
-                        className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                        ⚡ Déclencheurs RH
-                    </button>
-                    <button
-                        onClick={() => navigate('/sentinelle-burnout')}
-                        className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                        🧘 Sentinelle Anti-Burnout
-                    </button>
-                    <button
-                        onClick={() => navigate('/marketplace-talents')}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                        🎯 Marketplace Talents
-                    </button>
-                    <button
-                        onClick={() => navigate('/conformite')}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                        ⚖️ Audit CNPS
+                        <Coins size={14} className="text-amber-600" />
+                        Simuler Masse Salariale
                     </button>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs font-medium text-slate-500 border-t lg:border-t-0 pt-2 lg:pt-0 border-slate-100">
-                    <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        178 Présents
-                    </span>
-                    <span>9 Télétravail</span>
-                    <span>4 Congés</span>
-                </div>
+                <button
+                    onClick={() => showNotification("Rapport de synthèse de direction exporté avec succès.")}
+                    className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs ml-auto"
+                >
+                    <Download size={14} />
+                    Exporter Synthèse DAF
+                </button>
             </div>
 
-            {/* TOP ROW: 5 PASTEL KPI CARDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                {/* 1. Total Employees */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* 3. 4 CARTES KPI EXÉCUTIVES AVEC SPARKLINES INTÉGRÉES */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 1. Effectif Total */}
                 <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 }}
-                    className="bg-[#EFF6FF] border border-[#DBEAFE] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
+                    whileHover={{ y: -3 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => navigate('/employees')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between"
                 >
-                    <div className="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-xs">
-                        <Users size={20} />
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Effectif Total Actif</span>
+                            <span className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                                <Users size={18} />
+                            </span>
+                        </div>
+                        <div className="mt-2">
+                            <div className="text-3xl font-black text-slate-900 tracking-tight">{stats.totalEmployees}</div>
+                            <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                                <span className="bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                    +3 ce mois
+                                </span>
+                                <span className="text-slate-400 font-normal">100% contrats conformes</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="mt-4">
-                        <p className="text-xs font-semibold text-slate-600">Total Employees</p>
-                        <p className="text-3xl font-black text-slate-900 mt-1">{totalEmployeesCount}</p>
-                        <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
-                            <span>▲</span> +5% <span className="text-slate-500 font-normal">vs. last month</span>
-                        </p>
-                    </div>
-                </motion.div>
 
-                {/* 2. New Hires */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-[#ECFDF5] border border-[#D1FAE5] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
-                >
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs">
-                        <UserPlus size={20} />
-                    </div>
-                    <div className="mt-4">
-                        <p className="text-xs font-semibold text-slate-600">New Hires</p>
-                        <p className="text-3xl font-black text-slate-900 mt-1">12</p>
-                        <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
-                            <span>▲</span> +33% <span className="text-slate-500 font-normal">vs. last month</span>
-                        </p>
-                    </div>
-                </motion.div>
-
-                {/* 3. Resignations */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="bg-[#FFF1F2] border border-[#FFE4E6] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
-                >
-                    <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-xs">
-                        <LogOut size={20} />
-                    </div>
-                    <div className="mt-4">
-                        <p className="text-xs font-semibold text-slate-600">Resignations</p>
-                        <p className="text-3xl font-black text-slate-900 mt-1">3</p>
-                        <p className="text-xs font-semibold text-rose-500 mt-2 flex items-center gap-1">
-                            <span>▼</span> -57% <span className="text-slate-500 font-normal">vs. last month</span>
-                        </p>
-                    </div>
-                </motion.div>
-
-                {/* 4. Attendance Rate */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-[#F5F3FF] border border-[#EDE9FE] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
-                >
-                    <div className="w-10 h-10 rounded-xl bg-purple-500 text-white flex items-center justify-center shadow-xs">
-                        <Calendar size={20} />
-                    </div>
-                    <div className="mt-4">
-                        <p className="text-xs font-semibold text-slate-600">Attendance Rate</p>
-                        <p className="text-3xl font-black text-slate-900 mt-1">96%</p>
-                        <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
-                            <span>▲</span> +2% <span className="text-slate-500 font-normal">vs. last month</span>
-                        </p>
-                    </div>
-                </motion.div>
-
-                {/* 5. Avg. Time to Hire */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    className="bg-[#FFFBEB] border border-[#FEF3C7] rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
-                >
-                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
-                        <Clock size={20} />
-                    </div>
-                    <div className="mt-4">
-                        <p className="text-xs font-semibold text-slate-600">Avg. Time to Hire</p>
-                        <p className="text-3xl font-black text-slate-900 mt-1">18 <span className="text-lg font-bold text-slate-700">days</span></p>
-                        <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
-                            <span>▼</span> -36% <span className="text-slate-500 font-normal">vs. last month</span>
-                        </p>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* MIDDLE ROW: 3 CHARTS (Employee Distribution, Recruitment Status, Leave Trend) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* 1. Employee Distribution */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl p-5 shadow-xs"
-                >
-                    <h3 className="font-bold text-slate-800 text-base mb-4">Employee Distribution</h3>
-                    <div className="h-[230px] w-full">
+                    {/* Mini Sparkline Chart Bleu */}
+                    <div className="h-10 w-full mt-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={employeeDistribution} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                                <XAxis 
-                                    dataKey="department" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#64748B', fontSize: 12 }} 
-                                />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#94A3B8', fontSize: 11 }} 
-                                    domain={[0, 80]}
-                                    ticks={[0, 20, 40, 60, 80]}
-                                />
-                                <Tooltip 
-                                    cursor={{ fill: '#F8FAFC' }} 
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} 
-                                />
-                                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                                    <LabelList dataKey="count" position="top" fill="#475569" fontSize={11} fontWeight={600} />
-                                    {employeeDistribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
+                            <AreaChart data={sparklineEmployees} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="sparkEmployees" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#2563eb" stopOpacity={0.25}/>
+                                        <stop offset="100%" stopColor="#2563eb" stopOpacity={0.0}/>
+                                    </linearGradient>
+                                </defs>
+                                <Area type="monotone" dataKey="v" stroke="#2563eb" strokeWidth={2} fill="url(#sparkEmployees)" />
+                            </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </motion.div>
 
-                {/* 2. Recruitment Status Donut */}
+                {/* 2. Masse Salariale Mensuelle */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 }}
-                    className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl p-5 shadow-xs flex flex-col"
+                    whileHover={{ y: -3 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => navigate('/payroll')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-lg hover:border-emerald-300 transition-all cursor-pointer flex flex-col justify-between"
                 >
-                    <h3 className="font-bold text-slate-800 text-base mb-2">Recruitment Status</h3>
-                    <div className="flex-1 flex items-center justify-between">
-                        {/* Donut with center text */}
-                        <div className="relative w-1/2 h-[200px] flex items-center justify-center">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={recruitmentStatus}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={48}
-                                        outerRadius={72}
-                                        paddingAngle={3}
-                                        dataKey="value"
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Masse Salariale Brute</span>
+                            <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                                <Coins size={18} />
+                            </span>
+                        </div>
+                        <div className="mt-2">
+                            <div className="text-2xl font-black text-slate-900 tracking-tight">84,25 M FCFA</div>
+                            <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                                <span className="bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                    98.8% versé
+                                </span>
+                                <span className="text-slate-400 font-normal">Échéance : 26 Nov</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="h-10 w-full mt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={sparklinePayroll} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="sparkPayroll" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#059669" stopOpacity={0.25}/>
+                                        <stop offset="100%" stopColor="#059669" stopOpacity={0.0}/>
+                                    </linearGradient>
+                                </defs>
+                                <Area type="monotone" dataKey="v" stroke="#059669" strokeWidth={2} fill="url(#sparkPayroll)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </motion.div>
+
+                {/* 3. Taux de Présence & Ponctualité */}
+                <motion.div
+                    whileHover={{ y: -3 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => navigate('/shifts')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-lg hover:border-sky-300 transition-all cursor-pointer flex flex-col justify-between"
+                >
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Taux de Ponctualité</span>
+                            <span className="p-2 rounded-xl bg-sky-50 text-sky-600">
+                                <Clock size={18} />
+                            </span>
+                        </div>
+                        <div className="mt-2">
+                            <div className="text-3xl font-black text-slate-900 tracking-tight">{stats.tauxPresence}%</div>
+                            <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                                <span className="bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                    +1.2% vs M-1
+                                </span>
+                                <span className="text-slate-400 font-normal">Biométrie 4 agences</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="h-10 w-full mt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={sparklinePresence} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="sparkPresence" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#0284c7" stopOpacity={0.25}/>
+                                        <stop offset="100%" stopColor="#0284c7" stopOpacity={0.0}/>
+                                    </linearGradient>
+                                </defs>
+                                <Area type="monotone" dataKey="v" stroke="#0284c7" strokeWidth={2} fill="url(#sparkPresence)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </motion.div>
+
+                {/* 4. Score Conformité & SoD (Corporate Slate / Gold) */}
+                <motion.div
+                    whileHover={{ y: -3 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => navigate('/segregation-des-devoirs-sod')}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-lg hover:border-slate-400 transition-all cursor-pointer flex flex-col justify-between"
+                >
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Indice Conformité</span>
+                            <span className="p-2 rounded-xl bg-slate-100 text-slate-700">
+                                <ShieldCheck size={18} />
+                            </span>
+                        </div>
+                        <div className="mt-2">
+                            <div className="text-3xl font-black text-slate-900 tracking-tight">{stats.scoreConformite}%</div>
+                            <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                                <span className="bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                    Sapin II / MEPS
+                                </span>
+                                <span className="text-slate-400 font-normal">0 anomalie critique</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="h-10 w-full mt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={sparklineCompliance} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="sparkCompliance" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#334155" stopOpacity={0.25}/>
+                                        <stop offset="100%" stopColor="#334155" stopOpacity={0.0}/>
+                                    </linearGradient>
+                                </defs>
+                                <Area type="monotone" dataKey="v" stroke="#334155" strokeWidth={2} fill="url(#sparkCompliance)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* 4. APPROVAL INBOX & TÉLÉMÉTRIE RÉSEAU BOUTIQUES EN DIRECT */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* 1. APPROVAL INBOX : CENTRE D'ARBITRAGE UNIFIÉ (7 Cols) */}
+                <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-5 md:p-6 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                                        <CheckCircle2 size={18} />
+                                    </span>
+                                    <h2 className="font-extrabold text-slate-900 text-base md:text-lg">
+                                        Centre de Décision & Arbitrages en 1 Clic
+                                    </h2>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Traitez vos validations sans naviguer dans plusieurs menus
+                                </p>
+                            </div>
+
+                            {/* Filtres de la boîte d'approbation */}
+                            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                                {['TOUS', 'CONGE', 'COMPLIANCE', 'SOD'].map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTabApproval(tab)}
+                                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                                            activeTabApproval === tab 
+                                                ? 'bg-white text-slate-900 shadow-2xs font-extrabold' 
+                                                : 'text-slate-500 hover:text-slate-800'
+                                        }`}
                                     >
-                                        {recruitmentStatus.map((entry, index) => (
-                                            <Cell key={`pie-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                                <span className="text-[10px] text-slate-400 font-medium">Total Openings</span>
-                                <span className="text-2xl font-black text-slate-800 leading-tight">24</span>
+                                        {tab === 'TOUS' ? 'Tous' : tab}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        {/* Legend matching mockup */}
-                        <div className="w-1/2 flex flex-col justify-center space-y-2.5 text-xs pl-2">
-                            {recruitmentStatus.map((item) => (
-                                <div key={item.name} className="flex items-center gap-2">
-                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                                    <span className="text-slate-600 font-medium">{item.name}</span>
-                                    <span className="font-bold text-slate-800 ml-auto">{item.value}</span>
-                                    <span className="text-slate-400 text-[11px]">({item.percent}%)</span>
+                        {/* Liste des demandes filtrées */}
+                        <div className="divide-y divide-slate-100 mt-2 space-y-2">
+                            {filteredApprovals.length === 0 ? (
+                                <div className="text-center py-10 text-slate-400 text-xs">
+                                    <CheckCheck size={32} className="mx-auto text-emerald-500 mb-2" />
+                                    <p className="font-bold text-slate-700 text-sm">Inbox Zero !</p>
+                                    <p className="text-slate-500">Aucun dossier en attente pour ce filtre.</p>
+                                </div>
+                            ) : (
+                                filteredApprovals.map((item) => (
+                                    <div key={item.id} className="pt-3 pb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-slate-50/80 p-2.5 rounded-2xl transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-2xl font-black text-xs flex items-center justify-center shrink-0 shadow-xs ${item.avatarBg}`}>
+                                                {item.avatar}
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-slate-900 text-xs md:text-sm">{item.titre}</span>
+                                                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${item.badgeColor}`}>
+                                                        {item.badge}
+                                                    </span>
+                                                </div>
+                                                <div className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-1.5">
+                                                    <strong className="text-slate-800">{item.demandeur}</strong>
+                                                    <span>({item.role})</span>
+                                                    <span>·</span>
+                                                    <span className="text-slate-600">{item.departement}</span>
+                                                    <span>·</span>
+                                                    <span className="text-blue-600 font-medium">{item.date}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
+                                            <button
+                                                onClick={() => handleActionApproval(item.id, 'reject')}
+                                                title="Rejeter la demande"
+                                                className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer shadow-2xs"
+                                            >
+                                                <X size={15} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleActionApproval(item.id, 'approve')}
+                                                title="Approuver la demande"
+                                                className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shadow-blue-600/20"
+                                            >
+                                                <Check size={14} />
+                                                Valider
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span>Traçabilité légale scellée dans la piste d'audit</span>
+                        <button 
+                            onClick={() => navigate('/task-board')}
+                            className="font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                        >
+                            Ouvrir le Kanban des tâches <ArrowRight size={13} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* 2. TÉLÉMÉTRIE DES AGENCES ABIDJAN EN DIRECT (5 Cols) */}
+                <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-5 md:p-6 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                                <span className="p-1.5 rounded-lg bg-teal-50 text-teal-600">
+                                    <Building2 size={18} />
+                                </span>
+                                <div>
+                                    <h2 className="font-extrabold text-slate-900 text-base">
+                                        Réseau Agences & Charge (WFM)
+                                    </h2>
+                                    <p className="text-xs text-slate-500">Flux d'affluence et saturation guichet en direct</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => navigate('/capacite-charge-agences')}
+                                className="text-xs font-bold text-teal-600 hover:text-teal-800 flex items-center gap-1"
+                            >
+                                Simulateur IA <ArrowUpRight size={13} />
+                            </button>
+                        </div>
+
+                        {/* Liste des agences avec jauges de charge */}
+                        <div className="space-y-3 mt-3.5">
+                            {agencesStatus.map((agence, idx) => (
+                                <div key={idx} className="p-3 rounded-2xl bg-slate-50/80 border border-slate-100/90 space-y-1.5 hover:bg-slate-100/60 transition-colors">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                            <MapPin size={13} className="text-blue-600" />
+                                            <span className="font-bold text-xs text-slate-900">{agence.nom}</span>
+                                        </div>
+                                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                                            agence.saturation > 115 
+                                                ? 'bg-red-100 text-red-800 border border-red-200 animate-pulse' 
+                                                : agence.saturation >= 100 
+                                                ? 'bg-amber-100 text-amber-800 border border-amber-200' 
+                                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                        }`}>
+                                            {agence.saturation}% saturation
+                                        </span>
+                                    </div>
+
+                                    {/* Jauge progressive */}
+                                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                        <div 
+                                            className={`h-1.5 rounded-full ${
+                                                agence.saturation > 115 ? 'bg-red-500' : agence.saturation >= 100 ? 'bg-amber-500' : 'bg-emerald-500'
+                                            }`}
+                                            style={{ width: `${Math.min(agence.saturation, 100)}%` }}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5 font-medium">
+                                        <span>Effectif : <strong className="text-slate-800">{agence.etp} conseillers</strong></span>
+                                        <span>Attente : <strong className={agence.attenteMin > 10 ? 'text-red-600 font-bold' : 'text-slate-800'}>~{agence.attenteMin} min</strong></span>
+                                        <span>Flux : <strong>{agence.visiteurs}/j</strong></span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
-                </motion.div>
 
-                {/* 3. Leave Trend */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl p-5 shadow-xs"
-                >
-                    <h3 className="font-bold text-slate-800 text-base mb-4">Leave Trend</h3>
-                    <div className="h-[230px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={leaveTrend} margin={{ top: 15, right: 15, left: -20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                                <XAxis 
-                                    dataKey="month" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#64748B', fontSize: 12 }} 
-                                />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#94A3B8', fontSize: 11 }} 
-                                    domain={[0, 40]}
-                                    ticks={[0, 10, 20, 30, 40]}
-                                />
-                                <Tooltip 
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} 
-                                />
-                                <Line 
-                                    type="monotone" 
-                                    dataKey="leaves" 
-                                    stroke="#3b82f6" 
-                                    strokeWidth={2.5} 
-                                    dot={{ r: 4, fill: '#3b82f6', stroke: '#ffffff', strokeWidth: 2 }} 
-                                    activeDot={{ r: 6 }} 
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
+                    <div className="pt-3 border-t border-slate-100 text-center">
+                        <button
+                            onClick={() => navigate('/carte-agences')}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full"
+                        >
+                            Ouvrir la cartographie interactive du réseau <ArrowRight size={13} />
+                        </button>
                     </div>
-                </motion.div>
+                </div>
             </div>
 
-            {/* BOTTOM ROW: 3 CARDS (Recent Employees, Employee Satisfaction, Key Highlights) */}
+            {/* ══════════════════════════════════════════════════════════════ */}
+            {/* 5. ANALYTIQUE MASSE SALARIALE & AGENDA DES ÉCHÉANCES RH */}
+            {/* ══════════════════════════════════════════════════════════════ */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* 1. Recent Employees Table */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.45 }}
-                    className="lg:col-span-5 bg-white border border-slate-100 rounded-2xl p-5 shadow-xs flex flex-col justify-between"
-                >
-                    <h3 className="font-bold text-slate-800 text-base mb-4">Recent Employees</h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                            <thead>
-                                <tr className="border-b border-slate-100 text-slate-400 font-semibold">
-                                    <th className="pb-3 font-medium">Name</th>
-                                    <th className="pb-3 font-medium">Designation</th>
-                                    <th className="pb-3 font-medium">Department</th>
-                                    <th className="pb-3 font-medium">Joining Date</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {recentEmployees.map((emp, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/70 transition-colors">
-                                        <td className="py-3 flex items-center gap-2.5">
-                                            <div className={`w-8 h-8 rounded-full ${emp.bg} flex items-center justify-center font-bold text-xs shrink-0`}>
-                                                {emp.avatar}
-                                            </div>
-                                            <span className="font-bold text-slate-800">{emp.name}</span>
-                                        </td>
-                                        <td className="py-3 text-slate-600">{emp.role}</td>
-                                        <td className="py-3 text-slate-500">{emp.department}</td>
-                                        <td className="py-3 text-slate-400 whitespace-nowrap">{emp.date}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </motion.div>
+                {/* 1. Évolution Masse Salariale sur 6 mois (7 Cols) */}
+                <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-5 md:p-6 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-2 border-b border-slate-100">
+                            <div>
+                                <h3 className="font-extrabold text-slate-900 text-base">
+                                    Évolution Masse Salariale & Charges UEMOA
+                                </h3>
+                                <p className="text-xs text-slate-500">Historique semestriel consolidé en Millions FCFA</p>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs">
+                                <span className="flex items-center gap-1.5 text-slate-600 font-semibold">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span>
+                                    Masse Brute
+                                </span>
+                                <span className="flex items-center gap-1.5 text-slate-600 font-semibold">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block"></span>
+                                    Charges Patronales
+                                </span>
+                            </div>
+                        </div>
 
-                {/* 2. Employee Satisfaction Radial Gauge */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="lg:col-span-3 bg-white border border-slate-100 rounded-2xl p-5 shadow-xs flex flex-col items-center justify-between text-center"
-                >
-                    <div className="w-full text-left">
-                        <h3 className="font-bold text-slate-800 text-base">Employee Satisfaction</h3>
-                    </div>
-
-                    {/* Circular Arc / Gauge */}
-                    <div className="relative w-36 h-36 flex items-center justify-center my-2">
-                        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                            {/* Track */}
-                            <circle 
-                                cx="50" 
-                                cy="50" 
-                                r="40" 
-                                fill="transparent" 
-                                stroke="#F1F5F9" 
-                                strokeWidth="8" 
-                            />
-                            {/* Gauge Arc (4.2 out of 5 = 84%) */}
-                            <circle 
-                                cx="50" 
-                                cy="50" 
-                                r="40" 
-                                fill="transparent" 
-                                stroke="#10B981" 
-                                strokeWidth="8" 
-                                strokeDasharray="251.2" 
-                                strokeDashoffset={251.2 * (1 - 0.84)} 
-                                strokeLinecap="round" 
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                            <span className="text-2xl font-black text-slate-800 leading-none">
-                                4.2<span className="text-xs font-semibold text-slate-400">/5</span>
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-medium mt-1">Overall Rating</span>
+                        <div className="h-[220px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={payrollTrendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorMasseGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25}/>
+                                            <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0}/>
+                                        </linearGradient>
+                                        <linearGradient id="colorChargesGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.2}/>
+                                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="mois" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[10, 95]} />
+                                    <Tooltip 
+                                        formatter={(value, name) => [`${value} Millions FCFA`, name === 'masseM' ? 'Masse Brute' : 'Charges Patronales']}
+                                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}
+                                    />
+                                    <Area type="monotone" dataKey="masseM" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorMasseGrad)" />
+                                    <Area type="monotone" dataKey="chargesM" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorChargesGrad)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
 
-                    {/* Star Rating */}
-                    <div className="flex items-center gap-1 text-emerald-500 my-1">
-                        {[1, 2, 3, 4].map(s => (
-                            <Star key={s} size={16} fill="currentColor" />
-                        ))}
-                        <Star size={16} className="text-slate-200" fill="#E2E8F0" />
-                    </div>
-
-                    {/* Trend Pill */}
-                    <div className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
-                        <span>▲</span> +0.3 <span className="font-normal text-slate-500">vs. last survey</span>
-                    </div>
-                </motion.div>
-
-                {/* 3. Key Highlights */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.55 }}
-                    className="lg:col-span-4 bg-white border border-slate-100 rounded-2xl p-5 shadow-xs flex flex-col justify-between"
-                >
-                    <h3 className="font-bold text-slate-800 text-base mb-3">Key Highlights</h3>
-                    <div className="space-y-3">
-                        {keyHighlights.map((hl, i) => (
-                            <div key={i} className="flex items-center gap-3.5 p-2 rounded-xl hover:bg-slate-50 transition-colors">
-                                <div className={`w-9 h-9 rounded-full ${hl.bg} flex items-center justify-center shrink-0 shadow-xs`}>
-                                    <hl.icon size={18} />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-slate-800">{hl.title}</p>
-                                    <p className="text-[11px] text-slate-400 mt-0.5">{hl.desc}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* EXPANDABLE SECTION: AUDITS LÉGAUX & IA PREDICTIVE */}
-            <div className="pt-2">
-                <button
-                    onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors py-2 px-3 rounded-lg hover:bg-slate-100"
-                >
-                    <ShieldCheck size={16} className="text-indigo-600" />
-                    <span>Conformité Légale & Alertes Rétention IA</span>
-                    {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-
-                <AnimatePresence>
-                    {showAdvanced && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="space-y-6 pt-4 overflow-hidden"
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span>Ratio Charges Patronales / Brut : <strong>17.5% (Conforme CNPS)</strong></span>
+                        <button 
+                            onClick={() => navigate('/payroll')}
+                            className="font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
                         >
-                            <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">
-                                <div className="lg:col-span-2">
-                                    <ComplianceMonitor />
-                                </div>
-                                <div className="lg:col-span-2">
-                                    {predictiveInsights && predictiveInsights.length > 0 ? (
-                                        <div className="bg-indigo-950 text-white rounded-2xl shadow-md p-6 h-full border border-indigo-900">
-                                            <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-indigo-200">
-                                                <Sparkles size={20} className="text-amber-400" />
-                                                IA Prédictive : Alertes Rétention
-                                            </h3>
-                                            <div className="space-y-3">
-                                                {predictiveInsights.slice(0, 3).map((insight, idx) => (
-                                                    <div key={idx} className="bg-white/10 rounded-xl p-3 border border-white/10">
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-bold text-sm text-white">{insight.name}</span>
-                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${insight.riskLevel === 'Élevé' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-slate-900'}`}>
-                                                                Risque {insight.riskLevel}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-xs text-indigo-200 mt-1 line-clamp-2">{insight.reason}</p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-white border border-slate-100 rounded-2xl p-6 h-full flex flex-col justify-center items-center text-center">
-                                            <ShieldCheck size={36} className="text-emerald-500 mb-2" />
-                                            <h4 className="font-bold text-slate-800 text-sm">Climat Social Optimal</h4>
-                                            <p className="text-xs text-slate-500 mt-1 max-w-xs">Aucun risque critique de turnover détecté ce mois-ci par le modèle prédictif.</p>
-                                        </div>
-                                    )}
-                                </div>
+                            Détail de la paie <ArrowRight size={13} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* 2. AGENDA DES ÉCHÉANCES RH DU MOIS (5 Cols) */}
+                <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 p-5 md:p-6 shadow-xs flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 className="font-extrabold text-slate-900 text-base">
+                                    Échéances & Jalons RH de Novembre
+                                </h3>
+                                <p className="text-xs text-slate-500">Calendrier légal, déclaratif et social</p>
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                            <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                                <Calendar size={18} />
+                            </span>
+                        </div>
+
+                        <div className="divide-y divide-slate-100 mt-2">
+                            {echeancesRh.map((ech, idx) => (
+                                <div key={idx} className="py-2.5 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 font-extrabold text-xs flex items-center justify-center text-center shrink-0 border border-slate-200">
+                                            {ech.date}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-xs">{ech.titre}</p>
+                                            <p className="text-[11px] text-slate-500">Pôle : <strong>{ech.type}</strong></p>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        {ech.statut}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 text-center">
+                        <button
+                            onClick={() => navigate('/jours-feries')}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 w-full"
+                        >
+                            Voir le calendrier social complet <ArrowRight size={13} />
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
+
+export default Dashboard;

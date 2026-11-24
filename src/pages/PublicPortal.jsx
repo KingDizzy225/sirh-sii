@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -8,13 +9,14 @@ import {
     Banknote, Calendar, Clock, TrendingUp, AlertCircle, Send, 
     FileText, Shield, ChevronRight, X, QrCode, Download, Search,
     Receipt, Sparkles, UserCheck, Timer, AlertTriangle, MessageCircle,
-    Building, RefreshCw, ThumbsUp, Heart
+    Building, RefreshCw, ThumbsUp, Heart, ArrowLeft, LogIn
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function PublicPortal() {
+    const navigate = useNavigate();
     // Onglet actif : 'clockin', 'certificate', 'tracking', 'advance', 'expense', 'absence', 'general', 'ideas', 'chat'
     const [activeTab, setActiveTab] = useState('clockin');
 
@@ -398,10 +400,10 @@ export function PublicPortal() {
         { id: 'clockin', label: 'Pointage Express', icon: Timer, color: 'emerald' },
         { id: 'certificate', label: 'Attestations PDF', icon: FileText, color: 'blue' },
         { id: 'tracking', label: 'Suivre Dossier', icon: Search, color: 'amber' },
-        { id: 'advance', label: 'Avance Salaire', icon: Banknote, color: 'purple' },
-        { id: 'expense', label: 'Notes de Frais', icon: Receipt, color: 'indigo' },
+        { id: 'advance', label: 'Avance Salaire', icon: Banknote, color: 'emerald' },
+        { id: 'expense', label: 'Notes de Frais', icon: Receipt, color: 'blue' },
         { id: 'absence', label: 'Absence & Congé', icon: Calendar, color: 'cyan' },
-        { id: 'ideas', label: 'Boîte à Idées', icon: Sparkles, color: 'pink' },
+        { id: 'ideas', label: 'Boîte à Idées', icon: Sparkles, color: 'amber' },
         { id: 'chat', label: 'FAQ Virtuelle', icon: MessageCircle, color: 'teal' },
     ];
 
@@ -425,21 +427,41 @@ export function PublicPortal() {
                 )}
             </AnimatePresence>
 
+            {/* Barre Supérieure & Navigation Rapide */}
+            <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-4xl mb-6 flex items-center justify-between gap-4 flex-wrap"
+            >
+                <button
+                    onClick={() => navigate('/login')}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm group"
+                >
+                    <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform text-blue-400" />
+                    <span>Accès Console RH / Connexion</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="text-xs font-mono text-slate-400">Borne Libre-Service Ouverte</span>
+                </div>
+            </motion.div>
+
             {/* Header Officiel */}
             <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-4xl mb-6 text-center"
             >
-                <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-400 mb-4 shadow-lg shadow-blue-500/10">
-                    <Building size={28} className="mr-2 text-blue-400" />
-                    <span className="font-mono text-sm tracking-wider uppercase font-bold text-white">SII Côte d'Ivoire · Espace Collaborateur</span>
+                <div className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-blue-950/70 border border-blue-500/30 text-blue-400 mb-3 shadow-inner">
+                    <Building size={16} className="mr-2 text-blue-400" />
+                    <span className="font-mono text-xs tracking-wider uppercase font-bold text-white">SII Côte d'Ivoire · Guichet Unique Salarié</span>
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight font-['Outfit']">
-                    Grand Guichet Unique RH
+                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    Espace Libre-Service Collaborateur
                 </h1>
-                <p className="mt-2 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-                    Badgez votre présence, téléchargez vos attestations officielles et suivez vos démarches sans mot de passe.
+                <p className="mt-2 text-sm text-slate-400 max-w-2xl mx-auto">
+                    Pointage de présence, téléchargement d'attestations certifiées QR Hash, demandes d'avances et suivi de dossier sans mot de passe.
                 </p>
             </motion.div>
 
@@ -815,9 +837,9 @@ export function PublicPortal() {
                 {/* ======================================================== */}
                 {activeTab === 'expense' && (
                     <Card className="bg-slate-900/90 border-slate-800 shadow-2xl rounded-3xl overflow-hidden backdrop-blur-xl">
-                        <CardHeader className="bg-gradient-to-r from-indigo-900/40 via-slate-900 to-slate-900 border-b border-slate-800 p-6 sm:p-8">
+                        <CardHeader className="bg-gradient-to-r from-blue-900/40 via-slate-900 to-slate-900 border-b border-slate-800 p-6 sm:p-8">
                             <CardTitle className="text-2xl font-bold text-white flex items-center gap-3 font-['Outfit']">
-                                <Receipt className="text-indigo-400" size={28} />
+                                <Receipt className="text-blue-400" size={28} />
                                 Dépôt de Notes de Frais
                             </CardTitle>
                             <CardDescription className="text-slate-400 mt-1">
@@ -885,14 +907,14 @@ export function PublicPortal() {
                                         value={expenseNotes}
                                         onChange={(e) => setExpenseNotes(e.target.value)}
                                         placeholder="Détails du déplacement, noms des participants..."
-                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm h-24 outline-none focus:border-indigo-500"
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm h-24 outline-none focus:border-blue-500"
                                     />
                                 </div>
 
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/20"
+                                    className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-blue-600/20"
                                 >
                                     {loading ? "Envoi en cours..." : "Soumettre la Note de Frais"}
                                 </Button>
@@ -906,9 +928,9 @@ export function PublicPortal() {
                 {/* ======================================================== */}
                 {activeTab === 'advance' && (
                     <Card className="bg-slate-900/90 border-slate-800 shadow-2xl rounded-3xl overflow-hidden backdrop-blur-xl">
-                        <CardHeader className="bg-gradient-to-r from-purple-900/40 via-slate-900 to-slate-900 border-b border-slate-800 p-6 sm:p-8">
+                        <CardHeader className="bg-gradient-to-r from-emerald-900/40 via-slate-900 to-slate-900 border-b border-slate-800 p-6 sm:p-8">
                             <CardTitle className="text-2xl font-bold text-white flex items-center gap-3 font-['Outfit']">
-                                <Banknote className="text-purple-400" size={28} />
+                                <Banknote className="text-emerald-400" size={28} />
                                 Demande d'Avance sur Salaire
                             </CardTitle>
                             <CardDescription className="text-slate-400 mt-1">
@@ -975,14 +997,14 @@ export function PublicPortal() {
                                         value={advanceReason}
                                         onChange={e => setAdvanceReason(e.target.value)}
                                         placeholder="Urgence familiale, scolarité, santé..."
-                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm h-24 outline-none focus:border-purple-500"
+                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm h-24 outline-none focus:border-emerald-500"
                                     />
                                 </div>
 
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full h-14 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl shadow-xl shadow-purple-600/20"
+                                    className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-xl shadow-emerald-600/20"
                                 >
                                     {loading ? "Transmission..." : "Envoyer la Demande d'Avance"}
                                 </Button>
@@ -1096,9 +1118,9 @@ export function PublicPortal() {
                 {/* ======================================================== */}
                 {activeTab === 'ideas' && (
                     <Card className="bg-slate-900/90 border-slate-800 shadow-2xl rounded-3xl overflow-hidden backdrop-blur-xl">
-                        <CardHeader className="bg-gradient-to-r from-pink-900/40 via-slate-900 to-slate-900 border-b border-slate-800 p-6 sm:p-8">
+                        <CardHeader className="bg-gradient-to-r from-amber-900/40 via-slate-900 to-slate-900 border-b border-slate-800 p-6 sm:p-8">
                             <CardTitle className="text-2xl font-bold text-white flex items-center gap-3 font-['Outfit']">
-                                <Sparkles className="text-pink-400" size={28} />
+                                <Sparkles className="text-amber-400" size={28} />
                                 Boîte à Idées & Baromètre Climat
                             </CardTitle>
                             <CardDescription className="text-slate-400 mt-1">
@@ -1108,8 +1130,8 @@ export function PublicPortal() {
 
                         <CardContent className="p-6 sm:p-8 space-y-6">
                             {ideaSuccess ? (
-                                <div className="bg-pink-950/40 border border-pink-500/30 p-8 rounded-2xl text-center space-y-4">
-                                    <div className="w-16 h-16 bg-pink-500/20 text-pink-400 rounded-full mx-auto flex items-center justify-center">
+                                <div className="bg-amber-950/40 border border-amber-500/30 p-8 rounded-2xl text-center space-y-4">
+                                    <div className="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full mx-auto flex items-center justify-center">
                                         <Heart size={36} />
                                     </div>
                                     <h3 className="text-xl font-bold text-white">Merci pour votre contribution !</h3>
@@ -1118,7 +1140,7 @@ export function PublicPortal() {
                                     </p>
                                     <Button 
                                         onClick={() => { setIdeaSuccess(false); setIdeaFeedback(''); }}
-                                        className="bg-pink-600 hover:bg-pink-500 text-white rounded-xl font-semibold"
+                                        className="bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-semibold"
                                     >
                                         Soumettre une autre idée
                                     </Button>
@@ -1138,7 +1160,7 @@ export function PublicPortal() {
                                                     className={cn(
                                                         "w-8 h-10 sm:w-10 sm:h-12 rounded-xl font-bold text-xs sm:text-sm transition-all",
                                                         ideaScore === s 
-                                                            ? "bg-pink-600 text-white scale-110 shadow-lg shadow-pink-600/30" 
+                                                            ? "bg-amber-600 text-white scale-110 shadow-lg shadow-amber-600/30" 
                                                             : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
                                                     )}
                                                 >
@@ -1170,14 +1192,14 @@ export function PublicPortal() {
                                             value={ideaFeedback}
                                             onChange={e => setIdeaFeedback(e.target.value)}
                                             placeholder="Ex: Proposer des fruits bio le matin, organiser un tournoi de foot corporatif, assouplir les jours de télétravail..."
-                                            className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-4 text-sm h-32 outline-none focus:border-pink-500"
+                                            className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-4 text-sm h-32 outline-none focus:border-amber-500"
                                         />
                                     </div>
 
                                     <Button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full h-14 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-2xl shadow-xl shadow-pink-600/20"
+                                        className="w-full h-14 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-2xl shadow-xl shadow-amber-600/20"
                                     >
                                         {loading ? "Envoi anonyme..." : "Transmettre mon Idée aux RH"}
                                     </Button>

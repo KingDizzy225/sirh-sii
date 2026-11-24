@@ -323,6 +323,20 @@ app.use('/api/choc-des-guichets', verifyToken, require('./routes/chocDesGuichets
 app.use('/api/conciergerie-papiers', verifyToken, require('./routes/conciergeriePapiersRoutes'));
 app.use('/api/ecoute-serenite', verifyToken, require('./routes/ecouteSereniteRoutes'));
 
+// Modules Enterprise d'Élite : Hay Mercer, Coffre-Fort, SPM, Heures Sup CI, Sécurité Crise
+app.use('/api/pesee-hay', verifyToken, require('./routes/peseeHayRoutes'));
+app.use('/api/coffre-fort-numerique', verifyToken, require('./routes/coffreFortNumeriqueRoutes'));
+app.use('/api/moteur-commissions-spm', verifyToken, require('./routes/moteurCommissionsSpmRoutes'));
+app.use('/api/heures-sup-legales', verifyToken, require('./routes/heuresSupLegalesRoutes'));
+app.use('/api/securite-crise-rh', verifyToken, require('./routes/securiteCriseRhRoutes'));
+
+// Pack Gouvernance, Éthique, Dialogue Social & Finance (NAO, Conflits, SoD, Capacité, IDR)
+app.use('/api/accords-nao', verifyToken, require('./routes/accordsNaoRoutes'));
+app.use('/api/compliance-conflits', verifyToken, require('./routes/complianceConflitsRoutes'));
+app.use('/api/segregation-sod', verifyToken, require('./routes/segregationDevoirsSodRoutes'));
+app.use('/api/capacite-charge', verifyToken, require('./routes/capaciteChargeRoutes'));
+app.use('/api/indemnites-idr', verifyToken, require('./routes/indemnitesIdrRoutes'));
+
 // V9 Pointage géolocalisé
 const workSiteRoutes = require('./routes/workSiteRoutes');
 app.use('/api/worksites', verifyToken, workSiteRoutes);

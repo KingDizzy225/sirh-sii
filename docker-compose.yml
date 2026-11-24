@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL sécurisée pour les données RH
+  sirh-db:
+    image: postgres:16-alpine
+    container_name: sirh-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sirh_sii}
+      POSTGRES_USER: ${POSTGRES_USER:-sii_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-SuperSecretPassword2026!}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sii_admin} -d ${POSTGRES_DB:-sirh_sii}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Application SIRH-SII Full-Stack (Backend API + Frontend PWA)
+  sirh-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sirh-sii-app
+    restart: always
+    depends_on:
+      sirh-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sii_admin}:${POSTGRES_PASSWORD:-SuperSecretPassword2026!}@sirh-db:5432/${POSTGRES_DB:-sirh_sii}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-SuperJwtSecretKeyForSIIEnterprise2026}
+      COMPANY_NAME: "SII Côte d'Ivoire"
+      COMPANY_COUNTRY: "CI"
+      CURRENCY: "XOF"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/uploads:/app/server/uploads
+
+volumes:
+  postgres_data:
+    name: sirh_sii_postgres_volume

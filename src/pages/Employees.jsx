@@ -653,7 +653,7 @@ export function Employees() {
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                             className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
                             onClick={e => e.stopPropagation()}>
-                            <div className="px-6 py-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-600">
+                            <div className="px-6 py-4 border-b flex items-center justify-between bg-[#002B7F]">
                                 <h3 className="text-lg font-bold text-white">Modifier l'Employé</h3>
                                 <button onClick={() => setEditModal(null)} className="text-white/80 hover:text-white bg-transparent border-0 cursor-pointer"><X size={20} /></button>
                             </div>
@@ -789,14 +789,14 @@ export function Employees() {
                     </div>
                 </div>
 
-                <div className="bg-[#F5F3FF] border border-[#EDE9FE] rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-sm">
+                <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 shadow-xs flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-sm">
                         ✨
                     </div>
                     <div>
                         <p className="text-xs font-semibold text-slate-600">Parité F / H</p>
                         <p className="text-2xl font-black text-slate-900">46% / 54%</p>
-                        <p className="text-[11px] text-purple-700 font-semibold">Conforme charte mixité</p>
+                        <p className="text-[11px] text-emerald-700 font-semibold">Conforme charte mixité</p>
                     </div>
                 </div>
 
@@ -854,11 +854,11 @@ export function Employees() {
                                 (emp.matricule && emp.matricule.toLowerCase().includes(searchQuery.toLowerCase()))
                             ).map((emp, index) => {
                                 const avatarBg = [
-                                    'bg-blue-100 text-blue-700',
-                                    'bg-emerald-100 text-emerald-700',
-                                    'bg-purple-100 text-purple-700',
-                                    'bg-amber-100 text-amber-700',
-                                    'bg-pink-100 text-pink-700'
+                                    'bg-blue-100 text-[#002B7F]',
+                                    'bg-emerald-100 text-[#008000]',
+                                    'bg-sky-100 text-sky-800',
+                                    'bg-amber-100 text-amber-800',
+                                    'bg-slate-100 text-slate-800'
                                 ][index % 5];
                                 return (
                                 <TableRow key={emp.id} className={selectedEmployees.includes(emp.id) ? "bg-blue-50/50" : ""}>

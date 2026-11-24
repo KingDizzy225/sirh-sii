@@ -93,7 +93,6 @@ import { PublicSignature } from './pages/PublicSignature';
 import { Referrals } from './pages/Referrals';
 import { Mentorship } from './pages/Mentorship';
 import { ContractStudio } from './pages/ContractStudio';
-import { WhatsappGateway } from './pages/WhatsappGateway';
 import { MedicalVisitsHub } from './pages/MedicalVisitsHub';
 import { ClimateSurveys } from './pages/ClimateSurveys';
 import { Offboarding } from './pages/Offboarding';
@@ -132,6 +131,10 @@ import { ComiteCSST } from './pages/ComiteCSST';
 import { FlotteMobile } from './pages/FlotteMobile';
 import { RegistreVisiteurs } from './pages/RegistreVisiteurs';
 import { EnquetesAccidents } from './pages/EnquetesAccidents';
+import { CampagneEntretiensEap } from './pages/CampagneEntretiensEap';
+import { RevueSalarialeMerite } from './pages/RevueSalarialeMerite';
+import { CongesEvenementsFamiliaux } from './pages/CongesEvenementsFamiliaux';
+import { BourseInterneMobilite } from './pages/BourseInterneMobilite';
 import { EntretiensDepart } from './pages/EntretiensDepart';
 import { BilansCarriere } from './pages/BilansCarriere';
 import { InnovationParticipative } from './pages/InnovationParticipative';
@@ -217,6 +220,46 @@ import { PodcastsDialectes } from './pages/PodcastsDialectes';
 import { ChocDesGuichets } from './pages/ChocDesGuichets';
 import { ConciergeriePapiers } from './pages/ConciergeriePapiers';
 import { EcouteSerenite } from './pages/EcouteSerenite';
+import { PeseePostesHay } from './pages/PeseePostesHay';
+import { CoffreFortNumerique } from './pages/CoffreFortNumerique';
+import { MoteurCommissionsSpm } from './pages/MoteurCommissionsSpm';
+import { HeuresSupLegales } from './pages/HeuresSupLegales';
+import { SecuriteCriseRh } from './pages/SecuriteCriseRh';
+import { AccordsEntrepriseNao } from './pages/AccordsEntrepriseNao';
+import { ComplianceConflitsInterets } from './pages/ComplianceConflitsInterets';
+import { SegregationDevoirsSod } from './pages/SegregationDevoirsSod';
+import { CapaciteChargeAgences } from './pages/CapaciteChargeAgences';
+import { IndemnitesFinCarriereIdr } from './pages/IndemnitesFinCarriereIdr';
+import MatricePolyvalenceSuppleance from './pages/MatricePolyvalenceSuppleance';
+import EvaluationEfficaciteFdfp from './pages/EvaluationEfficaciteFdfp';
+import RuptureConventionnelleAmiable from './pages/RuptureConventionnelleAmiable';
+import SimulateurNoriaGvt from './pages/SimulateurNoriaGvt';
+import BilanSocialIndividuelBsi from './pages/BilanSocialIndividuelBsi';
+import StrategicWorkforcePlanning from './pages/StrategicWorkforcePlanning';
+import ContinuousFeedbackCheckins from './pages/ContinuousFeedbackCheckins';
+import PeopleAnalyticsFlightRisk from './pages/PeopleAnalyticsFlightRisk';
+import OrchestrationOnboardingOffboarding from './pages/OrchestrationOnboardingOffboarding';
+import EspaceDialogueSocialBdese from './pages/EspaceDialogueSocialBdese';
+import TalentReview9Box from './pages/TalentReview9Box';
+import BouclierPreAuditCnps from './pages/BouclierPreAuditCnps';
+import BoursePermutationAgences from './pages/BoursePermutationAgences';
+import BarometrePeriodeEssai from './pages/BarometrePeriodeEssai';
+import FacteurBradfordAbsenteisme from './pages/FacteurBradfordAbsenteisme';
+import RegistreDisciplinaireSanctions from './pages/RegistreDisciplinaireSanctions';
+import SoldeDeToutCompte from './pages/SoldeDeToutCompte';
+import MaterniteAllaitementProtection from './pages/MaterniteAllaitementProtection';
+import SaisiesArretsQuotiteCessible from './pages/SaisiesArretsQuotiteCessible';
+import CreditHeuresDeleguesProteges from './pages/CreditHeuresDeleguesProteges';
+import ClassificationCcniEchelons from './pages/ClassificationCcniEchelons';
+import RapportSocialInspectionMeps from './pages/RapportSocialInspectionMeps';
+import PlanAmeliorationPerformancePip from './pages/PlanAmeliorationPerformancePip';
+import PromessesEmbaucheOffres from './pages/PromessesEmbaucheOffres';
+import AnalytiqueRecrutementRoi from './pages/AnalytiqueRecrutementRoi';
+import PassationPosteKnowledgeHandover from './pages/PassationPosteKnowledgeHandover';
+import BarometreManagerialUpwardFeedback from './pages/BarometreManagerialUpwardFeedback';
+import NotesServiceAccusesLecture from './pages/NotesServiceAccusesLecture';
+import MutationsGeographiquesInstallation from './pages/MutationsGeographiquesInstallation';
+import LicenciementEconomiqueOrdreLegal from './pages/LicenciementEconomiqueOrdreLegal';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -410,6 +453,186 @@ const AppContent = () => {
             <Route path="/org-chart" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <OrgChart />
+              </ProtectedRoute>
+            } />
+            <Route path="/orgchart" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <OrgChart />
+              </ProtectedRoute>
+            } />
+            <Route path="/campagne-eap" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <CampagneEntretiensEap />
+              </ProtectedRoute>
+            } />
+            <Route path="/entretiens-annuels" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <CampagneEntretiensEap />
+              </ProtectedRoute>
+            } />
+            <Route path="/revue-salariale-merite" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <RevueSalarialeMerite />
+              </ProtectedRoute>
+            } />
+            <Route path="/conges-evenements-familiaux" element={
+              <ProtectedRoute>
+                <CongesEvenementsFamiliaux />
+              </ProtectedRoute>
+            } />
+            <Route path="/bourse-mobilite-interne" element={
+              <ProtectedRoute>
+                <BourseInterneMobilite />
+              </ProtectedRoute>
+            } />
+            <Route path="/matrice-polyvalence-suppleance" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <MatricePolyvalenceSuppleance />
+              </ProtectedRoute>
+            } />
+            <Route path="/evaluation-formations-fdfp" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <EvaluationEfficaciteFdfp />
+              </ProtectedRoute>
+            } />
+            <Route path="/rupture-conventionnelle-amiable" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <RuptureConventionnelleAmiable />
+              </ProtectedRoute>
+            } />
+            <Route path="/simulateur-noria-gvt" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Finance']}>
+                <SimulateurNoriaGvt />
+              </ProtectedRoute>
+            } />
+            <Route path="/bilan-social-individuel" element={
+              <ProtectedRoute>
+                <BilanSocialIndividuelBsi />
+              </ProtectedRoute>
+            } />
+            <Route path="/strategic-workforce-planning" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <StrategicWorkforcePlanning />
+              </ProtectedRoute>
+            } />
+            <Route path="/continuous-feedback-checkins" element={
+              <ProtectedRoute>
+                <ContinuousFeedbackCheckins />
+              </ProtectedRoute>
+            } />
+            <Route path="/people-analytics-flight-risk" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <PeopleAnalyticsFlightRisk />
+              </ProtectedRoute>
+            } />
+            <Route path="/orchestration-onboarding-offboarding" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <OrchestrationOnboardingOffboarding />
+              </ProtectedRoute>
+            } />
+            <Route path="/espace-dialogue-social-bdese" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <EspaceDialogueSocialBdese />
+              </ProtectedRoute>
+            } />
+            <Route path="/talent-review-9box" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <TalentReview9Box />
+              </ProtectedRoute>
+            } />
+            <Route path="/bouclier-preaudit-cnps" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <BouclierPreAuditCnps />
+              </ProtectedRoute>
+            } />
+            <Route path="/bourse-permutation-agences" element={
+              <ProtectedRoute>
+                <BoursePermutationAgences />
+              </ProtectedRoute>
+            } />
+            <Route path="/barometre-periode-essai" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <BarometrePeriodeEssai />
+              </ProtectedRoute>
+            } />
+            <Route path="/facteur-bradford-absenteisme" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <FacteurBradfordAbsenteisme />
+              </ProtectedRoute>
+            } />
+            <Route path="/registre-disciplinaire-sanctions" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <RegistreDisciplinaireSanctions />
+              </ProtectedRoute>
+            } />
+            <Route path="/solde-de-tout-compte" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <SoldeDeToutCompte />
+              </ProtectedRoute>
+            } />
+            <Route path="/maternite-allaitement-protection" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <MaterniteAllaitementProtection />
+              </ProtectedRoute>
+            } />
+            <Route path="/saisies-arrets-quotite-cessible" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <SaisiesArretsQuotiteCessible />
+              </ProtectedRoute>
+            } />
+            <Route path="/credit-heures-delegues-proteges" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <CreditHeuresDeleguesProteges />
+              </ProtectedRoute>
+            } />
+            <Route path="/classification-ccni-echelons" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <ClassificationCcniEchelons />
+              </ProtectedRoute>
+            } />
+            <Route path="/rapport-social-inspection-meps" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <RapportSocialInspectionMeps />
+              </ProtectedRoute>
+            } />
+            <Route path="/plan-amelioration-performance-pip" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <PlanAmeliorationPerformancePip />
+              </ProtectedRoute>
+            } />
+            <Route path="/promesses-embauche-offres" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <PromessesEmbaucheOffres />
+              </ProtectedRoute>
+            } />
+            <Route path="/analytique-recrutement-roi" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <AnalytiqueRecrutementRoi />
+              </ProtectedRoute>
+            } />
+            <Route path="/passation-poste-handover" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <PassationPosteKnowledgeHandover />
+              </ProtectedRoute>
+            } />
+            <Route path="/barometre-managerial-upward" element={
+              <ProtectedRoute>
+                <BarometreManagerialUpwardFeedback />
+              </ProtectedRoute>
+            } />
+            <Route path="/notes-service-accuses-lecture" element={
+              <ProtectedRoute>
+                <NotesServiceAccusesLecture />
+              </ProtectedRoute>
+            } />
+            <Route path="/mutations-geographiques-province" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <MutationsGeographiquesInstallation />
+              </ProtectedRoute>
+            } />
+            <Route path="/licenciement-economique-ordre" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <LicenciementEconomiqueOrdreLegal />
               </ProtectedRoute>
             } />
             <Route path="/org-simulation" element={
@@ -1077,12 +1300,6 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/whatsapp-bot" element={
-              <ProtectedRoute>
-                <WhatsappGateway />
-              </ProtectedRoute>
-            } />
-
             <Route path="/medical-hub" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Social Worker']}>
                 <MedicalVisitsHub />
@@ -1419,6 +1636,60 @@ const AppContent = () => {
             <Route path="/ecoute-serenite" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
                 <EcouteSerenite />
+              </ProtectedRoute>
+            } />
+
+            {/* Modules Enterprise d'Élite (Hay Mercer, Coffre-Fort, SPM Commissions, Heures Sup CI, Sécurité Crise) */}
+            <Route path="/pesee-postes-hay" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <PeseePostesHay />
+              </ProtectedRoute>
+            } />
+            <Route path="/coffre-fort-numerique" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <CoffreFortNumerique />
+              </ProtectedRoute>
+            } />
+            <Route path="/moteur-commissions-spm" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <MoteurCommissionsSpm />
+              </ProtectedRoute>
+            } />
+            <Route path="/heures-sup-legales" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <HeuresSupLegales />
+              </ProtectedRoute>
+            } />
+            <Route path="/securite-crise-rh" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <SecuriteCriseRh />
+              </ProtectedRoute>
+            } />
+
+            {/* Modules Enterprise Stratégiques (Accords NAO, Compliance, SoD Matrix, Capacité Agences, Provisions IDR) */}
+            <Route path="/accords-dentreprise-nao" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <AccordsEntrepriseNao />
+              </ProtectedRoute>
+            } />
+            <Route path="/compliance-conflits-interets" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Employee', 'Manager']}>
+                <ComplianceConflitsInterets />
+              </ProtectedRoute>
+            } />
+            <Route path="/segregation-des-devoirs-sod" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <SegregationDevoirsSod />
+              </ProtectedRoute>
+            } />
+            <Route path="/capacite-charge-agences" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <CapaciteChargeAgences />
+              </ProtectedRoute>
+            } />
+            <Route path="/indemnites-fin-carriere-idr" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <IndemnitesFinCarriereIdr />
               </ProtectedRoute>
             } />
 
