@@ -206,6 +206,22 @@ La plateforme **SIRH-SII** est un système intégré de gouvernance des ressourc
 - **Accès** : [`/licenciement-economique-ordre`](http://localhost:5173/licenciement-economique-ordre)
 - **Fonctionnalités clés** : Calcul objectif de l'ordre légal (Aptitudes, Ancienneté, Charges de famille), procédure impérative de 15 jours avec l'Inspecteur du Travail et registre de priorité de réembauchage (2 ans).
 
+### 3.21. Ouvertures de Poste & Contrôle du Budget d'Effectifs (*Headcount*)
+- **Accès** : [`/ouverture-poste-headcount`](http://localhost:5173/ouverture-poste-headcount)
+- **Fonctionnalités clés** : Suivi ETP budgétés vs réels par département, demandes de recrutement (Remplacement vs Création nette vs Hors-budget) et circuit d'approbation CG ➔ DRH ➔ DG.
+
+### 3.22. Modifications État Civil, RIB Bancaire & Parts IGR
+- **Accès** : [`/demandes-modification-etat-civil`](http://localhost:5173/demandes-modification-etat-civil)
+- **Fonctionnalités clés** : Validation Avant/Après avec pièces justificatives obligatoires (mariage, naissance, parts IGR, mutuelle) et contrôle anti-fraude sur les changements de RIB.
+
+### 3.23. Calendrier d'Équipe & Matrice Anti-Conflits de Congés
+- **Accès** : [`/calendrier-conflits-conges-agence`](http://localhost:5173/calendrier-conflits-conges-agence)
+- **Fonctionnalités clés** : Planning visuel consolidé par agence avec détection automatique des jours passant sous le seuil critique de présence.
+
+### 3.24. Contrôle Qualité & Détection d'Anomalies Pré-Paie
+- **Accès** : [`/audit-anomalies-pre-paie`](http://localhost:5173/audit-anomalies-pre-paie)
+- **Fonctionnalités clés** : Audit avant virement (changements de RIB, variation net > ±15%, salariés sortis encore dans le lot, absences non déduites) et délivrance du Bon à Payer (BAP).
+
 ---
 
 ## 4. GUIDE PRATIQUE POUR LE COLLABORATEUR

@@ -53,6 +53,7 @@ const getAllNavItems = (t) => [
     { name: 'Passeport Séjour & Titres CEDEAO', path: '/titres-cedeao', icon: Globe2, domain: 'Employés', category: 'Administration & Contrats', permission: 'employees:edit', manager: true },
     { name: 'Coffre-Fort Numérique (e-Vault)', path: '/coffre-fort-numerique', icon: Lock, domain: 'Employés', category: 'Administration & Contrats', permission: 'dashboard:view' },
     { name: 'Conciergerie Papiers (CNI/Permis)', path: '/conciergerie-papiers', icon: FileText, domain: 'Employés', category: 'Administration & Contrats', permission: 'dashboard:view', manager: true },
+    { name: 'Modifications État Civil, RIB & IGR', path: '/demandes-modification-etat-civil', icon: UserCheck, domain: 'Employés', category: 'Administration & Contrats', permission: 'dashboard:view' },
 
     // 2. Carrière, Évaluations & Mobilité
     { name: 'Organigramme Entreprise', path: '/org-chart', icon: Network, domain: 'Employés', category: 'Carrière & Évaluations', permission: 'employees:view' },
@@ -121,6 +122,7 @@ const getAllNavItems = (t) => [
 
     // 6. Recrutement, Talents & Campus
     { name: t('sidebar.recruitment', 'Recrutement & Campus'), path: '/recruitment', icon: Target, domain: 'Employés', category: 'Recrutement & Talents', permission: 'recruitment:view' },
+    { name: 'Ouvertures Poste & Budget ETP', path: '/ouverture-poste-headcount', icon: Briefcase, domain: 'Employés', category: 'Recrutement & Talents', permission: 'recruitment:view', manager: true },
     { name: 'Promesses d\'Embauche & Offres', path: '/promesses-embauche-offres', icon: FileSignature, domain: 'Employés', category: 'Recrutement & Talents', permission: 'recruitment:view', manager: true },
     { name: 'Analytique Recrutement (ROI / CPH)', path: '/analytique-recrutement-roi', icon: BarChart, domain: 'Employés', category: 'Recrutement & Talents', permission: 'recruitment:view', manager: true },
     { name: 'Fast-Track Stagiaires & Alternants', path: '/parrainage-stagiaires', icon: GraduationCap, domain: 'Employés', category: 'Recrutement & Talents', permission: 'dashboard:view', manager: true },
@@ -140,6 +142,7 @@ const getAllNavItems = (t) => [
     // 1. Temps, Présence & Plannings
     { name: 'Congés & Absences', path: '/leaves', icon: Calendar, domain: 'Pilotage RH', category: 'Temps, Absences & Shifts', permission: 'dashboard:view', manager: true },
     { name: 'Facteur Bradford & Absentéisme Réseau', path: '/facteur-bradford-absenteisme', icon: AlertTriangle, domain: 'Pilotage RH', category: 'Temps, Absences & Shifts', permission: 'dashboard:view', manager: true },
+    { name: 'Calendrier Anti-Conflits Congés', path: '/calendrier-conflits-conges-agence', icon: CalendarDays, domain: 'Pilotage RH', category: 'Temps, Absences & Shifts', permission: 'dashboard:view', manager: true },
     { name: 'Congés Événements Familiaux', path: '/conges-evenements-familiaux', icon: Heart, domain: 'Pilotage RH', category: 'Temps, Absences & Shifts', permission: 'dashboard:view' },
     { name: 'Pointages & Planning Shifts', path: '/shifts', icon: CalendarRange, domain: 'Pilotage RH', category: 'Temps, Absences & Shifts', permission: 'dashboard:view', manager: true },
     { name: 'Jours Fériés & Calendrier', path: '/jours-feries', icon: CalendarDays, domain: 'Pilotage RH', category: 'Temps, Absences & Shifts', permission: 'employees:edit' },
@@ -189,6 +192,7 @@ const getAllNavItems = (t) => [
     { name: 'Délégations de Signature', path: '/delegations', icon: UserCheck, domain: 'Pilotage RH', category: 'Paie, Finance & Retraite', permission: 'dashboard:view' },
     { name: 'Solde de Tout Compte (STC)', path: '/solde-de-tout-compte', icon: Calculator, domain: 'Pilotage RH', category: 'Paie, Finance & Retraite', permission: 'payroll:view', manager: true },
     { name: 'Saisies-Arrêts & Quotité Cessible', path: '/saisies-arrets-quotite-cessible', icon: Scale, domain: 'Pilotage RH', category: 'Paie, Finance & Retraite', permission: 'payroll:view', manager: true },
+    { name: 'Contrôle Qualité & Anomalies Pré-Paie', path: '/audit-anomalies-pre-paie', icon: ShieldAlert, domain: 'Pilotage RH', category: 'Paie, Finance & Retraite', permission: 'payroll:view' },
 
     // 5. Matériel, Flotte & Équipements Terrain
     { name: 'Frais Carburant & Tournées GPS', path: '/frais-carburant', icon: Fuel, domain: 'Pilotage RH', category: 'Flotte, Matériel & Équipements', permission: 'dashboard:view', manager: true },

@@ -275,6 +275,10 @@ import BarometreManagerialUpwardFeedback from './pages/BarometreManagerialUpward
 import NotesServiceAccusesLecture from './pages/NotesServiceAccusesLecture';
 import MutationsGeographiquesInstallation from './pages/MutationsGeographiquesInstallation';
 import LicenciementEconomiqueOrdreLegal from './pages/LicenciementEconomiqueOrdreLegal';
+import OuverturePosteHeadcount from './pages/OuverturePosteHeadcount';
+import DemandesModificationEtatCivil from './pages/DemandesModificationEtatCivil';
+import CalendrierConflitsCongesAgence from './pages/CalendrierConflitsCongesAgence';
+import AuditAnomaliesPrePaie from './pages/AuditAnomaliesPrePaie';
 
 const Unauthorized = () => (
   <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -648,6 +652,26 @@ const AppContent = () => {
             <Route path="/licenciement-economique-ordre" element={
               <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
                 <LicenciementEconomiqueOrdreLegal />
+              </ProtectedRoute>
+            } />
+            <Route path="/ouverture-poste-headcount" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <OuverturePosteHeadcount />
+              </ProtectedRoute>
+            } />
+            <Route path="/demandes-modification-etat-civil" element={
+              <ProtectedRoute>
+                <DemandesModificationEtatCivil />
+              </ProtectedRoute>
+            } />
+            <Route path="/calendrier-conflits-conges-agence" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR', 'Manager']}>
+                <CalendrierConflitsCongesAgence />
+              </ProtectedRoute>
+            } />
+            <Route path="/audit-anomalies-pre-paie" element={
+              <ProtectedRoute allowedRoles={['Administrator', 'HR']}>
+                <AuditAnomaliesPrePaie />
               </ProtectedRoute>
             } />
             <Route path="/org-simulation" element={
